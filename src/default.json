@@ -1,0 +1,84 @@
+{
+    "global": {
+        "title": "Macro Hero",
+        "gsheet": {
+        },
+        "variables": {
+            "playerName": {
+                "expression": "Local.value('playerName', 'Unknown Hero')"
+            }
+        }
+    },
+    "pages": [
+        {
+            "id": "main",
+            "label": "Général",
+            "variables": {
+                "token": {
+                    "expression": "'57cefc5e-23b0-40f8-ad32-31a1c331c501'"
+                },
+                "hp": {
+                    "expression": "100"
+                },
+                "speedBonus": {
+                    "expression": "GSheet.getValue('Xalithra Général', 'A1')"
+                },
+                "atkBonus": {
+                    "expression": "floor({speedBonus} / 10)"
+                },
+                "defBonus": {
+                    "expression": "1"
+                },
+                "isBandaged": {
+                    "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
+                },
+                "bandagedValue": {
+                    "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
+                }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Actions Générales"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "speedBonus",
+                            "label": "speedBonus Label"
+                        },
+                        {
+                            "type": "value",
+                            "var": "atkBonus",
+                            "label": "Bonus ATK"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('1d20 + {atkBonus}')"
+                    ],
+                    "label": "Lancer Attaque"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "isBandaged",
+                            "label": "isBandaged"
+                        },
+                        {
+                            "type": "value",
+                            "var": "bandagedValue",
+                            "label": "bandagedValue"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
