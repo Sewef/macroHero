@@ -3,9 +3,10 @@
  * Centralized management of all integrations (GSheets, Local, etc.)
  */
 
-import GSheetIntegration from "./GSheetIntegration.js";
-import LocalIntegration from "./LocalIntegration.js";
+import GSheetIntegration from "./GSheet.js";
+import LocalIntegration from "./Local.js";
 import * as ConditionsMarkers from "./ConditionsMarkers.js";
+import * as OwlTrackers from "./OwlTrackers.js";
 
 class IntegrationsManager {
   constructor() {
@@ -50,6 +51,12 @@ class IntegrationsManager {
       ConditionsMarkers: {
         getValue: (tokenId, conditionName) => ConditionsMarkers.getValue(tokenId, conditionName),
         isCondition: (tokenId, conditionName) => ConditionsMarkers.isCondition(tokenId, conditionName),
+      },
+      // Owl Trackers integration
+      OwlTrackers: {
+        getValue: (tokenId, trackerName) => OwlTrackers.getValue(tokenId, trackerName),
+        setValue: (tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value),
+        addValue: (tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta),
       },
       // Math functions - exposed both under Math object and directly
       Math: {

@@ -116,8 +116,15 @@ function substituteVariables(expression, scope = {}) {
   // Replace each variable with its value
   for (const varRef of varRefs) {
     if (varRef in scope) {
-      const value = scope[varRef];
+      let value = scope[varRef];
       console.log(`[SUBST]   ${varRef} = ${value}`);
+      
+      // If value is a string and doesn't already have quotes, add them
+      if (typeof value === 'string' && !value.startsWith("'") && !value.startsWith('"')) {
+        value = `'${value}'`;
+        console.log(`[SUBST]   Adding quotes: '${value}'`);
+      }
+      
       // Use word boundaries to avoid partial replacements
       const regex = new RegExp(`\\b${varRef}\\b`, 'g');
       result = result.replace(regex, value);
@@ -204,11 +211,21 @@ export async function executeCommand(command, page) {
     
     // Build and execute the function
     // We use a function to safely evaluate the command with the context
-    const func = new Function(...Object.keys(context), `return (async () => { return ${parsedCommand}; })()`);
-    const result = await func(...Object.values(context));
-    
-    console.log("Command result:", result);
-    return result;
+    try {
+      const functionCode = `return (async () => { return ${parsedCommand}; })()`;
+      console.log("[EXEC] Function code:", functionCode);
+      console.log("[EXEC] Context keys:", Object.keys(context));
+      
+      const func = new Function(...Object.keys(context), functionCode);
+      const result = await func(...Object.values(context));
+      
+      console.log("Command result:", result);
+      return result;
+    } catch (syntaxError) {
+      console.error("[EXEC] Syntax error in function code. Parsed command:", parsedCommand);
+      console.error("[EXEC] Error details:", syntaxError);
+      throw syntaxError;
+    }
   } catch (error) {
     console.error("Error executing command:", error);
     throw error;

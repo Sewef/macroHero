@@ -3,7 +3,7 @@
  * Provides integrations context for variable expressions
  */
 
-import { initializeIntegrations, getIntegrationsContext } from "./commands/integrations/IntegrationsManager.js";
+import { initializeIntegrations, getIntegrationsContext } from "./commands/integrations/Manager.js";
 
 /**
  * Initialize expression helpers with configuration

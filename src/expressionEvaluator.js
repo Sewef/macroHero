@@ -55,7 +55,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     // Step 3: Evaluate the expression
     // Pass context as a single object to avoid parameter name issues
     const funcCode = `return (async () => { 
-      const { GSheet, Local, ConditionsMarkers, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
+      const { GSheet, Local, ConditionsMarkers, OwlTrackers, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
       const Math = MathObj || { floor, ceil, round, abs, min, max };
       
       const result = (${processed});

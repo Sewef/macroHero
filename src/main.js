@@ -39,14 +39,22 @@ OBR.onReady(async () => {
       page._resolved = {}; // Start with empty resolved set
     }
 
-
-    // Delay logging until scene is fully ready
-    OBR.scene.onReadyChange((isReady) => {
-      if (isReady) {
-        initUI(cfg);
-        logOBRImageItems();
-      }
-    });
+    // Initialize UI when scene is ready (handles both already-ready and future-ready cases)
+    const isSceneReady = await OBR.scene.isReady();
+    if (isSceneReady) {
+      console.log("[MAIN] Scene is already ready, initializing UI");
+      initUI(cfg);
+      logOBRImageItems();
+    } else {
+      // If not ready yet, wait for it to be ready
+      OBR.scene.onReadyChange((isReady) => {
+        if (isReady) {
+          console.log("[MAIN] Scene is now ready, initializing UI");
+          initUI(cfg);
+          logOBRImageItems();
+        }
+      });
+    }
 
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {

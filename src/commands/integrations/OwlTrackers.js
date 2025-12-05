@@ -1,88 +1,64 @@
+import { 
+  getValue as getMetadataValue,
+  setValue as setMetadataValue,
+  addValue as addMetadataValue
+} from "../tokenMetadata.js";
+
+const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
+
 /**
  * Owl-Trackers Integration
  * Handles communication with the Owl-Trackers extension for status/condition tracking
  */
 
 /**
- * Get tracked status from Owl-Trackers
- * @param {string} itemId - Item ID to get status for
- * @param {string} statusKey - Status key to retrieve
- * @returns {Promise<any>} Status value
+ * Get a tracker value from a token
+ * @param {string} tokenId - Token ID to get tracker from
+ * @param {string} trackerName - Name of the tracker (e.g., "HP")
+ * @returns {Promise<number|null>} Tracker value or null if not found
  */
-export async function getTrackerStatus(itemId, statusKey) {
+export async function getValue(tokenId, trackerName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.OwlTrackers) {
-      return await Ext.OwlTrackers.getStatus(itemId, statusKey);
-    } else {
-      console.warn("Owl-Trackers extension not available");
-      return null;
+    const value = await getMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName);
+    if (value === null) {
+      console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
     }
+    return value;
   } catch (error) {
-    console.error("Failed to get tracker status:", error);
-    throw error;
+    console.error(`[OwlTrackers] Failed to get tracker "${trackerName}" value from token ${tokenId}:`, error.message);
+    return null;
   }
 }
 
 /**
- * Set tracked status in Owl-Trackers
- * @param {string} itemId - Item ID
- * @param {string} statusKey - Status key
- * @param {any} value - Value to set
+ * Set a tracker value on a token
+ * @param {string} tokenId - Token ID
+ * @param {string} trackerName - Tracker name
+ * @param {number} value - Value to set
  * @returns {Promise<void>}
  */
-export async function setTrackerStatus(itemId, statusKey, value) {
-  try {
-    if (typeof Ext !== 'undefined' && Ext.OwlTrackers) {
-      await Ext.OwlTrackers.setStatus(itemId, statusKey, value);
-    } else {
-      console.warn("Owl-Trackers extension not available");
-    }
-  } catch (error) {
-    console.error("Failed to set tracker status:", error);
-    throw error;
-  }
+export async function setValue(tokenId, trackerName, value) {
+  return await setMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName, value);
 }
 
 /**
- * Update tracker status (increment/decrement)
- * @param {string} itemId - Item ID
- * @param {string} statusKey - Status key
- * @param {number} delta - Amount to change (can be negative)
+ * Add/increment a tracker value (can be negative to subtract)
+ * @param {string} tokenId - Token ID
+ * @param {string} trackerName - Tracker name
+ * @param {number} delta - Amount to add (can be negative)
  * @returns {Promise<void>}
  */
-export async function updateTrackerStatus(itemId, statusKey, delta = 1) {
-  try {
-    const current = await getTrackerStatus(itemId, statusKey);
-    const newValue = (current || 0) + delta;
-    await setTrackerStatus(itemId, statusKey, newValue);
-  } catch (error) {
-    console.error("Failed to update tracker status:", error);
-    throw error;
+export async function addValue(tokenId, trackerName, delta = 1) {
+  const currentValue = await getValue(tokenId, trackerName);
+  if (currentValue === null) {
+    console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+    return;
   }
-}
-
-/**
- * Get all trackers for an item
- * @param {string} itemId - Item ID
- * @returns {Promise<Object>} All tracker statuses
- */
-export async function getAllTrackerStatuses(itemId) {
-  try {
-    if (typeof Ext !== 'undefined' && Ext.OwlTrackers) {
-      return await Ext.OwlTrackers.getAllStatus(itemId);
-    } else {
-      console.warn("Owl-Trackers extension not available");
-      return {};
-    }
-  } catch (error) {
-    console.error("Failed to get all tracker statuses:", error);
-    throw error;
-  }
+  await setValue(tokenId, trackerName, currentValue + delta);
 }
 
 export default {
-  getTrackerStatus,
-  setTrackerStatus,
-  updateTrackerStatus,
-  getAllTrackerStatuses
+  getValue,
+  setValue,
+  addValue
 };
