@@ -2,6 +2,7 @@
     "global": {
         "title": "Macro Hero",
         "gsheet": {
+
         },
         "variables": {
             "playerName": {
@@ -12,7 +13,7 @@
     "pages": [
         {
             "id": "main",
-            "label": "Général",
+            "label": "General",
             "variables": {
                 "token": {
                     "expression": "'57cefc5e-23b0-40f8-ad32-31a1c331c501'"
@@ -21,7 +22,7 @@
                     "expression": "100"
                 },
                 "speedBonus": {
-                    "expression": "GSheet.getValue('Xalithra Général', 'A1')"
+                    "expression": "GSheet.getValue('MacroHero', 'A1')"
                 },
                 "atkBonus": {
                     "expression": "floor({speedBonus} / 10)"
@@ -34,12 +35,15 @@
                 },
                 "bandagedValue": {
                     "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
+                },
+                "trackerStatus": {
+                    "expression": "OwlTrackers.getValue({token}, 'HP')"
                 }
             },
             "layout": [
                 {
                     "type": "title",
-                    "text": "Actions Générales"
+                    "text": "General Actions"
                 },
                 {
                     "type": "row",
@@ -61,7 +65,7 @@
                     "commands": [
                         "JustDices.roll('1d20 + {atkBonus}')"
                     ],
-                    "label": "Lancer Attaque"
+                    "label": "Roll Attack"
                 },
                 {
                     "type": "row",
@@ -77,6 +81,34 @@
                             "label": "bandagedValue"
                         }
                     ]
+                },
+                {
+                    "type": "title",
+                    "text": "Owl Trackers Integration"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "trackerStatus",
+                            "label": "Tracker HP"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "OwlTrackers.addValue({token}, 'HP', -5)"
+                    ],
+                    "label": "Take 5 Damage"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "OwlTrackers.addValue({token}, 'HP', 10)"
+                    ],
+                    "label": "Heal 10 HP"
                 }
             ]
         }
