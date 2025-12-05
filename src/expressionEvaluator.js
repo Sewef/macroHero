@@ -88,26 +88,54 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   
   const resolved = { ...previouslyResolved };
   
-  // Extract variables and sort them by dependencies
-  // Variables that don't reference others come first
+  // Topological sort: resolve variables in dependency order
   const varEntries = Object.entries(variablesConfig);
-  const sorted = varEntries.sort((a, b) => {
-    const [nameA, configA] = a;
-    const [nameB, configB] = b;
-    const exprA = configA.expression || '';
-    const exprB = configB.expression || '';
-    
-    // Check if A depends on B
-    const aDependsOnB = exprA.includes(`{${nameB}}`);
-    // Check if B depends on A
-    const bDependsOnA = exprB.includes(`{${nameA}}`);
-    
-    if (aDependsOnB && !bDependsOnA) return 1; // A depends on B, so B comes first
-    if (bDependsOnA && !aDependsOnB) return -1; // B depends on A, so A comes first
-    return 0; // No dependency relationship, keep original order
-  });
+  const dependencies = new Map();
   
-  for (const [varName, varConfig] of sorted) {
+  // Build dependency graph
+  for (const [varName, varConfig] of varEntries) {
+    const expr = varConfig.expression || '';
+    const deps = [];
+    
+    // Extract all variable references {varName}
+    const matches = expr.matchAll(/\{(\w+)\}/g);
+    for (const match of matches) {
+      const depVar = match[1];
+      if (depVar in variablesConfig && depVar !== varName) {
+        deps.push(depVar);
+      }
+    }
+    
+    dependencies.set(varName, deps);
+  }
+  
+  // Topological sort using Kahn's algorithm
+  const sorted = [];
+  const inProgress = new Set();
+  const completed = new Set();
+  
+  function visit(varName) {
+    if (completed.has(varName)) return;
+    if (inProgress.has(varName)) return; // Cycle detection
+    
+    inProgress.add(varName);
+    
+    const deps = dependencies.get(varName) || [];
+    for (const dep of deps) {
+      visit(dep);
+    }
+    
+    inProgress.delete(varName);
+    completed.add(varName);
+    sorted.push(varName);
+  }
+  
+  for (const [varName] of varEntries) {
+    visit(varName);
+  }
+  
+  for (const varName of sorted) {
+    const varConfig = variablesConfig[varName];
     if (!varConfig.expression) {
       continue;
     }

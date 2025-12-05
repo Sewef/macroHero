@@ -247,7 +247,7 @@ function renderValue(item, page) {
 
   // Create the value element structure
   const isLoading = resolvedValue === undefined || resolvedValue === null;
-  const displayValue = isLoading ? 'Loading...' : resolvedValue;
+  const displayValue = isLoading ? '' : resolvedValue;
   valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div>
                         <div class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</div>`;
 

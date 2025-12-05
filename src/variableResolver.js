@@ -75,7 +75,7 @@ async function resolveGoogleSheetsVariable(varName, varConfig) {
       return varConfig.default ?? 0;
     }
 
-    // Build the full range reference (e.g., "Xalithra Général!A1")
+    // Build the full range reference
     const fullRange = `'${sheetName}'!${range}`;
     console.log(`[GSHEET] Reading "${varName}" from ${fullRange}`);
 

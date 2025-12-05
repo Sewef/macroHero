@@ -33,7 +33,7 @@ class GSheetIntegration {
 
   /**
    * Get a single value from a Google Sheet
-   * @param {string} sheetName - Sheet name (e.g., "Xalithra Général")
+   * @param {string} sheetName - Sheet name
    * @param {string} range - Cell range (e.g., "A1")
    * @returns {Promise<any>} Cell value
    */
