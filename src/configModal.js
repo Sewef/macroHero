@@ -23,8 +23,12 @@ document.getElementById("cancelBtn").onclick = () => {
 // Save
 document.getElementById("saveBtn").onclick = () => {
   const text = document.getElementById("cfgArea").value;
-  const apiKey = document.getElementById("apiKeyInput").value.trim();
-  const sheetId = document.getElementById("sheetIdInput").value.trim();
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const sheetIdInput = document.getElementById("sheetIdInput");
+  
+  // Use new value if provided, otherwise keep original
+  const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
+  const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
   
   console.log("Save clicked, validating JSON...");
 
@@ -60,6 +64,22 @@ document.getElementById("saveBtn").onclick = () => {
   }
 };
 
+/**
+ * Mask sensitive string showing only first and last few characters
+ * @param {string} str - String to mask
+ * @param {number} visibleChars - Number of characters to show at start and end
+ * @returns {string} Masked string
+ */
+function maskSensitiveData(str, visibleChars = 4) {
+  if (!str || str.length <= visibleChars * 2) {
+    return str;
+  }
+  const start = str.substring(0, visibleChars);
+  const end = str.substring(str.length - visibleChars);
+  const masked = '•'.repeat(Math.min(12, str.length - visibleChars * 2));
+  return `${start}${masked}${end}`;
+}
+
 OBR.onReady(() => {
   console.log("=== Config Modal Ready ===");
   
@@ -67,8 +87,21 @@ OBR.onReady(() => {
   const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE) || "";
   const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE) || "";
   
-  document.getElementById("apiKeyInput").value = apiKey;
-  document.getElementById("sheetIdInput").value = sheetId;
+  // Store original values for saving later
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const sheetIdInput = document.getElementById("sheetIdInput");
+  
+  // Display masked values as placeholders, leave inputs empty
+  if (apiKey) {
+    apiKeyInput.placeholder = maskSensitiveData(apiKey);
+  }
+  if (sheetId) {
+    sheetIdInput.placeholder = maskSensitiveData(sheetId);
+  }
+  
+  // Store original values in data attributes
+  apiKeyInput.dataset.original = apiKey;
+  sheetIdInput.dataset.original = sheetId;
   
   // Load current config
   loadConfig().then(cfg => {
