@@ -4,6 +4,9 @@ import { initUI, updateConfig, setGlobalVariables } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
 
+const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
+const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
+
 document.getElementById("configBtn").onclick = openConfigModal;
 
 // Chargement initial
@@ -14,10 +17,15 @@ OBR.onReady(async () => {
     const cfg = await loadConfig();
     console.log("Config loaded:", cfg);
 
-    // Initialize expression system with Google Sheets if configured
-    if (cfg.global?.gsheet) {
-      console.log("[MAIN] Initializing expressions with Google Sheets...");
-      initializeExpressions(cfg.global.gsheet);
+    // Initialize expression system with Google Sheets from localStorage
+    const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE);
+    const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE);
+    
+    if (apiKey && sheetId) {
+      console.log("[MAIN] Initializing expressions with Google Sheets from localStorage...");
+      initializeExpressions({ apiKey, sheetId });
+    } else {
+      console.log("[MAIN] Google Sheets credentials not found in localStorage");
     }
 
     // Check if config is empty or has pages
@@ -59,6 +67,16 @@ OBR.onReady(async () => {
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
       console.log("✓ Config updated, refreshing UI");
+      
+      // Re-initialize Google Sheets from localStorage (modal saves credentials there)
+      const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE);
+      const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE);
+      
+      if (apiKey && sheetId) {
+        console.log("[MAIN] Re-initializing expressions with Google Sheets from localStorage...");
+        initializeExpressions({ apiKey, sheetId });
+      }
+      
       updateConfig(event.data);
     });
   } catch (error) {

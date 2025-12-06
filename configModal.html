@@ -14,7 +14,7 @@
     }
     textarea {
       width: 100%;
-      height: 260px;
+      height: 180px;
       background: #2a2a2a;
       color: #eee;
       border: 1px solid #444;
@@ -32,6 +32,19 @@
 <body>
   <h2>Configuration Macro Hero</h2>
 
+  <div style="margin-bottom: 15px;">
+    <h3 style="margin: 5px 0;">Google Sheets Settings</h3>
+    <div style="margin-bottom: 8px;">
+      <label for="apiKeyInput" style="display: block; margin-bottom: 3px;">API Key:</label>
+      <input type="text" id="apiKeyInput" style="width: 100%; padding: 6px; background: #2a2a2a; color: #eee; border: 1px solid #444; box-sizing: border-box;" placeholder="Enter Google API Key" />
+    </div>
+    <div style="margin-bottom: 8px;">
+      <label for="sheetIdInput" style="display: block; margin-bottom: 3px;">Sheet ID:</label>
+      <input type="text" id="sheetIdInput" style="width: 100%; padding: 6px; background: #2a2a2a; color: #eee; border: 1px solid #444; box-sizing: border-box;" placeholder="Enter Google Sheet ID" />
+    </div>
+  </div>
+
+  <h3 style="margin: 5px 0;">Configuration JSON</h3>
   <textarea id="cfgArea"></textarea>
 
   <div class="buttons">

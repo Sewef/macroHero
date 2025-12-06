@@ -11,7 +11,7 @@ import * as GoogleSheets from "./commands/integrations/GoogleSheets.js";
 import * as playerMetadata from "./commands/playerMetadata.js";
 import * as sceneMetadata from "./commands/sceneMetadata.js";
 import * as parser from "./parser.js";
-import { resolveVariables, getAffectedVariables } from "./expressionEvaluator.js";
+import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands } from "./expressionEvaluator.js";
 
 /**
  * Create a context object for command execution
@@ -299,13 +299,29 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
   }
   
   try {
-    console.log("[EXECUTOR] Button clicked, resolving variables for command execution...");
+    console.log("[EXECUTOR] Button clicked, analyzing command requirements...");
     
-    // First, resolve variables needed for the commands (without updating UI)
-    const freshResolved = await resolveVariables(page.variables, globalVariables, null);
-    page._resolved = freshResolved;
+    // Store old values to detect changes
+    const oldResolved = { ...page._resolved };
     
-    console.log("[EXECUTOR] Variables resolved for commands:", freshResolved);
+    // Find which variables are used in the commands
+    const usedVars = getVariablesUsedInCommands(commands);
+    console.log("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
+    
+    // Only resolve variables that are actually needed for command execution
+    // Pass the callback so UI updates for these variables too
+    if (usedVars.size > 0) {
+      console.log("[EXECUTOR] Resolving only required variables for command execution...");
+      const freshResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
+        const oldValue = oldResolved[varName];
+        if (oldValue !== value && onVariableResolved) {
+          onVariableResolved(varName, value);
+        }
+      }, usedVars);
+      page._resolved = { ...page._resolved, ...freshResolved };
+    }
+    
+    console.log("[EXECUTOR] Variables resolved for commands:", page._resolved);
     
     // Execute the commands
     const results = await executeCommands(commands, page);
@@ -318,7 +334,14 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     
     if (affectedVars.size > 0) {
       console.log("[EXECUTOR] Re-resolving affected variables...");
-      const updatedResolved = await resolveVariables(page.variables, globalVariables, onVariableResolved, affectedVars);
+      // Update old values before re-resolving
+      const currentResolved = { ...page._resolved };
+      const updatedResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
+        const oldValue = currentResolved[varName];
+        if (oldValue !== value && onVariableResolved) {
+          onVariableResolved(varName, value);
+        }
+      }, affectedVars);
       page._resolved = updatedResolved;
     } else {
       console.log("[EXECUTOR] No variables affected, skipping re-resolution");

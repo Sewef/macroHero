@@ -75,6 +75,25 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
 }
 
 /**
+ * Extract variable references from commands
+ * @param {Array<string>} commands - Commands to analyze
+ * @returns {Set<string>} Set of variable names used in commands
+ */
+export function getVariablesUsedInCommands(commands) {
+  const usedVars = new Set();
+  
+  for (const cmd of commands) {
+    // Extract {varName} references
+    const matches = cmd.matchAll(/\{(\w+)\}/g);
+    for (const match of matches) {
+      usedVars.add(match[1]);
+    }
+  }
+  
+  return usedVars;
+}
+
+/**
  * Analyze which variables could be affected by a set of commands
  * @param {Array<string>} commands - Commands that were executed
  * @param {Object} variablesConfig - Variables configuration object
@@ -156,6 +175,8 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     return previouslyResolved;
   }
   
+  // Start with previously resolved values (includes globals)
+  // But if we're filtering to specific vars, we'll re-resolve those and their dependencies
   const resolved = { ...previouslyResolved };
   
   // Topological sort: resolve variables in dependency order
@@ -182,13 +203,17 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   // If filtering, expand to include all dependencies
   let varsToResolve = onlyVars;
   if (onlyVars) {
+    console.log("[RESOLVE] Original filter set:", Array.from(onlyVars));
     varsToResolve = new Set(onlyVars);
     const toExpand = Array.from(onlyVars);
     while (toExpand.length > 0) {
       const varName = toExpand.pop();
+      console.log("[RESOLVE] Expanding dependencies for:", varName);
       const deps = dependencies.get(varName) || [];
+      console.log("[RESOLVE]   Dependencies:", deps);
       for (const dep of deps) {
         if (!varsToResolve.has(dep)) {
+          console.log("[RESOLVE]   Adding dependency:", dep);
           varsToResolve.add(dep);
           toExpand.push(dep);
         }
@@ -198,44 +223,66 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   }
   
   // Topological sort using Kahn's algorithm
+  // Only sort variables we need to resolve
   const sorted = [];
   const inProgress = new Set();
   const completed = new Set();
   
   function visit(varName) {
+    console.log(`[RESOLVE VISIT] Visiting ${varName}, completed=${completed.has(varName)}, inProgress=${inProgress.has(varName)}`);
     if (completed.has(varName)) return;
     if (inProgress.has(varName)) return; // Cycle detection
     
     inProgress.add(varName);
     
     const deps = dependencies.get(varName) || [];
+    console.log(`[RESOLVE VISIT] ${varName} has dependencies:`, deps);
     for (const dep of deps) {
+      console.log(`[RESOLVE VISIT] Recursing into dependency: ${dep}`);
       visit(dep);
     }
     
     inProgress.delete(varName);
     completed.add(varName);
     sorted.push(varName);
+    console.log(`[RESOLVE VISIT] Completed ${varName}, sorted is now:`, sorted);
   }
   
-  for (const [varName] of varEntries) {
-    visit(varName);
+  // Only visit variables we need to resolve (after expansion)
+  if (varsToResolve) {
+    console.log("[RESOLVE] Starting topological sort for filtered vars:", Array.from(varsToResolve));
+    for (const varName of varsToResolve) {
+      if (varName in variablesConfig) {
+        console.log(`[RESOLVE] Starting visit for: ${varName}`);
+        visit(varName);
+      } else {
+        console.warn(`[RESOLVE] Variable ${varName} not in variablesConfig, skipping`);
+      }
+    }
+  } else {
+    // No filter - resolve all
+    console.log("[RESOLVE] Starting topological sort for all vars");
+    for (const [varName] of varEntries) {
+      visit(varName);
+    }
   }
+  
+  console.log("[RESOLVE] Topologically sorted order:", sorted);
   
   for (const varName of sorted) {
-    // Skip if we're filtering and this var is not in the filter set (after expansion)
-    if (varsToResolve && !varsToResolve.has(varName)) {
-      continue;
-    }
-    
+    // No need to filter here anymore - sorted only contains what we need
     const varConfig = variablesConfig[varName];
-    if (!varConfig.expression) {
+    if (!varConfig?.expression) {
       continue;
     }
     
+    // When filtering, always re-resolve the vars in our filter set (even if they were in previouslyResolved)
+    // This ensures we get fresh values for affected variables and their dependencies
     try {
+      console.log(`[RESOLVE] Resolving ${varName}...`);
       const value = await evaluateExpression(varConfig.expression, resolved);
       resolved[varName] = value;
+      console.log(`[RESOLVE] ${varName} = ${value}`);
       
       if (onVariableResolved) {
         onVariableResolved(varName, value);
@@ -257,4 +304,5 @@ export default {
   evaluateExpression,
   resolveVariables,
   getAffectedVariables,
+  getVariablesUsedInCommands,
 };
