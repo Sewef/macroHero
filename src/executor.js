@@ -73,9 +73,33 @@ function substituteVariables(expression, scope = {}) {
   
   let result = expression;
 
-  // Extract all variable references
-  const varRefs = parser.extractVariableReferences(expression);
-  console.log(`[SUBST] Found variable references:`, varRefs);
+  // First, handle {varName} syntax (nested variable references)
+  const curlyVarPattern = /\{(\w+)\}/g;
+  result = result.replace(curlyVarPattern, (match, varName) => {
+    if (varName in scope) {
+      const value = scope[varName];
+      console.log(`[SUBST]   {${varName}} = ${value}`);
+      
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        return String(value);
+      } else if (value === null) {
+        return 'null';
+      } else if (value === undefined) {
+        return 'undefined';
+      } else if (typeof value === 'string') {
+        return value;
+      } else {
+        return JSON.stringify(value);
+      }
+    } else {
+      console.warn(`[SUBST]   ✗ {${varName}} not found in scope`);
+      return match; // Leave unchanged
+    }
+  });
+
+  // Then, handle plain variable names (for backward compatibility)
+  const varRefs = parser.extractVariableReferences(result);
+  console.log(`[SUBST] Found plain variable references:`, varRefs);
   
   // Sort by length descending to replace longer names first (avoid partial replacements)
   varRefs.sort((a, b) => b.length - a.length);
@@ -143,28 +167,18 @@ function parseCommandString(command, page) {
       const value = evaluateExpression(substituted, page);
       console.log(`[PARSE] After evaluation: "${value}"`);
       
-      // Convert value to string representation for insertion
-      let valueStr;
+      // Insert value directly without adding quotes - let the context determine formatting
+      // If the value needs to be a string, the original command should have quotes around {var}
       if (typeof value === 'string') {
-        // If it's already a string literal with quotes, use as-is
-        // Otherwise, wrap in quotes
-        if ((value.startsWith("'") && value.endsWith("'")) || 
-            (value.startsWith('"') && value.endsWith('"'))) {
-          valueStr = value;
-        } else {
-          valueStr = `'${value}'`;
-        }
+        result += value;
       } else if (typeof value === 'number' || typeof value === 'boolean') {
-        // Numbers and booleans can be inserted directly
-        valueStr = String(value);
+        result += String(value);
       } else if (value === null || value === undefined) {
-        valueStr = String(value);
+        result += String(value);
       } else {
         // For objects/arrays, use JSON representation
-        valueStr = JSON.stringify(value);
+        result += JSON.stringify(value);
       }
-      
-      result += valueStr;
     }
   }
   

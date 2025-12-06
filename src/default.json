@@ -239,8 +239,14 @@
                 "spd": {
                     "expression": "{stats[4]}"
                 },
+                "injuries": {
+                    "expression": "OwlTrackers.getValue({token}, 'Injuries')"
+                },
                 "pushItToTheLimit": {
                     "expression": "false"
+                },
+                "weaponDB": {
+                    "expression": "GoogleSheets.getValue('Xalithra Général', 'G35')"
                 }
             },
             "layout": [
@@ -288,13 +294,18 @@
                             "type":"checkbox",
                             "var":"pushItToTheLimit",
                             "label":"Push it to the Limit"
+                        },
+                        {
+                            "type":"value",
+                            "var":"injuries",
+                            "label":"Injuries"
                         }
                     ]
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d20 + {atk}')"
+                        "{pushItToTheLimit} ? JustDices.roll('db{6+{weaponDB}/3+{injuries}}') : JustDices.roll('1d20')"
                     ],
                     "label": "Fléau"
                 }

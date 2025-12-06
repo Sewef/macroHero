@@ -324,6 +324,18 @@ function renderCheckbox(item, page) {
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.className = "mh-checkbox-field";
+  
+  // Get initial value from resolved variables
+  const currentValue = page._resolved?.[item.var];
+  checkbox.checked = Boolean(currentValue);
+  
+  // Update variable when checkbox changes
+  checkbox.onchange = () => {
+    const newValue = checkbox.checked;
+    variable.expression = String(newValue);
+    page._resolved[item.var] = newValue;
+    console.log(`[Checkbox] Updated ${item.var} to ${newValue}`);
+  };
 
   const text = document.createElement("span");
   text.textContent = item.label ?? item.var;
