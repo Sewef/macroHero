@@ -126,60 +126,12 @@ function evaluateExpression(expression, page) {
  * @returns {string} Expression with variables replaced by values
  */
 function substituteVariables(expression, scope = {}, inStringLiteral = false) {
-  console.log(`[EXECUTOR] Substituting variables in: "${expression}" (inStringLiteral: ${inStringLiteral})`);
-  
   let result = expression;
   
-  // Check if this expression itself should be evaluated (contains operators or nested braces)
+  // Check if this expression should be evaluated (in string literal with operators/braces)
   const shouldEvaluate = inStringLiteral && /[+\-*\/(){}]/.test(expression);
 
-  // STEP 1: Process {{...}} patterns (shouldn't happen since parser strips one layer)
-  while (result.includes('{{')) {
-    const startPos = result.indexOf('{{');
-    if (startPos === -1) break;
-    
-    let depth = 1;
-    let i = startPos + 2;
-    let endPos = -1;
-    
-    while (i < result.length - 1) {
-      if (result[i] === '{' && result[i + 1] === '{') {
-        depth++;
-        i += 2;
-      } else if (result[i] === '}' && result[i + 1] === '}') {
-        depth--;
-        if (depth === 0) {
-          endPos = i + 2;
-          break;
-        }
-        i += 2;
-      } else {
-        i++;
-      }
-    }
-    
-    if (endPos === -1) {
-      console.error('[EXECUTOR] Unmatched {{ in expression');
-      break;
-    }
-    
-    const innerExpr = result.substring(startPos + 2, endPos - 2);
-    console.log(`[EXECUTOR] Processing {{${innerExpr}}}`);
-    
-    let substituted = substituteVariables(innerExpr, scope, false);
-    console.log(`[EXECUTOR] After substitution: ${substituted}`);
-    
-    try {
-      const evaluated = Function('"use strict"; return (' + substituted + ')')();
-      console.log(`[EXECUTOR] Evaluated to: ${evaluated}`);
-      result = result.substring(0, startPos) + String(evaluated) + result.substring(endPos);
-    } catch (err) {
-      console.error(`[EXECUTOR] Failed to evaluate {{${innerExpr}}}: ${err.message}`);
-      break;
-    }
-  }
-
-  // STEP 2: Process {expression} - substitute vars then evaluate if complex
+  // Process {expression} - substitute vars then evaluate if complex
   result = result.replace(/\{([^{}]+)\}/g, (match, inner) => {
     if (/^\w+$/.test(inner)) {
       // Simple {var}
@@ -194,7 +146,7 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
     
     // Complex {expr} - recursively substitute and evaluate
-    let subst = substituteVariables(inner, scope, false);
+    const subst = substituteVariables(inner, scope, false);
     try {
       const evaluated = Function('"use strict"; return (' + subst + ')')();
       return String(evaluated);
@@ -204,8 +156,7 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
   });
 
-
-  // STEP 3: Plain variables
+  // Plain variables
   const varRefs = parser.extractVariableReferences(result);
   varRefs.sort((a, b) => b.length - a.length);
 
@@ -228,19 +179,16 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
   }
   
-  // STEP 4: If we should evaluate (expression in string literal), do it now
+  // Evaluate if needed (expression in string literal with operators)
   if (shouldEvaluate) {
-    console.log(`[EXECUTOR] Evaluating expression in string literal: "${result}"`);
     try {
       const evaluated = Function('"use strict"; return (' + result + ')')();
       result = String(evaluated);
-      console.log(`[EXECUTOR] Evaluated to: ${result}`);
     } catch (err) {
-      console.log(`[EXECUTOR] Could not evaluate, keeping as-is: ${err.message}`);
+      // Keep as-is if evaluation fails
     }
   }
 
-  console.log(`[EXECUTOR] Final result: "${result}"`);
   return result;
 }
 
@@ -254,8 +202,6 @@ function parseCommandString(command, page) {
   const parsed = parser.parseCommand(command);
   const scope = page?._resolved || {};
   
-  console.log('[EXECUTOR] parseCommandString - parsed segments:', parsed.segments.length);
-  
   let result = "";
   let accumulatedLiteral = "";
   
@@ -264,20 +210,16 @@ function parseCommandString(command, page) {
       accumulatedLiteral += segment.value;
       result += segment.value;
     } else if (segment.type === "expression") {
-      console.log('[EXECUTOR] Processing expression segment:', segment.value);
-      // Check if we're inside a string literal by counting unmatched quotes
-      // Count single quotes in the accumulated literal before this expression
+      // Check if we're inside a string literal by counting quotes
       const singleQuotes = (accumulatedLiteral.match(/'/g) || []).length;
       const inStringLiteral = singleQuotes % 2 === 1;
       
       const substituted = substituteVariables(segment.value, scope, inStringLiteral);
-      console.log('[EXECUTOR] Segment substituted to:', substituted);
       result += substituted;
-      accumulatedLiteral += substituted; // Add to accumulated for next segment's context check
+      accumulatedLiteral += substituted;
     }
   }
   
-  console.log('[EXECUTOR] Final parsed command:', result);
   return result;
 }
 
