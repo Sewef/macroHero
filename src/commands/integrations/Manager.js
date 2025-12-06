@@ -7,6 +7,11 @@ import GSheetIntegration from "./GSheet.js";
 import LocalIntegration from "./Local.js";
 import * as ConditionsMarkers from "./ConditionsMarkers.js";
 import * as OwlTrackers from "./OwlTrackers.js";
+import * as playerMetadata from "../playerMetadata.js";
+import * as sceneMetadata from "../sceneMetadata.js";
+import * as tokenMetadata from "../tokenMetadata.js";
+import * as tokenAttachments from "../tokenAttachments.js";
+import * as GoogleSheets from "./GoogleSheets.js";
 
 class IntegrationsManager {
   constructor() {
@@ -29,16 +34,43 @@ class IntegrationsManager {
   }
 
   /**
+   * Wrap an async function to ensure it's properly awaitable
+   * @param {Function} fn - The function to wrap
+   * @returns {Function} Wrapped function that always returns a promise
+   */
+  wrapAsync(fn) {
+    return async (...args) => {
+      try {
+        let result = fn(...args);
+        result = result instanceof Promise ? await result : result;
+        
+        // Fix floating-point precision issues for numeric results
+        if (typeof result === 'number' && !Number.isInteger(result)) {
+          // Round to 10 decimal places to eliminate floating-point errors
+          // while preserving intentional decimal values
+          result = Math.round(result * 1e10) / 1e10;
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('[IntegrationsManager] Error in async function:', error);
+        return null;
+      }
+    };
+  }
+
+  /**
    * Get all integrations as context for expression evaluation
+   * All async methods are wrapped to ensure proper promise handling
    * @returns {Object} Context object with all integrations
    */
   getContext() {
     const self = this;
     return {
       // Google Sheets integration
-      GSheet: {
-        getValue: (sheetName, range) => self.gsheet?.getValue(sheetName, range) ?? Promise.resolve(null),
-        getRange: (sheetName, range) => self.gsheet?.getRange(sheetName, range) ?? Promise.resolve(null),
+      GoogleSheets: {
+        getValue: this.wrapAsync((sheetName, range) => self.gsheet?.getValue(sheetName, range) ?? Promise.resolve(null)),
+        getRange: this.wrapAsync((sheetName, range) => self.gsheet?.getRange(sheetName, range) ?? Promise.resolve(null)),
       },
       // Local storage integration
       Local: {
@@ -47,17 +79,22 @@ class IntegrationsManager {
         clear: () => self.local.clear(),
         keys: () => self.local.keys(),
       },
-      // Conditions Markers integration
+      // Conditions Markers integration (all async)
       ConditionsMarkers: {
-        getValue: (tokenId, conditionName) => ConditionsMarkers.getValue(tokenId, conditionName),
-        isCondition: (tokenId, conditionName) => ConditionsMarkers.isCondition(tokenId, conditionName),
+        getValue: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.getValue(tokenId, conditionName)),
+        isCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.isCondition(tokenId, conditionName)),
       },
-      // Owl Trackers integration
+      // Owl Trackers integration (all async)
       OwlTrackers: {
-        getValue: (tokenId, trackerName) => OwlTrackers.getValue(tokenId, trackerName),
-        setValue: (tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value),
-        addValue: (tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta),
+        getValue: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getValue(tokenId, trackerName)),
+        setValue: this.wrapAsync((tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value)),
+        addValue: this.wrapAsync((tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta)),
       },
+      // Metadata modules
+      playerMetadata,
+      sceneMetadata,
+      tokenMetadata,
+      tokenAttachments,
       // Math functions - exposed both under Math object and directly
       Math: {
         floor: Math.floor,

@@ -340,28 +340,63 @@ function renderDivider() {
 // ============================================
 
 export function renderConfigUI() {
-  if (!config) return;
+  console.log("[UI.renderConfigUI] Starting render...");
+  console.log("[UI.renderConfigUI] Current config:", config);
+  console.log("[UI.renderConfigUI] Current page ID:", currentPage);
+  
+  if (!config) {
+    console.warn("[UI.renderConfigUI] No config available");
+    return;
+  }
+  
   renderPageButtons();
-  selectFirstPage();
+  
+  // If we have a current page, re-render it; otherwise select first
+  if (currentPage) {
+    const page = config.pages?.find(p => p.id === currentPage);
+    if (page) {
+      console.log("[UI.renderConfigUI] Re-rendering current page:", currentPage);
+      renderPageContent(page);
+    } else {
+      console.log("[UI.renderConfigUI] Current page not found, selecting first");
+      selectFirstPage();
+    }
+  } else {
+    console.log("[UI.renderConfigUI] No current page, selecting first");
+    selectFirstPage();
+  }
+  
+  console.log("[UI.renderConfigUI] Render complete");
 }
 
 export async function updateConfig(newConfig) {
+  console.log("[UI.updateConfig] Received new config:", newConfig);
+  console.log("[UI.updateConfig] Previous config pages:", config?.pages?.length);
+  
   config = newConfig;
+  
+  console.log("[UI.updateConfig] New config pages:", config?.pages?.length);
   
   // Re-resolve variables when config updates
   try {
     // Resolve global variables
+    console.log("[UI.updateConfig] Re-resolving global variables...");
     const globalVars = await resolveVariables(config.global?.variables);
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
+    console.log("[UI.updateConfig] Global variables resolved:", globalVars);
 
     // Resolve variables for each page
+    console.log("[UI.updateConfig] Re-resolving page variables...");
     for (const page of config.pages || []) {
       page._resolved = await resolveVariables(page.variables, globalVars);
+      console.log(`[UI.updateConfig] Page ${page.id} variables resolved:`, page._resolved);
     }
   } catch (error) {
-    console.error("Error re-resolving variables:", error);
+    console.error("[UI.updateConfig] Error re-resolving variables:", error);
   }
 
+  console.log("[UI.updateConfig] Calling renderConfigUI()...");
   renderConfigUI();
+  console.log("[UI.updateConfig] UI render complete");
 }

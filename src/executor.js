@@ -5,13 +5,9 @@
 
 import * as math from "mathjs";
 import * as JustDices from "./commands/integrations/JustDices.js";
-import * as OwlTrackers from "./commands/integrations/OwlTrackers.js";
-import * as ConditionsMarkers from "./commands/integrations/ConditionsMarkers.js";
-import * as GoogleSheets from "./commands/integrations/GoogleSheets.js";
-import * as playerMetadata from "./commands/playerMetadata.js";
-import * as sceneMetadata from "./commands/sceneMetadata.js";
 import * as parser from "./parser.js";
 import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands } from "./expressionEvaluator.js";
+import { getIntegrationsContext } from "./commands/integrations/Manager.js";
 
 /**
  * Create a context object for command execution
@@ -24,19 +20,23 @@ function createExecutionContext(page) {
     page = { variables: {} };
   }
 
+  // Get integrations from Manager (includes OwlTrackers, ConditionsMarkers, GoogleSheets, etc.)
+  const integrations = getIntegrationsContext();
+
   return {
-    // Integrations
+    // Integrations from Manager
+    ...integrations,
+    
+    // JustDices (special handling for roll functions)
     JustDices: {
       roll: JustDices.roll,
       rollDice: JustDices.rollDice,
       rollDiceTotal: JustDices.rollDiceTotal,
       rollDiceSilent: JustDices.rollDiceSilent,
     },
-    OwlTrackers,
-    ConditionsMarkers,
-    GoogleSheets,
-    playerMetadata,
-    sceneMetadata,
+    
+    // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)
+    ...math,
     
     // Helper to get variable values
     getVar: (varName) => {
@@ -231,7 +231,7 @@ export async function executeCommand(command, page) {
 
     // Parse and substitute variables in the command
     console.log("[EXEC] Parsing command string...");
-    const parsedCommand = parseCommandString(command, page);
+    let parsedCommand = parseCommandString(command, page);
     console.log("[EXEC] Parsed command:", parsedCommand);
     
     // Extract variable references to check what's needed
@@ -240,6 +240,76 @@ export async function executeCommand(command, page) {
     
     // Create execution context with resolved variables
     const context = createExecutionContext(page);
+    
+    // Transform the command to properly await async function calls
+    // This is critical for expressions like: OwlTrackers.setValue(token, 'HP', OwlTrackers.getValue(token, 'HP')*1.1)
+    // We need to ensure OwlTrackers.getValue is awaited before the multiplication
+    
+    // Dynamically discover async methods from the context
+    const asyncMethods = [];
+    for (const [objectName, objectValue] of Object.entries(context)) {
+      if (typeof objectValue === 'object' && objectValue !== null) {
+        for (const [methodName, methodValue] of Object.entries(objectValue)) {
+          if (typeof methodValue === 'function') {
+            // Check if it's an async function or returns a promise
+            const methodStr = methodValue.toString();
+            if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
+              asyncMethods.push(`${objectName}.${methodName}`);
+            }
+          }
+        }
+      }
+    }
+    
+    console.log('[EXEC] Detected async methods:', asyncMethods);
+    
+    // For each async method, find all calls and wrap them with (await ...)
+    for (const method of asyncMethods) {
+      const escapedMethod = method.replace(/\./g, '\\.');
+      const regex = new RegExp(`${escapedMethod}\\s*\\(`, 'g');
+      
+      let match;
+      const matches = [];
+      
+      // Find all occurrences
+      while ((match = regex.exec(parsedCommand)) !== null) {
+        matches.push({ index: match.index, method: method });
+      }
+      
+      // Process matches in reverse order to maintain indices
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const { index, method: methodName } = matches[i];
+        
+        // Find the matching closing parenthesis
+        let parenCount = 0;
+        let startIdx = index + methodName.length;
+        let endIdx = startIdx;
+        
+        for (let j = startIdx; j < parsedCommand.length; j++) {
+          if (parsedCommand[j] === '(') parenCount++;
+          if (parsedCommand[j] === ')') {
+            parenCount--;
+            if (parenCount === 0) {
+              endIdx = j + 1;
+              break;
+            }
+          }
+        }
+        
+        // Extract the full function call
+        const fullCall = parsedCommand.substring(index, endIdx);
+        
+        // Check if it's already wrapped with await
+        const beforeCall = parsedCommand.substring(Math.max(0, index - 10), index).trim();
+        if (!beforeCall.endsWith('await')) {
+          // Wrap with (await ...)
+          const wrappedCall = `(await ${fullCall})`;
+          parsedCommand = parsedCommand.substring(0, index) + wrappedCall + parsedCommand.substring(endIdx);
+        }
+      }
+    }
+    
+    console.log("[EXEC] Transformed command:", parsedCommand);
     
     // Build and execute the function
     // We use a function to safely evaluate the command with the context

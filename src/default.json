@@ -19,7 +19,7 @@
                     "expression": "100"
                 },
                 "speedBonus": {
-                    "expression": "GSheet.getValue('MacroHero', 'A1')"
+                    "expression": "GoogleSheets.getValue('MacroHero', 'A1')"
                 },
                 "atkBonus": {
                     "expression": "floor({speedBonus} / 10)"
@@ -60,7 +60,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d20 + {1+1}')"
+                        "JustDices.roll('1d20 + {atkBonus}')"
                     ],
                     "label": "Roll Attack"
                 },
@@ -96,9 +96,9 @@
                 {
                     "type": "button",
                     "commands": [
-                        "OwlTrackers.addValue({token}, 'HP', -5)"
+                        "floor(OwlTrackers.setValue({token}, 'HP', OwlTrackers.getValue({token}, 'HP')*1.5), 0)"
                     ],
-                    "label": "Take 5 Damage"
+                    "label": "Heal 1 tick"
                 },
                 {
                     "type": "button",

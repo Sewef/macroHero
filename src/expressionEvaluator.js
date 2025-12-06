@@ -1,7 +1,7 @@
 /**
  * Expression Evaluator
  * Evaluates variable expressions with support for:
- * - GSheet.getValue(sheet, range)
+ * - GoogleSheets.getValue(sheet, range)
  * - Local.value(key, default)
  * - Mathematical expressions
  * - Variable substitution with {varName} syntax
@@ -11,7 +11,7 @@ import * as expressionHelpers from "./expressionHelpers.js";
 
 /**
  * Evaluate a variable expression
- * @param {string} expression - Expression to evaluate (e.g., "GSheet.getValue('Sheet', 'A1')" or "floor({speedBonus} / 10)")
+ * @param {string} expression - Expression to evaluate (e.g., "GoogleSheets.getValue('Sheet', 'A1')" or "floor({speedBonus} / 10)")
  * @param {Object} resolvedVars - Already resolved variables for substitution
  * @returns {Promise<any>} Evaluated result
  */
@@ -52,16 +52,84 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     // Step 2: Get execution context from integrations manager
     const contextObj = expressionHelpers.getExpressionContext();
     
-    // Step 3: Evaluate the expression
-    // Pass context as a single object to avoid parameter name issues
+    // Step 3: Transform the expression to properly await async function calls
+    // Replace patterns like OwlTrackers.getValue(...) with (await OwlTrackers.getValue(...))
+    // This ensures the promise is awaited before any arithmetic operations
+    let transformed = processed;
+    
+    // Dynamically discover async methods from the context
+    const asyncMethods = [];
+    for (const [objectName, objectValue] of Object.entries(contextObj)) {
+      if (typeof objectValue === 'object' && objectValue !== null) {
+        for (const [methodName, methodValue] of Object.entries(objectValue)) {
+          if (typeof methodValue === 'function') {
+            // Check if it's an async function or returns a promise
+            const methodStr = methodValue.toString();
+            if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
+              asyncMethods.push(`${objectName}.${methodName}`);
+            }
+          }
+        }
+      }
+    }
+    
+    console.log('[EVAL] Detected async methods:', asyncMethods);
+    
+    // For each async method, find all calls and wrap them with (await ...)
+    for (const method of asyncMethods) {
+      const escapedMethod = method.replace(/\./g, '\\.');
+      // Match method calls with their arguments: Method.name(...)
+      // We need to match balanced parentheses
+      const regex = new RegExp(`${escapedMethod}\\s*\\(`, 'g');
+      
+      let match;
+      let offset = 0;
+      const matches = [];
+      
+      // Find all occurrences
+      while ((match = regex.exec(transformed)) !== null) {
+        matches.push({ index: match.index, method: method });
+      }
+      
+      // Process matches in reverse order to maintain indices
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const { index, method: methodName } = matches[i];
+        
+        // Find the matching closing parenthesis
+        let parenCount = 0;
+        let startIdx = index + methodName.length;
+        let endIdx = startIdx;
+        
+        for (let j = startIdx; j < transformed.length; j++) {
+          if (transformed[j] === '(') parenCount++;
+          if (transformed[j] === ')') {
+            parenCount--;
+            if (parenCount === 0) {
+              endIdx = j + 1;
+              break;
+            }
+          }
+        }
+        
+        // Extract the full function call
+        const fullCall = transformed.substring(index, endIdx);
+        
+        // Check if it's already wrapped with await
+        const beforeCall = transformed.substring(Math.max(0, index - 10), index).trim();
+        if (!beforeCall.endsWith('await')) {
+          // Wrap with (await ...)
+          const wrappedCall = `(await ${fullCall})`;
+          transformed = transformed.substring(0, index) + wrappedCall + transformed.substring(endIdx);
+        }
+      }
+    }
+    
+    // Step 4: Evaluate the expression with proper async handling
     const funcCode = `return (async () => { 
-      const { GSheet, Local, ConditionsMarkers, OwlTrackers, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
+      const { GoogleSheets, Local, ConditionsMarkers, OwlTrackers, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
       const Math = MathObj || { floor, ceil, round, abs, min, max };
       
-      const result = (${processed});
-      if (result instanceof Promise) {
-        return await result;
-      }
+      const result = ${transformed};
       return result;
     })()`;
     
