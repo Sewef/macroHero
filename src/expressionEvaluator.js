@@ -22,17 +22,23 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     
     // Log available variables for debugging
     if (expression.includes('{')) {
-      const missingVars = (expression.match(/\{(\w+)\}/g) || []).map(v => v.slice(1, -1)).filter(v => !(v in resolvedVars));
+      const missingVars = (expression.match(/\{(\w+)(?:\[.*?\])?\}/g) || []).map(v => v.slice(1, -1).split('[')[0]).filter(v => !(v in resolvedVars));
       if (missingVars.length > 0) {
         console.warn(`[EVAL] Missing variables for "${expression}":`, missingVars, "Available:", Object.keys(resolvedVars));
       }
     }
     
-    for (const [varName, varValue] of Object.entries(resolvedVars)) {
-      const pattern = new RegExp(`\\{${varName}\\}`, 'g');
+    // Match both {varName} and {varName[index]} or {varName[index][index2]} etc.
+    const varPattern = /\{(\w+)((?:\[[^\]]+\])*)\}/g;
+    processed = processed.replace(varPattern, (match, varName, accessors) => {
+      if (!(varName in resolvedVars)) {
+        return match; // Leave unchanged if variable not found
+      }
+      
+      const varValue = resolvedVars[varName];
       
       // Convert value to appropriate type for substitution
-      let substitutedValue = varValue;
+      let substitutedValue;
       if (varValue === null) {
         substitutedValue = 'null';
       } else if (varValue === undefined) {
@@ -45,9 +51,16 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
           // Keep as string literal
           substitutedValue = `'${varValue}'`;
         }
+      } else if (Array.isArray(varValue) || typeof varValue === 'object') {
+        // For arrays and objects, use JSON representation
+        substitutedValue = JSON.stringify(varValue);
+      } else {
+        substitutedValue = varValue;
       }
-      processed = processed.replace(pattern, substitutedValue);
-    }
+      
+      // Append any accessors like [0] or [0][1]
+      return substitutedValue + accessors;
+    });
     
     // Step 2: Get execution context from integrations manager
     const contextObj = expressionHelpers.getExpressionContext();
