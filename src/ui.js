@@ -370,6 +370,13 @@ function renderCounter(item, page) {
   input.className = "mh-counter-input";
   input.value = numValue;
 
+  // Function to update value
+  const updateValue = async (newValue) => {
+    input.value = newValue;
+    variable.expression = String(newValue);
+    page._resolved[item.var] = newValue;
+  };
+
   // Decrement button
   const decrementBtn = document.createElement("button");
   decrementBtn.className = "mh-counter-btn";
@@ -377,15 +384,12 @@ function renderCounter(item, page) {
   decrementBtn.onclick = () => {
     const currentVal = Number(input.value) || 0;
     const newValue = currentVal - (item.step ?? 1);
-    input.value = newValue;
-    variable.expression = String(newValue);
-    page._resolved[item.var] = newValue;
+    updateValue(newValue);
   };
 
   input.onchange = () => {
     const newValue = Number(input.value) || 0;
-    variable.expression = String(newValue);
-    page._resolved[item.var] = newValue;
+    updateValue(newValue);
   };
 
   // Increment button
@@ -395,9 +399,7 @@ function renderCounter(item, page) {
   incrementBtn.onclick = () => {
     const currentVal = Number(input.value) || 0;
     const newValue = currentVal + (item.step ?? 1);
-    input.value = newValue;
-    variable.expression = String(newValue);
-    page._resolved[item.var] = newValue;
+    updateValue(newValue);
   };
 
   controls.appendChild(decrementBtn);

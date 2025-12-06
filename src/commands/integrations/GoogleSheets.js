@@ -94,7 +94,9 @@ export async function writeSheetRange(client, range, values) {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to write sheet: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Failed to write sheet range:", response.status, errorText);
+      throw new Error(`Failed to write sheet: ${response.status} - ${errorText}`);
     }
 
     return await response.json();

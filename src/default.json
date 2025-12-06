@@ -214,6 +214,91 @@
                     ]
                 }
             ]
+        },
+        {
+            "label": "Xalithra",
+            "variables": {
+                "token": {
+                    "expression": "'57cefc5e-23b0-40f8-ad32-31a1c331c501'"
+                },
+                "stats": {
+                    "expression": "GoogleSheets.getRange('Xalithra Général', 'T4:T8')"
+                },
+                "atk": {
+                    "expression": "{stats[0]}"
+                },
+                "def": {
+                    "expression": "{stats[1]}"
+                },
+                "spatk": {
+                    "expression": "{stats[2]}"
+                },
+                "spdef": {
+                    "expression": "{stats[3]}"
+                },
+                "spd": {
+                    "expression": "{stats[4]}"
+                },
+                "pushItToTheLimit": {
+                    "expression": "false"
+                }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Xalithra Stats"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "atk",
+                            "label": "ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "def",
+                            "label": "DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spatk",
+                            "label": "SP.ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdef",
+                            "label": "SP.DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spd",
+                            "label": "SPD"
+                        }
+                    ]
+                },
+                {
+                    "type":"divider"
+                },
+                {
+                    "type":"row",
+                    "children":[
+                        {
+                            "type":"checkbox",
+                            "var":"pushItToTheLimit",
+                            "label":"Push it to the Limit"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('1d20 + {atk}')"
+                    ],
+                    "label": "Fléau"
+                }
+            ]
         }
     ]
 }

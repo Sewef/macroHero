@@ -3,7 +3,6 @@
  * Centralized management of all integrations (GSheets, Local, etc.)
  */
 
-import GSheetIntegration from "./GSheet.js";
 import LocalIntegration from "./Local.js";
 import * as ConditionsMarkers from "./ConditionsMarkers.js";
 import * as OwlTrackers from "./OwlTrackers.js";
@@ -16,7 +15,7 @@ import * as GoogleSheets from "./GoogleSheets.js";
 
 class IntegrationsManager {
   constructor() {
-    this.gsheet = null;
+    this.googleSheetsClient = null;
     this.local = new LocalIntegration();
     console.log("[IntegrationsManager] ✓ Initialized");
   }
@@ -31,7 +30,11 @@ class IntegrationsManager {
       return;
     }
     
-    this.gsheet = new GSheetIntegration(config.apiKey, config.sheetId);
+    this.googleSheetsClient = GoogleSheets.initializeGoogleSheets({
+      apiKey: config.apiKey,
+      sheetId: config.sheetId
+    });
+    console.log("[IntegrationsManager] ✓ Google Sheets client initialized");
   }
 
   /**
@@ -68,10 +71,19 @@ class IntegrationsManager {
   getContext() {
     const self = this;
     return {
-      // Google Sheets integration
+      // Google Sheets integration (read-only - API keys don't support writes)
       GoogleSheets: {
-        getValue: this.wrapAsync((sheetName, range) => self.gsheet?.getValue(sheetName, range) ?? Promise.resolve(null)),
-        getRange: this.wrapAsync((sheetName, range) => self.gsheet?.getRange(sheetName, range) ?? Promise.resolve(null)),
+        getValue: this.wrapAsync(async (sheetName, range) => {
+          if (!self.googleSheetsClient) return null;
+          const fullRange = `'${sheetName}'!${range}`;
+          const rows = await GoogleSheets.readSheetRange(self.googleSheetsClient, fullRange);
+          return rows?.[0]?.[0] ?? null;
+        }),
+        getRange: this.wrapAsync(async (sheetName, range) => {
+          if (!self.googleSheetsClient) return null;
+          const fullRange = `'${sheetName}'!${range}`;
+          return await GoogleSheets.readSheetRange(self.googleSheetsClient, fullRange);
+        }),
       },
       // Local storage integration
       Local: {
