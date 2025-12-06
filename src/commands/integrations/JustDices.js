@@ -47,15 +47,79 @@ async function sendToLog(sender, text) {
 }
 
 /**
- * Roll dice using JustDices API
+ * Roll dice using JustDices API and return the total
  * @param {string} expression - Dice formula (e.g., "1d20+5", "3d6")
  * @param {boolean|Object} hiddenOrOptions - Whether roll is hidden, or options object
  * @param {boolean} hiddenOrOptions.hidden - Whether roll is hidden
  * @param {boolean} hiddenOrOptions.showInLogs - Whether to show in JustDices logs (default: true)
  * @param {number} hiddenOrOptions.timeoutMs - Response timeout in milliseconds (default: 5000)
- * @returns {Promise<Object>} Roll result with expression, rolls, total, data
+ * @returns {Promise<number>} Roll total
  */
 export async function roll(expression, hiddenOrOptions = {}) {
+  // Normalize options
+  let options = {};
+  if (typeof hiddenOrOptions === "boolean") {
+    options.hidden = hiddenOrOptions;
+  } else if (typeof hiddenOrOptions === "object") {
+    options = hiddenOrOptions;
+  }
+
+  const { hidden = false, showInLogs = true, timeoutMs = 5000 } = options;
+  const callId = generateCallId();
+  const requesterId = await getSelfId();
+
+  // Adjust expression for hidden rolls
+  let finalExpression = expression;
+  if (hidden && !expression.startsWith("/")) {
+    finalExpression = `/${expression}`;
+  }
+
+  let timeoutId;
+  const waitResponse = new Promise((resolve, reject) => {
+    const handler = (evt) => {
+      const res = evt.data;
+      if (!res) return;
+      
+      // Check if this response matches our request
+      if (res.callId !== callId || res.requesterId !== requesterId) {
+        return;
+      }
+
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        resolve(res);
+      } else {
+        reject(new Error(res.error || "Unknown JustDices error"));
+      }
+    };
+
+    const unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
+    
+    // Setup timeout
+    timeoutId = setTimeout(() => {
+      unsubscribe();
+      reject(new Error("JustDices API timeout"));
+    }, timeoutMs);
+  });
+
+  // Send request
+  await OBR.broadcast.sendMessage(
+    "justdices.api.request",
+    { callId, expression: finalExpression, showInLogs, requesterId },
+    { destination: "ALL" }
+  );
+
+  const response = await waitResponse;
+  return response.data?.total;
+}
+
+/**
+ * Roll dice and get full result object
+ * @param {string} expression - Dice formula
+ * @param {boolean|Object} hiddenOrOptions - Whether roll is hidden, or options object
+ * @returns {Promise<Object>} Full roll result with expression, rolls, total, data
+ */
+export async function getRollObject(expression, hiddenOrOptions = {}) {
   // Normalize options
   let options = {};
   if (typeof hiddenOrOptions === "boolean") {
@@ -113,35 +177,23 @@ export async function roll(expression, hiddenOrOptions = {}) {
 }
 
 /**
- * Roll dice and get full result data
- * @param {string} expression - Dice formula
- * @param {boolean} hidden - Whether roll is hidden
- * @returns {Promise<Object>} Full roll result data
- */
-export async function rollDice(expression, hidden = false) {
-  const result = await roll(expression, hidden);
-  return result.data;
-}
-
-/**
- * Roll dice and get just the total
+ * Roll dice silently (without showing in logs) and return total
  * @param {string} expression - Dice formula
  * @param {boolean} hidden - Whether roll is hidden
  * @returns {Promise<number>} Roll total
  */
-export async function rollDiceTotal(expression, hidden = false) {
-  const result = await roll(expression, hidden);
-  return result.data?.total;
+export async function rollSilent(expression, hidden = false) {
+  return roll(expression, { hidden, showInLogs: false });
 }
 
 /**
- * Roll dice silently (without showing in logs)
+ * Roll dice silently and get full result object
  * @param {string} expression - Dice formula
  * @param {boolean} hidden - Whether roll is hidden
- * @returns {Promise<Object>} Roll result
+ * @returns {Promise<Object>} Full roll result object
  */
-export async function rollDiceSilent(expression, hidden = false) {
-  return roll(expression, { hidden, showInLogs: false });
+export async function getRollObjectSilent(expression, hidden = false) {
+  return getRollObject(expression, { hidden, showInLogs: false });
 }
 
 /**
@@ -154,7 +206,7 @@ function generateCallId() {
 
 export default {
   roll,
-  rollDice,
-  rollDiceTotal,
-  rollDiceSilent,
+  getRollObject,
+  rollSilent,
+  getRollObjectSilent,
 };

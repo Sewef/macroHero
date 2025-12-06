@@ -30,9 +30,9 @@ function createExecutionContext(page) {
     // JustDices (special handling for roll functions)
     JustDices: {
       roll: JustDices.roll,
-      rollDice: JustDices.rollDice,
-      rollDiceTotal: JustDices.rollDiceTotal,
-      rollDiceSilent: JustDices.rollDiceSilent,
+      getRollObject: JustDices.getRollObject,
+      rollSilent: JustDices.rollSilent,
+      getRollObjectSilent: JustDices.getRollObjectSilent,
     },
     
     // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)

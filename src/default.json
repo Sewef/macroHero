@@ -9,7 +9,6 @@
     },
     "pages": [
         {
-            "id": "main",
             "label": "General",
             "variables": {
                 "token": {
@@ -96,16 +95,42 @@
                 {
                     "type": "button",
                     "commands": [
-                        "floor(OwlTrackers.setValue({token}, 'HP', OwlTrackers.getValue({token}, 'HP')*1.5), 0)"
+                        "OwlTrackers.setValue({token}, 'HP', floor(OwlTrackers.getValue({token}, 'HP')*1.1))"
                     ],
                     "label": "Heal 1 tick"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "OwlTrackers.addValue({token}, 'HP', 10)"
+                        "{isBandaged} ? OwlTrackers.addValue({token}, 'HP', 10) : OwlTrackers.addValue({token}, 'HP', -10)"
                     ],
-                    "label": "Heal 10 HP"
+                    "label": "Test Button"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('1d20 + {atkBonus}') > 15 ? OwlTrackers.addValue({token}, 'HP', 5) : OwlTrackers.addValue({token}, 'HP', -5)"
+                    ],
+                    "label": "Roll Attack (>15 = heal, <=15 = damage)"
+                }
+            ]
+        },
+        {
+            "label": "Advanced",
+            "variables": {
+                "customVar": {
+                    "expression": "'Custom Value'"
+                }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Advanced Actions"
+                },
+                {
+                    "type": "value",
+                    "var": "customVar",
+                    "label": "Custom Variable"
                 }
             ]
         }
