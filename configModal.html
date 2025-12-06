@@ -2,29 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Macro Hero Config</title>
 
   <style>
+    :root {
+      font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.87);
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-size: 14px;
+    }
+
     body {
       background: #1f1f1f;
       color: #eee;
       margin: 0;
-      padding: 10px;
-      font-family: sans-serif;
+      padding: 16px;
+      font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+      min-width: 320px;
+      box-sizing: border-box;
     }
+
+    h2 {
+      margin: 0 0 16px 0;
+      font-size: 1.5em;
+      font-weight: 600;
+      color: #4ea1ff;
+    }
+
+    h3 {
+      margin: 16px 0 8px 0;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #4ea1ff;
+      border-bottom: 1px solid #444;
+      padding-bottom: 6px;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.9em;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      background: #2a2a2a;
+      color: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 1em;
+      height: 32px;
+      outline-offset: 2px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
     textarea {
       width: 100%;
       height: 180px;
       background: #2a2a2a;
       color: #eee;
-      border: 1px solid #444;
-      font-family: monospace;
-      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      padding: 8px;
       box-sizing: border-box;
       resize: vertical;
+      outline-offset: 2px;
+      transition: border-color 0.2s;
     }
-    .buttons { margin-top: 10px; text-align: right; }
-    button { padding: 6px 12px; margin-left: 10px; }
+
+    textarea:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    .buttons {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    button {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      padding: 8px 16px;
+      height: auto;
+      font-family: inherit;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      color: #eee;
+      font-weight: 500;
+    }
+
+    button:hover {
+      border-color: #007bff;
+      background-color: #e6f0ff;
+      color: #000;
+    }
+
+    button:focus,
+    button:focus-visible {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+    }
+
+    #saveBtn {
+      border-color: #4ea1ff;
+      color: #4ea1ff;
+    }
+
+    #saveBtn:hover {
+      background-color: #4ea1ff;
+      border-color: #4ea1ff;
+      color: #000;
+    }
   </style>
   <script src="/src/configModal.js" type="module"></script>
 </head>
@@ -32,20 +150,22 @@
 <body>
   <h2>Configuration Macro Hero</h2>
 
-  <div style="margin-bottom: 15px;">
-    <h3 style="margin: 5px 0;">Google Sheets Settings</h3>
-    <div style="margin-bottom: 8px;">
-      <label for="apiKeyInput" style="display: block; margin-bottom: 3px;">API Key:</label>
-      <input type="text" id="apiKeyInput" style="width: 100%; padding: 6px; background: #2a2a2a; color: #eee; border: 1px solid #444; box-sizing: border-box;" placeholder="Enter Google API Key" />
+  <div>
+    <h3>Google Sheets Settings</h3>
+    <div class="input-group">
+      <label for="apiKeyInput">API Key</label>
+      <input type="text" id="apiKeyInput" placeholder="Enter Google API Key" />
     </div>
-    <div style="margin-bottom: 8px;">
-      <label for="sheetIdInput" style="display: block; margin-bottom: 3px;">Sheet ID:</label>
-      <input type="text" id="sheetIdInput" style="width: 100%; padding: 6px; background: #2a2a2a; color: #eee; border: 1px solid #444; box-sizing: border-box;" placeholder="Enter Google Sheet ID" />
+    <div class="input-group">
+      <label for="sheetIdInput">Sheet ID</label>
+      <input type="text" id="sheetIdInput" placeholder="Enter Google Sheet ID" />
     </div>
   </div>
 
-  <h3 style="margin: 5px 0;">Configuration JSON</h3>
-  <textarea id="cfgArea"></textarea>
+  <div>
+    <h3>Configuration JSON</h3>
+    <textarea id="cfgArea"></textarea>
+  </div>
 
   <div class="buttons">
     <button id="cancelBtn">Annuler</button>
