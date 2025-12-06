@@ -33,17 +33,17 @@ function renderPageButtons() {
     return;
   }
 
-  config.pages.forEach(p => {
+  config.pages.forEach((p, index) => {
     const btn = document.createElement("button");
-    btn.textContent = p.label ?? p.id;
+    btn.textContent = p.label || `Page ${index + 1}`;
 
     btn.onclick = () => {
-      currentPage = p.id;
+      currentPage = index;
       renderPageButtons();
       renderPageContent(p);
     };
 
-    if (currentPage === p.id) btn.classList.add("active");
+    if (currentPage === index) btn.classList.add("active");
 
     bar.appendChild(btn);
   });
@@ -52,7 +52,7 @@ function renderPageButtons() {
 function selectFirstPage() {
   if (config.pages?.length) {
     const first = config.pages[0];
-    currentPage = first.id;
+    currentPage = 0;
     renderPageContent(first);
   } else {
     document.getElementById("content").innerHTML = "<div class='mh-empty'>Aucune page définie</div>";
@@ -188,7 +188,7 @@ function renderButton(item, page) {
       btn.disabled = true;
       btn.textContent = "Execution...";
       try {
-        const pageObj = currentPage ? findPageById(currentPage) : page;
+        const pageObj = (currentPage !== null && currentPage !== undefined) ? findPageByIndex(currentPage) : page;
         
         // Store old resolved values to detect changes
         const oldResolved = { ...pageObj._resolved };
@@ -223,12 +223,12 @@ function renderButton(item, page) {
 }
 
 /**
- * Find a page by ID in the config
- * @param {string} pageId - Page ID
+ * Find a page by index in the config
+ * @param {number} pageIndex - Page index
  * @returns {Object|null} Page object or null
  */
-function findPageById(pageId) {
-  return config.pages?.find(p => p.id === pageId) || null;
+function findPageByIndex(pageIndex) {
+  return config.pages?.[pageIndex] || null;
 }
 
 function renderValue(item, page) {
@@ -342,7 +342,7 @@ function renderDivider() {
 export function renderConfigUI() {
   console.log("[UI.renderConfigUI] Starting render...");
   console.log("[UI.renderConfigUI] Current config:", config);
-  console.log("[UI.renderConfigUI] Current page ID:", currentPage);
+  console.log("[UI.renderConfigUI] Current page index:", currentPage);
   
   if (!config) {
     console.warn("[UI.renderConfigUI] No config available");
@@ -351,11 +351,11 @@ export function renderConfigUI() {
   
   renderPageButtons();
   
-  // If we have a current page, re-render it; otherwise select first
-  if (currentPage) {
-    const page = config.pages?.find(p => p.id === currentPage);
+  // If we have a current page index, re-render it; otherwise select first
+  if (currentPage !== null && currentPage !== undefined) {
+    const page = config.pages?.[currentPage];
     if (page) {
-      console.log("[UI.renderConfigUI] Re-rendering current page:", currentPage);
+      console.log("[UI.renderConfigUI] Re-rendering current page at index:", currentPage);
       renderPageContent(page);
     } else {
       console.log("[UI.renderConfigUI] Current page not found, selecting first");
