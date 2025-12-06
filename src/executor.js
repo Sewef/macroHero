@@ -28,26 +28,6 @@ function createExecutionContext(page) {
     
     // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)
     ...math,
-    
-    // Helper to get variable values
-    getVar: (varName) => {
-      const variable = page.variables?.[varName];
-      if (!variable) {
-        console.warn(`Variable not found: ${varName}`);
-        return undefined;
-      }
-      
-      return variable.default ?? variable.expression ?? undefined;
-    },
-    
-    // Helper to set variable values
-    setVar: (varName, value) => {
-      if (page.variables?.[varName]) {
-        page.variables[varName].expression = value;
-      } else {
-        console.warn(`Variable not found: ${varName}`);
-      }
-    },
   };
 }
 
