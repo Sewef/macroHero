@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Macro Hero",
-        "width": 500,
+        "width": 600,
         "height": 500,
         "variables": {
             "playerName": {
@@ -29,10 +29,10 @@
                     "expression": "1"
                 },
                 "isBandaged": {
-                    "expression": "ConditionsMarkers.isCondition({token}, 'Marked')"
+                    "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
                 },
                 "bandagedValue": {
-                    "expression": "ConditionsMarkers.getValue({token}, 'Marked')"
+                    "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
                 },
                 "trackerStatus": {
                     "expression": "OwlTrackers.getValue({token}, 'HP')"
@@ -337,12 +337,7 @@
                             "type": "counter",
                             "var": "spatkCS",
                             "label": "SP.ATK CS"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
+                        },
                         {
                             "type": "counter",
                             "var": "spdefCS",

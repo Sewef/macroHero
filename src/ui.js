@@ -6,7 +6,7 @@ let renderedValueElements = {}; // Map of varName -> DOM element for live update
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
-import { resolveVariables } from "./expressionEvaluator.js";
+import { resolveVariables, getDependentVariables } from "./expressionEvaluator.js";
 
 export function initUI(cfg) {
   config = cfg;
@@ -420,6 +420,10 @@ function renderCounter(item, page) {
     updateValue(newValue);
   }, { passive: false });
 
+  // Debounce timer for async updates
+  let updateTimer = null;
+  let pendingUpdate = false;
+
   // Function to update value
   const updateValue = async (newValue) => {
     // Apply min/max constraints
@@ -433,6 +437,31 @@ function renderCounter(item, page) {
     input.value = newValue;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
+    
+    // Debounce the async re-resolution
+    if (updateTimer) {
+      clearTimeout(updateTimer);
+    }
+    
+    updateTimer = setTimeout(async () => {
+      if (pendingUpdate) return; // Skip if already processing
+      pendingUpdate = true;
+      
+      try {
+        // Re-resolve all variables that depend on this one
+        const dependentVars = getDependentVariables(page.variables, [item.var]);
+        if (dependentVars.size > 1) { // More than just the changed variable itself
+          console.log(`[Counter] ${item.var} changed, re-resolving dependents:`, Array.from(dependentVars));
+          const onVariableResolved = (varName, value) => {
+            page._resolved[varName] = value;
+            updateRenderedValue(varName, value);
+          };
+          await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
+        }
+      } finally {
+        pendingUpdate = false;
+      }
+    }, 150); // 150ms debounce
   };
 
   // Increment button

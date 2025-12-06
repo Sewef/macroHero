@@ -382,9 +382,61 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   return resolved;
 }
 
+/**
+ * Find all variables that depend on the specified variables
+ * @param {Object} variablesConfig - Variables configuration
+ * @param {Set<string>|Array<string>} changedVars - Variables that changed
+ * @returns {Set<string>} All variables that depend on changedVars (including changedVars themselves)
+ */
+export function getDependentVariables(variablesConfig, changedVars) {
+  if (!variablesConfig) return new Set();
+  
+  const changedSet = new Set(Array.isArray(changedVars) ? changedVars : [changedVars]);
+  
+  // Build reverse dependency map (which vars depend on which)
+  const reverseDeps = new Map(); // varName -> Set of vars that depend on it
+  
+  for (const [varName, varConfig] of Object.entries(variablesConfig)) {
+    const expr = varConfig.expression || '';
+    
+    // Extract all variable references {varName} and {varName[index]} etc.
+    const matches = expr.matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
+    for (const match of matches) {
+      const depVar = match[1]; // Extract just the variable name, ignore indexing
+      if (depVar in variablesConfig && depVar !== varName) {
+        if (!reverseDeps.has(depVar)) {
+          reverseDeps.set(depVar, new Set());
+        }
+        reverseDeps.get(depVar).add(varName);
+      }
+    }
+  }
+  
+  // Find all variables that depend on changed variables (transitively)
+  const affected = new Set(changedSet);
+  const toProcess = Array.from(changedSet);
+  
+  while (toProcess.length > 0) {
+    const varName = toProcess.pop();
+    const dependents = reverseDeps.get(varName);
+    
+    if (dependents) {
+      for (const dependent of dependents) {
+        if (!affected.has(dependent)) {
+          affected.add(dependent);
+          toProcess.push(dependent);
+        }
+      }
+    }
+  }
+  
+  return affected;
+}
+
 export default {
   evaluateExpression,
   resolveVariables,
   getAffectedVariables,
   getVariablesUsedInCommands,
+  getDependentVariables,
 };
