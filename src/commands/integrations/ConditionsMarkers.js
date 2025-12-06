@@ -208,37 +208,31 @@ export async function isCondition(tokenId, conditionName, allItems = null) {
     }
     
     if (!tokenItem) {
+      console.warn(`[ConditionsMarkers.isCondition] Token ${tokenId} not found`);
       return false;
     }
     
     const allSceneItems = allItems || await OBR.scene.items.getItems();
     
-    // Find marker images attached to the token
+    // Find marker images attached to the token with the condition name
+    // Condition markers are named like "Condition Marker - Bandaged"
+    const conditionMarkerName = `Condition Marker - ${conditionName}`;
+    
     const markers = allSceneItems.filter(item =>
       item.attachedTo === tokenId &&
       item.type === 'IMAGE' &&
       item.metadata &&
-      "keegan.dev.condition-markers/metadata" in item.metadata
+      "keegan.dev.condition-markers/metadata" in item.metadata &&
+      item.name === conditionMarkerName
     );
     
-    // For each marker, find TEXT labels attached to it
-    for (const marker of markers) {
-      const labels = allSceneItems.filter(item =>
-        item.attachedTo === marker.id &&
-        item.type === 'TEXT' &&
-        item.metadata &&
-        "keegan.dev.condition-markers/label" in item.metadata &&
-        item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
-      );
-      
-      if (labels.length > 0) {
-        return true;
-      }
-    }
+    console.log(`[ConditionsMarkers.isCondition] Checking for "${conditionName}" on token ${tokenId}`);
+    console.log(`[ConditionsMarkers.isCondition] Looking for marker named: "${conditionMarkerName}"`);
+    console.log(`[ConditionsMarkers.isCondition] Found ${markers.length} matching marker(s)`);
     
-    return false;
+    return markers.length > 0;
   } catch (error) {
-    console.error("Error checking condition:", error);
+    console.error("[ConditionsMarkers.isCondition] Error checking condition:", error);
     return false;
   }
 }
