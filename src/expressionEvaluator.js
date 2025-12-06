@@ -86,7 +86,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
       }
     }
     
-    console.log('[EVAL] Detected async methods:', asyncMethods);
+    // console.log('[EVAL] Detected async methods:', asyncMethods);
     
     // For each async method, find all calls and wrap them with (await ...)
     for (const method of asyncMethods) {
@@ -391,7 +391,15 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
 export function getDependentVariables(variablesConfig, changedVars) {
   if (!variablesConfig) return new Set();
   
-  const changedSet = new Set(Array.isArray(changedVars) ? changedVars : [changedVars]);
+  // Convert input to Set
+  let changedSet;
+  if (changedVars instanceof Set) {
+    changedSet = changedVars;
+  } else if (Array.isArray(changedVars)) {
+    changedSet = new Set(changedVars);
+  } else {
+    changedSet = new Set([changedVars]);
+  }
   
   // Build reverse dependency map (which vars depend on which)
   const reverseDeps = new Map(); // varName -> Set of vars that depend on it

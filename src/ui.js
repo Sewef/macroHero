@@ -102,13 +102,26 @@ function renderPageContent(page) {
  * Update a rendered value element when its variable resolves
  */
 function updateRenderedValue(varName, value) {
+  console.log(`[updateRenderedValue] ${varName} = ${value}`);
   const element = renderedValueElements[varName];
   if (element) {
+    console.log(`[updateRenderedValue] Found element for ${varName}`);
+    // Update value display
     const contentDiv = element.querySelector(".mh-value-content");
     if (contentDiv) {
       contentDiv.textContent = value ?? "N/A";
       contentDiv.classList.remove("mh-loading");
+      console.log(`[updateRenderedValue] Updated value content for ${varName}`);
     }
+    
+    // Update counter input if this is a counter
+    const counterInput = element.querySelector(".mh-counter-input");
+    if (counterInput) {
+      counterInput.value = value ?? 0;
+      console.log(`[updateRenderedValue] Updated counter input for ${varName} to ${value}`);
+    }
+  } else {
+    console.log(`[updateRenderedValue] No element found for ${varName}`);
   }
 }
 

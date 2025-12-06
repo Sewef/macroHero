@@ -227,19 +227,19 @@
                     "expression": "GoogleSheets.getRange('Xalithra Général', 'T4:T8')"
                 },
                 "atk": {
-                    "expression": "{stats[0]}"
+                    "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
                 },
                 "def": {
-                    "expression": "{stats[1]}"
+                    "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
                 },
                 "spatk": {
-                    "expression": "{stats[2]}"
+                    "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
                 },
                 "spdef": {
-                    "expression": "{stats[3]}"
+                    "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
                 },
                 "spd": {
-                    "expression": "{stats[4]}"
+                    "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
                 },
                 "atkCS": {
                     "expression": "0",
@@ -372,6 +372,20 @@
                             "label": "Reckless Advance"
                         }
                     ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "addValue('atkCS', +1)",
+                        "addValue('defCS', -1)",
+                        "addValue('spatkCS', +1)",
+                        "addValue('spdefCS', -1)",
+                        "addValue('spdCS', +1)",
+                        "OwlTrackers.addValue({token}, 'Injuries', +1)",
+                        "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
+
+                    ],
+                    "label": "Anger Shell"
                 },
                 {
                     "type": "row",

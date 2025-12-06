@@ -1,7 +1,8 @@
 import { 
   getValue as getMetadataValue,
   setValue as setMetadataValue,
-  addValue as addMetadataValue
+  addValue as addMetadataValue,
+  getTokenMetadataValue
 } from "../tokenMetadata.js";
 
 const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
@@ -31,6 +32,33 @@ export async function getValue(tokenId, trackerName) {
 }
 
 /**
+ * Get a tracker's maximum value from a token
+ * @param {string} tokenId - Token ID to get tracker from
+ * @param {string} trackerName - Name of the tracker (e.g., "HP")
+ * @returns {Promise<number|null>} Tracker max value or null if not found
+ */
+export async function getMax(tokenId, trackerName) {
+  try {
+    const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
+    if (!Array.isArray(trackers)) {
+      console.warn(`[OwlTrackers] No trackers found on token ${tokenId}`);
+      return null;
+    }
+    
+    const tracker = trackers.find(t => t.name === trackerName);
+    if (!tracker) {
+      console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+      return null;
+    }
+    
+    return tracker.max ?? null;
+  } catch (error) {
+    console.error(`[OwlTrackers] Failed to get tracker "${trackerName}" max from token ${tokenId}:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Set a tracker value on a token
  * @param {string} tokenId - Token ID
  * @param {string} trackerName - Tracker name
@@ -49,16 +77,24 @@ export async function setValue(tokenId, trackerName, value) {
  * @returns {Promise<void>}
  */
 export async function addValue(tokenId, trackerName, delta = 1) {
+  console.log(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
   const currentValue = await getValue(tokenId, trackerName);
+  console.log(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
+  
   if (currentValue === null) {
-    console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+    console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
     return;
   }
-  await setValue(tokenId, trackerName, currentValue + delta);
+  
+  const newValue = currentValue + Number(delta);
+  console.log(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
+  await setValue(tokenId, trackerName, newValue);
+  console.log(`[OwlTrackers.addValue] Complete`);
 }
 
 export default {
   getValue,
+  getMax,
   setValue,
   addValue
 };

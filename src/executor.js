@@ -5,7 +5,7 @@
 
 import * as math from "mathjs";
 import * as parser from "./parser.js";
-import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands } from "./expressionEvaluator.js";
+import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, getDependentVariables } from "./expressionEvaluator.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
 
 /**
@@ -21,6 +21,11 @@ function createExecutionContext(page) {
 
   // Get integrations from Manager (includes OwlTrackers, ConditionsMarkers, GoogleSheets, etc.)
   const integrations = getIntegrationsContext();
+  
+  // Track which variables were modified during command execution
+  if (!page._modifiedVars) {
+    page._modifiedVars = new Set();
+  }
 
   return {
     // Integrations from Manager
@@ -28,6 +33,58 @@ function createExecutionContext(page) {
     
     // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)
     ...math,
+    
+    // Variable manipulation functions
+    setValue: (varName, value) => {
+      if (!page.variables || !(varName in page.variables)) {
+        throw new Error(`Variable "${varName}" not found in current page`);
+      }
+      
+      const variable = page.variables[varName];
+      let newValue = value;
+      
+      // Apply min/max constraints
+      if (variable.min !== undefined && newValue < variable.min) {
+        newValue = variable.min;
+      }
+      if (variable.max !== undefined && newValue > variable.max) {
+        newValue = variable.max;
+      }
+      
+      // Update both expression and resolved value
+      variable.expression = String(newValue);
+      page._resolved[varName] = newValue;
+      page._modifiedVars.add(varName);
+      
+      console.log(`[setValue] ${varName} = ${newValue}`);
+      return newValue;
+    },
+    
+    addValue: (varName, delta) => {
+      if (!page.variables || !(varName in page.variables)) {
+        throw new Error(`Variable "${varName}" not found in current page`);
+      }
+      
+      const variable = page.variables[varName];
+      const currentValue = Number(page._resolved[varName]) || 0;
+      let newValue = currentValue + Number(delta);
+      
+      // Apply min/max constraints
+      if (variable.min !== undefined && newValue < variable.min) {
+        newValue = variable.min;
+      }
+      if (variable.max !== undefined && newValue > variable.max) {
+        newValue = variable.max;
+      }
+      
+      // Update both expression and resolved value
+      variable.expression = String(newValue);
+      page._resolved[varName] = newValue;
+      page._modifiedVars.add(varName);
+      
+      console.log(`[addValue] ${varName} += ${delta} => ${newValue}`);
+      return newValue;
+    },
   };
 }
 
@@ -68,7 +125,7 @@ function evaluateExpression(expression, page) {
  * @returns {string} Expression with variables replaced by values
  */
 function substituteVariables(expression, scope = {}) {
-  console.log(`[SUBST] Substituting variables in: "${expression}"`);
+  console.log(`[SUBST] ==== VERSION 2.0 LOADED ==== Substituting variables in: "${expression}"`);
   console.log(`[SUBST] Available scope:`, scope);
   
   let result = expression;
@@ -78,7 +135,7 @@ function substituteVariables(expression, scope = {}) {
   result = result.replace(curlyVarPattern, (match, varName) => {
     if (varName in scope) {
       const value = scope[varName];
-      console.log(`[SUBST]   {${varName}} = ${value}`);
+      console.log(`[SUBST]   {${varName}} = ${value} (type: ${typeof value})`);
       
       if (typeof value === 'number' || typeof value === 'boolean') {
         return String(value);
@@ -87,7 +144,8 @@ function substituteVariables(expression, scope = {}) {
       } else if (value === undefined) {
         return 'undefined';
       } else if (typeof value === 'string') {
-        return value;
+        // Quote strings for proper JavaScript syntax
+        return `'${value.replace(/'/g, "\\'")}'`;
       } else {
         return JSON.stringify(value);
       }
@@ -108,12 +166,13 @@ function substituteVariables(expression, scope = {}) {
   for (const varRef of varRefs) {
     if (varRef in scope) {
       let value = scope[varRef];
-      console.log(`[SUBST]   ${varRef} = ${value}`);
+      console.log(`[SUBST]   ${varRef} = ${value} (type: ${typeof value})`);
       
       // Convert to string representation for substitution into expression
       let valueStr;
       if (typeof value === 'string') {
-        valueStr = value; // Keep as plain string for now
+        // For strings, wrap in quotes to ensure valid JavaScript syntax
+        valueStr = `'${value.replace(/'/g, "\\'")}'`; // Escape single quotes
       } else if (typeof value === 'number' || typeof value === 'boolean') {
         valueStr = String(value);
       } else if (value === null) {
@@ -124,6 +183,7 @@ function substituteVariables(expression, scope = {}) {
         valueStr = JSON.stringify(value);
       }
       
+      // Replace plain variable name (not in curly braces)
       // Use word boundaries to avoid partial replacements
       const regex = new RegExp(`\\b${varRef}\\b`, 'g');
       result = result.replace(regex, valueStr);
@@ -162,23 +222,8 @@ function parseCommandString(command, page) {
       const substituted = substituteVariables(segment.value, scope);
       console.log(`[PARSE] After substitution: "${substituted}"`);
       
-      // Then try to evaluate (for mathematical expressions like 1+1, floor, etc)
-      // Use the substituted value so math can work on it
-      const value = evaluateExpression(substituted, page);
-      console.log(`[PARSE] After evaluation: "${value}"`);
-      
-      // Insert value directly without adding quotes - let the context determine formatting
-      // If the value needs to be a string, the original command should have quotes around {var}
-      if (typeof value === 'string') {
-        result += value;
-      } else if (typeof value === 'number' || typeof value === 'boolean') {
-        result += String(value);
-      } else if (value === null || value === undefined) {
-        result += String(value);
-      } else {
-        // For objects/arrays, use JSON representation
-        result += JSON.stringify(value);
-      }
+      // The substituted string already has properly quoted values, use it directly
+      result += substituted;
     }
   }
   
@@ -351,6 +396,9 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
   try {
     console.log("[EXECUTOR] Button clicked, analyzing command requirements...");
     
+    // Initialize tracking for modified variables
+    page._modifiedVars = new Set();
+    
     // Store old values to detect changes
     const oldResolved = { ...page._resolved };
     
@@ -377,25 +425,45 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     const results = await executeCommands(commands, page);
     console.log("Button action completed:", results);
     
-    // After commands execute, only re-resolve variables that could have been affected
+    // After commands execute, resolve variables that were affected by integrations or modified by setValue/addValue
     console.log("[EXECUTOR] Analyzing affected variables...");
     const affectedVars = getAffectedVariables(commands, page.variables);
-    console.log("[EXECUTOR] Affected variables:", Array.from(affectedVars));
+    console.log("[EXECUTOR] Affected variables from integrations:", Array.from(affectedVars));
     
-    if (affectedVars.size > 0) {
-      console.log("[EXECUTOR] Re-resolving affected variables...");
+    // Track variables that were directly modified by setValue/addValue
+    const directlyModified = new Set();
+    if (page._modifiedVars && page._modifiedVars.size > 0) {
+      console.log("[EXECUTOR] Variables modified by setValue/addValue:", Array.from(page._modifiedVars));
+      for (const modifiedVar of page._modifiedVars) {
+        directlyModified.add(modifiedVar);
+        affectedVars.add(modifiedVar);
+      }
+    }
+    
+    // Find all variables that depend on affected/modified variables
+    const allAffected = getDependentVariables(page.variables, affectedVars);
+    console.log("[EXECUTOR] All affected variables (including dependents):", Array.from(allAffected));
+    
+    if (allAffected.size > 0) {
+      console.log("[EXECUTOR] Re-resolving affected variables and their dependents...");
       // Update old values before re-resolving
       const currentResolved = { ...page._resolved };
       const updatedResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
         const oldValue = currentResolved[varName];
-        if (oldValue !== value && onVariableResolved) {
-          onVariableResolved(varName, value);
+        // Always call callback for directly modified variables, or if value changed
+        if (directlyModified.has(varName) || (oldValue !== value && onVariableResolved)) {
+          if (onVariableResolved) {
+            onVariableResolved(varName, value);
+          }
         }
-      }, affectedVars);
+      }, allAffected);
       page._resolved = updatedResolved;
     } else {
       console.log("[EXECUTOR] No variables affected, skipping re-resolution");
     }
+    
+    // Clean up modified vars tracking
+    page._modifiedVars = new Set();
     
   } catch (error) {
     console.error("Button action failed:", error);
