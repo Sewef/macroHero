@@ -190,16 +190,22 @@ function renderButton(item, page) {
       try {
         const pageObj = currentPage ? findPageById(currentPage) : page;
         
+        // Store old resolved values to detect changes
+        const oldResolved = { ...pageObj._resolved };
+        
         // Create callback to update UI as variables resolve
         const onVariableResolved = (varName, value) => {
-          pageObj._resolved[varName] = value;
-          updateRenderedValue(varName, value);
+          const oldValue = oldResolved[varName];
+          // Only update if value actually changed
+          if (oldValue !== value) {
+            pageObj._resolved[varName] = value;
+            updateRenderedValue(varName, value);
+          }
         };
         
         await handleButtonClick(item.commands, pageObj, globalVariables, onVariableResolved);
         
-        // After command completes, refresh the entire page content
-        renderPageContent(pageObj);
+        // No need to re-render the entire page - individual values were updated via callback
       } catch (error) {
         console.error("Button action error:", error);
       } finally {

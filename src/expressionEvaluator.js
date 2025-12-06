@@ -75,13 +75,83 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
 }
 
 /**
+ * Analyze which variables could be affected by a set of commands
+ * @param {Array<string>} commands - Commands that were executed
+ * @param {Object} variablesConfig - Variables configuration object
+ * @returns {Set<string>} Set of variable names that might have changed
+ */
+export function getAffectedVariables(commands, variablesConfig) {
+  const affected = new Set();
+  
+  if (!variablesConfig) return affected;
+  
+  // Extract integration calls from commands (e.g., "OwlTrackers.addValue")
+  const integrationCalls = new Set();
+  for (const cmd of commands) {
+    const matches = cmd.matchAll(/(\w+)\.\w+\(/g);
+    for (const match of matches) {
+      integrationCalls.add(match[1]); // e.g., "OwlTrackers", "ConditionsMarkers"
+    }
+  }
+  
+  // Build dependency graph to find all variables that depend on changed integrations
+  const dependencies = new Map();
+  const reverseDeps = new Map(); // varName -> Set of vars that depend on it
+  
+  for (const [varName, varConfig] of Object.entries(variablesConfig)) {
+    const expr = varConfig.expression || '';
+    const deps = [];
+    
+    // Check if this variable uses any of the affected integrations
+    for (const integration of integrationCalls) {
+      if (expr.includes(integration + '.')) {
+        affected.add(varName);
+      }
+    }
+    
+    // Extract variable dependencies {varName}
+    const matches = expr.matchAll(/\{(\w+)\}/g);
+    for (const match of matches) {
+      const depVar = match[1];
+      if (depVar in variablesConfig && depVar !== varName) {
+        deps.push(depVar);
+        if (!reverseDeps.has(depVar)) {
+          reverseDeps.set(depVar, new Set());
+        }
+        reverseDeps.get(depVar).add(varName);
+      }
+    }
+    
+    dependencies.set(varName, deps);
+  }
+  
+  // Recursively add all variables that depend on affected variables
+  const toProcess = Array.from(affected);
+  while (toProcess.length > 0) {
+    const varName = toProcess.pop();
+    const dependents = reverseDeps.get(varName);
+    if (dependents) {
+      for (const dependent of dependents) {
+        if (!affected.has(dependent)) {
+          affected.add(dependent);
+          toProcess.push(dependent);
+        }
+      }
+    }
+  }
+  
+  return affected;
+}
+
+/**
  * Resolve all variables in a page or global config
  * @param {Object} variablesConfig - Variables configuration object
  * @param {Object} previouslyResolved - Variables resolved in previous step (for cascading)
  * @param {Function} onVariableResolved - Callback when a variable is resolved (varName, value)
+ * @param {Set<string>} onlyVars - If provided, only resolve these specific variables
  * @returns {Promise<Object>} Resolved variables
  */
-export async function resolveVariables(variablesConfig, previouslyResolved = {}, onVariableResolved = null) {
+export async function resolveVariables(variablesConfig, previouslyResolved = {}, onVariableResolved = null, onlyVars = null) {
   if (!variablesConfig) {
     return previouslyResolved;
   }
@@ -107,6 +177,24 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     }
     
     dependencies.set(varName, deps);
+  }
+  
+  // If filtering, expand to include all dependencies
+  let varsToResolve = onlyVars;
+  if (onlyVars) {
+    varsToResolve = new Set(onlyVars);
+    const toExpand = Array.from(onlyVars);
+    while (toExpand.length > 0) {
+      const varName = toExpand.pop();
+      const deps = dependencies.get(varName) || [];
+      for (const dep of deps) {
+        if (!varsToResolve.has(dep)) {
+          varsToResolve.add(dep);
+          toExpand.push(dep);
+        }
+      }
+    }
+    console.log("[RESOLVE] Expanded vars to resolve (including dependencies):", Array.from(varsToResolve));
   }
   
   // Topological sort using Kahn's algorithm
@@ -135,6 +223,11 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   }
   
   for (const varName of sorted) {
+    // Skip if we're filtering and this var is not in the filter set (after expansion)
+    if (varsToResolve && !varsToResolve.has(varName)) {
+      continue;
+    }
+    
     const varConfig = variablesConfig[varName];
     if (!varConfig.expression) {
       continue;
@@ -163,4 +256,5 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
 export default {
   evaluateExpression,
   resolveVariables,
+  getAffectedVariables,
 };

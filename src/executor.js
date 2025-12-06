@@ -3,6 +3,7 @@
  * Handles parsing and executing commands from the config
  */
 
+import * as math from "mathjs";
 import * as JustDices from "./commands/integrations/JustDices.js";
 import * as OwlTrackers from "./commands/integrations/OwlTrackers.js";
 import * as ConditionsMarkers from "./commands/integrations/ConditionsMarkers.js";
@@ -10,7 +11,7 @@ import * as GoogleSheets from "./commands/integrations/GoogleSheets.js";
 import * as playerMetadata from "./commands/playerMetadata.js";
 import * as sceneMetadata from "./commands/sceneMetadata.js";
 import * as parser from "./parser.js";
-import { resolveVariables } from "./expressionEvaluator.js";
+import { resolveVariables, getAffectedVariables } from "./expressionEvaluator.js";
 
 /**
  * Create a context object for command execution
@@ -119,15 +120,23 @@ function substituteVariables(expression, scope = {}) {
       let value = scope[varRef];
       console.log(`[SUBST]   ${varRef} = ${value}`);
       
-      // If value is a string and doesn't already have quotes, add them
-      if (typeof value === 'string' && !value.startsWith("'") && !value.startsWith('"')) {
-        value = `'${value}'`;
-        console.log(`[SUBST]   Adding quotes: '${value}'`);
+      // Convert to string representation for substitution into expression
+      let valueStr;
+      if (typeof value === 'string') {
+        valueStr = value; // Keep as plain string for now
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
+        valueStr = String(value);
+      } else if (value === null) {
+        valueStr = 'null';
+      } else if (value === undefined) {
+        valueStr = 'undefined';
+      } else {
+        valueStr = JSON.stringify(value);
       }
       
       // Use word boundaries to avoid partial replacements
       const regex = new RegExp(`\\b${varRef}\\b`, 'g');
-      result = result.replace(regex, value);
+      result = result.replace(regex, valueStr);
     } else {
       console.warn(`[SUBST]   ✗ ${varRef} not found in scope`);
     }
@@ -163,10 +172,33 @@ function parseCommandString(command, page) {
       const substituted = substituteVariables(segment.value, scope);
       console.log(`[PARSE] After substitution: "${substituted}"`);
       
-      // Then try to evaluate (for mathematical expressions like floor, etc)
+      // Then try to evaluate (for mathematical expressions like 1+1, floor, etc)
+      // Use the substituted value so math can work on it
       const value = evaluateExpression(substituted, page);
       console.log(`[PARSE] After evaluation: "${value}"`);
-      result += value;
+      
+      // Convert value to string representation for insertion
+      let valueStr;
+      if (typeof value === 'string') {
+        // If it's already a string literal with quotes, use as-is
+        // Otherwise, wrap in quotes
+        if ((value.startsWith("'") && value.endsWith("'")) || 
+            (value.startsWith('"') && value.endsWith('"'))) {
+          valueStr = value;
+        } else {
+          valueStr = `'${value}'`;
+        }
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
+        // Numbers and booleans can be inserted directly
+        valueStr = String(value);
+      } else if (value === null || value === undefined) {
+        valueStr = String(value);
+      } else {
+        // For objects/arrays, use JSON representation
+        valueStr = JSON.stringify(value);
+      }
+      
+      result += valueStr;
     }
   }
   
@@ -267,17 +299,31 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
   }
   
   try {
-    console.log("[EXECUTOR] Button clicked, re-resolving variables...");
+    console.log("[EXECUTOR] Button clicked, resolving variables for command execution...");
     
-    // Re-resolve all variables before executing commands (no caching)
-    // Pass the callback so UI gets updated as variables resolve
-    const freshResolved = await resolveVariables(page.variables, globalVariables, onVariableResolved);
+    // First, resolve variables needed for the commands (without updating UI)
+    const freshResolved = await resolveVariables(page.variables, globalVariables, null);
     page._resolved = freshResolved;
     
-    console.log("[EXECUTOR] Variables refreshed:", freshResolved);
+    console.log("[EXECUTOR] Variables resolved for commands:", freshResolved);
     
+    // Execute the commands
     const results = await executeCommands(commands, page);
     console.log("Button action completed:", results);
+    
+    // After commands execute, only re-resolve variables that could have been affected
+    console.log("[EXECUTOR] Analyzing affected variables...");
+    const affectedVars = getAffectedVariables(commands, page.variables);
+    console.log("[EXECUTOR] Affected variables:", Array.from(affectedVars));
+    
+    if (affectedVars.size > 0) {
+      console.log("[EXECUTOR] Re-resolving affected variables...");
+      const updatedResolved = await resolveVariables(page.variables, globalVariables, onVariableResolved, affectedVars);
+      page._resolved = updatedResolved;
+    } else {
+      console.log("[EXECUTOR] No variables affected, skipping re-resolution");
+    }
+    
   } catch (error) {
     console.error("Button action failed:", error);
   }
