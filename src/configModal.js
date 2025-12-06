@@ -24,10 +24,6 @@ document.getElementById("saveBtn").onclick = () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const sheetIdInput = document.getElementById("sheetIdInput");
   
-  // Use new value if provided, otherwise keep original
-  const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
-  const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
-  
   console.log("Save clicked, validating JSON...");
 
   try {
@@ -40,10 +36,11 @@ document.getElementById("saveBtn").onclick = () => {
     }
     
     // Save Google Sheets credentials to localStorage
-    const apiKey = document.getElementById("apiKeyInput").value;
-    saveGoogleSheetsApiKey(apiKey);
+    // Use new value if provided, otherwise keep original from dataset
+    const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
+    const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
     
-    const sheetId = document.getElementById("sheetIdInput").value;
+    saveGoogleSheetsApiKey(apiKey);
     saveGoogleSheetsSheetId(sheetId);
     
     console.log("✓ Config structure valid, sending to main app...");
