@@ -400,6 +400,13 @@
                 },
                 {"type": "divider"
                 },
+                {   
+                    "type":"button",
+                    "commands":[
+                        "JustDices.roll('1d20') == 20 ? setValue('isCrit', true) : setValue('isCrit', false)"
+                    ],
+                    "label":"Accuracy Roll"
+                },
                 {
                     "type": "row",
                     "children": [

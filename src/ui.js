@@ -7,6 +7,7 @@ let config = null;
 let currentPage = null;
 let globalVariables = {}; // Store global variables for use in button clicks
 let renderedValueElements = {}; // Map of varName -> DOM element for live updates
+let renderedCheckboxElements = {}; // Map of varName -> checkbox input element for live updates
 
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
@@ -86,8 +87,9 @@ function renderPageContent(page) {
   const container = document.getElementById("content");
   container.innerHTML = "";
   
-  // Clear previous element map
+  // Clear previous element maps
   renderedValueElements = {};
+  renderedCheckboxElements = {};
 
   // Render layout if defined
   if (page.layout && Array.isArray(page.layout)) {
@@ -128,6 +130,12 @@ export function updateRenderedValue(varName, value) {
     if (counterInput) {
       counterInput.value = value;
     }
+  }
+  
+  // Update checkbox if this variable has one
+  const checkbox = renderedCheckboxElements[varName];
+  if (checkbox) {
+    checkbox.checked = Boolean(value);
   }
 }
 
@@ -350,6 +358,9 @@ function renderCheckbox(item, page) {
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.className = "mh-checkbox-field";
+  
+  // Store reference for dynamic updates
+  renderedCheckboxElements[item.var] = checkbox;
   
   // Get initial value from resolved variables
   const currentValue = page._resolved?.[item.var];
