@@ -1,6 +1,8 @@
 {
     "global": {
         "title": "Macro Hero",
+        "width": 500,
+        "height": 500,
         "variables": {
             "playerName": {
                 "expression": "Local.value('playerName', 'Unknown Hero')"

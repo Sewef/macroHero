@@ -38,6 +38,16 @@ OBR.onReady(async () => {
     const globalVars = await resolveVariables(cfg.global?.variables);
     console.log("Global variables resolved:", globalVars);
 
+    // Apply width/height settings if specified
+    if (cfg.global?.width || cfg.global?.height) {
+      const width = cfg.global.width || 400;
+      const height = cfg.global.height || 600;
+      
+      console.log(`[MAIN] Setting extension size: ${width}x${height}`);
+      await OBR.action.setWidth(width);
+      await OBR.action.setHeight(height);
+    }
+
     // Store global variables for use in button clicks
     setGlobalVariables(globalVars);
     cfg._resolvedGlobal = globalVars;
@@ -78,7 +88,16 @@ OBR.onReady(async () => {
         initializeExpressions({ apiKey, sheetId });
       }
       
-      updateConfig(event.data);
+      // Apply width/height if specified in the new config
+      const newConfig = event.data;
+      if (newConfig.global?.width || newConfig.global?.height) {
+        const width = newConfig.global.width || 400;
+        const height = newConfig.global.height || 600;
+        await OBR.action.setWidth(width);
+        await OBR.action.setHeight(height);
+      }
+      
+      updateConfig(newConfig);
     });
   } catch (error) {
     console.error("Error during initialization:", error);
