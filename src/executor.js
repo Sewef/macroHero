@@ -122,11 +122,13 @@ function evaluateExpression(expression, page) {
  * Substitute variables in an expression with their resolved values
  * @param {string} expression - Expression with variable names
  * @param {Object} scope - Resolved variables scope
+ * @param {boolean} inStringLiteral - Whether substitution is happening inside a string literal
  * @returns {string} Expression with variables replaced by values
  */
-function substituteVariables(expression, scope = {}) {
+function substituteVariables(expression, scope = {}, inStringLiteral = false) {
   console.log(`[SUBST] ==== VERSION 2.0 LOADED ==== Substituting variables in: "${expression}"`);
   console.log(`[SUBST] Available scope:`, scope);
+  console.log(`[SUBST] In string literal: ${inStringLiteral}`);
   
   let result = expression;
 
@@ -137,15 +139,18 @@ function substituteVariables(expression, scope = {}) {
       const value = scope[varName];
       console.log(`[SUBST]   {${varName}} = ${value} (type: ${typeof value})`);
       
-      if (typeof value === 'number' || typeof value === 'boolean') {
+      if (typeof value === 'boolean') {
+        // Convert booleans to 0/1 for math expressions
+        return value ? '1' : '0';
+      } else if (typeof value === 'number') {
         return String(value);
       } else if (value === null) {
         return 'null';
       } else if (value === undefined) {
         return 'undefined';
       } else if (typeof value === 'string') {
-        // Quote strings for proper JavaScript syntax
-        return `'${value.replace(/'/g, "\\'")}'`;
+        // In string literals, use raw value; in code, quote it
+        return inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
       } else {
         return JSON.stringify(value);
       }
@@ -170,10 +175,13 @@ function substituteVariables(expression, scope = {}) {
       
       // Convert to string representation for substitution into expression
       let valueStr;
-      if (typeof value === 'string') {
-        // For strings, wrap in quotes to ensure valid JavaScript syntax
-        valueStr = `'${value.replace(/'/g, "\\'")}'`; // Escape single quotes
-      } else if (typeof value === 'number' || typeof value === 'boolean') {
+      if (typeof value === 'boolean') {
+        // Convert booleans to 0/1 for math expressions
+        valueStr = value ? '1' : '0';
+      } else if (typeof value === 'string') {
+        // In string literals, use raw value; in code, quote it
+        valueStr = inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
+      } else if (typeof value === 'number') {
         valueStr = String(value);
       } else if (value === null) {
         valueStr = 'null';
@@ -212,18 +220,28 @@ function parseCommandString(command, page) {
   console.log(`[PARSE] Scope available:`, scope);
   
   let result = "";
+  let accumulatedLiteral = "";
+  
   for (const segment of parsed.segments) {
     console.log(`[PARSE] Processing segment:`, segment);
     
     if (segment.type === "literal") {
+      accumulatedLiteral += segment.value;
       result += segment.value;
     } else if (segment.type === "expression") {
-      // First substitute variables with their values
-      const substituted = substituteVariables(segment.value, scope);
+      // Check if we're inside a string literal by counting unmatched quotes
+      // Count single quotes in the accumulated literal before this expression
+      const singleQuotes = (accumulatedLiteral.match(/'/g) || []).length;
+      const inStringLiteral = singleQuotes % 2 === 1; // Odd number means we're inside a string
+      
+      console.log(`[PARSE] Expression context: ${inStringLiteral ? 'inside string literal' : 'code context'}`);
+      
+      // Substitute variables with context-aware quoting
+      const substituted = substituteVariables(segment.value, scope, inStringLiteral);
       console.log(`[PARSE] After substitution: "${substituted}"`);
       
-      // The substituted string already has properly quoted values, use it directly
       result += substituted;
+      accumulatedLiteral += substituted; // Add to accumulated for next segment's context check
     }
   }
   

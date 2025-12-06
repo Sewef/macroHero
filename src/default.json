@@ -374,18 +374,29 @@
                     ]
                 },
                 {
-                    "type": "button",
-                    "commands": [
-                        "addValue('atkCS', +1)",
-                        "addValue('defCS', -1)",
-                        "addValue('spatkCS', +1)",
-                        "addValue('spdefCS', -1)",
-                        "addValue('spdCS', +1)",
-                        "OwlTrackers.addValue({token}, 'Injuries', +1)",
-                        "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
-
-                    ],
-                    "label": "Anger Shell"
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "addValue('atkCS', +1)",
+                                "addValue('defCS', -1)",
+                                "addValue('spatkCS', +1)",
+                                "addValue('spdefCS', -1)",
+                                "addValue('spdCS', +1)",
+                                "OwlTrackers.addValue({token}, 'Injuries', +1)",
+                                "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
+                            ],
+                            "label": "Anger Shell"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP') + OwlTrackers.getMax({token}, 'HP') * 0.05, OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
+                            ],
+                            "label": "Regeneration"
+                        }
+                    ]
                 },
                 {
                     "type": "row",
