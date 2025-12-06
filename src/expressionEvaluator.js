@@ -269,10 +269,11 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     const expr = varConfig.expression || '';
     const deps = [];
     
-    // Extract all variable references {varName}
-    const matches = expr.matchAll(/\{(\w+)\}/g);
+    // Extract all variable references {varName} and {varName[index]} etc.
+    // Pattern matches {word} or {word[...]} where [...] can be nested
+    const matches = expr.matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
     for (const match of matches) {
-      const depVar = match[1];
+      const depVar = match[1]; // Extract just the variable name, ignore indexing
       if (depVar in variablesConfig && depVar !== varName) {
         deps.push(depVar);
       }

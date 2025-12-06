@@ -64,7 +64,18 @@ export async function readSheetRange(client, range) {
 
     const data = await response.json();
     console.log("[GSHEET-API] ✓ Successfully read sheet range, rows:", data.values?.length ?? 0);
-    return data.values || [];
+    
+    const values = data.values || [];
+    
+    // Flatten single-column ranges for convenience
+    // If all rows have exactly 1 column, return a 1D array instead of 2D
+    if (values.length > 0 && values.every(row => row.length === 1)) {
+      const flattened = values.map(row => row[0]);
+      console.log("[GSHEET-API] ✓ Flattened single-column range to 1D array");
+      return flattened;
+    }
+    
+    return values;
   } catch (error) {
     console.error("[GSHEET-API] Exception:", error);
     throw error;
