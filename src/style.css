@@ -156,8 +156,13 @@ h1 {
   display: flex;
   gap: 16px;
   margin: 12px 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
+}
+
+.mh-layout-row > * {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .mh-layout-button {
@@ -196,9 +201,10 @@ h1 {
   background: var(--mh-panel);
   border: 1px solid #444;
   border-radius: 4px;
-  flex: 1;
-  min-width: 80px;
-  max-width: 150px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
 }
 
 .mh-value-label {
@@ -298,10 +304,11 @@ h1 {
   background: var(--mh-panel);
   border: 1px solid #444;
   border-radius: 4px;
-  flex: 1;
-  min-width: 150px;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .mh-layout-text {
@@ -317,6 +324,9 @@ h1 {
   padding: 6px 8px;
   background: var(--mh-panel);
   border: 1px solid #444;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
   border-radius: 4px;
   flex: 1;
   min-width: 80px;
