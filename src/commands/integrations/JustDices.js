@@ -75,6 +75,8 @@ export async function roll(expression, hiddenOrOptions = {}) {
   }
 
   let timeoutId;
+  let unsubscribe;
+  
   const waitResponse = new Promise((resolve, reject) => {
     const handler = (evt) => {
       const res = evt.data;
@@ -86,6 +88,8 @@ export async function roll(expression, hiddenOrOptions = {}) {
       }
 
       clearTimeout(timeoutId);
+      if (unsubscribe) unsubscribe();
+      
       if (res.ok) {
         resolve(res);
       } else {
@@ -93,24 +97,29 @@ export async function roll(expression, hiddenOrOptions = {}) {
       }
     };
 
-    const unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
+    unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
     
     // Setup timeout
     timeoutId = setTimeout(() => {
-      unsubscribe();
-      reject(new Error("JustDices API timeout"));
+      if (unsubscribe) unsubscribe();
+      reject(new Error(`JustDices API timeout (${timeoutMs}ms) for expression: ${finalExpression}`));
     }, timeoutMs);
   });
 
-  // Send request
-  await OBR.broadcast.sendMessage(
-    "justdices.api.request",
-    { callId, expression: finalExpression, showInLogs, requesterId },
-    { destination: "ALL" }
-  );
+  try {
+    // Send request
+    await OBR.broadcast.sendMessage(
+      "justdices.api.request",
+      { callId, expression: finalExpression, showInLogs, requesterId },
+      { destination: "ALL" }
+    );
 
-  const response = await waitResponse;
-  return response.data?.total;
+    const response = await waitResponse;
+    return response.data?.total;
+  } catch (error) {
+    console.error("[JustDices] Roll failed:", error.message);
+    throw error;
+  }
 }
 
 /**
@@ -139,6 +148,8 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
   }
 
   let timeoutId;
+  let unsubscribe;
+  
   const waitResponse = new Promise((resolve, reject) => {
     const handler = (evt) => {
       const res = evt.data;
@@ -150,6 +161,8 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
       }
 
       clearTimeout(timeoutId);
+      if (unsubscribe) unsubscribe();
+      
       if (res.ok) {
         resolve(res);
       } else {
@@ -157,23 +170,28 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
       }
     };
 
-    const unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
+    unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
     
     // Setup timeout
     timeoutId = setTimeout(() => {
-      unsubscribe();
-      reject(new Error("JustDices API timeout"));
+      if (unsubscribe) unsubscribe();
+      reject(new Error(`JustDices API timeout (${timeoutMs}ms) for expression: ${finalExpression}`));
     }, timeoutMs);
   });
 
-  // Send request
-  await OBR.broadcast.sendMessage(
-    "justdices.api.request",
-    { callId, expression: finalExpression, showInLogs, requesterId },
-    { destination: "ALL" }
-  );
+  try {
+    // Send request
+    await OBR.broadcast.sendMessage(
+      "justdices.api.request",
+      { callId, expression: finalExpression, showInLogs, requesterId },
+      { destination: "ALL" }
+    );
 
-  return waitResponse;
+    return await waitResponse;
+  } catch (error) {
+    console.error("[JustDices] getRollObject failed:", error.message);
+    throw error;
+  }
 }
 
 /**

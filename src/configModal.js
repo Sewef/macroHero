@@ -40,19 +40,11 @@ document.getElementById("saveBtn").onclick = () => {
     }
     
     // Save Google Sheets credentials to localStorage
-    if (apiKey) {
-      localStorage.setItem(GSHEET_API_KEY_STORAGE, apiKey);
-      console.log("✓ API key saved to localStorage");
-    } else {
-      localStorage.removeItem(GSHEET_API_KEY_STORAGE);
-    }
+    const apiKey = document.getElementById("apiKeyInput").value;
+    saveGoogleSheetsApiKey(apiKey);
     
-    if (sheetId) {
-      localStorage.setItem(GSHEET_SHEET_ID_STORAGE, sheetId);
-      console.log("✓ Sheet ID saved to localStorage");
-    } else {
-      localStorage.removeItem(GSHEET_SHEET_ID_STORAGE);
-    }
+    const sheetId = document.getElementById("sheetIdInput").value;
+    saveGoogleSheetsSheetId(sheetId);
     
     console.log("✓ Config structure valid, sending to main app...");
     closeModal({ updatedConfig: parsed, gsheetUpdated: true });

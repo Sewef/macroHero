@@ -20,6 +20,8 @@ OBR.onReady(async () => {
     
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
+    } else {
+      console.warn("[MAIN] Google Sheets not configured - missing credentials");
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
