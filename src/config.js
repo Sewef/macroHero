@@ -54,37 +54,6 @@ async function getPlayerId() {
 // Export for use in other modules
 export { ensureOBRReady };
 
-// Helper to determine if a variable is "local" (should be saved to metadata)
-// Local variables are simple values that don't call external integrations
-// Returns true if the variable should be saved, false otherwise
-function isLocalVariable(varDef) {
-    if (!varDef || !varDef.expression) return false;
-    
-    const expr = String(varDef.expression);
-    
-    // Skip if it contains external integration calls
-    const externalPatterns = [
-        'GoogleSheets.',
-        'OwlTrackers.',
-        'ConditionsMarkers.',
-        'JustDices.',
-        'Local.'
-    ];
-    
-    if (externalPatterns.some(pattern => expr.includes(pattern))) {
-        return false;
-    }
-    
-    // Skip if it references other variables (calculated/derived)
-    // Variables are referenced with {varName} syntax
-    if (/{[^}]+}/.test(expr)) {
-        return false;
-    }
-    
-    // It's a local variable - simple value like numbers, booleans, strings
-    return true;
-}
-
 // Helper to save full config to localStorage
 // This preserves the entire config including external/calculated variable definitions
 export function saveConfigToLocalStorage(cfg) {
@@ -215,8 +184,6 @@ export async function saveConfig(cfg) {
         const localVarsToSave = {};
         
         cfg.pages?.forEach((page, pageIndex) => {
-            console.log(`[CONFIG] Processing page ${pageIndex}, has variables:`, !!page.variables, "has layout:", !!page.layout);
-            
             if (!page.variables || !page.layout) return;
             
             // Find all variables that are editable via UI controls
@@ -226,7 +193,6 @@ export async function saveConfig(cfg) {
                     if (item.type === 'counter' || item.type === 'checkbox' || item.type === 'input') {
                         if (item.var) {
                             editableVars.add(item.var);
-                            console.log(`[CONFIG] Found editable control: type=${item.type}, var=${item.var}`);
                         }
                     }
                     if (item.type === 'row' && item.children) {
@@ -236,20 +202,13 @@ export async function saveConfig(cfg) {
             };
             findEditableVars(page.layout);
             
-            console.log(`[CONFIG] Page ${pageIndex} editable vars:`, Array.from(editableVars));
-            
             const localVarsInPage = {};
             Object.entries(page.variables).forEach(([varName, varDef]) => {
                 // Save if it's an editable variable (has a UI control)
                 if (editableVars.has(varName)) {
                     localVarsInPage[varName] = varDef.expression;
-                    console.log(`[CONFIG] ✓ Saving editable var [${pageIndex}].${varName} =`, varDef.expression);
-                } else {
-                    console.log(`[CONFIG] ✗ Skipping non-editable var [${pageIndex}].${varName}`);
                 }
             });
-            
-            console.log(`[CONFIG] Page ${pageIndex} local vars to save:`, localVarsInPage);
             
             // Only include page if it has local variables
             if (Object.keys(localVarsInPage).length > 0) {
@@ -294,23 +253,15 @@ export async function saveConfig(cfg) {
         // Verify it was saved - wait a moment for the save to complete
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        console.log("[CONFIG] Verifying save...");
         const updatedMetadata = await OBR.room.getMetadata();
-        console.log("[CONFIG] Full room metadata after save:", updatedMetadata);
         const savedConfigs = updatedMetadata[STORAGE_KEY] || {};
-        console.log("[CONFIG] Saved configs for all players:", savedConfigs);
         const saved = savedConfigs[playerId];
-        console.log("[CONFIG] Saved data for current player:", saved);
         
         if (saved) {
-            console.log("✓ [CONFIG] Local variables successfully verified in room metadata!");
-            console.log("[CONFIG] Verified local variables:", JSON.stringify(saved, null, 2));
+            console.log("✓ [CONFIG] Local variables successfully saved to room metadata");
             return true;
         } else {
-            console.error("✗ [CONFIG] ERROR: Local variables were saved but not found in room metadata!");
-            console.error("[CONFIG] Expected key:", STORAGE_KEY);
-            console.error("[CONFIG] Expected player:", playerId);
-            console.error("[CONFIG] Saved configs:", savedConfigs);
+            console.error("✗ [CONFIG] ERROR: Local variables were not saved to room metadata!");
             return false;
         }
     } catch (error) {

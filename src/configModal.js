@@ -1,8 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
-
-const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
-const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
+import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheetsConfig.js";
 
 function closeModal(data) {
   if (data) {
@@ -84,8 +82,7 @@ OBR.onReady(() => {
   console.log("=== Config Modal Ready ===");
   
   // Load Google Sheets credentials from localStorage
-  const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE) || "";
-  const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE) || "";
+  const { apiKey, sheetId } = getGoogleSheetsCredentials();
   
   // Store original values for saving later
   const apiKeyInput = document.getElementById("apiKeyInput");

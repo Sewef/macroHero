@@ -3,9 +3,7 @@ import { openConfigModal, loadConfig } from "./config.js";
 import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
-
-const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
-const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
+import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheetsConfig.js";
 
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;
@@ -18,8 +16,7 @@ OBR.onReady(async () => {
     const cfg = await loadConfig();
 
     // Initialize expression system with Google Sheets from localStorage
-    const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE);
-    const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE);
+    const { apiKey, sheetId } = getGoogleSheetsCredentials();
     
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
@@ -63,11 +60,10 @@ OBR.onReady(async () => {
 
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
-      console.log("[MAIN] Config updated, refreshing UI");
+      console.log("[MAIN] Config updated via modal");
       
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
-      const apiKey = localStorage.getItem(GSHEET_API_KEY_STORAGE);
-      const sheetId = localStorage.getItem(GSHEET_SHEET_ID_STORAGE);
+      const { apiKey, sheetId } = getGoogleSheetsCredentials();
       
       if (apiKey && sheetId) {
         initializeExpressions({ apiKey, sheetId });

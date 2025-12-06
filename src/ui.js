@@ -242,7 +242,6 @@ function renderButton(item, page) {
         
         await handleButtonClick(item.commands, pageObj, globalVariables, onVariableResolved);
         
-        console.log("[UI] Button commands completed, saving config");
         // Auto-save config after commands that may have modified variables
         await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config after button:", err));
         
@@ -345,9 +344,6 @@ function renderInput(item, page) {
     variable.expression = input.value;
     page._resolved[item.var] = input.value;
     
-    console.log("[UI] Input changed:", item.var, "=", input.value);
-    console.log("[UI] Calling saveConfig with config:", config);
-    
     // Auto-save config after local variable change
     saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
   };
@@ -387,9 +383,6 @@ function renderCheckbox(item, page) {
     const newValue = checkbox.checked;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
-    
-    console.log("[UI] Checkbox changed:", item.var, "=", newValue);
-    console.log("[UI] Calling saveConfig with config:", config);
     
     // Auto-save config after local variable change
     saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
@@ -502,9 +495,6 @@ function renderCounter(item, page) {
       pendingUpdate = true;
       
       try {
-        console.log("[UI] Counter changed:", item.var, "=", newValue);
-        console.log("[UI] Calling saveConfig with config:", config);
-        
         // Auto-save config after local variable change
         await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
         
