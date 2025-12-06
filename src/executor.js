@@ -126,81 +126,121 @@ function evaluateExpression(expression, page) {
  * @returns {string} Expression with variables replaced by values
  */
 function substituteVariables(expression, scope = {}, inStringLiteral = false) {
-  console.log(`[SUBST] ==== VERSION 2.0 LOADED ==== Substituting variables in: "${expression}"`);
-  console.log(`[SUBST] Available scope:`, scope);
-  console.log(`[SUBST] In string literal: ${inStringLiteral}`);
+  console.log(`[EXECUTOR] Substituting variables in: "${expression}" (inStringLiteral: ${inStringLiteral})`);
   
   let result = expression;
-
-  // First, handle {varName} syntax (nested variable references)
-  const curlyVarPattern = /\{(\w+)\}/g;
-  result = result.replace(curlyVarPattern, (match, varName) => {
-    if (varName in scope) {
-      const value = scope[varName];
-      console.log(`[SUBST]   {${varName}} = ${value} (type: ${typeof value})`);
-      
-      if (typeof value === 'boolean') {
-        // Convert booleans to 0/1 for math expressions
-        return value ? '1' : '0';
-      } else if (typeof value === 'number') {
-        return String(value);
-      } else if (value === null) {
-        return 'null';
-      } else if (value === undefined) {
-        return 'undefined';
-      } else if (typeof value === 'string') {
-        // In string literals, use raw value; in code, quote it
-        return inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
-      } else {
-        return JSON.stringify(value);
-      }
-    } else {
-      console.warn(`[SUBST]   ✗ {${varName}} not found in scope`);
-      return match; // Leave unchanged
-    }
-  });
-
-  // Then, handle plain variable names (for backward compatibility)
-  const varRefs = parser.extractVariableReferences(result);
-  console.log(`[SUBST] Found plain variable references:`, varRefs);
   
-  // Sort by length descending to replace longer names first (avoid partial replacements)
-  varRefs.sort((a, b) => b.length - a.length);
+  // Check if this expression itself should be evaluated (contains operators or nested braces)
+  const shouldEvaluate = inStringLiteral && /[+\-*\/(){}]/.test(expression);
 
-  // Replace each variable with its value
-  for (const varRef of varRefs) {
-    if (varRef in scope) {
-      let value = scope[varRef];
-      console.log(`[SUBST]   ${varRef} = ${value} (type: ${typeof value})`);
-      
-      // Convert to string representation for substitution into expression
-      let valueStr;
-      if (typeof value === 'boolean') {
-        // Convert booleans to 0/1 for math expressions
-        valueStr = value ? '1' : '0';
-      } else if (typeof value === 'string') {
-        // In string literals, use raw value; in code, quote it
-        valueStr = inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
-      } else if (typeof value === 'number') {
-        valueStr = String(value);
-      } else if (value === null) {
-        valueStr = 'null';
-      } else if (value === undefined) {
-        valueStr = 'undefined';
+  // STEP 1: Process {{...}} patterns (shouldn't happen since parser strips one layer)
+  while (result.includes('{{')) {
+    const startPos = result.indexOf('{{');
+    if (startPos === -1) break;
+    
+    let depth = 1;
+    let i = startPos + 2;
+    let endPos = -1;
+    
+    while (i < result.length - 1) {
+      if (result[i] === '{' && result[i + 1] === '{') {
+        depth++;
+        i += 2;
+      } else if (result[i] === '}' && result[i + 1] === '}') {
+        depth--;
+        if (depth === 0) {
+          endPos = i + 2;
+          break;
+        }
+        i += 2;
       } else {
-        valueStr = JSON.stringify(value);
+        i++;
       }
-      
-      // Replace plain variable name (not in curly braces)
-      // Use word boundaries to avoid partial replacements
-      const regex = new RegExp(`\\b${varRef}\\b`, 'g');
-      result = result.replace(regex, valueStr);
-    } else {
-      console.warn(`[SUBST]   ✗ ${varRef} not found in scope`);
+    }
+    
+    if (endPos === -1) {
+      console.error('[EXECUTOR] Unmatched {{ in expression');
+      break;
+    }
+    
+    const innerExpr = result.substring(startPos + 2, endPos - 2);
+    console.log(`[EXECUTOR] Processing {{${innerExpr}}}`);
+    
+    let substituted = substituteVariables(innerExpr, scope, false);
+    console.log(`[EXECUTOR] After substitution: ${substituted}`);
+    
+    try {
+      const evaluated = Function('"use strict"; return (' + substituted + ')')();
+      console.log(`[EXECUTOR] Evaluated to: ${evaluated}`);
+      result = result.substring(0, startPos) + String(evaluated) + result.substring(endPos);
+    } catch (err) {
+      console.error(`[EXECUTOR] Failed to evaluate {{${innerExpr}}}: ${err.message}`);
+      break;
     }
   }
 
-  console.log(`[SUBST] Result: "${result}"`);
+  // STEP 2: Process {expression} - substitute vars then evaluate if complex
+  result = result.replace(/\{([^{}]+)\}/g, (match, inner) => {
+    if (/^\w+$/.test(inner)) {
+      // Simple {var}
+      if (inner in scope) {
+        const val = scope[inner];
+        if (typeof val === 'boolean') return val ? '1' : '0';
+        if (typeof val === 'number') return String(val);
+        if (typeof val === 'string') return inStringLiteral ? val : `'${val.replace(/'/g, "\\'")}'`;
+        return String(val);
+      }
+      return match;
+    }
+    
+    // Complex {expr} - recursively substitute and evaluate
+    let subst = substituteVariables(inner, scope, false);
+    try {
+      const evaluated = Function('"use strict"; return (' + subst + ')')();
+      return String(evaluated);
+    } catch (err) {
+      console.error(`[EXECUTOR] Failed to eval {${inner}}: ${err.message}`);
+      return match;
+    }
+  });
+
+
+  // STEP 3: Plain variables
+  const varRefs = parser.extractVariableReferences(result);
+  varRefs.sort((a, b) => b.length - a.length);
+
+  for (const varRef of varRefs) {
+    if (varRef in scope) {
+      const value = scope[varRef];
+      let valueStr;
+      if (typeof value === 'boolean') {
+        valueStr = value ? '1' : '0';
+      } else if (typeof value === 'string') {
+        valueStr = inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
+      } else if (typeof value === 'number') {
+        valueStr = String(value);
+      } else {
+        valueStr = String(value);
+      }
+      
+      const regex = new RegExp(`\\b${varRef}\\b`, 'g');
+      result = result.replace(regex, valueStr);
+    }
+  }
+  
+  // STEP 4: If we should evaluate (expression in string literal), do it now
+  if (shouldEvaluate) {
+    console.log(`[EXECUTOR] Evaluating expression in string literal: "${result}"`);
+    try {
+      const evaluated = Function('"use strict"; return (' + result + ')')();
+      result = String(evaluated);
+      console.log(`[EXECUTOR] Evaluated to: ${result}`);
+    } catch (err) {
+      console.log(`[EXECUTOR] Could not evaluate, keeping as-is: ${err.message}`);
+    }
+  }
+
+  console.log(`[EXECUTOR] Final result: "${result}"`);
   return result;
 }
 
@@ -211,41 +251,33 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
  * @returns {string} Parsed command with substitutions
  */
 function parseCommandString(command, page) {
-  console.log(`[PARSE] Parsing command: "${command}"`);
-  
   const parsed = parser.parseCommand(command);
-  console.log(`[PARSE] Parsed segments:`, parsed.segments);
-  
   const scope = page?._resolved || {};
-  console.log(`[PARSE] Scope available:`, scope);
+  
+  console.log('[EXECUTOR] parseCommandString - parsed segments:', parsed.segments.length);
   
   let result = "";
   let accumulatedLiteral = "";
   
   for (const segment of parsed.segments) {
-    console.log(`[PARSE] Processing segment:`, segment);
-    
     if (segment.type === "literal") {
       accumulatedLiteral += segment.value;
       result += segment.value;
     } else if (segment.type === "expression") {
+      console.log('[EXECUTOR] Processing expression segment:', segment.value);
       // Check if we're inside a string literal by counting unmatched quotes
       // Count single quotes in the accumulated literal before this expression
       const singleQuotes = (accumulatedLiteral.match(/'/g) || []).length;
-      const inStringLiteral = singleQuotes % 2 === 1; // Odd number means we're inside a string
+      const inStringLiteral = singleQuotes % 2 === 1;
       
-      console.log(`[PARSE] Expression context: ${inStringLiteral ? 'inside string literal' : 'code context'}`);
-      
-      // Substitute variables with context-aware quoting
       const substituted = substituteVariables(segment.value, scope, inStringLiteral);
-      console.log(`[PARSE] After substitution: "${substituted}"`);
-      
+      console.log('[EXECUTOR] Segment substituted to:', substituted);
       result += substituted;
       accumulatedLiteral += substituted; // Add to accumulated for next segment's context check
     }
   }
   
-  console.log(`[PARSE] Final result: "${result}"`);
+  console.log('[EXECUTOR] Final parsed command:', result);
   return result;
 }
 
@@ -257,10 +289,7 @@ function parseCommandString(command, page) {
  */
 export async function executeCommand(command, page) {
   try {
-    console.log("\n[EXEC] executeCommand called");
-    console.log("[EXEC]   command:", command);
-    console.log("[EXEC]   page.id:", page?.id);
-    console.log("[EXEC]   page._resolved:", page?._resolved);
+    console.log(`[EXECUTOR] Executing command: ${command}`);
     
     if (!page) {
       throw new Error("No page provided to executeCommand");
@@ -273,13 +302,10 @@ export async function executeCommand(command, page) {
     }
 
     // Parse and substitute variables in the command
-    console.log("[EXEC] Parsing command string...");
     let parsedCommand = parseCommandString(command, page);
-    console.log("[EXEC] Parsed command:", parsedCommand);
     
     // Extract variable references to check what's needed
     const varRefs = parser.extractVariableReferences(command);
-    console.log("Variable references:", varRefs);
     
     // Create execution context with resolved variables
     const context = createExecutionContext(page);
@@ -303,8 +329,6 @@ export async function executeCommand(command, page) {
         }
       }
     }
-    
-    console.log('[EXEC] Detected async methods:', asyncMethods);
     
     // For each async method, find all calls and wrap them with (await ...)
     for (const method of asyncMethods) {
@@ -352,27 +376,20 @@ export async function executeCommand(command, page) {
       }
     }
     
-    console.log("[EXEC] Transformed command:", parsedCommand);
-    
     // Build and execute the function
     // We use a function to safely evaluate the command with the context
     try {
       const functionCode = `return (async () => { return ${parsedCommand}; })()`;
-      console.log("[EXEC] Function code:", functionCode);
-      console.log("[EXEC] Context keys:", Object.keys(context));
-      
       const func = new Function(...Object.keys(context), functionCode);
       const result = await func(...Object.values(context));
-      
-      console.log("Command result:", result);
       return result;
     } catch (syntaxError) {
-      console.error("[EXEC] Syntax error in function code. Parsed command:", parsedCommand);
-      console.error("[EXEC] Error details:", syntaxError);
+      console.error(`[EXECUTOR] Syntax error executing: ${parsedCommand}`);
+      console.error(`[EXECUTOR] Error:`, syntaxError);
       throw syntaxError;
     }
   } catch (error) {
-    console.error("Error executing command:", error);
+    console.error(`[EXECUTOR] Error executing command:`, error);
     throw error;
   }
 }
@@ -390,7 +407,7 @@ export async function executeCommands(commands, page) {
       const result = await executeCommand(command, page);
       results.push({ ok: true, result });
     } catch (error) {
-      console.error("Command execution failed:", error);
+      console.error(`[EXECUTOR] Command execution failed:`, error);
       results.push({ ok: false, error: error.message });
     }
   }
@@ -437,21 +454,15 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       page._resolved = { ...page._resolved, ...freshResolved };
     }
     
-    console.log("[EXECUTOR] Variables resolved for commands:", page._resolved);
-    
+      console.log(`[EXECUTOR] Variables resolved for commands (${usedVars.size} used)`);
+
     // Execute the commands
-    const results = await executeCommands(commands, page);
-    console.log("Button action completed:", results);
-    
-    // After commands execute, resolve variables that were affected by integrations or modified by setValue/addValue
-    console.log("[EXECUTOR] Analyzing affected variables...");
+    const results = await executeCommands(commands, page);    // After commands execute, resolve variables that were affected by integrations or modified by setValue/addValue
     const affectedVars = getAffectedVariables(commands, page.variables);
-    console.log("[EXECUTOR] Affected variables from integrations:", Array.from(affectedVars));
     
     // Track variables that were directly modified by setValue/addValue
     const directlyModified = new Set();
     if (page._modifiedVars && page._modifiedVars.size > 0) {
-      console.log("[EXECUTOR] Variables modified by setValue/addValue:", Array.from(page._modifiedVars));
       for (const modifiedVar of page._modifiedVars) {
         directlyModified.add(modifiedVar);
         affectedVars.add(modifiedVar);
@@ -460,10 +471,9 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     
     // Find all variables that depend on affected/modified variables
     const allAffected = getDependentVariables(page.variables, affectedVars);
-    console.log("[EXECUTOR] All affected variables (including dependents):", Array.from(allAffected));
     
     if (allAffected.size > 0) {
-      console.log("[EXECUTOR] Re-resolving affected variables and their dependents...");
+      console.log(`[EXECUTOR] Re-resolving ${allAffected.size} affected variables and their dependents`);
       // Update old values before re-resolving
       const currentResolved = { ...page._resolved };
       const updatedResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
@@ -476,8 +486,6 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
         }
       }, allAffected);
       page._resolved = updatedResolved;
-    } else {
-      console.log("[EXECUTOR] No variables affected, skipping re-resolution");
     }
     
     // Clean up modified vars tracking

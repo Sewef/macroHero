@@ -1,3 +1,8 @@
+/**
+ * UI Manager
+ * Handles rendering and updating the user interface
+ */
+
 let config = null;
 let currentPage = null;
 let globalVariables = {}; // Store global variables for use in button clicks
@@ -8,13 +13,20 @@ import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
 import { resolveVariables, getDependentVariables } from "./expressionEvaluator.js";
 
+/**
+ * Initialize the UI with the given configuration
+ * @param {Object} cfg - Configuration object
+ */
 export function initUI(cfg) {
   config = cfg;
   renderPageButtons();
   selectFirstPage();
 }
 
-// Store global variables for later use
+/**
+ * Store global variables for use in button clicks
+ * @param {Object} vars - Global variables object
+ */
 export function setGlobalVariables(vars) {
   globalVariables = vars;
   console.log("[UI] Global variables stored:", globalVariables);
@@ -101,27 +113,21 @@ function renderPageContent(page) {
 /**
  * Update a rendered value element when its variable resolves
  */
-function updateRenderedValue(varName, value) {
-  console.log(`[updateRenderedValue] ${varName} = ${value}`);
+export function updateRenderedValue(varName, value) {
   const element = renderedValueElements[varName];
   if (element) {
-    console.log(`[updateRenderedValue] Found element for ${varName}`);
     // Update value display
     const contentDiv = element.querySelector(".mh-value-content");
     if (contentDiv) {
       contentDiv.textContent = value ?? "N/A";
       contentDiv.classList.remove("mh-loading");
-      console.log(`[updateRenderedValue] Updated value content for ${varName}`);
     }
     
     // Update counter input if this is a counter
     const counterInput = element.querySelector(".mh-counter-input");
     if (counterInput) {
-      counterInput.value = value ?? 0;
-      console.log(`[updateRenderedValue] Updated counter input for ${varName} to ${value}`);
+      counterInput.value = value;
     }
-  } else {
-    console.log(`[updateRenderedValue] No element found for ${varName}`);
   }
 }
 
@@ -258,11 +264,6 @@ function renderValue(item, page) {
   const valueDiv = document.createElement("div");
   valueDiv.className = "mh-layout-value";
 
-  console.log(`[RENDER_VALUE] Rendering item:`, item);
-  console.log(`[RENDER_VALUE] Looking for variable: "${item.var}"`);
-  console.log(`[RENDER_VALUE] Available variables:`, Object.keys(page.variables || {}));
-  console.log(`[RENDER_VALUE] Resolved values:`, page._resolved);
-
   // Get variable definition from page.variables
   const variable = page.variables?.[item.var];
 
@@ -359,7 +360,6 @@ function renderCheckbox(item, page) {
     const newValue = checkbox.checked;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
-    console.log(`[Checkbox] Updated ${item.var} to ${newValue}`);
   };
 
   const text = document.createElement("span");
@@ -439,12 +439,20 @@ function renderCounter(item, page) {
 
   // Function to update value
   const updateValue = async (newValue) => {
+    // Store old value to detect if it actually changed
+    const oldValue = Number(input.value) || 0;
+    
     // Apply min/max constraints
     if (variable.min !== undefined && newValue < variable.min) {
       newValue = variable.min;
     }
     if (variable.max !== undefined && newValue > variable.max) {
       newValue = variable.max;
+    }
+    
+    // Only trigger update if value actually changed
+    if (oldValue === newValue) {
+      return; // No change, skip update
     }
     
     input.value = newValue;
@@ -464,7 +472,6 @@ function renderCounter(item, page) {
         // Re-resolve all variables that depend on this one
         const dependentVars = getDependentVariables(page.variables, [item.var]);
         if (dependentVars.size > 1) { // More than just the changed variable itself
-          console.log(`[Counter] ${item.var} changed, re-resolving dependents:`, Array.from(dependentVars));
           const onVariableResolved = (varName, value) => {
             page._resolved[varName] = value;
             updateRenderedValue(varName, value);
@@ -526,12 +533,8 @@ function renderCounter(item, page) {
 // ============================================
 
 export function renderConfigUI() {
-  console.log("[UI.renderConfigUI] Starting render...");
-  console.log("[UI.renderConfigUI] Current config:", config);
-  console.log("[UI.renderConfigUI] Current page index:", currentPage);
-  
   if (!config) {
-    console.warn("[UI.renderConfigUI] No config available");
+    console.warn("[UI] No config available");
     return;
   }
   
@@ -541,48 +544,33 @@ export function renderConfigUI() {
   if (currentPage !== null && currentPage !== undefined) {
     const page = config.pages?.[currentPage];
     if (page) {
-      console.log("[UI.renderConfigUI] Re-rendering current page at index:", currentPage);
       renderPageContent(page);
     } else {
-      console.log("[UI.renderConfigUI] Current page not found, selecting first");
       selectFirstPage();
     }
   } else {
-    console.log("[UI.renderConfigUI] No current page, selecting first");
     selectFirstPage();
   }
-  
-  console.log("[UI.renderConfigUI] Render complete");
 }
 
 export async function updateConfig(newConfig) {
-  console.log("[UI.updateConfig] Received new config:", newConfig);
-  console.log("[UI.updateConfig] Previous config pages:", config?.pages?.length);
-  
+  console.log("[UI] Config updated, refreshing UI");
   config = newConfig;
-  
-  console.log("[UI.updateConfig] New config pages:", config?.pages?.length);
   
   // Re-resolve variables when config updates
   try {
     // Resolve global variables
-    console.log("[UI.updateConfig] Re-resolving global variables...");
     const globalVars = await resolveVariables(config.global?.variables);
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
-    console.log("[UI.updateConfig] Global variables resolved:", globalVars);
 
     // Resolve variables for each page
-    console.log("[UI.updateConfig] Re-resolving page variables...");
     for (const page of config.pages || []) {
       page._resolved = await resolveVariables(page.variables, globalVars);
-      console.log(`[UI.updateConfig] Page ${page.id} variables resolved:`, page._resolved);
     }
   } catch (error) {
-    console.error("[UI.updateConfig] Error re-resolving variables:", error);
+    console.error("[UI] Error re-resolving variables:", error);
   }
 
-  console.log("[UI.updateConfig] Calling renderConfigUI()...");
   renderConfigUI();
-  console.log("[UI.updateConfig] UI render complete");
 }

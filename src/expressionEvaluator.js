@@ -285,23 +285,18 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   // If filtering, expand to include all dependencies
   let varsToResolve = onlyVars;
   if (onlyVars) {
-    console.log("[RESOLVE] Original filter set:", Array.from(onlyVars));
     varsToResolve = new Set(onlyVars);
     const toExpand = Array.from(onlyVars);
     while (toExpand.length > 0) {
       const varName = toExpand.pop();
-      console.log("[RESOLVE] Expanding dependencies for:", varName);
       const deps = dependencies.get(varName) || [];
-      console.log("[RESOLVE]   Dependencies:", deps);
       for (const dep of deps) {
         if (!varsToResolve.has(dep)) {
-          console.log("[RESOLVE]   Adding dependency:", dep);
           varsToResolve.add(dep);
           toExpand.push(dep);
         }
       }
     }
-    console.log("[RESOLVE] Expanded vars to resolve (including dependencies):", Array.from(varsToResolve));
   }
   
   // Topological sort using Kahn's algorithm
@@ -311,45 +306,34 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   const completed = new Set();
   
   function visit(varName) {
-    console.log(`[RESOLVE VISIT] Visiting ${varName}, completed=${completed.has(varName)}, inProgress=${inProgress.has(varName)}`);
     if (completed.has(varName)) return;
     if (inProgress.has(varName)) return; // Cycle detection
     
     inProgress.add(varName);
     
     const deps = dependencies.get(varName) || [];
-    console.log(`[RESOLVE VISIT] ${varName} has dependencies:`, deps);
     for (const dep of deps) {
-      console.log(`[RESOLVE VISIT] Recursing into dependency: ${dep}`);
       visit(dep);
     }
     
     inProgress.delete(varName);
     completed.add(varName);
     sorted.push(varName);
-    console.log(`[RESOLVE VISIT] Completed ${varName}, sorted is now:`, sorted);
   }
   
   // Only visit variables we need to resolve (after expansion)
   if (varsToResolve) {
-    console.log("[RESOLVE] Starting topological sort for filtered vars:", Array.from(varsToResolve));
     for (const varName of varsToResolve) {
       if (varName in variablesConfig) {
-        console.log(`[RESOLVE] Starting visit for: ${varName}`);
         visit(varName);
-      } else {
-        console.warn(`[RESOLVE] Variable ${varName} not in variablesConfig, skipping`);
       }
     }
   } else {
     // No filter - resolve all
-    console.log("[RESOLVE] Starting topological sort for all vars");
     for (const [varName] of varEntries) {
       visit(varName);
     }
   }
-  
-  console.log("[RESOLVE] Topologically sorted order:", sorted);
   
   for (const varName of sorted) {
     // No need to filter here anymore - sorted only contains what we need
@@ -361,16 +345,14 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     // When filtering, always re-resolve the vars in our filter set (even if they were in previouslyResolved)
     // This ensures we get fresh values for affected variables and their dependencies
     try {
-      console.log(`[RESOLVE] Resolving ${varName}...`);
       const value = await evaluateExpression(varConfig.expression, resolved);
       resolved[varName] = value;
-      console.log(`[RESOLVE] ${varName} = ${value}`);
       
       if (onVariableResolved) {
         onVariableResolved(varName, value);
       }
     } catch (error) {
-      console.error(`Error resolving "${varName}":`, error.message);
+      console.error(`[EVALUATOR] Error resolving "${varName}":`, error.message);
       resolved[varName] = null;
       
       if (onVariableResolved) {

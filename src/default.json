@@ -2,7 +2,7 @@
     "global": {
         "title": "Macro Hero",
         "width": 600,
-        "height": 500,
+        "height": 600,
         "variables": {
             "playerName": {
                 "expression": "Local.value('playerName', 'Unknown Hero')"
@@ -364,7 +364,7 @@
                         {
                             "type": "checkbox",
                             "var": "isCrit",
-                            "label": "Critical Hit"
+                            "label": "Is Critical Hit"
                         },
                         {
                             "type": "checkbox",
@@ -397,6 +397,8 @@
                             "label": "Regeneration"
                         }
                     ]
+                },
+                {"type": "divider"
                 },
                 {
                     "type": "row",
