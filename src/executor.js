@@ -4,7 +4,6 @@
  */
 
 import * as math from "mathjs";
-import * as JustDices from "./commands/integrations/JustDices.js";
 import * as parser from "./parser.js";
 import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands } from "./expressionEvaluator.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
@@ -27,14 +26,6 @@ function createExecutionContext(page) {
     // Integrations from Manager
     ...integrations,
     
-    // JustDices (special handling for roll functions)
-    JustDices: {
-      roll: JustDices.roll,
-      getRollObject: JustDices.getRollObject,
-      rollSilent: JustDices.rollSilent,
-      getRollObjectSilent: JustDices.getRollObjectSilent,
-    },
-    
     // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)
     ...math,
     
@@ -44,11 +35,6 @@ function createExecutionContext(page) {
       if (!variable) {
         console.warn(`Variable not found: ${varName}`);
         return undefined;
-      }
-      
-      // For calculated variables, we'd need to evaluate the expression
-      if (variable.type === "calc") {
-        return evaluateExpression(variable.expression, page);
       }
       
       return variable.default ?? variable.expression ?? undefined;

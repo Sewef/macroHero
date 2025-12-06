@@ -7,6 +7,7 @@ import GSheetIntegration from "./GSheet.js";
 import LocalIntegration from "./Local.js";
 import * as ConditionsMarkers from "./ConditionsMarkers.js";
 import * as OwlTrackers from "./OwlTrackers.js";
+import * as JustDices from "./JustDices.js";
 import * as playerMetadata from "../playerMetadata.js";
 import * as sceneMetadata from "../sceneMetadata.js";
 import * as tokenMetadata from "../tokenMetadata.js";
@@ -89,6 +90,13 @@ class IntegrationsManager {
         getValue: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getValue(tokenId, trackerName)),
         setValue: this.wrapAsync((tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value)),
         addValue: this.wrapAsync((tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta)),
+      },
+      // JustDices integration (all async)
+      JustDices: {
+        roll: this.wrapAsync((expression, hiddenOrOptions) => JustDices.roll(expression, hiddenOrOptions)),
+        getRollObject: this.wrapAsync((expression, hiddenOrOptions) => JustDices.getRollObject(expression, hiddenOrOptions)),
+        rollSilent: this.wrapAsync((expression, hidden) => JustDices.rollSilent(expression, hidden)),
+        getRollObjectSilent: this.wrapAsync((expression, hidden) => JustDices.getRollObjectSilent(expression, hidden)),
       },
       // Metadata modules
       playerMetadata,
