@@ -239,8 +239,42 @@
                 "spd": {
                     "expression": "{stats[4]}"
                 },
+                "atkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "defCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spatkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdefCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "isCrit": {
+                    "expression": "false"
+                },
+                "recklessAdvance": {
+                    "expression": "false"
+                },
                 "injuries": {
                     "expression": "OwlTrackers.getValue({token}, 'Injuries')"
+                },
+                "intimidate": {
+                    "expression": "GoogleSheets.getValue('Xalithra Général', 'C11')"
                 },
                 "pushItToTheLimit": {
                     "expression": "false"
@@ -285,29 +319,81 @@
                     ]
                 },
                 {
-                    "type":"divider"
-                },
-                {
-                    "type":"row",
-                    "children":[
+                    "type": "row",
+                    "children": [
                         {
-                            "type":"checkbox",
-                            "var":"pushItToTheLimit",
-                            "label":"Push it to the Limit"
+                            "type": "counter",
+                            "var": "atkCS",
+                            "label": "ATK CS"
                         },
                         {
-                            "type":"value",
-                            "var":"injuries",
-                            "label":"Injuries"
+                            "type": "counter",
+                            "var": "defCS",
+                            "label": "DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spatkCS",
+                            "label": "SP.ATK CS"
                         }
                     ]
                 },
                 {
-                    "type": "button",
-                    "commands": [
-                        "{pushItToTheLimit} ? JustDices.roll('db{6+{weaponDB}/3+{injuries}}') : JustDices.roll('1d20')"
-                    ],
-                    "label": "Fléau"
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "spdefCS",
+                            "label": "SP.DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spdCS",
+                            "label": "SPD CS"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "checkbox",
+                            "var": "pushItToTheLimit",
+                            "label": "Push it to the Limit"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "isCrit",
+                            "label": "Critical Hit"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "recklessAdvance",
+                            "label": "Reckless Advance"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db{5+{weaponDB}/3+{injuries}} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {atk}')"
+                            ],
+                            "label": "Flail"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db{6+{weaponDB}/3} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {atk}')"
+                            ],
+                            "label": "Rage"
+                        }
+                    ]
                 }
             ]
         }

@@ -259,7 +259,19 @@ function renderValue(item, page) {
   }
 
   // Get resolved value from page._resolved (from expression evaluation)
-  const resolvedValue = page._resolved?.[item.var];
+  let resolvedValue = page._resolved?.[item.var];
+  
+  // Apply min/max constraints if specified
+  if (typeof resolvedValue === 'number') {
+    if (variable.min !== undefined && resolvedValue < variable.min) {
+      resolvedValue = variable.min;
+      page._resolved[item.var] = resolvedValue;
+    }
+    if (variable.max !== undefined && resolvedValue > variable.max) {
+      resolvedValue = variable.max;
+      page._resolved[item.var] = resolvedValue;
+    }
+  }
 
   // Create the value element structure
   // Only treat as loading if the variable hasn't been resolved yet (undefined, not in _resolved)
@@ -381,27 +393,46 @@ function renderCounter(item, page) {
   input.type = "number";
   input.className = "mh-counter-input";
   input.value = numValue;
+  
+  // Set min/max if specified
+  if (variable.min !== undefined) {
+    input.min = variable.min;
+  }
+  if (variable.max !== undefined) {
+    input.max = variable.max;
+  }
+
+  // Scroll wheel support
+  input.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const currentVal = Number(input.value) || 0;
+    const step = item.step ?? 1;
+    let newValue;
+    
+    if (e.deltaY < 0) {
+      // Scroll up = increment
+      newValue = currentVal + step;
+    } else {
+      // Scroll down = decrement
+      newValue = currentVal - step;
+    }
+    
+    updateValue(newValue);
+  }, { passive: false });
 
   // Function to update value
   const updateValue = async (newValue) => {
+    // Apply min/max constraints
+    if (variable.min !== undefined && newValue < variable.min) {
+      newValue = variable.min;
+    }
+    if (variable.max !== undefined && newValue > variable.max) {
+      newValue = variable.max;
+    }
+    
     input.value = newValue;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
-  };
-
-  // Decrement button
-  const decrementBtn = document.createElement("button");
-  decrementBtn.className = "mh-counter-btn";
-  decrementBtn.textContent = "-";
-  decrementBtn.onclick = () => {
-    const currentVal = Number(input.value) || 0;
-    const newValue = currentVal - (item.step ?? 1);
-    updateValue(newValue);
-  };
-
-  input.onchange = () => {
-    const newValue = Number(input.value) || 0;
-    updateValue(newValue);
   };
 
   // Increment button
@@ -410,13 +441,28 @@ function renderCounter(item, page) {
   incrementBtn.textContent = "+";
   incrementBtn.onclick = () => {
     const currentVal = Number(input.value) || 0;
-    const newValue = currentVal + (item.step ?? 1);
+    let newValue = currentVal + (item.step ?? 1);
     updateValue(newValue);
   };
 
-  controls.appendChild(decrementBtn);
+  // Decrement button
+  const decrementBtn = document.createElement("button");
+  decrementBtn.className = "mh-counter-btn";
+  decrementBtn.textContent = "-";
+  decrementBtn.onclick = () => {
+    const currentVal = Number(input.value) || 0;
+    let newValue = currentVal - (item.step ?? 1);
+    updateValue(newValue);
+  };
+
+  // Button container
+  const buttonContainer = document.createElement("div");
+  buttonContainer.className = "mh-counter-buttons";
+  buttonContainer.appendChild(incrementBtn);
+  buttonContainer.appendChild(decrementBtn);
+
   controls.appendChild(input);
-  controls.appendChild(incrementBtn);
+  controls.appendChild(buttonContainer);
 
   container.appendChild(label);
   container.appendChild(controls);
