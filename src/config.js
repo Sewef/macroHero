@@ -129,7 +129,13 @@ export async function saveConfig(cfg) {
         // Update this player's config
         playerConfigs[playerId] = cfg;
         
+        // Calculate size of the config
+        const configJson = JSON.stringify(cfg);
+        const configSizeBytes = new Blob([configJson]).size;
+        const configSizeKB = (configSizeBytes / 1024).toFixed(2);
+        
         console.log("[CONFIG] Config to save:", cfg);
+        console.log("[CONFIG] Config size:", configSizeBytes, "bytes (", configSizeKB, "KB )");
         console.log("[CONFIG] Room metadata object being saved:", { [STORAGE_KEY]: playerConfigs });
         
         // Save to room metadata (using spread operator to preserve other extensions' data)
