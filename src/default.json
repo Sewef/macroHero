@@ -118,19 +118,100 @@
         {
             "label": "Advanced",
             "variables": {
-                "customVar": {
-                    "expression": "'Custom Value'"
+                "textVar": {
+                    "expression": "'Hello World'"
+                },
+                "numberVar": {
+                    "expression": "42"
+                },
+                "counterVar": {
+                    "expression": "10"
+                },
+                "checkboxVar": {
+                    "expression": "true"
+                },
+                "inputVar": {
+                    "expression": "'Enter text here'"
                 }
             },
             "layout": [
                 {
                     "type": "title",
-                    "text": "Advanced Actions"
+                    "text": "Layout Examples"
                 },
                 {
-                    "type": "value",
-                    "var": "customVar",
-                    "label": "Custom Variable"
+                    "type": "text",
+                    "content": "This page demonstrates all available layout types"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Display Types"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "textVar",
+                            "label": "Text Value"
+                        },
+                        {
+                            "type": "value",
+                            "var": "numberVar",
+                            "label": "Number Value"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Input Types"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "counterVar",
+                            "label": "Counter",
+                            "step": 5
+                        },
+                        {
+                            "type": "counter",
+                            "var": "numberVar",
+                            "label": "Counter (step 1)"
+                        }
+                    ]
+                },
+                {
+                    "type": "input",
+                    "var": "inputVar",
+                    "label": "Text Input",
+                    "placeholder": "Type something..."
+                },
+                {
+                    "type": "checkbox",
+                    "var": "checkboxVar",
+                    "label": "Checkbox Example"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Button"
+                },
+                {
+                    "type": "button",
+                    "label": "Example Button",
+                    "commands": [
+                        "JustDices.roll('1d20')"
+                    ]
                 }
             ]
         }

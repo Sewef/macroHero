@@ -145,6 +145,9 @@ function renderLayoutElement(layoutItem, page) {
     case "checkbox":
       return renderCheckbox(layoutItem, page);
     
+    case "counter":
+      return renderCounter(layoutItem, page);
+    
     case "text":
       return renderText(layoutItem);
     
@@ -335,6 +338,79 @@ function renderDivider() {
   const divider = document.createElement("div");
   divider.className = "mh-layout-divider";
   return divider;
+}
+
+function renderCounter(item, page) {
+  const container = document.createElement("div");
+  container.className = "mh-layout-counter";
+
+  const variable = page.variables?.[item.var];
+
+  if (!variable) {
+    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
+    return container;
+  }
+
+  // Get current value
+  const currentValue = page._resolved?.[item.var] ?? variable.expression ?? variable.default ?? 0;
+  const numValue = Number(currentValue) || 0;
+
+  // Label
+  const label = document.createElement("div");
+  label.className = "mh-counter-label";
+  label.textContent = item.label ?? item.var;
+
+  // Counter controls
+  const controls = document.createElement("div");
+  controls.className = "mh-counter-controls";
+
+  // Value input
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "mh-counter-input";
+  input.value = numValue;
+
+  // Decrement button
+  const decrementBtn = document.createElement("button");
+  decrementBtn.className = "mh-counter-btn";
+  decrementBtn.textContent = "-";
+  decrementBtn.onclick = () => {
+    const currentVal = Number(input.value) || 0;
+    const newValue = currentVal - (item.step ?? 1);
+    input.value = newValue;
+    variable.expression = String(newValue);
+    page._resolved[item.var] = newValue;
+  };
+
+  input.onchange = () => {
+    const newValue = Number(input.value) || 0;
+    variable.expression = String(newValue);
+    page._resolved[item.var] = newValue;
+  };
+
+  // Increment button
+  const incrementBtn = document.createElement("button");
+  incrementBtn.className = "mh-counter-btn";
+  incrementBtn.textContent = "+";
+  incrementBtn.onclick = () => {
+    const currentVal = Number(input.value) || 0;
+    const newValue = currentVal + (item.step ?? 1);
+    input.value = newValue;
+    variable.expression = String(newValue);
+    page._resolved[item.var] = newValue;
+  };
+
+  controls.appendChild(decrementBtn);
+  controls.appendChild(input);
+  controls.appendChild(incrementBtn);
+
+  container.appendChild(label);
+  container.appendChild(controls);
+
+  // Store reference for updates
+  renderedValueElements[item.var] = container;
+
+  return container;
 }
 
 // ============================================
