@@ -242,6 +242,10 @@ function renderButton(item, page) {
         
         await handleButtonClick(item.commands, pageObj, globalVariables, onVariableResolved);
         
+        console.log("[UI] Button commands completed, saving config");
+        // Auto-save config after commands that may have modified variables
+        await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config after button:", err));
+        
         // No need to re-render the entire page - individual values were updated via callback
       } catch (error) {
         console.error("Button action error:", error);
@@ -335,6 +339,18 @@ function renderInput(item, page) {
   input.className = "mh-input-field";
   input.placeholder = item.placeholder ?? "Enter value";
   input.value = variable.expression ?? variable.default ?? "";
+  
+  // Save when input loses focus
+  input.onblur = () => {
+    variable.expression = input.value;
+    page._resolved[item.var] = input.value;
+    
+    console.log("[UI] Input changed:", item.var, "=", input.value);
+    console.log("[UI] Calling saveConfig with config:", config);
+    
+    // Auto-save config after local variable change
+    saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+  };
 
   container.appendChild(label);
   container.appendChild(input);
@@ -371,6 +387,12 @@ function renderCheckbox(item, page) {
     const newValue = checkbox.checked;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
+    
+    console.log("[UI] Checkbox changed:", item.var, "=", newValue);
+    console.log("[UI] Calling saveConfig with config:", config);
+    
+    // Auto-save config after local variable change
+    saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
   };
 
   const text = document.createElement("span");
@@ -480,6 +502,12 @@ function renderCounter(item, page) {
       pendingUpdate = true;
       
       try {
+        console.log("[UI] Counter changed:", item.var, "=", newValue);
+        console.log("[UI] Calling saveConfig with config:", config);
+        
+        // Auto-save config after local variable change
+        await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+        
         // Re-resolve all variables that depend on this one
         const dependentVars = getDependentVariables(page.variables, [item.var]);
         if (dependentVars.size > 1) { // More than just the changed variable itself

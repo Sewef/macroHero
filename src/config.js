@@ -7,6 +7,7 @@ import { initUI } from "./ui.js";
 // Room metadata persists across the entire room session (for all players)
 // We store player-specific config in room metadata with player ID as the key
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
+export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
 export const MODAL_LABEL = "macrohero.config";
 
 let isOBRReady = false;
@@ -53,6 +54,67 @@ async function getPlayerId() {
 // Export for use in other modules
 export { ensureOBRReady };
 
+// Helper to determine if a variable is "local" (should be saved to metadata)
+// Local variables are simple values that don't call external integrations
+// Returns true if the variable should be saved, false otherwise
+function isLocalVariable(varDef) {
+    if (!varDef || !varDef.expression) return false;
+    
+    const expr = String(varDef.expression);
+    
+    // Skip if it contains external integration calls
+    const externalPatterns = [
+        'GoogleSheets.',
+        'OwlTrackers.',
+        'ConditionsMarkers.',
+        'JustDices.',
+        'Local.'
+    ];
+    
+    if (externalPatterns.some(pattern => expr.includes(pattern))) {
+        return false;
+    }
+    
+    // Skip if it references other variables (calculated/derived)
+    // Variables are referenced with {varName} syntax
+    if (/{[^}]+}/.test(expr)) {
+        return false;
+    }
+    
+    // It's a local variable - simple value like numbers, booleans, strings
+    return true;
+}
+
+// Helper to save full config to localStorage
+// This preserves the entire config including external/calculated variable definitions
+export function saveConfigToLocalStorage(cfg) {
+    try {
+        const configJson = JSON.stringify(cfg);
+        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, configJson);
+        const sizeKB = (new Blob([configJson]).size / 1024).toFixed(2);
+        console.log("[CONFIG] Full config saved to localStorage (", sizeKB, "KB )");
+        return true;
+    } catch (error) {
+        console.error("[CONFIG] Error saving to localStorage:", error);
+        return false;
+    }
+}
+
+// Helper to load full config from localStorage
+export function loadConfigFromLocalStorage() {
+    try {
+        const configJson = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY);
+        if (configJson) {
+            const cfg = JSON.parse(configJson);
+            console.log("[CONFIG] Full config loaded from localStorage");
+            return cfg;
+        }
+    } catch (error) {
+        console.error("[CONFIG] Error loading from localStorage:", error);
+    }
+    return null;
+}
+
 // --------------------------------------
 // CONFIG PAR DÉFAUT
 // --------------------------------------
@@ -83,19 +145,42 @@ export async function loadConfig() {
         const roomMetadata = await OBR.room.getMetadata();
         console.log("[CONFIG] Room metadata keys:", Object.keys(roomMetadata));
         
-        // Get the player configs object
+        // Get the player configs object from Room Metadata
         const playerConfigs = roomMetadata[STORAGE_KEY] || {};
-        console.log("[CONFIG] Player configs:", playerConfigs);
+        console.log("[CONFIG] Player configs from Room Metadata:", playerConfigs);
         
-        const playerConfig = playerConfigs[playerId];
+        // Get saved local variables for this player from Room Metadata
+        const savedLocalVars = playerConfigs[playerId];
         
-        if (playerConfig) {
-            console.log("✓ [CONFIG] Configuration loaded from room metadata:", playerConfig);
-            return playerConfig;
+        // Start with full config from localStorage, or default config if not found
+        const localStorageConfig = loadConfigFromLocalStorage();
+        const config = localStorageConfig 
+            ? JSON.parse(JSON.stringify(localStorageConfig))
+            : JSON.parse(JSON.stringify(defaultConfig));
+        
+        if (savedLocalVars) {
+            console.log("✓ [CONFIG] Saved local variables found:", savedLocalVars);
+            
+            // Merge saved local variables into config
+            // Structure: { pageIndex: { varName: value, ... }, ... }
+            Object.entries(savedLocalVars).forEach(([pageIndex, vars]) => {
+                const pageIdx = parseInt(pageIndex);
+                if (config.pages[pageIdx]?.variables) {
+                    Object.entries(vars).forEach(([varName, value]) => {
+                        if (config.pages[pageIdx].variables[varName]) {
+                            // Update the expression with the saved value
+                            config.pages[pageIdx].variables[varName].expression = value;
+                        }
+                    });
+                }
+            });
+            
+            console.log("✓ [CONFIG] Merged saved values into config");
         } else {
-            console.log("✗ [CONFIG] No stored config found for this player, using default");
-            return defaultConfig;
+            console.log("✗ [CONFIG] No saved variables found for this player");
         }
+        
+        return config;
     } catch (error) {
         console.error("✗ [CONFIG] Error loading config:", error);
         return defaultConfig;
@@ -104,8 +189,9 @@ export async function loadConfig() {
 
 // --------------------------------------
 // SAVE CONFIG
-// Saves config to ROOM metadata (persists across page reloads)
-// Stores config per-player using player ID as the key
+// Saves ONLY local variable values to ROOM metadata (persists across page reloads)
+// This dramatically reduces storage size by skipping external/calculated variables
+// Stores per-player using player ID as the key
 // MUST be called after OBR.onReady()
 // NOTE: Room metadata is shared, so we namespace by player ID to avoid conflicts
 // Also supports multiple extensions by using reverse domain notation
@@ -120,22 +206,82 @@ export async function saveConfig(cfg) {
         const playerId = await getPlayerId();
         console.log("[CONFIG] Saving config for player:", playerId);
         
+        // Save full config to localStorage
+        saveConfigToLocalStorage(cfg);
+        
+        // Extract only local variables from config for Room Metadata
+        // Structure: { pageIndex: { varName: value, ... }, ... }
+        // Local variables are those that users can modify via UI controls
+        const localVarsToSave = {};
+        
+        cfg.pages?.forEach((page, pageIndex) => {
+            console.log(`[CONFIG] Processing page ${pageIndex}, has variables:`, !!page.variables, "has layout:", !!page.layout);
+            
+            if (!page.variables || !page.layout) return;
+            
+            // Find all variables that are editable via UI controls
+            const editableVars = new Set();
+            const findEditableVars = (items) => {
+                items?.forEach(item => {
+                    if (item.type === 'counter' || item.type === 'checkbox' || item.type === 'input') {
+                        if (item.var) {
+                            editableVars.add(item.var);
+                            console.log(`[CONFIG] Found editable control: type=${item.type}, var=${item.var}`);
+                        }
+                    }
+                    if (item.type === 'row' && item.children) {
+                        findEditableVars(item.children);
+                    }
+                });
+            };
+            findEditableVars(page.layout);
+            
+            console.log(`[CONFIG] Page ${pageIndex} editable vars:`, Array.from(editableVars));
+            
+            const localVarsInPage = {};
+            Object.entries(page.variables).forEach(([varName, varDef]) => {
+                // Save if it's an editable variable (has a UI control)
+                if (editableVars.has(varName)) {
+                    localVarsInPage[varName] = varDef.expression;
+                    console.log(`[CONFIG] ✓ Saving editable var [${pageIndex}].${varName} =`, varDef.expression);
+                } else {
+                    console.log(`[CONFIG] ✗ Skipping non-editable var [${pageIndex}].${varName}`);
+                }
+            });
+            
+            console.log(`[CONFIG] Page ${pageIndex} local vars to save:`, localVarsInPage);
+            
+            // Only include page if it has local variables
+            if (Object.keys(localVarsInPage).length > 0) {
+                localVarsToSave[pageIndex] = localVarsInPage;
+            }
+        });
+        
+        console.log("[CONFIG] Local variables to save:", localVarsToSave);
+        
         // Get current room metadata
         const roomMetadata = await OBR.room.getMetadata();
         
         // Get existing player configs
         const playerConfigs = roomMetadata[STORAGE_KEY] || {};
         
-        // Update this player's config
-        playerConfigs[playerId] = cfg;
+        // Update this player's local variables
+        playerConfigs[playerId] = localVarsToSave;
         
-        // Calculate size of the config
-        const configJson = JSON.stringify(cfg);
-        const configSizeBytes = new Blob([configJson]).size;
-        const configSizeKB = (configSizeBytes / 1024).toFixed(2);
+        // Calculate size of the local variables
+        const localVarsJson = JSON.stringify(localVarsToSave);
+        const localVarsSizeBytes = new Blob([localVarsJson]).size;
+        const localVarsSizeKB = (localVarsSizeBytes / 1024).toFixed(2);
         
-        console.log("[CONFIG] Config to save:", cfg);
-        console.log("[CONFIG] Config size:", configSizeBytes, "bytes (", configSizeKB, "KB )");
+        // Calculate what the full config size would have been
+        const fullConfigJson = JSON.stringify(cfg);
+        const fullConfigSizeBytes = new Blob([fullConfigJson]).size;
+        const fullConfigSizeKB = (fullConfigSizeBytes / 1024).toFixed(2);
+        const savedPercent = ((1 - localVarsSizeBytes / fullConfigSizeBytes) * 100).toFixed(1);
+        
+        console.log("[CONFIG] Local variables size:", localVarsSizeBytes, "bytes (", localVarsSizeKB, "KB )");
+        console.log("[CONFIG] Full config would be:", fullConfigSizeBytes, "bytes (", fullConfigSizeKB, "KB )");
+        console.log("[CONFIG] Storage saved:", savedPercent + "%");
         console.log("[CONFIG] Room metadata object being saved:", { [STORAGE_KEY]: playerConfigs });
         
         // Save to room metadata (using spread operator to preserve other extensions' data)
@@ -150,14 +296,18 @@ export async function saveConfig(cfg) {
         
         console.log("[CONFIG] Verifying save...");
         const updatedMetadata = await OBR.room.getMetadata();
+        console.log("[CONFIG] Full room metadata after save:", updatedMetadata);
         const savedConfigs = updatedMetadata[STORAGE_KEY] || {};
+        console.log("[CONFIG] Saved configs for all players:", savedConfigs);
         const saved = savedConfigs[playerId];
+        console.log("[CONFIG] Saved data for current player:", saved);
         
         if (saved) {
-            console.log("✓ [CONFIG] Config successfully verified in room metadata!");
+            console.log("✓ [CONFIG] Local variables successfully verified in room metadata!");
+            console.log("[CONFIG] Verified local variables:", JSON.stringify(saved, null, 2));
             return true;
         } else {
-            console.error("✗ [CONFIG] ERROR: Config was saved but not found in room metadata!");
+            console.error("✗ [CONFIG] ERROR: Local variables were saved but not found in room metadata!");
             console.error("[CONFIG] Expected key:", STORAGE_KEY);
             console.error("[CONFIG] Expected player:", playerId);
             console.error("[CONFIG] Saved configs:", savedConfigs);
