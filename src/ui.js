@@ -63,6 +63,13 @@ function selectFirstPage() {
 // RENDER HELPERS - Page Content
 // ============================================
 
+export function reloadCurrentPage() {
+  if (currentPage !== null && config?.pages?.[currentPage]) {
+    const page = config.pages[currentPage];
+    renderPageContent(page);
+  }
+}
+
 function renderPageContent(page) {
   const container = document.getElementById("content");
   container.innerHTML = "";
@@ -252,8 +259,9 @@ function renderValue(item, page) {
   const resolvedValue = page._resolved?.[item.var];
 
   // Create the value element structure
-  const isLoading = resolvedValue === undefined || resolvedValue === null;
-  const displayValue = isLoading ? '' : resolvedValue;
+  // Only treat as loading if the variable hasn't been resolved yet (undefined, not in _resolved)
+  const isLoading = !(item.var in (page._resolved || {}));
+  const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
   valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div>
                         <div class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</div>`;
 

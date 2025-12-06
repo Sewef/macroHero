@@ -1,6 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { openConfigModal, loadConfig } from "./config.js";
-import { initUI, updateConfig, setGlobalVariables } from "./ui.js";
+import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
 
@@ -8,6 +8,7 @@ const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
 const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
 
 document.getElementById("configBtn").onclick = openConfigModal;
+document.getElementById("reloadBtn").onclick = reloadCurrentPage;
 
 // Chargement initial
 OBR.onReady(async () => {

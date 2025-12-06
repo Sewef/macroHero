@@ -68,6 +68,11 @@ h1 {
   font-weight: bold;
 }
 
+.mh-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .mh-config-btn {
   background: none;
   border: 1px solid #ccc;

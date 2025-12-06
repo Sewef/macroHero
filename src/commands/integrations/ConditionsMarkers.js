@@ -266,6 +266,8 @@ export async function setMarkerVisibility(markerIds, visible) {
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
+    console.log(`[ConditionsMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
+    
     let tokenItem = null;
     if (allItems) {
       tokenItem = allItems.find(item => item.id === tokenId);
@@ -275,6 +277,7 @@ export async function getValue(tokenId, conditionName, allItems = null) {
     }
     
     if (!tokenItem) {
+      console.log(`[ConditionsMarkers.getValue] Token not found`);
       return null;
     }
     
@@ -288,8 +291,12 @@ export async function getValue(tokenId, conditionName, allItems = null) {
       "keegan.dev.condition-markers/metadata" in item.metadata
     );
     
+    console.log(`[ConditionsMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
+    
     // For each marker, find TEXT labels attached to it
     for (const marker of markers) {
+      console.log(`[ConditionsMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
+      
       const labels = allSceneItems.filter(item =>
         item.attachedTo === marker.id &&
         item.type === 'TEXT' &&
@@ -298,15 +305,21 @@ export async function getValue(tokenId, conditionName, allItems = null) {
         item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
       );
       
+      console.log(`[ConditionsMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
+      
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
-        return labelText && labelText.trim() ? labelText : null;
+        console.log(`[ConditionsMarkers.getValue] Label text: "${labelText}"`);
+        const result = labelText && labelText.trim() ? labelText : null;
+        console.log(`[ConditionsMarkers.getValue] Returning: ${result}`);
+        return result;
       }
     }
     
+    console.log(`[ConditionsMarkers.getValue] No matching label found, returning null`);
     return null;
   } catch (error) {
-    console.error(`Error getting condition value:`, error);
+    console.error(`[ConditionsMarkers.getValue] Error:`, error);
     return null;
   }
 }

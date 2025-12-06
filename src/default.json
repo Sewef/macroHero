@@ -27,10 +27,10 @@
                     "expression": "1"
                 },
                 "isBandaged": {
-                    "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
+                    "expression": "ConditionsMarkers.isCondition({token}, 'Marked')"
                 },
                 "bandagedValue": {
-                    "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
+                    "expression": "ConditionsMarkers.getValue({token}, 'Marked')"
                 },
                 "trackerStatus": {
                     "expression": "OwlTrackers.getValue({token}, 'HP')"
