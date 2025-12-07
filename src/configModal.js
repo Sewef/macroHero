@@ -7,6 +7,144 @@ let currentTab = 'editor';
 let editingPageIndex = null;
 let editingElementIndex = null;
 let expandedPages = new Set();
+// Variable modal state (inlined from variableModal.js)
+let editingVariablePageIndex = null;
+let editingVariableKey = null;
+
+function showVariableError(msg) {
+  const err = document.getElementById('variableError');
+  if (err) {
+    err.textContent = msg;
+    err.style.display = 'block';
+  }
+}
+
+function ensureVariableModalInDom() {
+  return new Promise(resolve => {
+    if (document.getElementById('variableModal')) {
+      resolve();
+    } else {
+      // Inline modal HTML directly to avoid fetch timing issues
+      const html = `
+      <div id="variableModal" class="modal">
+        <div class="modal-content" style="width: 420px; max-width: 95vw;">
+          <div class="modal-header">
+            <h3 id="variableModalTitle">Edit Variable</h3>
+            <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">×</button>
+          </div>
+          <div class="input-group">
+            <label for="variableKey">Name</label>
+            <input type="text" id="variableKey" />
+          </div>
+          <div class="input-group">
+            <label for="variableExpression">Expression</label>
+            <input type="text" id="variableExpression" placeholder="e.g. player.hp + 5" />
+          </div>
+          <div class="row" style="margin-top: 8px; gap: 8px;">
+            <div class="input-group" style="flex:1; margin-bottom:0;">
+              <label for="variableMin">Min</label>
+              <input type="number" id="variableMin" placeholder="optional" />
+            </div>
+            <div class="input-group" style="flex:1; margin-bottom:0;">
+              <label for="variableMax">Max</label>
+              <input type="number" id="variableMax" placeholder="optional" />
+            </div>
+          </div>
+          <div id="variableError" style="color: #ff4e4e; font-size: 0.9em; display: none; margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+            <button type="button" class="btn-small" id="saveVariableBtn">Save</button>
+            <button type="button" class="btn-small btn-danger" id="cancelVariableBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', html);
+      // small delay to ensure inserted elements are available
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
+function openVariableModal(pageIndex, key = '', value = '', isEdit = false) {
+  editingVariablePageIndex = pageIndex;
+  editingVariableKey = key;
+  const title = document.getElementById('variableModalTitle');
+  if (title) title.textContent = isEdit ? 'Edit Variable' : 'Add Variable';
+  const keyInput = document.getElementById('variableKey');
+  if (keyInput) keyInput.value = key;
+  if (keyInput) keyInput.disabled = isEdit;
+  // Populate expression/min/max fields
+  const exprInput = document.getElementById('variableExpression');
+  const minInput = document.getElementById('variableMin');
+  const maxInput = document.getElementById('variableMax');
+  if (typeof value === 'object' && value !== null && ('expression' in value || 'min' in value || 'max' in value)) {
+    if (exprInput) exprInput.value = value.expression ?? '';
+    if (minInput) minInput.value = (value.min !== undefined && value.min !== null) ? value.min : '';
+    if (maxInput) maxInput.value = (value.max !== undefined && value.max !== null) ? value.max : '';
+  } else {
+    if (exprInput) exprInput.value = (value !== undefined && value !== null) ? String(value) : '';
+    if (minInput) minInput.value = '';
+    if (maxInput) maxInput.value = '';
+  }
+  const err = document.getElementById('variableError');
+  if (err) err.style.display = 'none';
+  const modal = document.getElementById('variableModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeVariableModal() {
+  const modal = document.getElementById('variableModal');
+  if (modal) modal.style.display = 'none';
+  editingVariablePageIndex = null;
+  editingVariableKey = null;
+}
+
+function saveVariableFromModal(currentConfigParam) {
+  const keyEl = document.getElementById('variableKey');
+  const exprEl = document.getElementById('variableExpression');
+  const minEl = document.getElementById('variableMin');
+  const maxEl = document.getElementById('variableMax');
+  if (!keyEl || !exprEl || !minEl || !maxEl) return false;
+  const key = keyEl.value.trim();
+  const exprRaw = exprEl.value.trim();
+  const minRaw = minEl.value.trim();
+  const maxRaw = maxEl.value.trim();
+  // Build value object
+  let value = {};
+  if (exprRaw !== '') value.expression = exprRaw;
+  if (minRaw !== '') {
+    const m = Number(minRaw);
+    if (!Number.isFinite(m)) {
+      showVariableError('Min must be a number');
+      return false;
+    }
+    value.min = m;
+  }
+  if (maxRaw !== '') {
+    const M = Number(maxRaw);
+    if (!Number.isFinite(M)) {
+      showVariableError('Max must be a number');
+      return false;
+    }
+    value.max = M;
+  }
+  if (!key) {
+    showVariableError('Variable name is required.');
+    return false;
+  }
+  if (editingVariablePageIndex === 'global') {
+    if (!currentConfigParam.global) currentConfigParam.global = {};
+    if (!currentConfigParam.global.variables) currentConfigParam.global.variables = {};
+    currentConfigParam.global.variables[key] = value;
+  } else {
+    if (!currentConfigParam.pages[editingVariablePageIndex].variables) {
+      currentConfigParam.pages[editingVariablePageIndex].variables = {};
+    }
+    currentConfigParam.pages[editingVariablePageIndex].variables[key] = value;
+  }
+  closeVariableModal();
+  return true;
+}
 
 function closeModal(data) {
   if (data) {
@@ -49,6 +187,18 @@ function syncFromJson() {
   try {
     const text = document.getElementById("cfgArea").value;
     const parsed = JSON.parse(text);
+    // Basic normalization to ensure expected structure for the visual editor
+    if (!parsed.global) parsed.global = { title: "Macro Hero", width: 600, height: 600, variables: {} };
+    if (!Array.isArray(parsed.pages)) parsed.pages = [];
+    parsed.pages = parsed.pages.map(p => {
+      if (!p) return { label: 'Page', variables: {}, layout: [] };
+      if (typeof p.variables !== 'object' || Array.isArray(p.variables) || p.variables === null) {
+        p.variables = p.variables || {};
+      }
+      if (!Array.isArray(p.layout)) p.layout = [];
+      return p;
+    });
+
     currentConfig = parsed;
     renderEditor(parsed);
     alert("✓ Synced to visual editor");
@@ -91,6 +241,31 @@ function renderEditor(config) {
   document.getElementById("globalTitle").value = config.global?.title || "";
   document.getElementById("globalWidth").value = config.global?.width || 600;
   document.getElementById("globalHeight").value = config.global?.height || 600;
+  
+  // Render global variables
+  const globalVarsContainer = document.getElementById('globalVariablesList');
+  if (globalVarsContainer) {
+    const globals = config.global?.variables || {};
+    const keys = Object.keys(globals || {});
+    if (keys.length === 0) {
+      globalVarsContainer.innerHTML = '<div style="color: #666; font-size: 0.85em;">No global variables</div>';
+    } else {
+      globalVarsContainer.innerHTML = keys.map(k => `
+        <div class="variable-item" data-var-key="${k}">
+          <span class="variable-key">${k}</span>
+          <span class="variable-value">${typeof globals[k] === 'object' ? JSON.stringify(globals[k]) : globals[k]}</span>
+          <div class="variable-actions">
+            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">Edit</button>
+            <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    const addGlobalBtn = document.getElementById('addGlobalVariableBtn');
+    if (addGlobalBtn) {
+      addGlobalBtn.onclick = () => addGlobalVariable();
+    }
+  }
   
   // Render pages
   const container = document.getElementById("pagesContainer");
@@ -171,7 +346,6 @@ function renderEditor(config) {
           <button type="button" class="collapse-btn ${isExpanded ? '' : 'collapsed'}">▼</button>
           <input type="text" class="page-label-input" value="${page.label || ''}" placeholder="Page Label" style="flex: 1; margin-right: 12px;" onclick="event.stopPropagation();" />
           <div class="page-actions">
-            <button type="button" class="btn-small">+ Element</button>
             <button type="button" class="btn-small btn-danger">Delete</button>
           </div>
         </div>
@@ -180,14 +354,32 @@ function renderEditor(config) {
             ${page.variables ? Object.keys(page.variables).length : 0} variables, 
             ${page.layout ? page.layout.length : 0} layout items
           </div>
+          <div style="margin-bottom: 16px;">
+            <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Variables</h4>
+            <div class="variables-list" data-page-index="${index}">
+              ${page.variables ? Object.entries(page.variables).map(([key, value]) => `
+                <div class="variable-item" data-var-key="${key}">
+                  <span class="variable-key">${key}</span>
+                  <span class="variable-value">${typeof value === 'object' ? JSON.stringify(value) : value}</span>
+                  <div class="variable-actions">
+                    <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${index}, '${key}')">Edit</button>
+                    <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${index}, '${key}')">×</button>
+                  </div>
+                </div>
+              `).join('') : '<div style="color: #666; font-size: 0.85em;">No variables</div>'}
+            </div>
+            <button type="button" class="btn-small" onclick="event.stopPropagation(); addVariable(${index})" style="margin-top: 8px;">+ Variable</button>
+          </div>
+          <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Layout</h4>
           ${layoutItemsHtml ? `<div class="layout-items" data-page-index="${index}">${layoutItemsHtml}</div>` : ''}
+          <button type="button" class="btn-small add-element-btn" onclick="event.stopPropagation(); addElement(${index})" style="margin-top: 12px;">+ Element</button>
         </div>
       `;
       container.appendChild(pageDiv);
       
       // Add event listeners after appending to DOM
       const collapseBtn = pageDiv.querySelector('.collapse-btn');
-      const addBtn = pageDiv.querySelector('.btn-small');
+      const addBtn = pageDiv.querySelector('.add-element-btn');
       const deleteBtn = pageDiv.querySelector('.btn-small.btn-danger');
       
       collapseBtn.addEventListener('click', (e) => {
@@ -206,11 +398,13 @@ function renderEditor(config) {
         }
       });
       
-      addBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        addElement(index);
-      });
+      if (addBtn) {
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          addElement(index);
+        });
+      }
       
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -616,6 +810,91 @@ window.deleteElement = function(pageIndex, elementIndex) {
 window.deleteChildElement = function(pageIndex, rowIndex, childIndex) {
   if (confirm("Delete this row item?")) {
     currentConfig.pages[pageIndex].layout[rowIndex].children.splice(childIndex, 1);
+    renderEditor(currentConfig);
+  }
+};
+
+// Variable management functions
+
+window.addVariable = function(pageIndex) {
+  ensureVariableModalInDom().then(() => {
+    openVariableModal(pageIndex, '', '', false);
+    setTimeout(() => {
+      document.getElementById('variableKey').disabled = false;
+    }, 0);
+    window._saveVariableHandler = function() {
+      if (saveVariableFromModal(currentConfig)) {
+        renderEditor(currentConfig);
+      }
+    };
+    document.getElementById('saveVariableBtn').onclick = window._saveVariableHandler;
+    document.getElementById('cancelVariableBtn').onclick = closeVariableModal;
+  });
+};
+
+window.editVariable = function(pageIndex, varKey) {
+  ensureVariableModalInDom().then(() => {
+    const value = currentConfig.pages[pageIndex].variables[varKey];
+    openVariableModal(pageIndex, varKey, value, true);
+    setTimeout(() => {
+      document.getElementById('variableKey').disabled = true;
+    }, 0);
+    window._saveVariableHandler = function() {
+      if (saveVariableFromModal(currentConfig)) {
+        renderEditor(currentConfig);
+      }
+    };
+    document.getElementById('saveVariableBtn').onclick = window._saveVariableHandler;
+    document.getElementById('cancelVariableBtn').onclick = closeVariableModal;
+  });
+};
+
+window.deleteVariable = function(pageIndex, varKey) {
+  if (confirm(`Delete variable "${varKey}"?`)) {
+    delete currentConfig.pages[pageIndex].variables[varKey];
+    renderEditor(currentConfig);
+  }
+};
+
+// Global variable handlers
+window.addGlobalVariable = function() {
+  ensureVariableModalInDom().then(() => {
+    openVariableModal('global', '', '', false);
+    setTimeout(() => {
+      const el = document.getElementById('variableKey'); if (el) el.disabled = false;
+    }, 0);
+    window._saveVariableHandler = function() {
+      if (saveVariableFromModal(currentConfig)) {
+        renderEditor(currentConfig);
+      }
+    };
+    document.getElementById('saveVariableBtn').onclick = window._saveVariableHandler;
+    document.getElementById('cancelVariableBtn').onclick = closeVariableModal;
+  });
+};
+
+window.editGlobalVariable = function(varKey) {
+  ensureVariableModalInDom().then(() => {
+    const value = currentConfig.global?.variables?.[varKey];
+    openVariableModal('global', varKey, value, true);
+    setTimeout(() => {
+      const el = document.getElementById('variableKey'); if (el) el.disabled = true;
+    }, 0);
+    window._saveVariableHandler = function() {
+      if (saveVariableFromModal(currentConfig)) {
+        renderEditor(currentConfig);
+      }
+    };
+    document.getElementById('saveVariableBtn').onclick = window._saveVariableHandler;
+    document.getElementById('cancelVariableBtn').onclick = closeVariableModal;
+  });
+};
+
+window.deleteGlobalVariable = function(varKey) {
+  if (confirm(`Delete global variable "${varKey}"?`)) {
+    if (currentConfig.global && currentConfig.global.variables) {
+      delete currentConfig.global.variables[varKey];
+    }
     renderEditor(currentConfig);
   }
 };

@@ -19,6 +19,10 @@
       font-size: 14px;
     }
 
+    html, body {
+      height: 100%;
+    }
+
     body {
       background: #1f1f1f;
       color: #eee;
@@ -27,6 +31,8 @@
       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
       min-width: 320px;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
 
     h2 {
@@ -52,6 +58,20 @@
       border-bottom: 2px solid #444;
     }
 
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
     .tab {
       background: none;
       border: none;
@@ -75,7 +95,23 @@
 
     .tab-content {
       display: none;
+      /* Let the tab content expand into the modal body instead of being its own scroller */
+      overflow: visible;
+      /* Do not force inner flex sizing so pages can grow naturally */
+      flex: none;
     }
+
+    /* Make form and tab content occupy available space so internal scrolling works */
+    #configForm {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    /* Ensure editor container can expand into the modal body (no inner scrolling) */
+    #editor-tab { display: block; }
+    .editor-container { display: block; width: 100%; overflow: visible; padding-right: 8px; }
 
     .tab-content.active {
       display: block;
@@ -139,11 +175,7 @@
       outline: none;
     }
 
-    .editor-container {
-      max-height: 400px;
-      overflow-y: auto;
-      padding-right: 8px;
-    }
+    
 
     .editor-container::-webkit-scrollbar {
       width: 8px;
@@ -219,6 +251,37 @@
       margin-top: 12px;
       padding-left: 12px;
       border-left: 2px solid #444;
+    }
+
+    .variable-item {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .variable-key {
+      font-weight: 600;
+      color: #4ea1ff;
+      min-width: 120px;
+    }
+
+    .variable-value {
+      flex: 1;
+      color: #bbb;
+      font-size: 0.9em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .variable-actions {
+      display: flex;
+      gap: 4px;
     }
 
     .layout-item {
@@ -475,10 +538,16 @@
 <body>
   <h2>Configuration Macro Hero</h2>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="editor">Visual Editor</button>
-    <button class="tab" data-tab="json">JSON Editor</button>
-    <button class="tab" data-tab="gsheets">Google Sheets</button>
+  <div class="topbar">
+    <div class="tabs">
+      <button class="tab active" data-tab="editor">Visual Editor</button>
+      <button class="tab" data-tab="json">JSON Editor</button>
+      <button class="tab" data-tab="gsheets">Google Sheets</button>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="cancelBtn">Cancel</button>
+      <button type="button" id="saveBtn">Save</button>
+    </div>
   </div>
 
   <form id="configForm">
@@ -498,6 +567,14 @@
           <label for="globalHeight">Height</label>
           <input type="number" id="globalHeight" placeholder="600" />
         </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Global Variables</h4>
+        <div id="globalVariablesList">
+          <div style="color: #666; font-size: 0.85em;">No global variables</div>
+        </div>
+        <button type="button" class="btn-small" id="addGlobalVariableBtn" style="margin-top: 8px;">+ Global Variable</button>
       </div>
 
       <h3>Pages</h3>
@@ -526,10 +603,7 @@
       </div>
     </div>
 
-    <div class="buttons">
-      <button type="button" id="cancelBtn">Cancel</button>
-      <button type="button" id="saveBtn">Save</button>
-    </div>
+    <!-- bottom buttons removed; actions moved to top header -->
   </form>
 
   <!-- Element Editor Modal -->
