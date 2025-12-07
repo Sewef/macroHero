@@ -5,7 +5,7 @@
         "height": 600,
         "variables": {
             "playerName": {
-                "expression": "Local.value('playerName', 'Unknown Hero')"
+                "expression": "Local.value('playerName', 'myGlobalVarPlayerName')"
             }
         }
     },

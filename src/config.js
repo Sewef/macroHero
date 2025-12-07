@@ -306,6 +306,7 @@ export async function openConfigModal() {
         id: "macrohero.config",
         url: "/configModal.html",
         width: 500,
-        height: 500
+        height: 500,
+        disableClickAway: true
     });
 }
