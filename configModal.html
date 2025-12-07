@@ -45,13 +45,12 @@
       color: #4ea1ff;
     }
 
+    /* h3 is only used for section headers, keep minimal styling */
     h3 {
       margin: 16px 0 8px 0;
       font-size: 1.1em;
       font-weight: 600;
       color: #4ea1ff;
-      border-bottom: 1px solid #444;
-      padding-bottom: 6px;
     }
 
     .tabs {
@@ -84,10 +83,7 @@
       min-width: 0;
     }
 
-    .topbar .tab {
-      z-index: 10001;
-      position: relative;
-    }
+    /* .topbar .tab not needed, .tab already styled */
 
     .header-actions {
       display: flex;
@@ -201,26 +197,6 @@
       outline: none;
     }
 
-    
-
-    .editor-container::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .editor-container::-webkit-scrollbar-track {
-      background: #2a2a2a;
-      border-radius: 4px;
-    }
-
-    .editor-container::-webkit-scrollbar-thumb {
-      background: #555;
-      border-radius: 4px;
-    }
-
-    .editor-container::-webkit-scrollbar-thumb:hover {
-      background: #666;
-    }
-
     .page-item {
       background: #2a2a2a;
       border: 1px solid #444;
@@ -238,12 +214,6 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-    }
-
-    .page-label {
-      font-weight: 600;
-      color: #4ea1ff;
-      font-size: 1.1em;
     }
 
     .page-actions {
@@ -444,11 +414,7 @@
       margin-bottom: 16px;
     }
 
-    .modal-title {
-      font-size: 1.2em;
-      font-weight: 600;
-      color: #4ea1ff;
-    }
+    /* .modal-title uses same style as h3, so h3 covers it */
 
     .close-modal {
       background: none;
@@ -630,7 +596,7 @@
       </div>
     </div>
 
-    <!-- bottom buttons removed; actions moved to top header -->
+    <!-- Actions are in top header -->
   </form>
 
   <!-- Element Editor Modal -->
