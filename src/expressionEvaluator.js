@@ -139,7 +139,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     
     // Step 4: Evaluate the expression with proper async handling
     const funcCode = `return (async () => { 
-      const { GoogleSheets, Local, ConditionsMarkers, OwlTrackers, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
+      const { GoogleSheets, Local, ConditionsMarkers, OwlTrackers, StatBubbles, ColoredRings, JustDices, playerMetadata, sceneMetadata, tokenMetadata, tokenAttachments, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
       const Math = MathObj || { floor, ceil, round, abs, min, max };
       
       const result = ${transformed};

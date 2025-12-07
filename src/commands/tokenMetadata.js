@@ -193,6 +193,92 @@ export async function addValue(tokenId, metadataKey, itemName, delta) {
   await setValue(tokenId, metadataKey, itemName, newValue);
 }
 
+/**
+ * Get a flat metadata property value (for metadata stored as objects, not arrays)
+ * @param {string} tokenId - Token ID
+ * @param {string} metadataKey - The metadata key (e.g., "com.owlbear-rodeo-bubbles-extension/metadata")
+ * @param {string} propertyName - Name of the property (e.g., "health", "armor class")
+ * @returns {Promise<any|null>} Property value or null if not found
+ */
+export async function getFlatValue(tokenId, metadataKey, propertyName) {
+  try {
+    const items = await OBR.scene.items.getItems([tokenId]);
+    if (!items || items.length === 0) {
+      console.warn(`[tokenMetadata.getFlatValue] Token ${tokenId} not found`);
+      return null;
+    }
+    
+    const metadata = items[0].metadata?.[metadataKey];
+    if (!metadata) {
+      console.warn(`[tokenMetadata.getFlatValue] No metadata found at key "${metadataKey}" on token ${tokenId}`);
+      return null;
+    }
+    
+    const value = metadata[propertyName];
+    if (value === undefined || value === null) {
+      console.warn(`[tokenMetadata.getFlatValue] Property "${propertyName}" not found in "${metadataKey}" on token ${tokenId}`);
+      return null;
+    }
+    
+    return value;
+  } catch (error) {
+    console.error(`[tokenMetadata.getFlatValue] Failed to get property "${propertyName}" from token ${tokenId}:`, error.message);
+    return null;
+  }
+}
+
+/**
+ * Set a flat metadata property value (for metadata stored as objects, not arrays)
+ * @param {string} tokenId - Token ID
+ * @param {string} metadataKey - The metadata key
+ * @param {string} propertyName - Name of the property
+ * @param {any} value - Value to set
+ * @returns {Promise<boolean>} True if successful
+ */
+export async function setFlatValue(tokenId, metadataKey, propertyName, value) {
+  try {
+    await OBR.scene.items.updateItems([tokenId], (items) => {
+      items.forEach(item => {
+        if (!item.metadata[metadataKey]) {
+          item.metadata[metadataKey] = {};
+        }
+        item.metadata[metadataKey][propertyName] = value;
+      });
+    });
+    console.log(`[tokenMetadata.setFlatValue] Set "${propertyName}" to ${value} in "${metadataKey}" on token ${tokenId}`);
+    return true;
+  } catch (error) {
+    console.error(`[tokenMetadata.setFlatValue] Failed to set property "${propertyName}" on token ${tokenId}:`, error.message);
+    return false;
+  }
+}
+
+/**
+ * Get all flat metadata properties (for metadata stored as objects)
+ * @param {string} tokenId - Token ID
+ * @param {string} metadataKey - The metadata key
+ * @returns {Promise<Object|null>} Object with all properties or null if not found
+ */
+export async function getFlatMetadata(tokenId, metadataKey) {
+  try {
+    const items = await OBR.scene.items.getItems([tokenId]);
+    if (!items || items.length === 0) {
+      console.warn(`[tokenMetadata.getFlatMetadata] Token ${tokenId} not found`);
+      return null;
+    }
+    
+    const metadata = items[0].metadata?.[metadataKey];
+    if (!metadata) {
+      console.warn(`[tokenMetadata.getFlatMetadata] No metadata found at key "${metadataKey}" on token ${tokenId}`);
+      return null;
+    }
+    return metadata;
+  } catch (error) {
+    console.error(`[tokenMetadata.getFlatMetadata] Failed to get metadata from token ${tokenId}:`, error.message);
+    return null;
+  }
+}
+
 
 export default {
   getTokenMetadata,
@@ -203,5 +289,8 @@ export default {
   deleteTokenMetadata,
   getValue,
   setValue,
-  addValue
+  addValue,
+  getFlatValue,
+  setFlatValue,
+  getFlatMetadata
 };

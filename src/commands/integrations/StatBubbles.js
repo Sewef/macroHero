@@ -1,8 +1,7 @@
 import { 
-  getValue as getMetadataValue,
-  setValue as setMetadataValue,
-  addValue as addMetadataValue,
-  getTokenMetadataValue
+  getFlatValue,
+  setFlatValue,
+  getFlatMetadata
 } from "../tokenMetadata.js";
 
 const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata";
@@ -21,11 +20,7 @@ const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata"
  */
 export async function getValue(tokenId, statName) {
   try {
-    const value = await getMetadataValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName);
-    if (value === null) {
-      console.warn(`[StatBubbles] Stat "${statName}" not found on token ${tokenId}`);
-    }
-    return value;
+    return await getFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName);
   } catch (error) {
     console.error(`[StatBubbles] Failed to get stat "${statName}" value from token ${tokenId}:`, error.message);
     return null;
@@ -41,9 +36,11 @@ export async function getValue(tokenId, statName) {
  */
 export async function setValue(tokenId, statName, value) {
   try {
-    await setMetadataValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName, value);
-    console.log(`[StatBubbles] Set stat "${statName}" to ${value} on token ${tokenId}`);
-    return true;
+    const success = await setFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName, value);
+    if (success) {
+      console.log(`[StatBubbles] Set stat "${statName}" to ${value} on token ${tokenId}`);
+    }
+    return success;
   } catch (error) {
     console.error(`[StatBubbles] Failed to set stat "${statName}" on token ${tokenId}:`, error.message);
     return false;
@@ -82,12 +79,7 @@ export async function addValue(tokenId, statName, amount) {
  */
 export async function getAllStats(tokenId) {
   try {
-    const stats = await getTokenMetadataValue(tokenId, STAT_BUBBLES_METADATA_KEY);
-    if (!stats) {
-      console.warn(`[StatBubbles] No stats found on token ${tokenId}`);
-      return null;
-    }
-    return stats;
+    return await getFlatMetadata(tokenId, STAT_BUBBLES_METADATA_KEY);
   } catch (error) {
     console.error(`[StatBubbles] Failed to get all stats from token ${tokenId}:`, error.message);
     return null;

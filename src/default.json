@@ -36,6 +36,18 @@
                 },
                 "trackerStatus": {
                     "expression": "OwlTrackers.getValue({token}, 'HP')"
+                },
+                "bubbleHealth": {
+                    "expression": "StatBubbles.getValue({token}, 'health')"
+                },
+                "bubbleMaxHealth": {
+                    "expression": "StatBubbles.getValue({token}, 'max health')"
+                },
+                "bubbleAC": {
+                    "expression": "StatBubbles.getValue({token}, 'armor class')"
+                },
+                "bubbleHealthPercent": {
+                    "expression": "StatBubbles.getHealthPercentage({token})"
                 }
             },
             "layout": [
@@ -173,6 +185,73 @@
                                 "ColoredRings.removeRing({token}, '#00ff00')"
                             ],
                             "label": "Remove Green Ring"
+                        }
+                    ]
+                },
+                {
+                    "type": "title",
+                    "text": "StatBubbles Integration"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "bubbleHealth",
+                            "label": "Health"
+                        },
+                        {
+                            "type": "value",
+                            "var": "bubbleMaxHealth",
+                            "label": "Max Health"
+                        },
+                        {
+                            "type": "value",
+                            "var": "bubbleAC",
+                            "label": "AC"
+                        },
+                        {
+                            "type": "value",
+                            "var": "bubbleHealthPercent",
+                            "label": "HP %"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "StatBubbles.heal({token}, 10)"
+                            ],
+                            "label": "Heal 10"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "StatBubbles.damage({token}, 5)"
+                            ],
+                            "label": "Damage 5"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "StatBubbles.setValue({token}, 'temporary health', 15)"
+                            ],
+                            "label": "Set Temp HP to 15"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "StatBubbles.setValue({token}, 'armor class', StatBubbles.getValue({token}, 'armor class') + 2)"
+                            ],
+                            "label": "AC +2"
                         }
                     ]
                 }
