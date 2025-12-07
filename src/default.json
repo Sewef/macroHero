@@ -114,6 +114,67 @@
                         "JustDices.roll('1d20 + {atkBonus}') > 15 ? OwlTrackers.addValue({token}, 'HP', 5) : OwlTrackers.addValue({token}, 'HP', -5)"
                     ],
                     "label": "Roll Attack (>15 = heal, <=15 = damage)"
+                },
+                {
+                    "type": "title",
+                    "text": "Colored Rings"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#1a6aff')"
+                            ],
+                            "label": "Add Blue Ring"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#1a6aff')"
+                            ],
+                            "label": "Remove Blue Ring"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#ff7433')"
+                            ],
+                            "label": "Add Orange Ring"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#ff7433')"
+                            ],
+                            "label": "Remove Orange Ring"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#00ff00')"
+                            ],
+                            "label": "Add Green Ring"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#00ff00')"
+                            ],
+                            "label": "Remove Green Ring"
+                        }
+                    ]
                 }
             ]
         },

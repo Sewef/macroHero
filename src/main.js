@@ -74,8 +74,8 @@ OBR.onReady(async () => {
       // Apply width/height if specified in the new config
       const newConfig = event.data;
       if (newConfig.global?.width || newConfig.global?.height) {
-        const width = newConfig.global.width || 400;
-        const height = newConfig.global.height || 600;
+        const width = newConfig.global.width || 500;
+        const height = newConfig.global.height || 500;
         await OBR.action.setWidth(width);
         await OBR.action.setHeight(height);
       }
@@ -90,13 +90,13 @@ OBR.onReady(async () => {
 async function logOBRImageItems() {
   // Optional: Log scene items for debugging
   // Uncomment if needed for troubleshooting
-  /*
+  
   try {
     const items = await OBR.scene.items.getItems();
     console.log("[MAIN] Scene items:", items);
   } catch (err) {
     console.error("[MAIN] Error fetching scene items:", err);
   }
-  */
+  
 }
 

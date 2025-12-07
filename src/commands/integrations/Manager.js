@@ -6,6 +6,8 @@
 import LocalIntegration from "./Local.js";
 import * as ConditionsMarkers from "./ConditionsMarkers.js";
 import * as OwlTrackers from "./OwlTrackers.js";
+import * as StatBubbles from "./StatBubbles.js";
+import * as ColoredRings from "./ColoredRings.js";
 import * as JustDices from "./JustDices.js";
 import * as playerMetadata from "../playerMetadata.js";
 import * as sceneMetadata from "../sceneMetadata.js";
@@ -103,6 +105,23 @@ class IntegrationsManager {
         getMax: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getMax(tokenId, trackerName)),
         setValue: this.wrapAsync((tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value)),
         addValue: this.wrapAsync((tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta)),
+      },
+      // StatBubbles integration (all async)
+      StatBubbles: {
+        getValue: this.wrapAsync((tokenId, statName) => StatBubbles.getValue(tokenId, statName)),
+        setValue: this.wrapAsync((tokenId, statName, value) => StatBubbles.setValue(tokenId, statName, value)),
+        addValue: this.wrapAsync((tokenId, statName, amount) => StatBubbles.addValue(tokenId, statName, amount)),
+        getAllStats: this.wrapAsync((tokenId) => StatBubbles.getAllStats(tokenId)),
+        getHealthPercentage: this.wrapAsync((tokenId) => StatBubbles.getHealthPercentage(tokenId)),
+        heal: this.wrapAsync((tokenId, amount) => StatBubbles.heal(tokenId, amount)),
+        damage: this.wrapAsync((tokenId, amount) => StatBubbles.damage(tokenId, amount)),
+      },
+      // ColoredRings integration (all async)
+      ColoredRings: {
+        getRings: this.wrapAsync((tokenId) => ColoredRings.getRings(tokenId)),
+        hasRing: this.wrapAsync((tokenId, color) => ColoredRings.hasRing(tokenId, color)),
+        addRing: this.wrapAsync((tokenId, color) => ColoredRings.addRing(tokenId, color)),
+        removeRing: this.wrapAsync((tokenId, color) => ColoredRings.removeRing(tokenId, color)),
       },
       // JustDices integration (all async)
       JustDices: {
