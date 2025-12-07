@@ -11,31 +11,28 @@
     },
     "pages": [
         {
-            "label": "General",
+            "label": "Integrations",
             "variables": {
                 "token": {
                     "expression": "'57cefc5e-23b0-40f8-ad32-31a1c331c501'"
                 },
-                "hp": {
-                    "expression": "100"
+                "inputName": {
+                    "expression": "'Enter name here'"
                 },
-                "speedBonus": {
+                "sheetValue": {
                     "expression": "GoogleSheets.getValue('MacroHero', 'A1')"
-                },
-                "atkBonus": {
-                    "expression": "floor({speedBonus} / 10)"
-                },
-                "defBonus": {
-                    "expression": "1"
                 },
                 "isBandaged": {
                     "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
                 },
-                "bandagedValue": {
+                "conditionValue": {
                     "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
                 },
-                "trackerStatus": {
+                "trackerHP": {
                     "expression": "OwlTrackers.getValue({token}, 'HP')"
+                },
+                "trackerMaxHP": {
+                    "expression": "OwlTrackers.getMax({token}, 'HP')"
                 },
                 "bubbleHealth": {
                     "expression": "StatBubbles.getValue({token}, 'health')"
@@ -46,36 +43,42 @@
                 "bubbleAC": {
                     "expression": "StatBubbles.getValue({token}, 'armor class')"
                 },
-                "bubbleHealthPercent": {
-                    "expression": "StatBubbles.getHealthPercentage({token})"
+                "ringColors": {
+                    "expression": "ColoredRings.getRings({token})"
+                },
+                "hasBlueRing": {
+                    "expression": "ColoredRings.hasRing({token}, '#1a6aff')"
                 }
             },
             "layout": [
                 {
                     "type": "title",
-                    "text": "General Actions"
+                    "text": "Google Sheets"
+                },
+                {
+                    "type": "text",
+                    "content": "Read values from Google Sheets (requires API key)"
                 },
                 {
                     "type": "row",
                     "children": [
                         {
                             "type": "value",
-                            "var": "speedBonus",
-                            "label": "speedBonus Label"
-                        },
-                        {
-                            "type": "value",
-                            "var": "atkBonus",
-                            "label": "Bonus ATK"
+                            "var": "sheetValue",
+                            "label": "Cell A1"
                         }
                     ]
                 },
                 {
-                    "type": "button",
-                    "commands": [
-                        "JustDices.roll('1d20 + {atkBonus}')"
-                    ],
-                    "label": "Roll Attack"
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Conditions Markers"
+                },
+                {
+                    "type": "text",
+                    "content": "Check and read condition markers on tokens"
                 },
                 {
                     "type": "row",
@@ -83,114 +86,84 @@
                         {
                             "type": "value",
                             "var": "isBandaged",
-                            "label": "isBandaged"
+                            "label": "Has Bandaged?"
                         },
                         {
                             "type": "value",
-                            "var": "bandagedValue",
-                            "label": "bandagedValue"
+                            "var": "conditionValue",
+                            "label": "Bandaged Value"
                         }
                     ]
                 },
                 {
+                    "type": "button",
+                    "commands": [
+                        "{isBandaged} ? OwlTrackers.addValue({token}, 'HP', 10) : OwlTrackers.addValue({token}, 'HP', -5)"
+                    ],
+                    "label": "Heal if Bandaged"
+                },
+                {
+                    "type": "divider"
+                },
+                {
                     "type": "title",
-                    "text": "Owl Trackers Integration"
+                    "text": "Owl Trackers"
+                },
+                {
+                    "type": "text",
+                    "content": "Get and modify tracker values on tokens"
                 },
                 {
                     "type": "row",
                     "children": [
                         {
                             "type": "value",
-                            "var": "trackerStatus",
-                            "label": "Tracker HP"
+                            "var": "trackerHP",
+                            "label": "HP"
+                        },
+                        {
+                            "type": "value",
+                            "var": "trackerMaxHP",
+                            "label": "Max HP"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "OwlTrackers.addValue({token}, 'HP', 10)"
+                            ],
+                            "label": "Heal 10"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "OwlTrackers.addValue({token}, 'HP', -5)"
+                            ],
+                            "label": "Damage 5"
                         }
                     ]
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "OwlTrackers.setValue({token}, 'HP', floor(OwlTrackers.getValue({token}, 'HP')*1.1))"
+                        "OwlTrackers.setValue({token}, 'HP', {trackerMaxHP})"
                     ],
-                    "label": "Heal 1 tick"
+                    "label": "Heal to Max"
                 },
                 {
-                    "type": "button",
-                    "commands": [
-                        "{isBandaged} ? OwlTrackers.addValue({token}, 'HP', 10) : OwlTrackers.addValue({token}, 'HP', -10)"
-                    ],
-                    "label": "Test Button"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "JustDices.roll('1d20 + {atkBonus}') > 15 ? OwlTrackers.addValue({token}, 'HP', 5) : OwlTrackers.addValue({token}, 'HP', -5)"
-                    ],
-                    "label": "Roll Attack (>15 = heal, <=15 = damage)"
+                    "type": "divider"
                 },
                 {
                     "type": "title",
-                    "text": "Colored Rings"
+                    "text": "StatBubbles"
                 },
                 {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.addRing({token}, '#1a6aff')"
-                            ],
-                            "label": "Add Blue Ring"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.removeRing({token}, '#1a6aff')"
-                            ],
-                            "label": "Remove Blue Ring"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.addRing({token}, '#ff7433')"
-                            ],
-                            "label": "Add Orange Ring"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.removeRing({token}, '#ff7433')"
-                            ],
-                            "label": "Remove Orange Ring"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.addRing({token}, '#00ff00')"
-                            ],
-                            "label": "Add Green Ring"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "ColoredRings.removeRing({token}, '#00ff00')"
-                            ],
-                            "label": "Remove Green Ring"
-                        }
-                    ]
-                },
-                {
-                    "type": "title",
-                    "text": "StatBubbles Integration"
+                    "type": "text",
+                    "content": "Manage health, AC, and temp HP via StatBubbles extension"
                 },
                 {
                     "type": "row",
@@ -203,17 +176,12 @@
                         {
                             "type": "value",
                             "var": "bubbleMaxHealth",
-                            "label": "Max Health"
+                            "label": "Max"
                         },
                         {
                             "type": "value",
                             "var": "bubbleAC",
                             "label": "AC"
-                        },
-                        {
-                            "type": "value",
-                            "var": "bubbleHealthPercent",
-                            "label": "HP %"
                         }
                     ]
                 },
@@ -223,16 +191,16 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.heal({token}, 10)"
+                                "StatBubbles.heal({token}, 15)"
                             ],
-                            "label": "Heal 10"
+                            "label": "Heal 15"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.damage({token}, 5)"
+                                "StatBubbles.damage({token}, 8)"
                             ],
-                            "label": "Damage 5"
+                            "label": "Damage 8"
                         }
                     ]
                 },
@@ -242,18 +210,178 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.setValue({token}, 'temporary health', 15)"
+                                "StatBubbles.setValue({token}, 'temporary health', 20)"
                             ],
-                            "label": "Set Temp HP to 15"
+                            "label": "Set Temp HP 20"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.setValue({token}, 'armor class', StatBubbles.getValue({token}, 'armor class') + 2)"
+                                "StatBubbles.addValue({token}, 'armor class', 2)"
                             ],
                             "label": "AC +2"
                         }
                     ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Colored Rings"
+                },
+                {
+                    "type": "text",
+                    "content": "Add and remove colored status rings on tokens"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "hasBlueRing",
+                            "label": "Has Blue Ring?"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#1a6aff')"
+                            ],
+                            "label": "Add Blue"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#ff7433')"
+                            ],
+                            "label": "Add Orange"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.addRing({token}, '#00ff00')"
+                            ],
+                            "label": "Add Green"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#1a6aff')"
+                            ],
+                            "label": "Remove Blue"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#ff7433')"
+                            ],
+                            "label": "Remove Orange"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ColoredRings.removeRing({token}, '#00ff00')"
+                            ],
+                            "label": "Remove Green"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "JustDices"
+                },
+                {
+                    "type": "text",
+                    "content": "Roll dice and get results in Owlbear Rodeo"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('1d20')"
+                            ],
+                            "label": "Roll d20"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('2d6 + 3')"
+                            ],
+                            "label": "Roll 2d6+3"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('1d20 + {bubbleAC}') > 15 ? StatBubbles.damage({token}, 10) : null"
+                    ],
+                    "label": "Attack Roll (DC 15)"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Local Storage"
+                },
+                {
+                    "type": "text",
+                    "content": "Store and retrieve values in browser localStorage"
+                },
+                {
+                    "type": "input",
+                    "var": "inputName",
+                    "label": "Enter Name",
+                    "placeholder": "Type a name..."
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('Global Player Name: ' + {playerName})"
+                            ],
+                            "label": "Show Global Name"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('Input Name: ' + {inputName})"
+                            ],
+                            "label": "Show Input Name"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "Local.set('playerName', 'Xalithra')"
+                    ],
+                    "label": "Save Player Name"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('Player: ' + Local.value('playerName', 'Unknown'))"
+                    ],
+                    "label": "Show Player Name"
                 }
             ]
         },

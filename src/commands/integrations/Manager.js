@@ -78,8 +78,19 @@ class IntegrationsManager {
         getValue: this.wrapAsync(async (sheetName, range) => {
           if (!self.googleSheetsClient) return null;
           const fullRange = `'${sheetName}'!${range}`;
-          const rows = await GoogleSheets.readSheetRange(self.googleSheetsClient, fullRange);
-          return rows?.[0]?.[0] ?? null;
+          const result = await GoogleSheets.readSheetRange(self.googleSheetsClient, fullRange);
+          // readSheetRange returns flattened array for single columns, or 2D array otherwise
+          // For single cell, handle both cases
+          if (Array.isArray(result)) {
+            if (result.length === 0) return null;
+            // If first element is an array, it's 2D (not flattened)
+            if (Array.isArray(result[0])) {
+              return result[0][0] ?? null;
+            }
+            // Otherwise it's flattened 1D array
+            return result[0] ?? null;
+          }
+          return result ?? null;
         }),
         getRange: this.wrapAsync(async (sheetName, range) => {
           if (!self.googleSheetsClient) return null;
