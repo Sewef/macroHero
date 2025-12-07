@@ -27,10 +27,13 @@
       background: #1f1f1f;
       color: #eee;
       margin: 0;
-      padding: 16px;
+      padding: 0;
       font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
       min-width: 320px;
       box-sizing: border-box;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
@@ -64,6 +67,26 @@
       align-items: center;
       gap: 12px;
       margin-bottom: 8px;
+      position: sticky;
+      top: 0;
+      background: #1f1f1f;
+      z-index: 9999;
+      pointer-events: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      padding: 16px 24px 8px 24px;
+    }
+
+    .topbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .topbar .tab {
+      z-index: 10001;
+      position: relative;
     }
 
     .header-actions {
@@ -107,10 +130,13 @@
       flex-direction: column;
       flex: 1 1 auto;
       min-height: 0;
+      overflow-y: auto;
+      height: 100vh;
+      padding: 16px;
+      box-sizing: border-box;
     }
 
     /* Ensure editor container can expand into the modal body (no inner scrolling) */
-    #editor-tab { display: block; }
     .editor-container { display: block; width: 100%; overflow: visible; padding-right: 8px; }
 
     .tab-content.active {
@@ -536,13 +562,14 @@
 </head>
 
 <body>
-  <h2>Configuration Macro Hero</h2>
-
   <div class="topbar">
-    <div class="tabs">
-      <button class="tab active" data-tab="editor">Visual Editor</button>
-      <button class="tab" data-tab="json">JSON Editor</button>
-      <button class="tab" data-tab="gsheets">Google Sheets</button>
+    <div class="topbar-left">
+      <h2 style="margin:0;">Configuration Macro Hero</h2>
+      <div class="tabs" style="margin-top:8px;">
+        <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
+        <button type="button" class="tab" data-tab="json">JSON Editor</button>
+        <button type="button" class="tab" data-tab="gsheets">Google Sheets</button>
+      </div>
     </div>
     <div class="header-actions">
       <button type="button" id="cancelBtn">Cancel</button>

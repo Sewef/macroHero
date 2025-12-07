@@ -148,10 +148,7 @@ function saveVariableFromModal(currentConfigParam) {
 
 function closeModal(data) {
   if (data) {
-    console.log("Modal sending result broadcast:", data);
     OBR.broadcast.sendMessage("macrohero.config.result", data, { destination: "LOCAL" });
-  } else {
-    console.log("Modal closed without saving");
   }
   OBR.modal.close(MODAL_LABEL);
 }
@@ -503,7 +500,6 @@ window.togglePageCollapse = function(index, e) {
   // Prevent toggle if we just finished dragging
   const timeSinceDragEnd = Date.now() - dragEndTime;
   if (timeSinceDragEnd < 200) {
-    console.log('Preventing collapse toggle - just finished dragging');
     return;
   }
   
@@ -1100,12 +1096,7 @@ document.getElementById("addPageBtn").onclick = () => {
   renderEditor(currentConfig);
 };
 
-// Tab click handlers
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    switchTab(tab.dataset.tab);
-  });
-});
+// Tab click handlers will be attached when the modal is ready (inside OBR.onReady)
 
 // Sync from JSON button
 document.getElementById("syncFromJson").onclick = syncFromJson;
@@ -1200,6 +1191,16 @@ OBR.onReady(() => {
     currentConfig = cfg;
     renderEditor(cfg);
     document.getElementById("cfgArea").value = JSON.stringify(cfg, null, 2);
+    // Attach tab handlers now that DOM is ready
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          switchTab(tab.dataset.tab);
+        });
+      });
+      // No delegated fallback — explicit handlers above are sufficient and less intrusive.
+    // Ensure initial tab state
+    switchTab(currentTab);
   }).catch(error => {
     console.error("Error loading config in modal:", error);
   });
