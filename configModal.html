@@ -45,6 +45,42 @@
       padding-bottom: 6px;
     }
 
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #444;
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      padding: 8px 16px;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 1em;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: #4ea1ff;
+    }
+
+    .tab.active {
+      color: #4ea1ff;
+      border-bottom-color: #4ea1ff;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     .input-group {
       margin-bottom: 12px;
     }
@@ -58,12 +94,14 @@
       letter-spacing: 0.5px;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
       width: 100%;
       padding: 6px 8px;
       background: #2a2a2a;
       color: #eee;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
       border-radius: 4px;
       box-sizing: border-box;
       font-family: inherit;
@@ -73,17 +111,19 @@
       transition: border-color 0.2s;
     }
 
-    input[type="text"]:focus {
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus {
       border-color: #007bff;
       outline: none;
     }
 
     textarea {
       width: 100%;
-      height: 180px;
+      min-height: 120px;
       background: #2a2a2a;
       color: #eee;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
       border-radius: 4px;
       font-family: 'Courier New', monospace;
       font-size: 0.9em;
@@ -99,16 +139,290 @@
       outline: none;
     }
 
+    .editor-container {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .editor-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .editor-container::-webkit-scrollbar-track {
+      background: #2a2a2a;
+      border-radius: 4px;
+    }
+
+    .editor-container::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+
+    .editor-container::-webkit-scrollbar-thumb:hover {
+      background: #666;
+    }
+
+    .page-item {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .page-header {
+      cursor: move;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .page-label {
+      font-weight: 600;
+      color: #4ea1ff;
+      font-size: 1.1em;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .collapse-btn {
+      background: none;
+      border: none;
+      color: #4ea1ff;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 0 8px;
+      transition: transform 0.2s;
+    }
+
+    .collapse-btn.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .page-content {
+      display: block;
+    }
+
+    .page-content.collapsed {
+      display: none;
+    }
+
+    .layout-items {
+      margin-top: 12px;
+      padding-left: 12px;
+      border-left: 2px solid #444;
+    }
+
+    .layout-item {
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+    }
+
+    .layout-item.row-container {
+      cursor: default;
+      border-color: #4ea1ff;
+      background: #2a2a2a;
+    }
+
+    .row-children {
+      margin-left: 24px;
+      margin-bottom: 8px;
+      padding-left: 12px;
+      border-left: 2px solid #4ea1ff;
+      min-height: 20px;
+    }
+
+    .row-children .layout-item {
+      background: #3a3a3a;
+    }
+
+    .row-drop-zone {
+      background: #2a2a2a;
+      border: 2px dashed #555;
+      border-radius: 4px;
+      padding: 12px;
+      text-align: center;
+      color: #888;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .row-drop-zone.drag-over {
+      background: #333;
+      border-color: #4ea1ff;
+      color: #4ea1ff;
+    }
+
+    .layout-item.dragging {
+      opacity: 0.5;
+    }
+
+    .page-item.drag-over {
+      border-color: #4ea1ff;
+      background: #333;
+    }
+
+    .drop-indicator {
+      height: 3px;
+      background: #4ea1ff;
+      margin: 4px 0;
+      border-radius: 2px;
+      box-shadow: 0 0 8px #4ea1ff;
+      transition: all 0.2s;
+    }
+
+    .layout-item-info {
+      flex: 1;
+    }
+
+    .layout-item-type {
+      display: inline-block;
+      background: #4ea1ff;
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 0.75em;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .layout-item-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .drag-handle {
+      cursor: move;
+      color: #888;
+      padding: 0 4px;
+      font-size: 1.2em;
+      user-select: none;
+    }
+
+    .drag-handle:hover {
+      color: #4ea1ff;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #2a2a2a;
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #4ea1ff;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 1.5em;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+    }
+
+    .close-modal:hover {
+      color: #fff;
+    }
+
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      background: #2a2a2a;
+      color: #eee;
+      border: 1px solid #555;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 1em;
+      height: 32px;
+    }
+
+    .btn-small {
+      padding: 4px 12px;
+      font-size: 0.85em;
+      height: auto;
+    }
+
+    .btn-danger {
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .btn-danger:hover {
+      background-color: #ff4444;
+      color: #000;
+    }
+
+    .btn-add {
+      width: 100%;
+      margin-top: 8px;
+      border-style: dashed;
+      color: #4ea1ff;
+    }
+
     .buttons {
       margin-top: 16px;
       display: flex;
       gap: 12px;
       justify-content: flex-end;
+      border-top: 1px solid #444;
+      padding-top: 16px;
     }
 
     button {
       background: none;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
       border-radius: 4px;
       cursor: pointer;
       font-size: 1em;
@@ -133,6 +447,11 @@
       outline-offset: 2px;
     }
 
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     #saveBtn {
       border-color: #4ea1ff;
       color: #4ea1ff;
@@ -143,6 +462,12 @@
       border-color: #4ea1ff;
       color: #000;
     }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
   </style>
   <script src="/src/configModal.js" type="module"></script>
 </head>
@@ -150,9 +475,47 @@
 <body>
   <h2>Configuration Macro Hero</h2>
 
+  <div class="tabs">
+    <button class="tab active" data-tab="editor">Visual Editor</button>
+    <button class="tab" data-tab="json">JSON Editor</button>
+    <button class="tab" data-tab="gsheets">Google Sheets</button>
+  </div>
+
   <form id="configForm">
-    <div>
-      <h3>Google Sheets Settings</h3>
+    <!-- Visual Editor Tab -->
+    <div id="editor-tab" class="tab-content active">
+      <div class="input-group">
+        <label for="globalTitle">Global Title</label>
+        <input type="text" id="globalTitle" placeholder="Macro Hero" />
+      </div>
+      
+      <div class="row">
+        <div class="input-group">
+          <label for="globalWidth">Width</label>
+          <input type="number" id="globalWidth" placeholder="600" />
+        </div>
+        <div class="input-group">
+          <label for="globalHeight">Height</label>
+          <input type="number" id="globalHeight" placeholder="600" />
+        </div>
+      </div>
+
+      <h3>Pages</h3>
+      <div class="editor-container" id="pagesContainer"></div>
+      <button type="button" class="btn-add" id="addPageBtn">+ Add Page</button>
+    </div>
+
+    <!-- JSON Editor Tab -->
+    <div id="json-tab" class="tab-content">
+      <div class="input-group">
+        <label for="cfgArea">Raw JSON Configuration</label>
+        <textarea id="cfgArea" style="min-height: 400px;"></textarea>
+      </div>
+      <button type="button" id="syncFromJson">Sync to Visual Editor</button>
+    </div>
+
+    <!-- Google Sheets Tab -->
+    <div id="gsheets-tab" class="tab-content">
       <div class="input-group">
         <label for="apiKeyInput">API Key</label>
         <input type="password" id="apiKeyInput" placeholder="Enter Google API Key" autocomplete="off" />
@@ -163,15 +526,42 @@
       </div>
     </div>
 
-    <div>
-      <h3>Configuration JSON</h3>
-      <textarea id="cfgArea"></textarea>
-    </div>
-
     <div class="buttons">
-      <button type="button" id="cancelBtn">Annuler</button>
-      <button type="button" id="saveBtn">Enregistrer</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+      <button type="button" id="saveBtn">Save</button>
     </div>
   </form>
+
+  <!-- Element Editor Modal -->
+  <div id="elementModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Add Element</h3>
+        <button type="button" class="close-modal" onclick="closeElementModal()">×</button>
+      </div>
+      
+      <div class="input-group">
+        <label for="elementType">Element Type</label>
+        <select id="elementType" onchange="updateElementFields()">
+          <option value="button">Button</option>
+          <option value="value">Value Display</option>
+          <option value="input">Text Input</option>
+          <option value="counter">Counter</option>
+          <option value="checkbox">Checkbox</option>
+          <option value="title">Title</option>
+          <option value="text">Text/Description</option>
+          <option value="divider">Divider</option>
+          <option value="row">Row (Container)</option>
+        </select>
+      </div>
+
+      <div id="elementFields"></div>
+
+      <div class="buttons">
+        <button type="button" onclick="closeElementModal()">Cancel</button>
+        <button type="button" onclick="saveElement()" id="saveElementBtn">Add Element</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
