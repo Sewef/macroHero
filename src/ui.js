@@ -22,6 +22,28 @@ export function initUI(cfg) {
   config = cfg;
   renderPageButtons();
   selectFirstPage();
+  // Once initial UI is rendered, remove the loading overlay
+  hideLoadingOverlay();
+}
+
+// Show a loading overlay and hide content while config is loading
+function showLoadingOverlay() {
+  try {
+    const loader = document.getElementById('loadingOverlay');
+    const content = document.getElementById('content');
+    if (loader) loader.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+  } catch (e) { console.warn('[UI] Failed to show loading overlay', e); }
+}
+
+// Hide the loading overlay and show the main content
+function hideLoadingOverlay() {
+  try {
+    const loader = document.getElementById('loadingOverlay');
+    const content = document.getElementById('content');
+    if (loader) loader.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+  } catch (e) { console.warn('[UI] Failed to hide loading overlay', e); }
 }
 
 /**
@@ -619,6 +641,8 @@ export function renderConfigUI() {
 
 export async function updateConfig(newConfig) {
   console.log("[UI] Config updated, refreshing UI");
+  // Show the loading overlay while we re-resolve and re-render
+  showLoadingOverlay();
   config = newConfig;
   
   // Re-resolve variables when config updates
@@ -637,4 +661,6 @@ export async function updateConfig(newConfig) {
   }
 
   renderConfigUI();
+  // Hide overlay after render complete
+  hideLoadingOverlay();
 }
