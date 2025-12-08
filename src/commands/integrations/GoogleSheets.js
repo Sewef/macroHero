@@ -81,6 +81,56 @@ export function parseLocalizedNumberString(raw) {
   return raw;
 }
 
+// Storage keys for persisted GSheets credentials
+export const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
+export const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
+
+/**
+ * Get Google Sheets credentials from localStorage
+ * @returns {{apiKey: string|null, sheetId: string|null}}
+ */
+export function getGoogleSheetsCredentials() {
+  return {
+    apiKey: localStorage.getItem(GSHEET_API_KEY_STORAGE),
+    sheetId: localStorage.getItem(GSHEET_SHEET_ID_STORAGE)
+  };
+}
+
+/**
+ * Save Google Sheets API key to localStorage
+ * @param {string} apiKey - The API key to save (or empty to remove)
+ */
+export function saveGoogleSheetsApiKey(apiKey) {
+  if (apiKey && apiKey.trim()) {
+    localStorage.setItem(GSHEET_API_KEY_STORAGE, apiKey);
+    console.log("✓ API key saved to localStorage");
+  } else {
+    localStorage.removeItem(GSHEET_API_KEY_STORAGE);
+  }
+}
+
+/**
+ * Save Google Sheets Sheet ID to localStorage
+ * @param {string} sheetId - The sheet ID to save (or empty to remove)
+ */
+export function saveGoogleSheetsSheetId(sheetId) {
+  if (sheetId && sheetId.trim()) {
+    localStorage.setItem(GSHEET_SHEET_ID_STORAGE, sheetId);
+    console.log("✓ Sheet ID saved to localStorage");
+  } else {
+    localStorage.removeItem(GSHEET_SHEET_ID_STORAGE);
+  }
+}
+
+/**
+ * Check if Google Sheets credentials are configured
+ * @returns {boolean}
+ */
+export function hasGoogleSheetsCredentials() {
+  const { apiKey, sheetId } = getGoogleSheetsCredentials();
+  return !!(apiKey && sheetId);
+}
+
 /**
  * Read range from Google Sheet
  * @param {Object} client - Initialized client
@@ -97,15 +147,15 @@ export async function readSheetRange(client, range) {
     console.log("[GSHEET-API] Fetching URL:", url.replace(client.apiKey, "***"));
     console.log("[GSHEET-API] Sheet ID:", client.sheetId);
     console.log("[GSHEET-API] Range:", range);
-    
+
     const response = await fetch(url);
-    
+
     console.log("[GSHEET-API] Response status:", response.status, response.statusText);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[GSHEET-API] Error response body:", errorText);
-      
+
       // Parse error details if it's JSON
       let errorDetails = errorText;
       try {
@@ -114,7 +164,7 @@ export async function readSheetRange(client, range) {
       } catch (e) {
         // Not JSON, use as-is
       }
-      
+
       const errorMsg = `Failed to read sheet (${response.status} ${response.statusText}): ${errorDetails}`;
       console.error("[GSHEET-API]", errorMsg);
       throw new Error(errorMsg);
@@ -122,7 +172,7 @@ export async function readSheetRange(client, range) {
 
     const data = await response.json();
     console.log("[GSHEET-API] ✓ Successfully read sheet range, rows:", data.values?.length ?? 0);
-    
+
     const values = data.values || [];
 
     // Use exported helper parseLocalizedNumberString
@@ -134,7 +184,7 @@ export async function readSheetRange(client, range) {
       if (parsed !== cell && typeof parsed === 'number' && !Number.isNaN(parsed)) conversionCount += 1;
       return parsed;
     }));
-    
+
     // Log conversions if any
     if (conversionCount > 0) {
       console.log(`[GSHEET-API] ✓ Converted ${conversionCount} localized numeric strings to numbers`);
@@ -236,7 +286,7 @@ export async function getSheetMetadata(client) {
   try {
     const url = `${client.baseUrl}/${client.sheetId}?key=${client.apiKey}`;
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`Failed to get sheet metadata: ${response.statusText}`);
     }
@@ -253,8 +303,13 @@ export default {
   readSheetRange,
   writeSheetRange,
   appendToSheet,
-  getSheetMetadata
-  ,
-  parseLocalizedNumberString
+  getSheetMetadata,
+  parseLocalizedNumberString,
+  getGoogleSheetsCredentials,
+  saveGoogleSheetsApiKey,
+  saveGoogleSheetsSheetId,
+  hasGoogleSheetsCredentials,
+  GSHEET_API_KEY_STORAGE,
+  GSHEET_SHEET_ID_STORAGE
 };
 

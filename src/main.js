@@ -3,7 +3,7 @@ import { openConfigModal, loadConfig } from "./config.js";
 import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
-import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheetsConfig.js";
+import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;
