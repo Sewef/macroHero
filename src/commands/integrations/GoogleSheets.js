@@ -24,6 +24,64 @@ export function initializeGoogleSheets(config) {
 }
 
 /**
+ * Try to parse a localized numeric string into a Number
+ * Supports French format (27,6), thousand separators (1 234 or 1.234) and mixed styles (1.234,56)
+ * Returns the original value if it cannot be parsed deterministically
+ * @param {*} raw
+ */
+export function parseLocalizedNumberString(raw) {
+  if (raw === null || raw === undefined) return raw;
+  if (typeof raw !== 'string') return raw;
+
+  // Trim and normalize whitespace
+  let s = raw.trim();
+  if (s === '') return raw;
+  // Replace NBSP or thin spaces, and remove common thousands separators (space groups later)
+  s = s.replace(/\u00A0|\u202F/g, ' ');
+  // Remove all spaces (could be thousand separators in some locales)
+  s = s.replace(/\s/g, '');
+
+  // If it's now a plain integer, keep it as number
+  if (/^[+-]?\d+$/.test(s)) return Number(s);
+
+  const hasComma = s.indexOf(',') !== -1;
+  const hasDot = s.indexOf('.') !== -1;
+
+  // If both separators exist, assume the last separator is the decimal marker
+  if (hasComma && hasDot) {
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // pattern like 1.234,56 -> remove dots (thousands), comma = decimal
+      const normalized = s.replace(/\./g, '').replace(/,/g, '.');
+      const n = Number(normalized);
+      return Number.isNaN(n) ? raw : n;
+    } else {
+      // pattern like 1,234.56 -> remove commas (thousands)
+      const normalized = s.replace(/,/g, '');
+      const n = Number(normalized);
+      return Number.isNaN(n) ? raw : n;
+    }
+  }
+
+  // Only comma -> treat comma as decimal
+  if (hasComma && !hasDot) {
+    const normalized = s.replace(/,/g, '.');
+    const n = Number(normalized);
+    return Number.isNaN(n) ? raw : n;
+  }
+
+  // Only dot -> standard parse (also remove stray commas if any)
+  if (hasDot && !hasComma) {
+    const normalized = s.replace(/,/g, '');
+    const n = Number(normalized);
+    return Number.isNaN(n) ? raw : n;
+  }
+
+  return raw;
+}
+
+/**
  * Read range from Google Sheet
  * @param {Object} client - Initialized client
  * @param {string} range - Sheet range (e.g., "Sheet1!A1:D10")
@@ -66,16 +124,31 @@ export async function readSheetRange(client, range) {
     console.log("[GSHEET-API] ✓ Successfully read sheet range, rows:", data.values?.length ?? 0);
     
     const values = data.values || [];
+
+    // Use exported helper parseLocalizedNumberString
+
+    // Convert values in place (preserve non-numeric strings)
+    let conversionCount = 0;
+    const convertedValues = values.map(row => row.map(cell => {
+      const parsed = parseLocalizedNumberString(cell);
+      if (parsed !== cell && typeof parsed === 'number' && !Number.isNaN(parsed)) conversionCount += 1;
+      return parsed;
+    }));
     
+    // Log conversions if any
+    if (conversionCount > 0) {
+      console.log(`[GSHEET-API] ✓ Converted ${conversionCount} localized numeric strings to numbers`);
+    }
+
     // Flatten single-column ranges for convenience
     // If all rows have exactly 1 column, return a 1D array instead of 2D
-    if (values.length > 0 && values.every(row => row.length === 1)) {
-      const flattened = values.map(row => row[0]);
+    if (convertedValues.length > 0 && convertedValues.every(row => row.length === 1)) {
+      const flattened = convertedValues.map(row => row[0]);
       console.log("[GSHEET-API] ✓ Flattened single-column range to 1D array");
       return flattened;
     }
-    
-    return values;
+
+    return convertedValues;
   } catch (error) {
     console.error("[GSHEET-API] Exception:", error);
     throw error;
@@ -181,4 +254,7 @@ export default {
   writeSheetRange,
   appendToSheet,
   getSheetMetadata
+  ,
+  parseLocalizedNumberString
 };
+
