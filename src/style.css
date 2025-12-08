@@ -224,7 +224,8 @@ h1 {
   border: 1px solid #444;
   border-radius: 4px;
   flex: 1 1 0;
-  min-width: 0;
+  /* allow shrinking but keep a small readable minimum for short values */
+  min-width: 40px;
   max-width: none;
   overflow: hidden;
 }
@@ -247,6 +248,9 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* ensure inner value can shrink within its container */
+  min-width: 0;
+  text-align: center;
 }
 
 .mh-value-content.mh-loading {
@@ -348,12 +352,10 @@ h1 {
   border: 1px solid #444;
   border-radius: 4px;
   flex: 1 1 0;
-  min-width: 0;
+  /* match mh-layout-value responsiveness: allow tighter layouts */
+  min-width: 40px;
+  max-width: none;
   overflow: hidden;
-  border-radius: 4px;
-  flex: 1;
-  min-width: 80px;
-  max-width: 150px;
 }
 
 .mh-counter-label {
