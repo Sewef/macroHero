@@ -111,7 +111,7 @@ export async function roll(expression, hiddenOrOptions = {}) {
     await OBR.broadcast.sendMessage(
       "justdices.api.request",
       { callId, expression: finalExpression, showInLogs, requesterId },
-      { destination: "ALL" }
+      { destination: "LOCAL" }
     );
 
     const response = await waitResponse;
@@ -184,7 +184,7 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
     await OBR.broadcast.sendMessage(
       "justdices.api.request",
       { callId, expression: finalExpression, showInLogs, requesterId },
-      { destination: "ALL" }
+      { destination: "LOCAL" }
     );
 
     return await waitResponse;
