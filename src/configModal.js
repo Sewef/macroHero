@@ -1,5 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
+import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 
 let currentConfig = null;
@@ -146,11 +146,51 @@ function saveVariableFromModal(currentConfigParam) {
   return true;
 }
 
-function closeModal(data) {
-  if (data) {
-    OBR.broadcast.sendMessage("macrohero.config.result", data, { destination: "LOCAL" });
+async function closeModal(data) {
+  try {
+    if (data) {
+      // Try primary send first
+      let sent = false;
+      const attempts = [
+        { opts: { destination: "LOCAL" }, desc: 'LOCAL' },
+        { opts: undefined, desc: 'no-options' },
+        { opts: { destination: "ROOM" }, desc: 'ROOM' },
+        { opts: { destination: "ALL" }, desc: 'ALL' }
+      ];
+
+      for (const attempt of attempts) {
+        try {
+          if (attempt.opts !== undefined) {
+            await OBR.broadcast.sendMessage("macrohero.config.result", data, attempt.opts);
+          } else {
+            await OBR.broadcast.sendMessage("macrohero.config.result", data);
+          }
+          console.log(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
+          sent = true;
+          break;
+        } catch (err) {
+          // Log detailed info for debugging
+          try {
+            console.warn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
+          } catch (logErr) {
+            console.warn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
+          }
+        }
+      }
+
+      if (!sent) {
+        console.error('[MODAL] ERROR: All attempts to broadcast config.result failed');
+      }
+    }
+  } catch (err) {
+    console.error("[MODAL] Unexpected error while broadcasting config result:", err);
   }
-  OBR.modal.close(MODAL_LABEL);
+
+  try {
+    await OBR.modal.close(MODAL_LABEL);
+  } catch (err) {
+    console.warn("[MODAL] Warning: modal.close failed:", err);
+  }
 }
 
 // Tab switching
@@ -1108,7 +1148,7 @@ document.getElementById("cancelBtn").onclick = () => {
 };
 
 // Save
-document.getElementById("saveBtn").onclick = () => {
+document.getElementById("saveBtn").onclick = async () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const sheetIdInput = document.getElementById("sheetIdInput");
   
@@ -1138,9 +1178,17 @@ document.getElementById("saveBtn").onclick = () => {
     
     saveGoogleSheetsApiKey(apiKey);
     saveGoogleSheetsSheetId(sheetId);
-    
-    console.log("✓ Config valid, sending to main app...");
-    closeModal({ updatedConfig: config, gsheetUpdated: true });
+
+    // Persist full config to room-scoped localStorage (modal context)
+    try {
+      await saveConfigToLocalStorage(config);
+      console.log("✓ Config saved to room-scoped localStorage by modal");
+    } catch (err) {
+      console.warn("[MODAL] Failed to save full config to localStorage:", err);
+    }
+
+    console.log("✓ Config valid, notifying main app to reload from storage...");
+    await closeModal({ savedFromModal: true, gsheetUpdated: true });
   } catch (e) {
     console.error("✗ Validation error:", e);
     alert("Error: " + e.message);

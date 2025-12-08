@@ -1,5 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { openConfigModal, loadConfig } from "./config.js";
+import { openConfigModal, loadConfig, loadConfigFromLocalStorage } from "./config.js";
 import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
@@ -63,23 +63,39 @@ OBR.onReady(async () => {
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
       console.log("[MAIN] Config updated via modal");
-      
+
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
       const { apiKey, sheetId } = getGoogleSheetsCredentials();
-      
+
       if (apiKey && sheetId) {
         initializeExpressions({ apiKey, sheetId });
       }
-      
+
+      // If the modal sent a small flag, load full config from room-scoped localStorage
+      let newConfig = event.data;
+      if (event.data && event.data.savedFromModal) {
+        try {
+          const cfg = await loadConfigFromLocalStorage();
+          if (cfg) {
+            newConfig = cfg;
+          } else {
+            console.warn('[MAIN] No config found in localStorage after modal saved');
+            return;
+          }
+        } catch (err) {
+          console.error('[MAIN] Failed to load config from localStorage after modal saved:', err);
+          return;
+        }
+      }
+
       // Apply width/height if specified in the new config
-      const newConfig = event.data;
       if (newConfig.global?.width || newConfig.global?.height) {
         const width = newConfig.global.width || 500;
         const height = newConfig.global.height || 500;
         await OBR.action.setWidth(width);
         await OBR.action.setHeight(height);
       }
-      
+
       updateConfig(newConfig);
     });
   } catch (error) {

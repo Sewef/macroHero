@@ -54,14 +54,29 @@ async function getPlayerId() {
 // Export for use in other modules
 export { ensureOBRReady };
 
-// Helper to save full config to localStorage
+// Helper to build a room-scoped localStorage key.
+// Uses `OBR.room.id` when available so configs are stored per-room
+async function getRoomScopedLocalStorageKey() {
+    try {
+        // Ensure SDK is ready so OBR.room.id is populated
+        await ensureOBRReady();
+        const roomId = (OBR.room && OBR.room.id) ? OBR.room.id : (OBR.room && typeof OBR.room.getId === 'function' ? await OBR.room.getId() : 'unknown');
+        return `${LOCAL_STORAGE_CONFIG_KEY}/${roomId}`;
+    } catch (e) {
+        console.warn('[CONFIG] Could not determine room id for localStorage key, using fallback', e);
+        return `${LOCAL_STORAGE_CONFIG_KEY}/unknown`;
+    }
+}
+
+// Helper to save full config to localStorage (room-scoped)
 // This preserves the entire config including external/calculated variable definitions
-export function saveConfigToLocalStorage(cfg) {
+export async function saveConfigToLocalStorage(cfg) {
     try {
         const configJson = JSON.stringify(cfg);
-        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, configJson);
+        const key = await getRoomScopedLocalStorageKey();
+        localStorage.setItem(key, configJson);
         const sizeKB = (new Blob([configJson]).size / 1024).toFixed(2);
-        console.log("[CONFIG] Full config saved to localStorage (", sizeKB, "KB )");
+        console.log("[CONFIG] Full config saved to localStorage (", sizeKB, "KB )", "key=", key);
         return true;
     } catch (error) {
         console.error("[CONFIG] Error saving to localStorage:", error);
@@ -70,12 +85,13 @@ export function saveConfigToLocalStorage(cfg) {
 }
 
 // Helper to load full config from localStorage
-export function loadConfigFromLocalStorage() {
+export async function loadConfigFromLocalStorage() {
     try {
-        const configJson = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY);
+        const key = await getRoomScopedLocalStorageKey();
+        const configJson = localStorage.getItem(key);
         if (configJson) {
             const cfg = JSON.parse(configJson);
-            console.log("[CONFIG] Full config loaded from localStorage");
+            console.log("[CONFIG] Full config loaded from localStorage", "key=", key);
             return cfg;
         }
     } catch (error) {
@@ -121,8 +137,8 @@ export async function loadConfig() {
         // Get saved local variables for this player from Room Metadata
         const savedLocalVars = playerConfigs[playerId];
         
-        // Start with full config from localStorage, or default config if not found
-        const localStorageConfig = loadConfigFromLocalStorage();
+        // Start with full config from room-scoped localStorage, or default config if not found
+        const localStorageConfig = await loadConfigFromLocalStorage();
         const config = localStorageConfig 
             ? JSON.parse(JSON.stringify(localStorageConfig))
             : JSON.parse(JSON.stringify(defaultConfig));
@@ -175,8 +191,8 @@ export async function saveConfig(cfg) {
         const playerId = await getPlayerId();
         console.log("[CONFIG] Saving config for player:", playerId);
         
-        // Save full config to localStorage
-        saveConfigToLocalStorage(cfg);
+        // Save full config to room-scoped localStorage
+        await saveConfigToLocalStorage(cfg);
         
         // Extract only local variables from config for Room Metadata
         // Structure: { pageIndex: { varName: value, ... }, ... }
@@ -284,21 +300,42 @@ export async function openConfigModal() {
     // Listen for the result from the modal
     const unsubscribe = OBR.broadcast.onMessage("macrohero.config.result", async (event) => {
         console.log("[MODAL] Received broadcast 'macrohero.config.result':", event.data);
-        if (event.data?.updatedConfig) {
-            console.log("[MODAL] Updated config found, saving to metadata...", event.data.updatedConfig);
-            try {
-                await saveConfig(event.data.updatedConfig);
-                // Notify main app to reload UI
-                console.log("[MODAL] Broadcasting config.updated to LOCAL");
-                OBR.broadcast.sendMessage("macrohero.config.updated", event.data.updatedConfig, { destination: "LOCAL" });
-                console.log("✓ [MODAL] Config saved and UI update broadcast sent");
-            } catch (error) {
-                console.error("✗ [MODAL] Failed to save config:", error);
+        try {
+            if (event.data?.updatedConfig) {
+                console.log("[MODAL] Updated config found, saving to metadata...", event.data.updatedConfig);
+                try {
+                    await saveConfig(event.data.updatedConfig);
+                    console.log("[MODAL] Config saved to metadata via updatedConfig path");
+                } catch (error) {
+                    console.error("✗ [MODAL] Failed to save config (updatedConfig path):", error);
+                }
+            } else if (event.data?.savedFromModal) {
+                console.log("[MODAL] Received savedFromModal flag — loading full config from room-scoped localStorage");
+                try {
+                    const cfg = await loadConfigFromLocalStorage();
+                    if (cfg) {
+                        console.log("[MODAL] Full config loaded from localStorage, saving to metadata...");
+                        await saveConfig(cfg);
+                    } else {
+                        console.warn("[MODAL] No full config found in localStorage to save to metadata");
+                    }
+                } catch (error) {
+                    console.error("✗ [MODAL] Error loading/saving config from localStorage:", error);
+                }
+            } else {
+                console.log("[MODAL] Modal closed without config update");
             }
-        } else {
-            console.log("[MODAL] Modal closed without config update");
+
+            // Notify main app to reload UI — send a small flag to avoid size limits
+            try {
+                await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromModal: true }, { destination: "LOCAL" });
+                console.log("[MODAL] Broadcasted small config.updated flag to LOCAL");
+            } catch (err) {
+                console.warn("[MODAL] Warning: failed to broadcast small config.updated flag:", err);
+            }
+        } finally {
+            unsubscribe();
         }
-        unsubscribe();
     });
 
     console.log("[MODAL] Opening modal window...");
