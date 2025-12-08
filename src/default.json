@@ -20,7 +20,7 @@
                     "expression": "'Enter name here'"
                 },
                 "isBandaged": {
-                    "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
+                    "expression": "ConditionsMarkers.hasCondition({token}, 'Bandaged')"
                 },
                 "conditionValue": {
                     "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
@@ -776,6 +776,13 @@
                             "type": "button",
                             "commands": [
                                 "ConditionsMarkers.addCondition({token}, 'Rage')"
+                            ],
+                            "label": "Enrage"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ConditionsMarkers.removeCondition({token}, 'Rage')"
                             ],
                             "label": "Calm Down"
                         }

@@ -107,8 +107,13 @@ class IntegrationsManager {
       },
       // Conditions Markers integration (all async)
       ConditionsMarkers: {
+        getConditions: this.wrapAsync((tokenId) => ConditionsMarkers.getConditions(tokenId)),
         getValue: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.getValue(tokenId, conditionName)),
-        isCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.isCondition(tokenId, conditionName)),
+        hasCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.hasCondition(tokenId, conditionName)),
+        addCondition: this.wrapAsync((tokenId, conditionName, options) => ConditionsMarkers.addCondition(tokenId, conditionName, options)),
+        removeCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.removeCondition(tokenId, conditionName)),
+        toggleCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.toggleCondition(tokenId, conditionName)),
+        clearAllConditions: this.wrapAsync((tokenId) => ConditionsMarkers.clearAllConditions(tokenId)),
       },
       // Owl Trackers integration (all async)
       OwlTrackers: {

@@ -10,7 +10,7 @@ import OBR from "@owlbear-rodeo/sdk";
  * @param {string} itemId - Item ID
  * @returns {Promise<Array>} Array of condition objects
  */
-export async function getItemConditions(itemId) {
+export async function getConditions(itemId) {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
       const ext = Ext.ConditionsMarkers;
@@ -49,14 +49,45 @@ export async function addCondition(itemId, conditionName, options = {}) {
       console.log(`[ConditionsMarkers] Using native Ext.ConditionsMarkers.addCondition for token ${itemId}, condition '${conditionName}'`);
       return await Ext.ConditionsMarkers.addCondition(itemId, conditionName, options);
     }
+    // Fallback: attempt to use the Condition Markers API (request/response pattern)
+    const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
+    const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
 
-    console.log(`[ConditionsMarkers] Native API missing, sending addCondition broadcast for token ${itemId}, condition '${conditionName}'`);
-    await OBR.broadcast.sendMessage(
-      "conditionmarkers.api.addCondition",
-      { tokenId: itemId, condition: conditionName },
-      { destination: "ALL" }
-    );
-    console.log(`[ConditionsMarkers] Broadcast sent successfully for condition '${conditionName}'`);
+    const requesterId = await OBR.player.getId();
+    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const payload = { callId, requesterId, action: 'add', tokenId: itemId, condition: conditionName, value: options?.value };
+
+    console.log(`[ConditionsMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName}'`);
+
+    const res = await new Promise((resolve, reject) => {
+      let timeoutId = null;
+      const handler = (evt) => {
+        const data = evt.data;
+        if (!data) return;
+        if (data.callId !== callId || data.requesterId !== requesterId) return;
+        if (timeoutId) clearTimeout(timeoutId);
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        resolve(data);
+      };
+
+      // Listen for response
+      OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
+
+      // Send request
+      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "ALL" }).catch(err => {
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        reject(err);
+      });
+
+      // Timeout
+      timeoutId = setTimeout(() => {
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        reject(new Error('ConditionMarkers API timeout'));
+      }, 5000);
+    });
+
+    console.log(`[ConditionsMarkers] API response for add '${conditionName}':`, res);
+    return res;
   } catch (error) {
     console.error("Failed to add condition:", error);
     throw error;
@@ -76,14 +107,40 @@ export async function removeCondition(itemId, conditionName) {
     if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.removeCondition === 'function') {
       return await Ext.ConditionsMarkers.removeCondition(itemId, conditionName);
     }
+    // Fallback: use Condition Markers API request/response
+    const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
+    const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
 
-    // Fallback: find and delete marker items
-    const items = await OBR.scene.items.getItems();
-    const markers = items.filter(item => item.attachedTo === itemId && item.name === `Condition Marker - ${conditionName}`);
-    const markerIds = markers.map(m => m.id);
-    if (markerIds.length > 0) {
-      await OBR.scene.items.deleteItems(markerIds);
-    }
+    const requesterId = await OBR.player.getId();
+    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const payload = { callId, requesterId, action: 'remove', tokenId: itemId, condition: conditionName };
+
+    const res = await new Promise((resolve, reject) => {
+      let timeoutId = null;
+      const handler = (evt) => {
+        const data = evt.data;
+        if (!data) return;
+        if (data.callId !== callId || data.requesterId !== requesterId) return;
+        if (timeoutId) clearTimeout(timeoutId);
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        resolve(data);
+      };
+
+      OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
+
+      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "ALL" }).catch(err => {
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        reject(err);
+      });
+
+      timeoutId = setTimeout(() => {
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        reject(new Error('ConditionMarkers API timeout'));
+      }, 5000);
+    });
+
+    console.log(`[ConditionsMarkers] API response for remove '${conditionName}':`, res);
+    return res;
   } catch (error) {
     console.error("Failed to remove condition:", error);
     throw error;
@@ -103,7 +160,7 @@ export async function toggleCondition(itemId, conditionName) {
       return await Ext.ConditionsMarkers.toggleCondition(itemId, conditionName);
     }
 
-    const conditions = await getItemConditions(itemId);
+    const conditions = await getConditions(itemId);
     const hasCondition = conditions.some(c => c.name === conditionName || c === conditionName);
 
     if (hasCondition) {
@@ -128,7 +185,7 @@ export async function clearAllConditions(itemId) {
       return await Ext.ConditionsMarkers.clearAllConditions(itemId);
     }
 
-    const conditions = await getItemConditions(itemId);
+    const conditions = await getConditions(itemId);
     for (const condition of conditions) {
       const name = condition.name ?? condition;
       await removeCondition(itemId, name);
@@ -151,7 +208,7 @@ export async function hasCondition(itemId, conditionName) {
       return await Ext.ConditionsMarkers.hasCondition(itemId, conditionName);
     }
 
-    const conditions = await getItemConditions(itemId);
+    const conditions = await getConditions(itemId);
     return conditions.some(c => (c.name ? c.name === conditionName : c === conditionName));
   } catch (error) {
     console.error("Failed to check condition:", error);
@@ -163,144 +220,7 @@ export async function hasCondition(itemId, conditionName) {
  * Get available condition types
  * @returns {Promise<Array>} Array of available condition names
  */
-export async function getAvailableConditions() {
-  try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      const ext = Ext.ConditionsMarkers;
-      if (typeof ext.getAvailableConditions === 'function') {
-        return await ext.getAvailableConditions();
-      }
-      if (typeof ext.getConditions === 'function') {
-        return await ext.getConditions();
-      }
-    }
-    console.log("[ConditionsMarkers] getAvailableConditions fallback: returning []");
-    return [];
-  } catch (error) {
-    console.error("Failed to get available conditions:", error);
-    return [];
-  }
-}
-
-/**
- * Get condition marker attachments on a token
- * Condition markers are attachments with metadata key "keegan.dev.condition-markers/metadata"
- * @param {string} tokenId - Token ID
- * @param {Array} allItems - All scene items (optional, will fetch if not provided)
- * @returns {Promise<Array>} Array of condition marker attachments
- */
-export async function getConditionMarkerAttachments(tokenId, allItems = null) {
-  try {
-    // Use efficient selector pattern: getItems([tokenId]) to fetch only the target token
-    let tokenItem = null;
-    if (allItems) {
-      tokenItem = allItems.find(item => item.id === tokenId);
-    } else {
-      const items = await OBR.scene.items.getItems([tokenId]);
-      tokenItem = items[0];
-    }
-    
-    if (!tokenItem) {
-      console.log(`[ConditionsMarkers] Token ${tokenId} not found in scene`);
-      return [];
-    }
-    
-    // Get all items to find those attached to this token
-    const allSceneItems = allItems || await OBR.scene.items.getItems();
-    const markers = allSceneItems.filter(item => 
-      item.attachedTo === tokenId && 
-      item.metadata && 
-      "keegan.dev.condition-markers/metadata" in item.metadata
-    );
-    return markers;
-  } catch (error) {
-    console.error("[ConditionsMarkers] Error fetching condition markers:", error);
-    return [];
-  }
-}
-
-/**
- * Find a specific condition marker by name
- * @param {string} tokenId - Token ID
- * @param {string} markerName - Name of condition marker
- * @param {Array} allItems - All scene items (optional)
- * @returns {Promise<Object|null>} Condition marker item or null
- */
-export async function findConditionMarker(tokenId, markerName, allItems = null) {
-  try {
-    const markers = await getConditionMarkerAttachments(tokenId, allItems);
-    return markers.find(m => m.name === markerName) || null;
-  } catch (error) {
-    console.error("Error finding marker:", error);
-    return null;
-  }
-}
-
-/**
- * Check if a condition is applied to a token
- * @param {string} tokenId - Token ID
- * @param {string} conditionName - Name of the condition (e.g., "Bandaged")
- * @param {Array} allItems - All scene items (optional)
- * @returns {Promise<boolean>} True if condition is present, false otherwise
- */
-export async function isCondition(tokenId, conditionName, allItems = null) {
-  try {
-    let tokenItem = null;
-    if (allItems) {
-      tokenItem = allItems.find(item => item.id === tokenId);
-    } else {
-      const items = await OBR.scene.items.getItems([tokenId]);
-      tokenItem = items[0];
-    }
-    
-    if (!tokenItem) {
-      console.warn(`[ConditionsMarkers.isCondition] Token ${tokenId} not found`);
-      return false;
-    }
-    
-    const allSceneItems = allItems || await OBR.scene.items.getItems();
-    
-    // Find marker images attached to the token with the condition name
-    // Condition markers are named like "Condition Marker - Bandaged"
-    const conditionMarkerName = `Condition Marker - ${conditionName}`;
-    
-    const markers = allSceneItems.filter(item =>
-      item.attachedTo === tokenId &&
-      item.type === 'IMAGE' &&
-      item.metadata &&
-      "keegan.dev.condition-markers/metadata" in item.metadata &&
-      item.name === conditionMarkerName
-    );
-    
-    console.log(`[ConditionsMarkers.isCondition] Checking for "${conditionName}" on token ${tokenId}`);
-    console.log(`[ConditionsMarkers.isCondition] Looking for marker named: "${conditionMarkerName}"`);
-    console.log(`[ConditionsMarkers.isCondition] Found ${markers.length} matching marker(s)`);
-    
-    return markers.length > 0;
-  } catch (error) {
-    console.error("[ConditionsMarkers.isCondition] Error checking condition:", error);
-    return false;
-  }
-}
-
-/**
- * Set condition marker visibility
- * @param {string|Array<string>} markerIds - Single marker ID or array of marker IDs
- * @param {boolean} visible - Visibility state
- */
-export async function setMarkerVisibility(markerIds, visible) {
-  try {
-    const ids = Array.isArray(markerIds) ? markerIds : [markerIds];
-    await OBR.scene.items.updateItems(ids, (items) => {
-      items.forEach(item => {
-        item.visible = visible;
-      });
-    });
-    console.log(`[ConditionsMarkers] Set ${ids.length} marker(s) visible to ${visible}`);
-  } catch (error) {
-    console.error("[ConditionsMarkers] Error setting marker visibility:", error);
-  }
-}
+/* Removed helper functions to simplify API surface per request */
 
 /**
  * Get the value (text) of a condition label
@@ -371,16 +291,11 @@ export async function getValue(tokenId, conditionName, allItems = null) {
 }
 
 export default {
-  getItemConditions,
+  getConditions,
   addCondition,
   removeCondition,
   toggleCondition,
   clearAllConditions,
   hasCondition,
-  getAvailableConditions,
-  getConditionMarkerAttachments,
-  findConditionMarker,
-  isCondition,
-  setMarkerVisibility,
   getValue
 };
