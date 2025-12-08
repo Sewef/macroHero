@@ -1175,7 +1175,45 @@ document.getElementById("saveBtn").onclick = async () => {
     // Save Google Sheets credentials to localStorage
     const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
     const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
-    
+
+    // Hide any previous GS error
+    const gsErrEl = document.getElementById('gsheetsError');
+    if (gsErrEl) gsErrEl.style.display = 'none';
+
+    // If config references GoogleSheets but credentials are missing/too short, block save
+    function scanObjectForGoogleSheets(obj) {
+      if (!obj) return false;
+      if (typeof obj === 'string') {
+        return obj.includes('GoogleSheets.');
+      }
+      if (typeof obj === 'object') {
+        if (Array.isArray(obj)) {
+          for (const it of obj) {
+            if (scanObjectForGoogleSheets(it)) return true;
+          }
+        } else {
+          for (const k of Object.keys(obj)) {
+            const v = obj[k];
+            if (scanObjectForGoogleSheets(v)) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    const usesGoogleSheets = scanObjectForGoogleSheets(config);
+    const credInvalid = (!apiKey || apiKey.length < 10) || (!sheetId || sheetId.length < 10);
+    if (usesGoogleSheets && credInvalid) {
+      const errMsg = 'Google Sheets is referenced in the configuration but API Key or Sheet ID is missing/invalid. Please configure them to avoid repeated API calls.';
+      if (gsErrEl) {
+        gsErrEl.textContent = errMsg;
+        gsErrEl.style.display = 'block';
+      }
+      // Switch user to GS tab so they can correct credentials
+      try { switchTab('gsheets'); } catch (e) {}
+      throw new Error(errMsg);
+    }
+
     saveGoogleSheetsApiKey(apiKey);
     saveGoogleSheetsSheetId(sheetId);
 
