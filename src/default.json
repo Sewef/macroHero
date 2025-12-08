@@ -49,6 +49,16 @@
                 "hasBlueRing": {
                     "expression": "ColoredRings.hasRing({token}, '#1a6aff')"
                 }
+                ,
+                "prettyHasInitiative": {
+                    "expression": "PrettySordid.hasInitiative({token})"
+                },
+                "prettyInitiativeCount": {
+                    "expression": "PrettySordid.getInitiativeCount({token})"
+                },
+                "prettyActive": {
+                    "expression": "PrettySordid.isActiveTurn({token})"
+                }
             },
             "layout": [
                 {
@@ -293,6 +303,51 @@
                                 "ColoredRings.removeRing({token}, '#00ff00')"
                             ],
                             "label": "Remove Green"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Pretty Sordid"
+                },
+                {
+                    "type": "text",
+                    "content": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        { "type": "value", "var": "prettyHasInitiative", "label": "Has Initiative?" },
+                        { "type": "value", "var": "prettyInitiativeCount", "label": "Initiative" },
+                        { "type": "value", "var": "prettyActive", "label": "Active?" }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "PrettySordid.hasInitiative({token}) ? PrettySordid.setInitiativeCount({token}, PrettySordid.getInitiativeCount({token}) + 1) : PrettySordid.setInitiativeCount({token}, 1)"
+                            ],
+                            "label": "Increment / Assign 1"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "PrettySordid.hasInitiative({token}) ? PrettySordid.setInitiativeCount({token}, PrettySordid.getInitiativeCount({token}) - 1) : null"
+                            ],
+                            "label": "Decrement"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "PrettySordid.setInitiativeCount({token}, 0)"
+                            ],
+                            "label": "Reset to 0"
                         }
                     ]
                 },
