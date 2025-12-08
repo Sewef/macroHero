@@ -1,7 +1,7 @@
 {
     "global": {
         "title": "Macro Hero",
-        "width": 600,
+        "width": 800,
         "height": 600,
         "variables": {
             "playerName": {
@@ -509,6 +509,12 @@
                 "spd": {
                     "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
                 },
+                "initiative": {
+                    "expression": "{spd} + {initiativeBonus}"
+                },
+                "initiativeBonus": {
+                    "expression": "0"
+                },
                 "atkCS": {
                     "expression": "0",
                     "min": -6,
@@ -556,6 +562,9 @@
                     "expression": "false"
                 },
                 "recklessAdvance": {
+                    "expression": "false"
+                },
+                "rockHead": {
                     "expression": "false"
                 },
                 "injuries": {
@@ -868,6 +877,12 @@
                 "spd": {
                     "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
                 },
+                "initiative": {
+                    "expression": "{spd} + {initiativeBonus}"
+                },
+                "initiativeBonus": {
+                    "expression": "{isTrained} && {isMounted} ? 8 : {isTrained} ? 4 : 0"
+                },
                 "atkCS": {
                     "expression": "0",
                     "min": -6,
@@ -920,6 +935,9 @@
                 "recklessAdvance": {
                     "expression": "false"
                 },
+                "rockHead": {
+                    "expression": "false"
+                },
                 "damageInput": {
                     "expression": ""
                 },
@@ -934,7 +952,7 @@
                 "acBonus": {
                     "expression": "0"
                 },
-                "conditionnalDamages": {
+                "conditionalDamages": {
                     "expression": "false"
                 }
             },
@@ -966,6 +984,11 @@
                             "type": "value",
                             "var": "spd",
                             "label": "SPD"
+                        },
+                        {
+                            "type": "value",
+                            "var": "initiative",
+                            "label": "INI"
                         }
                     ]
                 },
@@ -996,6 +1019,11 @@
                             "type": "counter",
                             "var": "spdCS",
                             "label": "SPD CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "initiativeBonus",
+                            "label": "+INI"
                         }
                     ]
                 },
@@ -1101,6 +1129,11 @@
                             "type": "checkbox",
                             "var": "recklessAdvance",
                             "label": "Reckless Advance"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "rockHead",
+                            "label": "Rock Head"
                         }
                     ]
                 },
@@ -1135,14 +1168,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db14 + {{recklessAdvance}*8} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db14 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
                             ],
                             "label": "Double-Edge (AC 2)"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db8 + {{recklessAdvance}*8} + {atk}')",
+                                "JustDices.roll('{{isCrit}+1}db8 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')",
                                 "ConditionsMarkers.addCondition({token}, 'Rage')"
                             ],
                             "label": "Rage (AC 2)"
@@ -1150,7 +1183,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
                             ],
                             "label": "Horn Attack (AC 2)"
                         }
@@ -1161,29 +1194,739 @@
                     "children": [
                         {
                             "type": "checkbox",
-                            "var": "conditionnalDamages",
-                            "label": "Hit Last Turn"
+                            "var": "conditionalDamages",
+                            "label": "Conditional Damages"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*5} + {{recklessAdvance}*8} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db{({conditionalDamages}+1)*5} + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
                             ],
                             "label": "Payback (AC 2)"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*4} + {{recklessAdvance}*8} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db{({conditionalDamages}+1)*4} + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
                             ],
                             "label": "Payback (AC 2)"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*6} + {{recklessAdvance}*8} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db{({conditionalDamages}+1)*6} + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
                             ],
                             "label": "Assurance (AC 2)"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "Rixe",
+            "variables": {
+                "token": {
+                    "expression": "'TODO'"
+                },
+                "stats": {
+                    "expression": "GoogleSheets.getRange('Rixe', 'Q4:Q8')"
+                },
+                "atk": {
+                    "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "def": {
+                    "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spatk": {
+                    "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spdef": {
+                    "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spd": {
+                    "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "initiative": {
+                    "expression": "{spd} + {initiativeBonus}"
+                },
+                "initiativeBonus": {
+                    "expression": "{isTrained} && {isMounted} ? 8 : {isTrained} ? 4 : 0"
+                },
+                "atkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "defCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spatkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdefCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "evadeBonus": {
+                    "expression": "0"
+                },
+                "physEvade": {
+                    "expression": "min(6, floor({def} / 5)) + {evadeBonus}"
+                },
+                "speEvade": {
+                    "expression": "min(6, floor({spdef} / 5)) + {evadeBonus}"
+                },
+                "spdEvade": {
+                    "expression": "min(6, floor({spd} / 5)) + {evadeBonus}"
+                },
+                "isTrained": {
+                    "expression": "false"
+                },
+                "isMounted": {
+                    "expression": "false"
+                },
+                "overland": {
+                    "expression": "GoogleSheets.getValue('Rixe', 'C18') + floor({spdCS}/2) + ({isTrained} && {isMounted} ? 2 : ({isTrained} ? 1 : 0))"
+                },
+                "isCrit": {
+                    "expression": "false"
+                },
+                "recklessAdvance": {
+                    "expression": "false"
+                },
+                "rockHead": {
+                    "expression": "false"
+                },
+                "damageInput": {
+                    "expression": ""
+                },
+                "damageModifier": {
+                    "expression": "1"
+                },
+                "critRange": {
+                    "expression": "20",
+                    "min": 0,
+                    "max": 20
+                },
+                "acBonus": {
+                    "expression": "0"
+                },
+                "conditionalDamages": {
+                    "expression": "false"
+                }
+            },
+            "layout": [
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "atk",
+                            "label": "ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "def",
+                            "label": "DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spatk",
+                            "label": "SP.ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdef",
+                            "label": "SP.DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spd",
+                            "label": "SPD"
+                        },
+                        {
+                            "type": "value",
+                            "var": "initiative",
+                            "label": "INI"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "atkCS",
+                            "label": "ATK CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "defCS",
+                            "label": "DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spatkCS",
+                            "label": "SP.ATK CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spdefCS",
+                            "label": "SP.DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spdCS",
+                            "label": "SPD CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "initiativeBonus",
+                            "label": "+INI"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "input",
+                            "var": "damageInput",
+                            "label": "Damage Input"
+                        },
+                        {
+                            "type": "input",
+                            "var": "damageModifier",
+                            "label": "Damage Modifier"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, maxHP = OwlTrackers.getMax({token}, 'HP'), dmg = dmg > 0.5 * maxHP ? 0.5 * maxHP : dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label": "Phys Dmg"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, maxHP = OwlTrackers.getMax({token}, 'HP'), dmg = dmg > 0.5 * maxHP ? 0.5 * maxHP : dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label": "Spe Dmg"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "evadeBonus",
+                            "label": "Evade Bonus"
+                        },
+                        {
+                            "type": "value",
+                            "var": "physEvade",
+                            "label": "Phys Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "speEvade",
+                            "label": "Spe Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdEvade",
+                            "label": "Spd Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "overland",
+                            "label": "Overland Speed"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "checkbox",
+                            "var": "isTrained",
+                            "label": "Trained"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "isMounted",
+                            "label": "Mounted"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "isCrit",
+                            "label": "Is Critical Hit"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "recklessAdvance",
+                            "label": "Reckless Advance"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "critRange",
+                            "label": "Crit Range"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "acBonus",
+                            "label": "AC Bonus"
+                        },
+                        {
+                            "type": "button",
+                            "label": "Roll AC",
+                            "commands": [
+                                "JustDices.roll('1d20')"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db5 + {{recklessAdvance}*8} + {atk}')"
+                            ],
+                            "label": "Tackle (AC 2)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db7 + {{recklessAdvance}*8} + {atk}')"
+                            ],
+                            "label": "Smack Down (AC 2)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db10 + {atk}')"
+                            ],
+                            "label": "Dig (AC 2)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db6 + {atk}')"
+                            ],
+                            "label": "Gyro Ball (AC 2)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('1d20')"
+                            ],
+                            "label": "Screech (AC 4)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "addValue('atkCS', +1)",
+                                "addValue('defCS', +1)",
+                                "addValue('spdCS', -1)"
+                            ],
+                            "label": "Curse"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "Ace",
+            "variables": {
+                "token": {
+                    "expression": "'TODO'"
+                },
+                "stats": {
+                    "expression": "GoogleSheets.getRange('Ace', 'Q4:Q8')"
+                },
+                "atk": {
+                    "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "def": {
+                    "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spatk": {
+                    "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spdef": {
+                    "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "spd": {
+                    "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+                },
+                "initiative": {
+                    "expression": "{spd} + {initiativeBonus}"
+                },
+                "initiativeBonus": {
+                    "expression": "{isTrained} && {isMounted} ? 8 : {isTrained} ? 4 : 0"
+                },
+                "atkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "defCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spatkCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdefCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "spdCS": {
+                    "expression": "0",
+                    "min": -6,
+                    "max": 6
+                },
+                "evadeBonus": {
+                    "expression": "1"
+                },
+                "physEvade": {
+                    "expression": "min(6, floor({def} / 5)) + {evadeBonus}"
+                },
+                "speEvade": {
+                    "expression": "min(6, floor({spdef} / 5)) + {evadeBonus}"
+                },
+                "spdEvade": {
+                    "expression": "min(6, floor({spd} / 5)) + {evadeBonus}"
+                },
+                "isTrained": {
+                    "expression": "false"
+                },
+                "isMounted": {
+                    "expression": "false"
+                },
+                "overland": {
+                    "expression": "GoogleSheets.getValue('Ace', 'C18') + floor({spdCS}/2) + ({isTrained} && {isMounted} ? 2 : ({isTrained} ? 1 : 0))"
+                },
+                "isCrit": {
+                    "expression": "false"
+                },
+                "recklessAdvance": {
+                    "expression": "false"
+                },
+                "rockHead": {
+                    "expression": "false"
+                },
+                "damageInput": {
+                    "expression": ""
+                },
+                "damageModifier": {
+                    "expression": "1"
+                },
+                "critRange": {
+                    "expression": "20",
+                    "min": 0,
+                    "max": 20
+                },
+                "acBonus": {
+                    "expression": "0"
+                },
+                "conditionalDamages": {
+                    "expression": "false"
+                },
+                "dualShopCount": {
+                    "expression": "0",
+                    "min": 0,
+                    "max": 4
+                }
+            },
+            "layout": [
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "atk",
+                            "label": "ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "def",
+                            "label": "DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spatk",
+                            "label": "SP.ATK"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdef",
+                            "label": "SP.DEF"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spd",
+                            "label": "SPD"
+                        },
+                        {
+                            "type": "value",
+                            "var": "initiative",
+                            "label": "INI"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "atkCS",
+                            "label": "ATK CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "defCS",
+                            "label": "DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spatkCS",
+                            "label": "SP.ATK CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spdefCS",
+                            "label": "SP.DEF CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "spdCS",
+                            "label": "SPD CS"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "initiativeBonus",
+                            "label": "+INI"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "input",
+                            "var": "damageInput",
+                            "label": "Damage Input"
+                        },
+                        {
+                            "type": "input",
+                            "var": "damageModifier",
+                            "label": "Damage Modifier"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label": "Phys Dmg"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label": "Spe Dmg"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "evadeBonus",
+                            "label": "Evade Bonus"
+                        },
+                        {
+                            "type": "value",
+                            "var": "physEvade",
+                            "label": "Phys Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "speEvade",
+                            "label": "Spe Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdEvade",
+                            "label": "Spd Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "overland",
+                            "label": "Overland Speed"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "checkbox",
+                            "var": "isTrained",
+                            "label": "Trained"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "isMounted",
+                            "label": "Mounted"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "isCrit",
+                            "label": "Is Critical Hit"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "recklessAdvance",
+                            "label": "Reckless Advance"
+                        },
+                        {
+                            "type": "checkbox",
+                            "var": "rockHead",
+                            "label": "Rock Head"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "critRange",
+                            "label": "Crit Range"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "acBonus",
+                            "label": "AC Bonus"
+                        },
+                        {
+                            "type": "button",
+                            "label": "Roll AC",
+                            "commands": [
+                                "JustDices.roll('1d20')"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db7 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
+                            ],
+                            "label": "Slash (AC 2)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
+                            ],
+                            "label": "Take Down (AC 5)"
+                        },
+                        {
+                            "type": "counter",
+                            "var": "dualShopCount",
+                            "label": "Dual Shop Count",
+                            "min": 1,
+                            "max": 4,
+                            "step": 1
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll({dualShopCount} == 1 ? 'db7 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? \"2d6\" : 0}' : {dualShopCount} == 2 ? 'db12 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? \"2d6\" : 0}' : {dualShopCount} == 3 ? 'db12 + db5 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? \"2d6\" : 0}' : 'db12 + 2*(db5) + {{recklessAdvance}*8} + {atk} + {{rockHead} ? \"2d6\" : 0}')"
+                            ],
+                            "label": "Dual Shop (AC 5)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db8 + {atk} + {{rockHead} ? '2d6' : 0}')"
+                            ],
+                            "label": "Bulldoze (AC 2)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db6 + {atk} + {{rockHead} ? '2d6' : 0}')"
+                            ],
+                            "label": "Sand Tomb (AC 4)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "JustDices.roll('Tempête de Sable, et voilà')"
+                            ],
+                            "label": "Sandstorm"
                         }
                     ]
                 }
