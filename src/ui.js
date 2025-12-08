@@ -141,9 +141,22 @@ function renderPageContent(page) {
   };
   
   // Start resolving variables (don't await - let it happen in background)
-  resolveVariables(page.variables, globalVariables, onVariableResolved).then((allResolved) => {
-    page._resolved = allResolved;
-  });
+  // Use any previously-resolved page values plus globals as the starting set
+  const previouslyResolved = { ...globalVariables, ...(page._resolved || {}) };
+
+  // Determine which variables still need resolving (skip already-resolved ones)
+  const allVarNames = Object.keys(page.variables || {});
+  const varsToResolve = allVarNames.filter(v => !(v in (page._resolved || {})));
+
+  if (varsToResolve.length === 0) {
+    // Nothing to resolve — ensure _resolved includes globals
+    page._resolved = { ...previouslyResolved };
+  } else {
+    // Resolve only the missing variables (resolveVariables will include dependencies)
+    resolveVariables(page.variables, previouslyResolved, onVariableResolved, new Set(varsToResolve)).then((allResolved) => {
+      page._resolved = allResolved;
+    });
+  }
 }
 
 /**
@@ -652,9 +665,21 @@ export async function updateConfig(newConfig) {
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
 
-    // Resolve variables for each page
+    // Reset page resolved sets, and resolve only the current page to avoid spamming external integrations
     for (const page of config.pages || []) {
-      page._resolved = await resolveVariables(page.variables, globalVars);
+      page._resolved = {}; // cleared — will resolve lazily per-page
+    }
+
+    // If we have a current page selected, resolve only that page's variables now
+    if (currentPage !== null && currentPage !== undefined && config.pages?.[currentPage]) {
+      try {
+        const page = config.pages[currentPage];
+        // Use globalVars as previouslyResolved so expressions can access globals
+        page._resolved = await resolveVariables(page.variables, globalVars, null);
+      } catch (err) {
+        console.error('[UI] Error resolving current page variables during config update:', err);
+        // leave page._resolved as {} to allow render-time resolution
+      }
     }
   } catch (error) {
     console.error("[UI] Error re-resolving variables:", error);
