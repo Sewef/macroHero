@@ -58,14 +58,26 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--mh-panel);
-  padding: 8px 12px;
-  border-bottom: 1px solid #000;
+  gap: 12px;
+  background: var(--mh-bg);
+  padding: 16px 24px 8px 24px; /* mirror configModal topbar */
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
 .mh-title {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--mh-accent);
+}
+
+/* Keep `.mh-topbar-left` for compatibility if needed (not used by main UI tabs) */
+.mh-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .mh-header-buttons {
@@ -98,21 +110,26 @@ h1 {
 }
 
 /* PAGE SELECTOR */
+/* Tab-like pagebar (mirrors configModal.tab look) */
 .mh-pagebar {
-  padding: 8px;
+  padding: 8px 24px 0 24px; /* align with header horizontal padding */
   display: flex;
-  gap: 12px;
-  border-bottom: 1px solid #000;
+  gap: 8px;
+  border-bottom: 2px solid #444; /* match modal tab rule */
   flex-wrap: wrap;
+  align-items: center;
+  background: var(--mh-bg); /* same as header for seamless block */
 }
 
-.mh-pagebar button {
-  background: var(--mh-panel);
-  border: 1px solid #444;
-  padding: 6px 12px;
-  border-radius: 4px;
+.mh-pagebar .tab, .mh-pagebar button {
+  background: transparent; /* modal has none */
+  border: none;
+  padding: 8px 16px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
   cursor: pointer;
-  color: var(--mh-text);
+  color: #aaa;
   transition: all 0.2s;
   font-family: inherit;
   font-size: 1em;
@@ -124,14 +141,18 @@ h1 {
   margin: 0;
 }
 
-.mh-pagebar button:hover {
-  border-color: #007bff;
-  background-color: #e6f0ff;
+.mh-pagebar .tab:hover {
+  color: var(--mh-accent);
 }
 
-.mh-pagebar button.active {
-  border-color: var(--mh-accent);
+.mh-pagebar .tab.active {
   color: var(--mh-accent);
+  border-bottom-color: var(--mh-accent);
+}
+
+/* Make pagebar scroll horizontally on small screens */
+.mh-pagebar {
+  overflow-x: auto;
 }
 
 /* MAIN CONTENT */

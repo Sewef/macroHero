@@ -40,23 +40,33 @@ export function setGlobalVariables(vars) {
 function renderPageButtons() {
   const bar = document.getElementById("pageBar");
   bar.innerHTML = "";
+  // Accessibility: indicate tablist role
+  bar.setAttribute('role', 'tablist');
 
   if (!config.pages?.length) {
-    bar.innerHTML = "<i>Aucune page</i>";
+    bar.innerHTML = "<i>No pages</i>";
     return;
   }
 
   config.pages.forEach((p, index) => {
     const btn = document.createElement("button");
+    // Use the same tab style as the modal - add 'tab' class
+    btn.classList.add("tab");
     btn.textContent = p.label || `Page ${index + 1}`;
 
+    btn.setAttribute('role', 'tab');
     btn.onclick = () => {
       currentPage = index;
       renderPageButtons();
       renderPageContent(p);
     };
 
-    if (currentPage === index) btn.classList.add("active");
+    if (currentPage === index) {
+      btn.classList.add("active");
+      btn.setAttribute('aria-selected', 'true');
+    } else {
+      btn.setAttribute('aria-selected', 'false');
+    }
 
     bar.appendChild(btn);
   });
@@ -68,7 +78,7 @@ function selectFirstPage() {
     currentPage = 0;
     renderPageContent(first);
   } else {
-    document.getElementById("content").innerHTML = "<div class='mh-empty'>Aucune page définie</div>";
+    document.getElementById("content").innerHTML = "<div class='mh-empty'>No pages defined</div>";
   }
 }
 
@@ -96,7 +106,7 @@ function renderPageContent(page) {
     renderLayout(container, page.layout, page);
   } else {
     const emptyMsg = document.createElement("i");
-    emptyMsg.textContent = "Aucun layout défini pour cette page";
+    emptyMsg.textContent = "No layout defined for this page";
     container.appendChild(emptyMsg);
   }
   
