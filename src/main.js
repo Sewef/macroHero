@@ -17,7 +17,7 @@ OBR.onReady(async () => {
 
     // Initialize expression system with Google Sheets from localStorage
     const { apiKey, sheetId } = getGoogleSheetsCredentials();
-    
+
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
     } else {
@@ -50,14 +50,7 @@ OBR.onReady(async () => {
     if (isSceneReady) {
       initUI(cfg);
       logOBRImageItems();
-    } else {
-      // If not ready yet, wait for it to be ready
-      OBR.scene.onReadyChange((isReady) => {
-        if (isReady) {
-          initUI(cfg);
-          logOBRImageItems();
-        }
-      });
+          logOBRSceneMetadata();
     }
 
     // Listen for config changes from the modal
@@ -106,13 +99,21 @@ OBR.onReady(async () => {
 async function logOBRImageItems() {
   // Optional: Log scene items for debugging
   // Uncomment if needed for troubleshooting
-  
+
   try {
     const items = await OBR.scene.items.getItems();
     console.log("[MAIN] Scene items:", items);
   } catch (err) {
     console.error("[MAIN] Error fetching scene items:", err);
   }
-  
+
 }
 
+async function logOBRSceneMetadata() {
+  try {
+    const metadata = await OBR.scene.getMetadata();
+    console.log("[MAIN] Scene metadata:", metadata);
+  } catch (err) {
+    console.error("[MAIN] Error fetching scene metadata:", err);
+  }
+}
