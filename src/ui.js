@@ -76,6 +76,8 @@ function selectFirstPage() {
   if (config.pages?.length) {
     const first = config.pages[0];
     currentPage = 0;
+    // Ensure the tabs update to reflect the selected page
+    renderPageButtons();
     renderPageContent(first);
   } else {
     document.getElementById("content").innerHTML = "<div class='mh-empty'>No pages defined</div>";
