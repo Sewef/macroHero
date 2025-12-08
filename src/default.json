@@ -760,26 +760,25 @@
                     "type": "divider"
                 },
                 {
-                    "type":"row",
-                    "children":[
+                    "type": "row",
+                    "children": [
                         {
-                            "type":"counter",
-                            "var":"critRange",
-                            "label":"Crit Range"
+                            "type": "counter",
+                            "var": "critRange",
+                            "label": "Crit Range"
                         },
                         {
-                            "type":"counter",
-                            "var":"acBonus",
-                            "label":"AC Bonus"
+                            "type": "counter",
+                            "var": "acBonus",
+                            "label": "AC Bonus"
                         },
                         {
-                            "type":"button",
-                            "label":"Roll AC",
-                            "commands":[
+                            "type": "button",
+                            "label": "Roll AC",
+                            "commands": [
                                 "JustDices.roll('1d20')"
                             ]
                         }
-
                     ]
                 },
                 {
@@ -935,7 +934,7 @@
                 "acBonus": {
                     "expression": "0"
                 },
-                "isHitLastTurn": {
+                "conditionnalDamages": {
                     "expression": "false"
                 }
             },
@@ -1109,26 +1108,25 @@
                     "type": "divider"
                 },
                 {
-                    "type":"row",
-                    "children":[
+                    "type": "row",
+                    "children": [
                         {
-                            "type":"counter",
-                            "var":"critRange",
-                            "label":"Crit Range"
+                            "type": "counter",
+                            "var": "critRange",
+                            "label": "Crit Range"
                         },
                         {
-                            "type":"counter",
-                            "var":"acBonus",
-                            "label":"AC Bonus"
+                            "type": "counter",
+                            "var": "acBonus",
+                            "label": "AC Bonus"
                         },
                         {
-                            "type":"button",
-                            "label":"Roll AC",
-                            "commands":[
+                            "type": "button",
+                            "label": "Roll AC",
+                            "commands": [
                                 "JustDices.roll('1d20')"
                             ]
                         }
-
                     ]
                 },
                 {
@@ -1136,19 +1134,23 @@
                     "children": [
                         {
                             "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db14 + {{recklessAdvance}*8} + {atk}')"
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db14 + {{recklessAdvance}*8} + {atk}')"
                             ],
                             "label": "Double-Edge (AC 2)"
                         },
                         {
                             "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db8 + {{recklessAdvance}*8} + {atk}')"
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db8 + {{recklessAdvance}*8} + {atk}')",
+                                "ConditionsMarkers.addCondition({token}, 'Rage')"
                             ],
                             "label": "Rage (AC 2)"
                         },
                         {
                             "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk}')"
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk}')"
                             ],
                             "label": "Horn Attack (AC 2)"
                         }
@@ -1158,67 +1160,34 @@
                     "type": "row",
                     "children": [
                         {
-                            "type":"checkbox",
-                            "var": "isHitLastTurn",
-                            "label":"Hit Last Turn"
+                            "type": "checkbox",
+                            "var": "conditionnalDamages",
+                            "label": "Hit Last Turn"
                         },
                         {
                             "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db{({isHitLastTurn}+1)*5} + {{recklessAdvance}*8} + {atk}')"
+                            "commands": [
+                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*5} + {{recklessAdvance}*8} + {atk}')"
                             ],
                             "label": "Payback (AC 2)"
                         },
                         {
                             "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db8 + {{recklessAdvance}*8} + {atk}')"
-                            ],
-                            "label": "Rage (AC 2)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": ["JustDices.roll('{{isCrit}+1}db9 + {{recklessAdvance}*8} + {atk}')"
-                            ],
-                            "label": "Horn Attack (AC 2)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
                             "commands": [
-                                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
-                                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5))) : null",
-                                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
-                                "JustDices.roll('{{isCrit}+1}db{9} + {{pushItToTheLimit}+1}*({{injuries} > 0 ? {intimidate}+{injuries} : 0}) + {{recklessAdvance}*8} + {fastHandsBonus} + {atk}')"
+                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*4} + {{recklessAdvance}*8} + {atk}')"
                             ],
-                            "label": "Double Lame Laser (AC 6)"
+                            "label": "Payback (AC 2)"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
-                                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5))) : null",
-                                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
-                                "JustDices.roll('({{isCrit}+1}db{9} + {{pushItToTheLimit}+1}*({{injuries} > 0 ? {intimidate}+{injuries} : 0}) + {{recklessAdvance}*8} + {fastHandsBonus} + {atk})*0.65')"
+                                "JustDices.roll('{{isCrit}+1}db{({conditionnalDamages}+1)*6} + {{recklessAdvance}*8} + {atk}')"
                             ],
-                            "label": "Secondary Attack (AC 10)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
-                                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5))) : null",
-                                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
-                                "JustDices.roll('{{isCrit}+1}db{7} + {{pushItToTheLimit}+1}*({{injuries} > 0 ? {intimidate}+{injuries} : 0}) + {fastHandsBonus} + {atk}')"
-                            ],
-                            "label": "Fusil à Fusion (AC 4)"
+                            "label": "Assurance (AC 2)"
                         }
                     ]
                 }
             ]
-        
         }
     ]
 }

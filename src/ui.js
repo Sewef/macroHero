@@ -400,13 +400,27 @@ function renderCheckbox(item, page) {
   checkbox.checked = Boolean(currentValue);
   
   // Update variable when checkbox changes
-  checkbox.onchange = () => {
+  checkbox.onchange = async () => {
     const newValue = checkbox.checked;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
-    
-    // Auto-save config after local variable change
-    saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+
+    try {
+      // Auto-save config after local variable change
+      await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+
+      // Re-resolve dependent variables so value items update
+      const dependentVars = getDependentVariables(page.variables, [item.var]);
+      if (dependentVars.size > 0) {
+        const onVariableResolved = (varName, value) => {
+          page._resolved[varName] = value;
+          updateRenderedValue(varName, value);
+        };
+        await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
+      }
+    } catch (err) {
+      console.error('[UI] Error handling checkbox change:', err);
+    }
   };
 
   const text = document.createElement("span");
