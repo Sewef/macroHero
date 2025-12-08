@@ -136,14 +136,20 @@ export function updateRenderedValue(varName, value) {
       contentDiv.textContent = value ?? "N/A";
       contentDiv.classList.remove("mh-loading");
     }
-    
+
     // Update counter input if this is a counter
     const counterInput = element.querySelector(".mh-counter-input");
     if (counterInput) {
       counterInput.value = value;
     }
+
+    // Update input field if this is an input
+    const inputField = element.querySelector(".mh-input-field");
+    if (inputField) {
+      inputField.value = value ?? "";
+    }
   }
-  
+
   // Update checkbox if this variable has one
   const checkbox = renderedCheckboxElements[varName];
   if (checkbox) {
@@ -337,7 +343,7 @@ function renderInput(item, page) {
   const variable = page.variables?.[item.var];
 
   if (!variable) {
-    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
+    container.innerHTML = `<div class=\"mh-value-error\">Variable not found: ${item.var}</div>`;
     return container;
   }
 
@@ -350,12 +356,15 @@ function renderInput(item, page) {
   input.className = "mh-input-field";
   input.placeholder = item.placeholder ?? "Enter value";
   input.value = variable.expression ?? variable.default ?? "";
-  
+
+  // Store reference for dynamic updates
+  renderedValueElements[item.var] = container;
+
   // Save when input loses focus
   input.onblur = () => {
     variable.expression = input.value;
     page._resolved[item.var] = input.value;
-    
+
     // Auto-save config after local variable change
     saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
   };

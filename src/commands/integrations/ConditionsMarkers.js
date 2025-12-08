@@ -13,11 +13,22 @@ import OBR from "@owlbear-rodeo/sdk";
 export async function getItemConditions(itemId) {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      return await Ext.ConditionsMarkers.getConditions(itemId);
+      const ext = Ext.ConditionsMarkers;
+      if (typeof ext.getItemConditions === 'function') {
+        return await ext.getItemConditions(itemId);
+      }
+      if (typeof ext.getConditions === 'function') {
+        return await ext.getConditions(itemId);
+      }
+      console.log("[ConditionsMarkers] Native extension present but no getItemConditions/getConditions method");
     } else {
-      console.warn("Conditions Markers extension not available");
-      return [];
+      console.log("[ConditionsMarkers] Native extension not present, using fallback");
     }
+
+    // Fallback: scan scene attachments for condition markers
+    const items = await OBR.scene.items.getItems();
+    const markers = items.filter(item => item.attachedTo === itemId && item.name && item.name.startsWith("Condition Marker - "));
+    return markers.map(m => ({ name: m.name.replace("Condition Marker - ", "") }));
   } catch (error) {
     console.error("Failed to get item conditions:", error);
     throw error;
@@ -31,18 +42,28 @@ export async function getItemConditions(itemId) {
  * @param {Object} options - Additional options
  * @returns {Promise<void>}
  */
+
 export async function addCondition(itemId, conditionName, options = {}) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      await Ext.ConditionsMarkers.addCondition(itemId, conditionName, options);
-    } else {
-      console.warn("Conditions Markers extension not available");
+    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.addCondition === 'function') {
+      console.log(`[ConditionsMarkers] Using native Ext.ConditionsMarkers.addCondition for token ${itemId}, condition '${conditionName}'`);
+      return await Ext.ConditionsMarkers.addCondition(itemId, conditionName, options);
     }
+
+    console.log(`[ConditionsMarkers] Native API missing, sending addCondition broadcast for token ${itemId}, condition '${conditionName}'`);
+    await OBR.broadcast.sendMessage(
+      "conditionmarkers.api.addCondition",
+      { tokenId: itemId, condition: conditionName },
+      { destination: "ALL" }
+    );
+    console.log(`[ConditionsMarkers] Broadcast sent successfully for condition '${conditionName}'`);
   } catch (error) {
     console.error("Failed to add condition:", error);
     throw error;
   }
 }
+
+
 
 /**
  * Remove a condition from an item
@@ -52,10 +73,16 @@ export async function addCondition(itemId, conditionName, options = {}) {
  */
 export async function removeCondition(itemId, conditionName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      await Ext.ConditionsMarkers.removeCondition(itemId, conditionName);
-    } else {
-      console.warn("Conditions Markers extension not available");
+    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.removeCondition === 'function') {
+      return await Ext.ConditionsMarkers.removeCondition(itemId, conditionName);
+    }
+
+    // Fallback: find and delete marker items
+    const items = await OBR.scene.items.getItems();
+    const markers = items.filter(item => item.attachedTo === itemId && item.name === `Condition Marker - ${conditionName}`);
+    const markerIds = markers.map(m => m.id);
+    if (markerIds.length > 0) {
+      await OBR.scene.items.deleteItems(markerIds);
     }
   } catch (error) {
     console.error("Failed to remove condition:", error);
@@ -71,8 +98,13 @@ export async function removeCondition(itemId, conditionName) {
  */
 export async function toggleCondition(itemId, conditionName) {
   try {
+    // Prefer native toggle if available
+    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.toggleCondition === 'function') {
+      return await Ext.ConditionsMarkers.toggleCondition(itemId, conditionName);
+    }
+
     const conditions = await getItemConditions(itemId);
-    const hasCondition = conditions.some(c => c.name === conditionName);
+    const hasCondition = conditions.some(c => c.name === conditionName || c === conditionName);
 
     if (hasCondition) {
       await removeCondition(itemId, conditionName);
@@ -92,9 +124,14 @@ export async function toggleCondition(itemId, conditionName) {
  */
 export async function clearAllConditions(itemId) {
   try {
+    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.clearAllConditions === 'function') {
+      return await Ext.ConditionsMarkers.clearAllConditions(itemId);
+    }
+
     const conditions = await getItemConditions(itemId);
     for (const condition of conditions) {
-      await removeCondition(itemId, condition.name);
+      const name = condition.name ?? condition;
+      await removeCondition(itemId, name);
     }
   } catch (error) {
     console.error("Failed to clear conditions:", error);
@@ -110,8 +147,12 @@ export async function clearAllConditions(itemId) {
  */
 export async function hasCondition(itemId, conditionName) {
   try {
+    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.hasCondition === 'function') {
+      return await Ext.ConditionsMarkers.hasCondition(itemId, conditionName);
+    }
+
     const conditions = await getItemConditions(itemId);
-    return conditions.some(c => c.name === conditionName);
+    return conditions.some(c => (c.name ? c.name === conditionName : c === conditionName));
   } catch (error) {
     console.error("Failed to check condition:", error);
     throw error;
@@ -125,11 +166,16 @@ export async function hasCondition(itemId, conditionName) {
 export async function getAvailableConditions() {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      return await Ext.ConditionsMarkers.getAvailableConditions?.() || [];
-    } else {
-      console.warn("Conditions Markers extension not available");
-      return [];
+      const ext = Ext.ConditionsMarkers;
+      if (typeof ext.getAvailableConditions === 'function') {
+        return await ext.getAvailableConditions();
+      }
+      if (typeof ext.getConditions === 'function') {
+        return await ext.getConditions();
+      }
     }
+    console.log("[ConditionsMarkers] getAvailableConditions fallback: returning []");
+    return [];
   } catch (error) {
     console.error("Failed to get available conditions:", error);
     return [];

@@ -137,12 +137,17 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
       // Simple {var}
       if (inner in scope) {
         const val = scope[inner];
+        if (val === null || val === undefined || val === "") {
+          // If not in string literal, treat as 0 for math
+          return inStringLiteral ? "" : "0";
+        }
         if (typeof val === 'boolean') return val ? '1' : '0';
         if (typeof val === 'number') return String(val);
         if (typeof val === 'string') return inStringLiteral ? val : `'${val.replace(/'/g, "\\'")}'`;
         return String(val);
       }
-      return match;
+      // If variable is missing, treat as 0 in math context
+      return inStringLiteral ? "" : "0";
     }
     
     // Complex {expr} - recursively substitute and evaluate
@@ -342,11 +347,11 @@ export async function executeCommand(command, page) {
  * @param {Object} page - Page config
  * @returns {Promise<Array>} Array of results
  */
-export async function executeCommands(commands, page) {
+export async function executeCommands(commands, page, onVariableResolved = null) {
   const results = [];
   for (const command of commands) {
     try {
-      const result = await executeCommand(command, page);
+      const result = await executeCommand(command, page, onVariableResolved);
       results.push({ ok: true, result });
     } catch (error) {
       console.error(`[EXECUTOR] Command execution failed:`, error);

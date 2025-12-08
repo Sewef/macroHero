@@ -19,9 +19,6 @@
                 "inputName": {
                     "expression": "'Enter name here'"
                 },
-                "sheetValue": {
-                    "expression": "GoogleSheets.getValue('MacroHero', 'A1')"
-                },
                 "isBandaged": {
                     "expression": "ConditionsMarkers.isCondition({token}, 'Bandaged')"
                 },
@@ -534,6 +531,24 @@
                     "min": -6,
                     "max": 6
                 },
+                "evadeBonus": {
+                    "expression": "0"
+                },
+                "physEvade": {
+                    "expression": "min(6, floor({def} / 5)) + {evadeBonus}"
+                },
+                "speEvade": {
+                    "expression": "min(6, floor({spdef} / 5)) + {evadeBonus}"
+                },
+                "spdEvade": {
+                    "expression": "min(6, floor({spd} / 5)) + {evadeBonus}"
+                },
+                "armorClass": {
+                    "expression": "GoogleSheets.getValue('Xalithra Général', 'R9')"
+                },
+                "overland": {
+                    "expression": "GoogleSheets.getValue('Xalithra Général', 'C28') + floor({spdCS}/2)"
+                },
                 "isCrit": {
                     "expression": "false"
                 },
@@ -551,13 +566,15 @@
                 },
                 "weaponDB": {
                     "expression": "GoogleSheets.getValue('Xalithra Général', 'G35')"
+                },
+                "fastHandsBonus": {
+                    "expression": "min(3, floor(max(0, {spdCS}) / 2)) + min(3, floor(max(0, {spdEvade}) / 2))"
+                },
+                "damageInput": {
+                    "expression": ""
                 }
             },
             "layout": [
-                {
-                    "type": "title",
-                    "text": "Xalithra Stats"
-                },
                 {
                     "type": "row",
                     "children": [
@@ -622,6 +639,93 @@
                     "type": "divider"
                 },
                 {
+                    "type":"row",
+                    "children":[
+                        {
+                            "type":"input",
+                            "var":"damageInput",
+                            "label":"Damage Input"
+                        },
+                        {
+                            "type":"button",
+                            "commands":[
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.isCondition({token}, 'Rage') ? 5 : 0) - {def}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label":"Phys Dmg"
+                        },
+                        {
+                            "type":"button",
+                            "commands":[
+                                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.isCondition({token}, 'Rage') ? 5 : 0) - {spdef}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
+                                "setValue('damageInput', null)"
+                            ],
+                            "label":"Spe Dmg"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "counter",
+                            "var": "evadeBonus",
+                            "label": "Evade Bonus"
+                        },
+                        {
+                            "type": "value",
+                            "var": "physEvade",
+                            "label": "Phys Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "speEvade",
+                            "label": "Spe Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "spdEvade",
+                            "label": "Spd Ev"
+                        },
+                        {
+                            "type": "value",
+                            "var": "armorClass",
+                            "label": "Armor Class"
+                        },
+                        {
+                            "type": "value",
+                            "var": "overland",
+                            "label": "Overland Speed"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "addValue('atkCS', +1)",
+                                "addValue('defCS', -1)",
+                                "addValue('spatkCS', +1)",
+                                "addValue('spdefCS', -1)",
+                                "addValue('spdCS', +1)"
+                            ],
+                            "label": "Anger Shell"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP') + OwlTrackers.getMax({token}, 'HP') * 0.05, OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
+                            ],
+                            "label": "Passive Regeneration"
+                        }
+                    ]
+                },
+                {
                     "type": "row",
                     "children": [
                         {
@@ -642,38 +746,7 @@
                     ]
                 },
                 {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "addValue('atkCS', +1)",
-                                "addValue('defCS', -1)",
-                                "addValue('spatkCS', +1)",
-                                "addValue('spdefCS', -1)",
-                                "addValue('spdCS', +1)",
-                                "OwlTrackers.addValue({token}, 'Injuries', +1)",
-                                "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
-                            ],
-                            "label": "Anger Shell"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP') + OwlTrackers.getMax({token}, 'HP') * 0.05, OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))"
-                            ],
-                            "label": "Regeneration"
-                        }
-                    ]
-                },
-                {"type": "divider"
-                },
-                {   
-                    "type":"button",
-                    "commands":[
-                        "JustDices.roll('1d20') == 20 ? setValue('isCrit', true) : setValue('isCrit', false)"
-                    ],
-                    "label":"Accuracy Roll"
+                    "type": "divider"
                 },
                 {
                     "type": "row",
@@ -681,16 +754,30 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db{5+{weaponDB}/3+{injuries}} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {atk}')"
+                                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
+                                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5))) : null",
+                                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
+                                "JustDices.roll('{{isCrit}+1}db{5+{weaponDB}/3+{injuries}} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {fastHandsBonus} + {atk}')"
                             ],
                             "label": "Flail"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('{{isCrit}+1}db{6+{weaponDB}/3} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {atk}')"
+                                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
+                                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5))) : null",
+                                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
+                                "JustDices.roll('{{isCrit}+1}db{6+{weaponDB}/3} + {{pushItToTheLimit}+1}*({intimidate}+{injuries}) + {{recklessAdvance}*8} + {fastHandsBonus} + {atk}')",
+                                "ConditionsMarkers.addCondition({token}, 'Rage')"
                             ],
                             "label": "Rage"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "ConditionsMarkers.addCondition({token}, 'Rage')"
+                            ],
+                            "label": "Calm Down"
                         }
                     ]
                 }
