@@ -3,8 +3,7 @@
     "title": "Macro Hero",
     "width": 600,
     "height": 600,
-    "variables": {
-    }
+    "variables": {}
   },
   "pages": [
     {
@@ -48,7 +47,7 @@
           "max": 6
         },
         "spatkCS": {
-          "expression": "0",
+          "expression": "-2",
           "min": -6,
           "max": 6
         },
@@ -192,20 +191,25 @@
               "label": "Damage Input"
             },
             {
-              "type": "button",
-              "commands": [
-                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {def}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
-                "setValue('damageInput', null)"
-              ],
-              "label": "Phys Dmg"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {spdef}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
-                "setValue('damageInput', null)"
-              ],
-              "label": "Spe Dmg"
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {def}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
+                    "setValue('damageInput', null)"
+                  ],
+                  "label": "Phys Dmg"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {spdef}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
+                    "setValue('damageInput', null)"
+                  ],
+                  "label": "Spe Dmg"
+                }
+              ]
             }
           ]
         },
@@ -376,7 +380,46 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {
+        "token": "86338ffe-a797-44ff-be57-9fa8c5242684",
+        "stats": [
+          23,
+          17,
+          5,
+          17,
+          17
+        ],
+        "atkCS": 0,
+        "atk": 23,
+        "defCS": 0,
+        "def": 17,
+        "spatkCS": -2,
+        "spatk": 8,
+        "spdefCS": 0,
+        "spdef": 17,
+        "spdCS": 0,
+        "spd": 17,
+        "initiativeBonus": 0,
+        "initiative": 17,
+        "evadeBonus": 0,
+        "physEvade": 3,
+        "speEvade": 3,
+        "spdEvade": 3,
+        "armorClass": 1,
+        "overland": 6,
+        "isCrit": false,
+        "recklessAdvance": false,
+        "rockHead": false,
+        "injuries": null,
+        "intimidate": 6,
+        "pushItToTheLimit": false,
+        "pushIntimidateBonus": 0,
+        "weaponDB": 9,
+        "fastHandsBonus": 1,
+        "critRange": 20,
+        "acBonus": 0
+      }
     },
     {
       "label": "Stryfe",
@@ -750,7 +793,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {}
     },
     {
       "label": "Rixe",
@@ -1020,6 +1064,11 @@
               "type": "checkbox",
               "var": "recklessAdvance",
               "label": "Reckless Advance"
+            },
+            {
+              "type": "checkbox",
+              "var": "rockHead",
+              "label": "Rock Head"
             }
           ]
         },
@@ -1054,21 +1103,21 @@
             {
               "type": "button",
               "commands": [
-                "JustDices.roll('{{isCrit}+1}db5 + {{recklessAdvance}*8} + {atk}')"
+                "JustDices.roll('{{isCrit}+1}db5 + {{recklessAdvance}*8} + {atk} + {{rockHead} ? '2d6' : 0}')"
               ],
               "label": "Tackle (AC 2)"
             },
             {
               "type": "button",
               "commands": [
-                "JustDices.roll('{{isCrit}+1}db7 + {{recklessAdvance}*8} + {atk}')"
+                "JustDices.roll('{{isCrit}+1}db7 + {atk} + {{rockHead} ? '2d6' : 0}')"
               ],
               "label": "Smack Down (AC 2)"
             },
             {
               "type": "button",
               "commands": [
-                "JustDices.roll('{{isCrit}+1}db10 + {atk}')"
+                "JustDices.roll('{{isCrit}+1}db10 + {atk} + {{rockHead} ? '2d6' : 0}')"
               ],
               "label": "Dig (AC 2)"
             }
@@ -1080,7 +1129,7 @@
             {
               "type": "button",
               "commands": [
-                "JustDices.roll('{{isCrit}+1}db6 + {atk}')"
+                "JustDices.roll('{{isCrit}+1}db6 + {atk} + {{rockHead} ? '2d6' : 0}')"
               ],
               "label": "Gyro Ball (AC 2)"
             },
@@ -1102,7 +1151,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {}
     },
     {
       "label": "Ace",
@@ -1470,7 +1520,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {}
     },
     {
       "label": "Storm",
@@ -1832,7 +1883,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {}
     },
     {
       "label": "Verdex",
@@ -2200,7 +2252,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_resolved": {}
     }
   ]
 }
