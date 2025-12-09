@@ -48,8 +48,7 @@
                 },
                 "hasBlueRing": {
                     "expression": "ColoredRings.hasRing({token}, '#1a6aff')"
-                }
-                ,
+                },
                 "prettyHasInitiative": {
                     "expression": "PrettySordid.hasInitiative({token})"
                 },
@@ -84,6 +83,47 @@
                 },
                 {
                     "type": "title",
+                    "text": "Stack Demo"
+                },
+                {
+                    "type": "text",
+                    "content": "Demonstrates the `stack` container."
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "text",
+                            "content": "This is a row containing a stack:"
+                        },
+                        {
+                            "type": "stack",
+                            "children": [
+                                {
+                                    "type": "value",
+                                    "var": "sheetValue",
+                                    "label": "Base Value"
+                                },
+                                {
+                                    "type": "button",
+                                    "label": "Button",
+                                    "commands": [
+                                        "JustDices.roll('1d6')"
+                                    ]
+                                },
+                                {
+                                    "type": "button",
+                                    "label": "Button",
+                                    "commands": [
+                                        "JustDices.roll('1d6')"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "title",
                     "text": "Conditions Markers"
                 },
                 {
@@ -115,9 +155,16 @@
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.addCondition({token}, 'Bandaged', 1)"
+                        "ConditionsMarkers.toggleCondition({token}, 'Bandaged')"
                     ],
                     "label": "Toggle Bandage"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "ConditionsMarkers.addCondition({token}, 'Bandaged', {{conditionValue}+1})"
+                    ],
+                    "label": "Increment Bandage"
                 },
                 {
                     "type": "divider"
@@ -327,9 +374,21 @@
                 {
                     "type": "row",
                     "children": [
-                        { "type": "value", "var": "prettyHasInitiative", "label": "Has Initiative?" },
-                        { "type": "value", "var": "prettyInitiativeCount", "label": "Initiative" },
-                        { "type": "value", "var": "prettyActive", "label": "Active?" }
+                        {
+                            "type": "value",
+                            "var": "prettyHasInitiative",
+                            "label": "Has Initiative?"
+                        },
+                        {
+                            "type": "value",
+                            "var": "prettyInitiativeCount",
+                            "label": "Initiative"
+                        },
+                        {
+                            "type": "value",
+                            "var": "prettyActive",
+                            "label": "Active?"
+                        }
                     ]
                 },
                 {

@@ -137,11 +137,29 @@ export async function loadConfig() {
         // Get saved local variables for this player from Room Metadata
         const savedLocalVars = playerConfigs[playerId];
         
-        // Start with full config from room-scoped localStorage, or default config if not found
+        // Start with full config from room-scoped localStorage.
+        // If not found, try to load the bundled `src/default.json` shipped with the extension.
+        // Fallback to the in-code `defaultConfig` if that fails.
         const localStorageConfig = await loadConfigFromLocalStorage();
-        const config = localStorageConfig 
-            ? JSON.parse(JSON.stringify(localStorageConfig))
-            : JSON.parse(JSON.stringify(defaultConfig));
+        let config;
+        if (localStorageConfig) {
+            config = JSON.parse(JSON.stringify(localStorageConfig));
+        } else {
+            try {
+                // Attempt to fetch the packaged default config file
+                const resp = await fetch('/src/default.json');
+                if (resp.ok) {
+                    const packaged = await resp.json();
+                    config = JSON.parse(JSON.stringify(packaged));
+                    console.log('[CONFIG] Loaded packaged default config from /src/default.json');
+                } else {
+                    throw new Error('HTTP ' + resp.status);
+                }
+            } catch (err) {
+                console.warn('[CONFIG] Could not load packaged default config, using in-code defaultConfig', err);
+                config = JSON.parse(JSON.stringify(defaultConfig));
+            }
+        }
         
         if (savedLocalVars) {
             console.log("✓ [CONFIG] Saved local variables found:", savedLocalVars);

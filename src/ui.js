@@ -73,15 +73,13 @@ function renderPageButtons() {
   config.pages.forEach((p, index) => {
     const btn = document.createElement("button");
     // Use the same tab style as the modal - add 'tab' class
-    btn.classList.add("tab");
-    btn.textContent = p.label || `Page ${index + 1}`;
-
-    btn.setAttribute('role', 'tab');
-    btn.onclick = () => {
+    btn.classList.add('tab');
+    btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
+    btn.addEventListener('click', () => {
       currentPage = index;
       renderPageButtons();
       renderPageContent(p);
-    };
+    });
 
     if (currentPage === index) {
       btn.classList.add("active");
@@ -102,7 +100,8 @@ function selectFirstPage() {
     renderPageButtons();
     renderPageContent(first);
   } else {
-    document.getElementById("content").innerHTML = "<div class='mh-empty'>No pages defined</div>";
+      // No pages configured
+      currentPage = null;
   }
 }
 
@@ -212,6 +211,9 @@ function renderLayoutElement(layoutItem, page) {
     
     case "row":
       return renderRow(layoutItem, page);
+
+    case "stack":
+      return renderStack(layoutItem, page);
     
     case "button":
       return renderButton(layoutItem, page);
@@ -265,6 +267,48 @@ function renderRow(item, page) {
   }
 
   return row;
+}
+
+function renderStack(item, page) {
+  const container = document.createElement("div");
+  container.className = "mh-layout-stack";
+  container.style.margin = '12px 0';
+
+  // Arrange children vertically (one per row). Use a fixed gap between items.
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '8px';
+
+  // Make the stack act like a normal row child: allow it to flex but prevent overflow
+  container.style.flex = item.flex || '1 1 0';
+  container.style.minWidth = '0';
+  // Stretch children to fill the stack width by default
+  container.style.alignItems = 'stretch';
+
+  if (item.children && Array.isArray(item.children)) {
+    item.children.forEach((child) => {
+      let element;
+      // If child is a value, call renderValue with inStack=true so it renders horizontally
+      if (child.type === 'value') {
+        element = renderValue(child, page, true);
+      } else {
+        element = renderLayoutElement(child, page);
+      }
+      if (element) {
+        // Ensure child occupies full width of the stack column
+        element.style.width = '100%';
+        element.style.boxSizing = 'border-box';
+        element.classList.add('mh-stack-compact');
+        // If this is a value item, add horizontal class for styling
+        if (child.type === 'value') {
+          element.classList.add('mh-stack-horizontal-value');
+        }
+        container.appendChild(element);
+      }
+    });
+  }
+
+  return container;
 }
 
 function renderButton(item, page) {
@@ -324,13 +368,11 @@ function findPageByIndex(pageIndex) {
   return config.pages?.[pageIndex] || null;
 }
 
-function renderValue(item, page) {
+function renderValue(item, page, inStack = false) {
   const valueDiv = document.createElement("div");
   valueDiv.className = "mh-layout-value";
-
   // Get variable definition from page.variables
   const variable = page.variables?.[item.var];
-
   if (!variable) {
     valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div><div class="mh-value-error">Variable not found: ${item.var}</div>`;
     return valueDiv;
@@ -352,11 +394,17 @@ function renderValue(item, page) {
   }
 
   // Create the value element structure
-  // Only treat as loading if the variable hasn't been resolved yet (undefined, not in _resolved)
-  const isLoading = !(item.var in (page._resolved || {}));
-  const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
-  valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div>
-                        <div class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</div>`;
+    // Only treat as loading if the variable hasn't been resolved yet (undefined, not in _resolved)
+    const isLoading = !(item.var in (page._resolved || {}));
+    const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
+
+    // If this value is being rendered inside a stack, render as single-line 'label: value'
+    if (inStack) {
+      valueDiv.innerHTML = `<span class="mh-value-label">${item.label ?? item.var}:</span> <span class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</span>`;
+      valueDiv.classList.add('mh-stack-horizontal-value');
+    } else {
+      valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div><div class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</div>`;
+    }
 
   // Store reference to this element so we can update it later
   renderedValueElements[item.var] = valueDiv;

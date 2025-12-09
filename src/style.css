@@ -1,3 +1,31 @@
+.mh-layout-button,
+.mh-layout-value,
+.mh-layout-input,
+.mh-layout-counter,
+.mh-layout-checkbox {
+  background: var(--mh-panel);
+  border: 1px solid #444;
+  border-radius: 4px;
+  box-sizing: border-box;
+  min-width: 40px;
+  overflow: hidden;
+  font-family: inherit;
+}
+.mh-stack-compact.mh-layout-button {
+  font-size: 0.85em;
+  padding: 2px 6px !important;
+  margin: 0 !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.mh-stack-compact.mh-layout-value {
+  font-size: 1.05em;
+  padding: 8px 12px !important;
+  margin: 0 !important;
+  min-width: 0;
+  min-height: 32px;
+  box-sizing: border-box;
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -201,6 +229,16 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+}
+
+/* STACK - overlay children on top of each other for compact layouts */
+.mh-layout-stack {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .mh-layout-row > * {
@@ -539,4 +577,28 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+/* When a value is rendered inside a stack we force a horizontal single-line layout.
+   This selector is more specific than the generic .mh-layout-value rule so it wins.
+*/
+.mh-layout-value.mh-stack-horizontal-value {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.mh-layout-value.mh-stack-horizontal-value .mh-value-label {
+  text-transform: none;
+  font-size: 0.9em;
+  color: #aaa;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+.mh-layout-value.mh-stack-horizontal-value .mh-value-content {
+  text-align: left;
+  font-family: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
