@@ -322,9 +322,52 @@ function renderEditor(config) {
         const typeLabel = item.type || 'unknown';
         const label = item.label || item.text || item.var || '';
         
-        // Handle row items with children
-        if (item.type === 'row' && item.children && Array.isArray(item.children)) {
-          const childrenHtml = item.children.map((child, childIndex) => {
+        // Handle row items (treat as container even if children is missing)
+        if (item.type === 'row') {
+          // Debug attribute to help verify rendering in DOM
+          console.debug(`[EDITOR] Rendering row at page=${index} element=${itemIndex} children=${(item.children && item.children.length) || 0}`);
+          const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
+          const childrenHtml = childrenArr.map((child, childIndex) => {
+            // If the child is itself a stack, render it as a nested container with its own children
+            if (child.type === 'stack') {
+              const nested = (child.children && Array.isArray(child.children)) ? child.children : [];
+              const nestedHtml = nested.map((nChild, nestedIndex) => {
+                const nLabel = nChild.label || nChild.text || nChild.var || '';
+                const nContent = nChild.type === 'text' && nChild.content ? nChild.content.substring(0, 50) + (nChild.content.length > 50 ? '...' : '') : nLabel;
+                return `
+                  <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-nested-index="${nestedIndex}" data-page-index="${index}">
+                    <div class="layout-item-info">
+                      <span class="layout-item-type">${nChild.type || 'unknown'}</span>
+                      <span>${nContent}</span>
+                    </div>
+                    <div class="layout-item-actions">
+                      <span class="drag-handle">⋮⋮</span>
+                      <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex}, ${nestedIndex})">Edit</button>
+                      <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex}, ${nestedIndex})">×</button>
+                    </div>
+                  </div>
+                `;
+              }).join('');
+
+              return `
+                <div class="layout-item stack-container" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
+                  <div class="layout-item-info">
+                    <span class="layout-item-type">${child.type || 'stack'}</span>
+                    <span>Stack (${nested.length} items)</span>
+                  </div>
+                  <div class="layout-item-actions">
+                    <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex}, ${childIndex})">+ Item</button>
+                    <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex})">Edit</button>
+                    <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex})">×</button>
+                  </div>
+                </div>
+                <div class="stack-children" data-parent-element-index="${itemIndex}" data-parent-child-index="${childIndex}" data-page-index="${index}">
+                  ${nestedHtml}
+                  ${nested.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-parent-child-index="${childIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
+                </div>
+              `;
+            }
+
             const childLabel = child.label || child.text || child.var || '';
             const childContent = child.type === 'text' && child.content ? child.content.substring(0, 50) + (child.content.length > 50 ? '...' : '') : childLabel;
             return `
@@ -341,12 +384,12 @@ function renderEditor(config) {
               </div>
             `;
           }).join('');
-          
+
           return `
-            <div class="layout-item row-container" data-element-index="${itemIndex}" data-page-index="${index}">
+            <div class="layout-item row-container" data-element-index="${itemIndex}" data-page-index="${index}" data-has-children="${childrenArr.length}">
               <div class="layout-item-info">
                 <span class="layout-item-type">${typeLabel}</span>
-                <span>Row (${item.children.length} items)</span>
+                <span>Row (${childrenArr.length} items)</span>
               </div>
               <div class="layout-item-actions">
                 <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex})">+ Item</button>
@@ -356,7 +399,50 @@ function renderEditor(config) {
             </div>
             <div class="row-children" data-row-index="${itemIndex}" data-page-index="${index}">
               ${childrenHtml}
-              ${item.children.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
+              ${childrenArr.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
+            </div>
+          `;
+        }
+        // Handle stack items (vertical container) even if children missing
+        if (item.type === 'stack') {
+          // Debug attribute and log so it's easy to confirm stack rendering
+          console.debug(`[EDITOR] Rendering stack at page=${index} element=${itemIndex} children=${(item.children && item.children.length) || 0}`);
+          
+          
+          const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
+          const childrenHtml = childrenArr.map((child, childIndex) => {
+            const childLabel = child.label || child.text || child.var || '';
+            const childContent = child.type === 'text' && child.content ? child.content.substring(0, 50) + (child.content.length > 50 ? '...' : '') : childLabel;
+            return `
+              <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
+                <div class="layout-item-info">
+                  <span class="layout-item-type">${child.type || 'unknown'}</span>
+                  <span>${childContent}</span>
+                </div>
+                <div class="layout-item-actions">
+                  <span class="drag-handle">⋮⋮</span>
+                  <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex})">Edit</button>
+                  <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex})">×</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="layout-item stack-container" data-element-index="${itemIndex}" data-page-index="${index}" data-has-children="${childrenArr.length}">
+              <div class="layout-item-info">
+                <span class="layout-item-type">${typeLabel}</span>
+                <span>Stack (${childrenArr.length} items)</span>
+              </div>
+              <div class="layout-item-actions">
+                <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex})">+ Item</button>
+                <button type="button" class="btn-small" onclick="event.stopPropagation(); editElement(${index}, ${itemIndex})">Edit</button>
+                <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteElement(${index}, ${itemIndex})">×</button>
+              </div>
+            </div>
+            <div class="stack-children" data-stack-index="${itemIndex}" data-page-index="${index}">
+              ${childrenHtml}
+              ${childrenArr.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
             </div>
           `;
         }
@@ -516,9 +602,9 @@ function renderEditor(config) {
         });
       }
       
-      // Add drop listeners to row children containers
-      const rowChildContainers = pageDiv.querySelectorAll('.row-children');
-      rowChildContainers.forEach(container => {
+      // Add drop listeners to row and stack children containers
+      const childContainers = pageDiv.querySelectorAll('.row-children, .stack-children');
+      childContainers.forEach(container => {
         container.addEventListener('dragover', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -595,9 +681,11 @@ let draggedElement = null;
 let draggedFromPageIndex = null;
 let draggedElementIndex = null;
 let draggedChildIndex = null;
+let draggedNestedIndex = null; // index inside a nested stack's children
 let dropIndicator = null;
 let lastDropTarget = null;
 let dropPosition = null;
+let lastDropTargetMeta = null;
 
 function createDropIndicator() {
   if (!dropIndicator) {
@@ -623,10 +711,16 @@ function handleElementDragStart(e) {
   
   // Check if this is a child element
   const childIndex = this.dataset.childIndex;
+  const nestedIndex = this.dataset.nestedIndex;
   if (childIndex !== undefined) {
     draggedChildIndex = parseInt(childIndex);
   } else {
     draggedChildIndex = null;
+  }
+  if (nestedIndex !== undefined) {
+    draggedNestedIndex = parseInt(nestedIndex);
+  } else {
+    draggedNestedIndex = null;
   }
   
   draggedElement = this;
@@ -650,6 +744,14 @@ function handleElementDragOver(e) {
     // Store drop target info
     lastDropTarget = this;
     dropPosition = e.clientY < midpoint ? 'before' : 'after';
+    // Capture metadata from dataset for nested handling
+    lastDropTargetMeta = {
+      elementIndex: this.dataset.elementIndex !== undefined ? parseInt(this.dataset.elementIndex) : null,
+      childIndex: this.dataset.childIndex !== undefined ? parseInt(this.dataset.childIndex) : null,
+      nestedIndex: this.dataset.nestedIndex !== undefined ? parseInt(this.dataset.nestedIndex) : null,
+      parentChildIndex: this.dataset.parentChildIndex !== undefined ? parseInt(this.dataset.parentChildIndex) : null,
+      pageIndex: this.dataset.pageIndex !== undefined ? parseInt(this.dataset.pageIndex) : null
+    };
     
     // Determine if we should insert before or after this element
     if (dropPosition === 'before') {
@@ -680,17 +782,23 @@ function handleElementDrop(e) {
     return;
   }
   
-  const dropElementIndex = parseInt(lastDropTarget.dataset.elementIndex);
-  const dropPageIndex = parseInt(lastDropTarget.dataset.pageIndex);
-  const dropChildIndex = lastDropTarget.dataset.childIndex !== undefined ? parseInt(lastDropTarget.dataset.childIndex) : null;
+  // Use metadata captured during dragover
+  const dropElementIndex = lastDropTargetMeta?.elementIndex;
+  const dropPageIndex = lastDropTargetMeta?.pageIndex;
+  const dropChildIndex = lastDropTargetMeta?.childIndex !== undefined ? lastDropTargetMeta.childIndex : null;
+  const dropNestedIndex = lastDropTargetMeta?.nestedIndex !== undefined ? lastDropTargetMeta.nestedIndex : null;
+  const dropParentChildIndex = lastDropTargetMeta?.parentChildIndex !== undefined ? lastDropTargetMeta.parentChildIndex : null;
   
   if (draggedFromPageIndex === dropPageIndex) {
     const page = currentConfig.pages[dropPageIndex];
     
     // Get the dragged element/child
     let draggedItem;
-    if (draggedChildIndex !== null) {
-      // Dragging from a row
+    if (draggedNestedIndex !== null) {
+      // Dragging from a nested stack child
+      draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex].children[draggedNestedIndex];
+    } else if (draggedChildIndex !== null) {
+      // Dragging from a row child (direct)
       draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex];
     } else {
       // Dragging a top-level element
@@ -698,40 +806,46 @@ function handleElementDrop(e) {
     }
     
     // Remove from source
-    if (draggedChildIndex !== null) {
+    if (draggedNestedIndex !== null) {
+      page.layout[draggedElementIndex].children[draggedChildIndex].children.splice(draggedNestedIndex, 1);
+    } else if (draggedChildIndex !== null) {
       page.layout[draggedElementIndex].children.splice(draggedChildIndex, 1);
     } else {
       page.layout.splice(draggedElementIndex, 1);
     }
     
     // Insert into target
-    if (dropChildIndex !== null) {
-      // Dropping into a row
+    if (dropNestedIndex !== null) {
+      // Dropping relative to a nested child inside a stack -> insert into that stack's children
+      const targetParentStack = page.layout[dropElementIndex].children[dropChildIndex];
+      if (!targetParentStack.children) targetParentStack.children = [];
+      let insertIndex = dropNestedIndex;
+      if (draggedNestedIndex !== null && draggedElementIndex === dropElementIndex && draggedChildIndex === dropChildIndex) {
+        if (draggedNestedIndex < dropNestedIndex) insertIndex = dropNestedIndex - 1;
+      }
+      if (dropPosition === 'after') insertIndex++;
+      targetParentStack.children.splice(insertIndex, 0, draggedItem);
+    } else if (dropChildIndex !== null) {
+      // Dropping into a row (as a child of the row)
       const targetRow = page.layout[dropElementIndex];
       if (!targetRow.children) targetRow.children = [];
-      
       let insertIndex = dropChildIndex;
-      
-      // Adjust insert index for same row reordering
       if (draggedChildIndex !== null && draggedElementIndex === dropElementIndex) {
-        if (draggedChildIndex < dropChildIndex) {
-          insertIndex = dropChildIndex - 1;
-        }
+        if (draggedChildIndex < dropChildIndex) insertIndex = dropChildIndex - 1;
       }
-      
       if (dropPosition === 'after') insertIndex++;
       targetRow.children.splice(insertIndex, 0, draggedItem);
+    } else if (dropParentChildIndex !== null) {
+      // Dropping into an empty nested stack container (drop zone that belongs to a parent child)
+      const parentStack = page.layout[dropElementIndex].children[dropParentChildIndex];
+      if (!parentStack.children) parentStack.children = [];
+      parentStack.children.push(draggedItem);
     } else {
       // Dropping at top level
-      let insertIndex = dropElementIndex;
-      
-      // Adjust for same-level reordering when source was also top-level
+      let insertIndex = dropElementIndex !== null ? dropElementIndex : page.layout.length;
       if (draggedChildIndex === null) {
-        if (draggedElementIndex < dropElementIndex) {
-          insertIndex = dropElementIndex - 1;
-        }
+        if (draggedElementIndex < insertIndex) insertIndex = insertIndex - 1;
       }
-      
       if (dropPosition === 'after') insertIndex++;
       page.layout.splice(insertIndex, 0, draggedItem);
     }
@@ -750,24 +864,35 @@ function handleEmptyRowDrop(e) {
   
   const dropElementIndex = parseInt(this.dataset.elementIndex);
   const dropPageIndex = parseInt(this.dataset.pageIndex);
+  const dropParentChildIndex = this.dataset.parentChildIndex !== undefined ? parseInt(this.dataset.parentChildIndex) : null;
   
   if (draggedFromPageIndex === dropPageIndex) {
     const page = currentConfig.pages[dropPageIndex];
     
     // Get the dragged element/child
     let draggedItem;
-    if (draggedChildIndex !== null) {
+    if (draggedNestedIndex !== null) {
+      draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex].children[draggedNestedIndex];
+      page.layout[draggedElementIndex].children[draggedChildIndex].children.splice(draggedNestedIndex, 1);
+    } else if (draggedChildIndex !== null) {
       draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex];
       page.layout[draggedElementIndex].children.splice(draggedChildIndex, 1);
     } else {
       draggedItem = page.layout[draggedElementIndex];
       page.layout.splice(draggedElementIndex, 1);
     }
-    
-    // Add to empty row
-    const targetRow = page.layout[dropElementIndex];
-    if (!targetRow.children) targetRow.children = [];
-    targetRow.children.push(draggedItem);
+
+    // Add to empty row or empty nested stack drop zone
+    if (dropParentChildIndex !== null) {
+      // Add into a nested stack's children
+      const parentStack = page.layout[dropElementIndex].children[dropParentChildIndex];
+      if (!parentStack.children) parentStack.children = [];
+      parentStack.children.push(draggedItem);
+    } else {
+      const targetRow = page.layout[dropElementIndex];
+      if (!targetRow.children) targetRow.children = [];
+      targetRow.children.push(draggedItem);
+    }
     
     renderEditor(currentConfig);
   }
@@ -787,6 +912,7 @@ function handleElementDragEnd(e) {
 
 // Element modal functions
 let editingChildIndex = null;
+let editingChildParentIndex = null; // when adding/editing a child of a nested container (stack inside a row)
 
 window.addElement = function(pageIndex) {
   editingPageIndex = pageIndex;
@@ -799,12 +925,18 @@ window.addElement = function(pageIndex) {
   document.getElementById("elementModal").classList.add("active");
 };
 
-window.addChildElement = function(pageIndex, rowIndex) {
+window.addChildElement = function(pageIndex, rowIndex, parentChildIndex) {
   editingPageIndex = pageIndex;
   editingElementIndex = rowIndex;
+  editingChildParentIndex = (parentChildIndex !== undefined) ? parentChildIndex : null; // null = direct child of row
   editingChildIndex = -1; // -1 means adding new child
-  document.getElementById("modalTitle").textContent = "Add Row Item";
-  document.getElementById("saveElementBtn").textContent = "Add Row Item";
+  // Determine parent (row or nested stack)
+  const parent = (editingChildParentIndex === null)
+    ? currentConfig.pages[pageIndex].layout[rowIndex]
+    : (currentConfig.pages[pageIndex].layout[rowIndex].children || [])[editingChildParentIndex];
+  const parentTypeLabel = parent?.type === 'stack' ? 'Stack' : 'Row';
+  document.getElementById("modalTitle").textContent = `Add ${parentTypeLabel} Item`;
+  document.getElementById("saveElementBtn").textContent = `Add ${parentTypeLabel} Item`;
   document.getElementById("elementType").value = "button";
   updateElementFields();
   document.getElementById("elementModal").classList.add("active");
@@ -823,17 +955,33 @@ window.editElement = function(pageIndex, elementIndex) {
   document.getElementById("elementModal").classList.add("active");
 };
 
-window.editChildElement = function(pageIndex, rowIndex, childIndex) {
+window.editChildElement = function(pageIndex, rowIndex, childIndex, nestedChildIndex) {
   editingPageIndex = pageIndex;
   editingElementIndex = rowIndex;
-  editingChildIndex = childIndex;
-  const element = currentConfig.pages[pageIndex].layout[rowIndex].children[childIndex];
-  
-  document.getElementById("modalTitle").textContent = "Edit Row Item";
-  document.getElementById("saveElementBtn").textContent = "Save Changes";
-  document.getElementById("elementType").value = element.type;
-  updateElementFields(element);
-  document.getElementById("elementModal").classList.add("active");
+  if (nestedChildIndex !== undefined) {
+    // Editing a child of a nested container (stack inside a row)
+    editingChildParentIndex = childIndex;
+    editingChildIndex = nestedChildIndex;
+    const element = currentConfig.pages[pageIndex].layout[rowIndex].children[childIndex].children[nestedChildIndex];
+    const parent = currentConfig.pages[pageIndex].layout[rowIndex].children[childIndex];
+    const parentTypeLabel = parent?.type === 'stack' ? 'Stack' : 'Row';
+    document.getElementById("modalTitle").textContent = `Edit ${parentTypeLabel} Item`;
+    document.getElementById("saveElementBtn").textContent = "Save Changes";
+    document.getElementById("elementType").value = element.type;
+    updateElementFields(element);
+    document.getElementById("elementModal").classList.add("active");
+  } else {
+    editingChildParentIndex = null;
+    editingChildIndex = childIndex;
+    const element = currentConfig.pages[pageIndex].layout[rowIndex].children[childIndex];
+    const parent = currentConfig.pages[pageIndex].layout[rowIndex];
+    const parentTypeLabel = parent?.type === 'stack' ? 'Stack' : 'Row';
+    document.getElementById("modalTitle").textContent = `Edit ${parentTypeLabel} Item`;
+    document.getElementById("saveElementBtn").textContent = "Save Changes";
+    document.getElementById("elementType").value = element.type;
+    updateElementFields(element);
+    document.getElementById("elementModal").classList.add("active");
+  }
 };
 
 window.deleteElement = function(pageIndex, elementIndex) {
@@ -843,10 +991,17 @@ window.deleteElement = function(pageIndex, elementIndex) {
   }
 };
 
-window.deleteChildElement = function(pageIndex, rowIndex, childIndex) {
-  if (confirm("Delete this row item?")) {
-    currentConfig.pages[pageIndex].layout[rowIndex].children.splice(childIndex, 1);
-    renderEditor(currentConfig);
+window.deleteChildElement = function(pageIndex, rowIndex, childIndex, nestedChildIndex) {
+  if (nestedChildIndex !== undefined) {
+    if (confirm("Delete this nested item?")) {
+      currentConfig.pages[pageIndex].layout[rowIndex].children[childIndex].children.splice(nestedChildIndex, 1);
+      renderEditor(currentConfig);
+    }
+  } else {
+    if (confirm("Delete this row item?")) {
+      currentConfig.pages[pageIndex].layout[rowIndex].children.splice(childIndex, 1);
+      renderEditor(currentConfig);
+    }
   }
 };
 
@@ -939,6 +1094,8 @@ window.closeElementModal = function() {
   document.getElementById("elementModal").classList.remove("active");
   editingPageIndex = null;
   editingElementIndex = null;
+  editingChildIndex = null;
+  editingChildParentIndex = null;
 };
 
 window.updateElementFields = function(existingElement = null) {
@@ -1038,6 +1195,9 @@ window.updateElementFields = function(existingElement = null) {
     case 'row':
       html = `<p style="color: #4ea1ff;">Row is a container. Use the "+ Item" button to add elements to the row.</p>`;
       break;
+    case 'stack':
+      html = `<p style="color: #4ea1ff;">Stack is a vertical container. Use the "+ Item" button to add elements to the stack.</p>`;
+      break;
   }
   
   fieldsContainer.innerHTML = html;
@@ -1086,19 +1246,41 @@ window.saveElement = function() {
         element.children = existing.children || [];
       }
       break;
+    case 'stack':
+      // Initialize with empty children array if creating new stack
+      if (editingElementIndex === null || editingChildIndex !== null) {
+        element.children = [];
+      } else {
+        // Preserve existing children when editing
+        const existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
+        element.children = existing.children || [];
+      }
+      break;
   }
   
   // Add or update element
   if (editingChildIndex !== null) {
-    // Working with row child
-    const row = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
-    if (editingChildIndex === -1) {
-      // Adding new child
-      if (!row.children) row.children = [];
-      row.children.push(element);
+    // Working with a child. Support nested containers (stack inside a row) via editingChildParentIndex
+    if (editingChildParentIndex === null) {
+      // Direct child of a row
+      const row = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
+      if (editingChildIndex === -1) {
+        // Adding new child
+        if (!row.children) row.children = [];
+        row.children.push(element);
+      } else {
+        // Editing existing child
+        row.children[editingChildIndex] = element;
+      }
     } else {
-      // Editing existing child
-      row.children[editingChildIndex] = element;
+      // Child of a nested container (stack inside a row)
+      const parentStack = currentConfig.pages[editingPageIndex].layout[editingElementIndex].children[editingChildParentIndex];
+      if (!parentStack.children) parentStack.children = [];
+      if (editingChildIndex === -1) {
+        parentStack.children.push(element);
+      } else {
+        parentStack.children[editingChildIndex] = element;
+      }
     }
   } else if (editingElementIndex !== null) {
     // Editing existing element

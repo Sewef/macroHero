@@ -298,6 +298,12 @@
       background: #2a2a2a;
     }
 
+    .layout-item.stack-container {
+      cursor: default;
+      border-color: #4ea1ff;
+      background: #2a2a2a;
+    }
+
     .row-children {
       margin-left: 24px;
       margin-bottom: 8px;
@@ -306,7 +312,19 @@
       min-height: 20px;
     }
 
+    .stack-children {
+      margin-left: 24px;
+      margin-bottom: 8px;
+      padding-left: 12px;
+      border-left: 2px solid #4ea1ff;
+      min-height: 20px;
+    }
+
     .row-children .layout-item {
+      background: #3a3a3a;
+    }
+
+    .stack-children .layout-item {
       background: #3a3a3a;
     }
 
@@ -620,6 +638,7 @@
           <option value="text">Text/Description</option>
           <option value="divider">Divider</option>
           <option value="row">Row (Container)</option>
+          <option value="stack">Stack (Vertical container)</option>
         </select>
       </div>
 
