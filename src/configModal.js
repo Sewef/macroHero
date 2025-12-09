@@ -324,8 +324,6 @@ function renderEditor(config) {
         
         // Handle row items (treat as container even if children is missing)
         if (item.type === 'row') {
-          // Debug attribute to help verify rendering in DOM
-          console.debug(`[EDITOR] Rendering row at page=${index} element=${itemIndex} children=${(item.children && item.children.length) || 0}`);
           const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
           const childrenHtml = childrenArr.map((child, childIndex) => {
             // If the child is itself a stack, render it as a nested container with its own children
@@ -386,7 +384,7 @@ function renderEditor(config) {
           }).join('');
 
           return `
-            <div class="layout-item row-container" data-element-index="${itemIndex}" data-page-index="${index}" data-has-children="${childrenArr.length}">
+            <div class="layout-item row-container" data-element-index="${itemIndex}" data-page-index="${index}">
               <div class="layout-item-info">
                 <span class="layout-item-type">${typeLabel}</span>
                 <span>Row (${childrenArr.length} items)</span>
@@ -405,10 +403,6 @@ function renderEditor(config) {
         }
         // Handle stack items (vertical container) even if children missing
         if (item.type === 'stack') {
-          // Debug attribute and log so it's easy to confirm stack rendering
-          console.debug(`[EDITOR] Rendering stack at page=${index} element=${itemIndex} children=${(item.children && item.children.length) || 0}`);
-          
-          
           const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
           const childrenHtml = childrenArr.map((child, childIndex) => {
             const childLabel = child.label || child.text || child.var || '';
@@ -429,7 +423,7 @@ function renderEditor(config) {
           }).join('');
 
           return `
-            <div class="layout-item stack-container" data-element-index="${itemIndex}" data-page-index="${index}" data-has-children="${childrenArr.length}">
+            <div class="layout-item stack-container" data-element-index="${itemIndex}" data-page-index="${index}">
               <div class="layout-item-info">
                 <span class="layout-item-type">${typeLabel}</span>
                 <span>Stack (${childrenArr.length} items)</span>
