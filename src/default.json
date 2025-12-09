@@ -115,7 +115,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.toggleCondition({token}, 'Bandaged', 1)"
+                        "ConditionsMarkers.addCondition({token}, 'Bandaged', 1)"
                     ],
                     "label": "Toggle Bandage"
                 },

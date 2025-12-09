@@ -39,15 +39,15 @@ export async function getConditions(itemId) {
  * Add a condition to an item
  * @param {string} itemId - Item ID
  * @param {string} conditionName - Condition name (e.g., "poisoned", "stunned")
- * @param {Object} options - Additional options
+ * @param {any} value - Optional plain value for the condition (number|string|boolean|null)
  * @returns {Promise<void>}
  */
 
-export async function addCondition(itemId, conditionName, options = {}) {
+export async function addCondition(itemId, conditionName, value = null) {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.addCondition === 'function') {
-      console.log(`[ConditionsMarkers] Using native Ext.ConditionsMarkers.addCondition for token ${itemId}, condition '${conditionName}'`);
-      return await Ext.ConditionsMarkers.addCondition(itemId, conditionName, options);
+      console.log(`[ConditionsMarkers] Using native Ext.ConditionsMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
+      return await Ext.ConditionsMarkers.addCondition(itemId, conditionName, value);
     }
     // Fallback: attempt to use the Condition Markers API (request/response pattern)
     const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
@@ -55,9 +55,9 @@ export async function addCondition(itemId, conditionName, options = {}) {
 
     const requesterId = await OBR.player.getId();
     const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const payload = { callId, requesterId, action: 'add', tokenId: itemId, condition: conditionName, value: options?.value };
+    const payload = { callId, requesterId, action: 'add', tokenId: itemId, condition: conditionName, value };
 
-    console.log(`[ConditionsMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName}'`);
+    console.log(`[ConditionsMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName},' value ${value}`, );
 
     const res = await new Promise((resolve, reject) => {
       let timeoutId = null;
@@ -228,7 +228,7 @@ export async function hasCondition(itemId, conditionName) {
  * @param {string} tokenId - Token ID
  * @param {string} conditionName - Name of the condition (e.g., "Bandaged")
  * @param {Array} allItems - All scene items (optional, will fetch if not provided)
- * @returns {Promise<string|null>} Text value of the label, or null if not found
+ * @returns {Promise<number|null>} Numeric value of the label, or null if not found or non-numeric
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
@@ -276,9 +276,21 @@ export async function getValue(tokenId, conditionName, allItems = null) {
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
         console.log(`[ConditionsMarkers.getValue] Label text: "${labelText}"`);
-        const result = labelText && labelText.trim() ? labelText : null;
-        console.log(`[ConditionsMarkers.getValue] Returning: ${result}`);
-        return result;
+        const trimmed = labelText && labelText.trim() ? labelText.trim() : null;
+        if (!trimmed) {
+          console.log(`[ConditionsMarkers.getValue] Returning: null (empty)`);
+          return null;
+        }
+
+        // Simpler numeric parsing: use Number() and ensure it's finite.
+        const n = Number(trimmed);
+        if (Number.isFinite(n)) {
+          console.log(`[ConditionsMarkers.getValue] Parsed number: ${n}`);
+          return n;
+        }
+
+        console.log(`[ConditionsMarkers.getValue] Label not numeric, returning null`);
+        return null;
       }
     }
     
