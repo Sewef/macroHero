@@ -26,6 +26,42 @@
   min-height: 32px;
   box-sizing: border-box;
 }
+
+/* Compact inputs when placed inside a stack (match value item compactness) */
+.mh-stack-compact.mh-layout-input {
+  font-size: 1.0em;
+  padding: 6px 10px !important;
+  margin: 0 !important;
+  min-width: 0;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+.mh-stack-compact.mh-layout-input .mh-input-field {
+  height: 24px;
+  padding: 2px 6px;
+  font-size: 0.95em;
+}
+
+/* Inline label for inputs inside stacks */
+.mh-stack-compact.mh-layout-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.mh-stack-compact.mh-layout-input .mh-input-label {
+  text-transform: none;
+  font-size: 0.9em;
+  color: #aaa;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+.mh-stack-compact.mh-layout-input .mh-input-field {
+  text-align: left;
+}
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

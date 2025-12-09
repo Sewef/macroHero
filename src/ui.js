@@ -287,13 +287,16 @@ function renderStack(item, page) {
 
   if (item.children && Array.isArray(item.children)) {
     item.children.forEach((child) => {
-      let element;
-      // If child is a value, call renderValue with inStack=true so it renders horizontally
-      if (child.type === 'value') {
-        element = renderValue(child, page, true);
-      } else {
-        element = renderLayoutElement(child, page);
-      }
+        let element;
+        // If child is a value, call renderValue with inStack=true so it renders horizontally
+        if (child.type === 'value') {
+          element = renderValue(child, page, true);
+        } else if (child.type === 'input') {
+          // Render input with inStack=true so it becomes inline (label + input)
+          element = renderInput(child, page, true);
+        } else {
+          element = renderLayoutElement(child, page);
+        }
       if (element) {
         // Ensure child occupies full width of the stack column
         element.style.width = '100%';
@@ -419,7 +422,7 @@ function renderText(item) {
   return text;
 }
 
-function renderInput(item, page) {
+function renderInput(item, page, inStack = false) {
   const container = document.createElement("div");
   container.className = "mh-layout-input";
 
@@ -430,9 +433,10 @@ function renderInput(item, page) {
     return container;
   }
 
-  const label = document.createElement("label");
+  const label = document.createElement(inStack ? "span" : "label");
   label.className = "mh-input-label";
-  label.textContent = item.label ?? item.var;
+  // When inline in a stack, show as 'Label:' to match value rendering
+  label.textContent = inStack ? `${item.label ?? item.var}:` : (item.label ?? item.var);
 
   const input = document.createElement("input");
   input.type = "text";
@@ -452,8 +456,18 @@ function renderInput(item, page) {
     saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
   };
 
-  container.appendChild(label);
-  container.appendChild(input);
+  // If this is rendered inline for stacks, arrange label and input side-by-side
+  if (inStack) {
+    container.style.display = 'flex';
+    container.style.flexDirection = 'row';
+    container.style.alignItems = 'center';
+    container.style.gap = '8px';
+    container.appendChild(label);
+    container.appendChild(input);
+  } else {
+    container.appendChild(label);
+    container.appendChild(input);
+  }
   return container;
 }
 
