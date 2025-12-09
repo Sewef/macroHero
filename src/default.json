@@ -113,6 +113,13 @@
                     "label": "Heal if Bandaged"
                 },
                 {
+                    "type": "button",
+                    "commands": [
+                        "ConditionsMarkers.toggleCondition({token}, 'Bandaged', 1)"
+                    ],
+                    "label": "Toggle Bandage"
+                },
+                {
                     "type": "divider"
                 },
                 {

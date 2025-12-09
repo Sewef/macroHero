@@ -74,7 +74,7 @@ export async function addCondition(itemId, conditionName, options = {}) {
       OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
 
       // Send request
-      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "ALL" }).catch(err => {
+      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "LOCAL" }).catch(err => {
         try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
         reject(err);
       });
@@ -128,7 +128,7 @@ export async function removeCondition(itemId, conditionName) {
 
       OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
 
-      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "ALL" }).catch(err => {
+      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "LOCAL" }).catch(err => {
         try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
         reject(err);
       });
