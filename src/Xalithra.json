@@ -1,4 +1,4 @@
-{
+﻿{
   "global": {
     "title": "Macro Hero",
     "width": 600,
@@ -16,19 +16,19 @@
           "expression": "GoogleSheets.getRange('Xalithra Général', 'T4:T8')"
         },
         "atk": {
-          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : 0.1)))"
         },
         "def": {
-          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : 0.1)))"
         },
         "spatk": {
-          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : 0.1)))"
         },
         "spdef": {
-          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : 0.1)))"
         },
         "spd": {
-          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : 0.1)))"
         },
         "initiative": {
           "expression": "{spd} + {initiativeBonus}"
@@ -431,19 +431,19 @@
           "expression": "GoogleSheets.getRange('Stryfe', 'Q4:Q8')"
         },
         "atk": {
-          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : 0.1)))"
         },
         "def": {
-          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : 0.1)))"
         },
         "spatk": {
-          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : 0.1)))"
         },
         "spdef": {
-          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : 0.1)))"
         },
         "spd": {
-          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : 0.1)))"
         },
         "initiative": {
           "expression": "{spd} + {initiativeBonus}"
@@ -806,19 +806,19 @@
           "expression": "GoogleSheets.getRange('Rixe', 'Q4:Q8')"
         },
         "atk": {
-          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : 0.1)))"
         },
         "def": {
-          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : 0.1)))"
         },
         "spatk": {
-          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : 0.1)))"
         },
         "spdef": {
-          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : 0.1)))"
         },
         "spd": {
-          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : 0.1)))"
         },
         "initiative": {
           "expression": "{spd} + {initiativeBonus}"
@@ -1164,19 +1164,19 @@
           "expression": "GoogleSheets.getRange('Ace', 'Q4:Q8')"
         },
         "atk": {
-          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[0]} * (1 + {atkCS} * ({atkCS} > 0 ? 0.2 : 0.1)))"
         },
         "def": {
-          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[1]} * (1 + {defCS} * ({defCS} > 0 ? 0.2 : 0.1)))"
         },
         "spatk": {
-          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[2]} * (1 + {spatkCS} * ({spatkCS} > 0 ? 0.2 : 0.1)))"
         },
         "spdef": {
-          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[3]} * (1 + {spdefCS} * ({spdefCS} > 0 ? 0.2 : 0.1)))"
         },
         "spd": {
-          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : -0.1)))"
+          "expression": "floor({stats[4]} * (1 + {spdCS} * ({spdCS} > 0 ? 0.2 : 0.1)))"
         },
         "initiative": {
           "expression": "{spd} + {initiativeBonus}"
