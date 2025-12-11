@@ -68,11 +68,46 @@ async function getRoomScopedLocalStorageKey() {
     }
 }
 
+// Clean runtime-only fields from a config object before serializing/saving.
+// Removes `_resolvedGlobal` and any `page._resolved` entries to avoid
+// persisting runtime caches/state.
+export function cleanConfigForSave(cfg) {
+    if (!cfg) return cfg;
+    try {
+        const clone = JSON.parse(JSON.stringify(cfg));
+        if (clone._resolvedGlobal) delete clone._resolvedGlobal;
+        if (clone._modifiedVars) delete clone._modifiedVars;
+        if (Array.isArray(clone.pages)) {
+            clone.pages.forEach(p => {
+                if (p && p._resolved) delete p._resolved;
+                if (p && p._modifiedVars) delete p._modifiedVars;
+            });
+        }
+        return clone;
+    } catch (e) {
+        console.warn('[CONFIG] cleanConfigForSave failed, falling back to shallow clone', e);
+        const clone = Object.assign({}, cfg);
+        delete clone._resolvedGlobal;
+        delete clone._modifiedVars;
+        if (Array.isArray(clone.pages)) {
+            clone.pages = clone.pages.map(p => {
+                const cp = Object.assign({}, p);
+                delete cp._resolved;
+                delete cp._modifiedVars;
+                return cp;
+            });
+        }
+        return clone;
+    }
+}
+
 // Helper to save full config to localStorage (room-scoped)
 // This preserves the entire config including external/calculated variable definitions
 export async function saveConfigToLocalStorage(cfg) {
     try {
-        const configJson = JSON.stringify(cfg);
+        // Clean runtime-only fields before serializing to localStorage
+        const cleaned = cleanConfigForSave(cfg);
+        const configJson = JSON.stringify(cleaned);
         const key = await getRoomScopedLocalStorageKey();
         localStorage.setItem(key, configJson);
         const sizeKB = (new Blob([configJson]).size / 1024).toFixed(2);
@@ -209,7 +244,7 @@ export async function saveConfig(cfg) {
         const playerId = await getPlayerId();
         console.log("[CONFIG] Saving config for player:", playerId);
         
-        // Save full config to room-scoped localStorage
+        // Save full config to room-scoped localStorage (clean runtime fields first)
         await saveConfigToLocalStorage(cfg);
         
         // Extract only local variables from config for Room Metadata
@@ -266,8 +301,9 @@ export async function saveConfig(cfg) {
         const localVarsSizeBytes = new Blob([localVarsJson]).size;
         const localVarsSizeKB = (localVarsSizeBytes / 1024).toFixed(2);
         
-        // Calculate what the full config size would have been
-        const fullConfigJson = JSON.stringify(cfg);
+        // Calculate what the full config size would be after cleaning runtime fields
+        const cleanedForSize = cleanConfigForSave(cfg);
+        const fullConfigJson = JSON.stringify(cleanedForSize);
         const fullConfigSizeBytes = new Blob([fullConfigJson]).size;
         const fullConfigSizeKB = (fullConfigSizeBytes / 1024).toFixed(2);
         const savedPercent = ((1 - localVarsSizeBytes / fullConfigSizeBytes) * 100).toFixed(1);

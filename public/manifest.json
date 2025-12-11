@@ -1,6 +1,6 @@
 {
   "name": "MacroHero",
-  "version": "0.1a",
+  "version": "0.1b",
   "manifest_version": 1,
   "icon": "/logo.png",
   "action": {
