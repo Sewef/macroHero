@@ -19,34 +19,6 @@ async function getSelfId() {
 }
 
 /**
- * Get sender information
- * @returns {Promise<Object>} Sender object with id, name, color, role
- */
-async function getSender() {
-  const sender = {
-    id: await OBR.player.getId(),
-    name: await OBR.player.getName(),
-    color: await OBR.player.getColor(),
-    role: await OBR.player.getRole(),
-  };
-  return sender;
-}
-
-/**
- * Send a roll to the JustDices log
- * @param {Object} sender - Sender information
- * @param {Object} text - Text object with roll details
- * @returns {Promise<void>}
- */
-async function sendToLog(sender, text) {
-  await OBR.broadcast.sendMessage(
-    "justdices.dice-roll",
-    { sender, user: sender.name, text },
-    { destination: "ALL" }
-  );
-}
-
-/**
  * Roll dice using JustDices API and return the total
  * @param {string} expression - Dice formula (e.g., "1d20+5", "3d6")
  * @param {boolean|Object} hiddenOrOptions - Whether roll is hidden, or options object
