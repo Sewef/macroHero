@@ -29,7 +29,7 @@ export function initializeGoogleSheets(config) {
  * Returns the original value if it cannot be parsed deterministically
  * @param {*} raw
  */
-export function parseLocalizedNumberString(raw) {
+function parseLocalizedNumberString(raw) {
   if (raw === null || raw === undefined) return raw;
   if (typeof raw !== 'string') return raw;
 
@@ -137,7 +137,7 @@ export function hasGoogleSheetsCredentials() {
  * @param {string} range - Sheet range (e.g., "Sheet1!A1:D10")
  * @returns {Promise<Array>} Array of rows
  */
-export async function readSheetRange(client, range) {
+async function readSheetRange(client, range) {
   if (!client) {
     throw new Error("Google Sheets not initialized");
   }
@@ -206,13 +206,42 @@ export async function readSheetRange(client, range) {
 }
 
 /**
+ * Convenience: Get a range for a given sheet name and range string
+ * @param {Object} client - Initialized client
+ * @param {string} sheetName - Sheet name (e.g., "Sheet1")
+ * @param {string} range - Range string (e.g., "A1:B2")
+ * @returns {Promise<Array>} Array of rows or flattened single-column array
+ */
+export async function getRange(client, sheetName, range) {
+  const fullRange = `'${sheetName}'!${range}`;
+  return await readSheetRange(client, fullRange);
+}
+
+/**
+ * Convenience: Get single-cell value or first value from a range
+ * @param {Object} client - Initialized client
+ * @param {string} sheetName - Sheet name (e.g., "Sheet1")
+ * @param {string} range - Range string (e.g., "A1")
+ * @returns {Promise<any>} Single cell value or null
+ */
+export async function getValue(client, sheetName, range) {
+  const result = await getRange(client, sheetName, range);
+  if (Array.isArray(result)) {
+    if (result.length === 0) return null;
+    if (Array.isArray(result[0])) return result[0][0] ?? null;
+    return result[0] ?? null;
+  }
+  return result ?? null;
+}
+
+/**
  * Write to Google Sheet
  * @param {Object} client - Initialized client
  * @param {string} range - Sheet range
  * @param {Array} values - 2D array of values
  * @returns {Promise<Object>} Write result
  */
-export async function writeSheetRange(client, range, values) {
+async function writeSheetRange(client, range, values) {
   if (!client) {
     throw new Error("Google Sheets not initialized");
   }
@@ -247,7 +276,7 @@ export async function writeSheetRange(client, range, values) {
  * @param {Array} values - Row to append
  * @returns {Promise<Object>} Append result
  */
-export async function appendToSheet(client, range, values) {
+async function appendToSheet(client, range, values) {
   if (!client) {
     throw new Error("Google Sheets not initialized");
   }
@@ -278,7 +307,7 @@ export async function appendToSheet(client, range, values) {
  * @param {Object} client - Initialized client
  * @returns {Promise<Object>} Sheet metadata
  */
-export async function getSheetMetadata(client) {
+async function getSheetMetadata(client) {
   if (!client) {
     throw new Error("Google Sheets not initialized");
   }
@@ -300,11 +329,8 @@ export async function getSheetMetadata(client) {
 
 export default {
   initializeGoogleSheets,
-  readSheetRange,
-  writeSheetRange,
-  appendToSheet,
-  getSheetMetadata,
-  parseLocalizedNumberString,
+  getRange,
+  getValue,
   getGoogleSheetsCredentials,
   saveGoogleSheetsApiKey,
   saveGoogleSheetsSheetId,
