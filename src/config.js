@@ -180,18 +180,35 @@ export async function loadConfig() {
         if (localStorageConfig) {
             config = JSON.parse(JSON.stringify(localStorageConfig));
         } else {
-            try {
-                // Attempt to fetch the packaged default config file
-                const resp = await fetch('/src/default.json');
-                if (resp.ok) {
-                    const packaged = await resp.json();
-                    config = JSON.parse(JSON.stringify(packaged));
-                    console.log('[CONFIG] Loaded packaged default config from /src/default.json');
-                } else {
-                    throw new Error('HTTP ' + resp.status);
+            // Try several sensible locations for the packaged default.json
+            const tryPaths = ['/src/default.json', '/default.json', '/assets/default.json'];
+            let packaged = null;
+            for (const p of tryPaths) {
+                try {
+                    const resp = await fetch(p);
+                    if (resp.ok) {
+                        packaged = await resp.json();
+                        console.log('[CONFIG] Loaded packaged default config from', p);
+                        break;
+                    }
+                } catch (e) {
+                    // ignore and try next path
                 }
-            } catch (err) {
-                console.warn('[CONFIG] Could not load packaged default config, using in-code defaultConfig', err);
+            }
+
+            if (packaged) {
+                config = JSON.parse(JSON.stringify(packaged));
+
+                // Persist the packaged default to room-scoped localStorage so
+                // subsequent loads find it as the saved full config.
+                try {
+                    await saveConfigToLocalStorage(config);
+                    console.log('[CONFIG] Packaged default persisted to room-scoped localStorage');
+                } catch (e) {
+                    console.warn('[CONFIG] Failed to persist packaged default to localStorage', e);
+                }
+            } else {
+                console.warn('[CONFIG] Could not load packaged default config, using in-code defaultConfig');
                 config = JSON.parse(JSON.stringify(defaultConfig));
             }
         }

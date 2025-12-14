@@ -81,47 +81,7 @@
                 {
                     "type": "divider"
                 },
-                {
-                    "type": "title",
-                    "text": "Stack Demo"
-                },
-                {
-                    "type": "text",
-                    "content": "Demonstrates the `stack` container."
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "text",
-                            "content": "This is a row containing a stack:"
-                        },
-                        {
-                            "type": "stack",
-                            "children": [
-                                {
-                                    "type": "value",
-                                    "var": "sheetValue",
-                                    "label": "Base Value"
-                                },
-                                {
-                                    "type": "button",
-                                    "label": "Button",
-                                    "commands": [
-                                        "JustDices.roll('1d6')"
-                                    ]
-                                },
-                                {
-                                    "type": "button",
-                                    "label": "Button",
-                                    "commands": [
-                                        "JustDices.roll('1d6')"
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
+                
                 {
                     "type": "title",
                     "text": "Conditions Markers"
@@ -507,7 +467,7 @@
             ]
         },
         {
-            "label": "Advanced",
+            "label": "Layout",
             "variables": {
                 "textVar": {
                     "expression": "'Hello World'"
@@ -589,6 +549,50 @@
                     "type": "checkbox",
                     "var": "checkboxVar",
                     "label": "Checkbox Example"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Stack Demo"
+                },
+                {
+                    "type": "text",
+                    "content": "Demonstrates the `stack` container."
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "text",
+                            "content": "This is a row containing a stack:"
+                        },
+                        {
+                            "type": "stack",
+                            "children": [
+                                {
+                                    "type": "value",
+                                    "var": "textVar",
+                                    "label": "Base Value"
+                                },
+                                {
+                                    "type": "button",
+                                    "label": "Button",
+                                    "commands": [
+                                        "JustDices.roll('1d6')"
+                                    ]
+                                },
+                                {
+                                    "type": "button",
+                                    "label": "Button",
+                                    "commands": [
+                                        "JustDices.roll('1d6')"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     "type": "divider"
