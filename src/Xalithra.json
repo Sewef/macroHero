@@ -380,46 +380,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {
-        "token": "86338ffe-a797-44ff-be57-9fa8c5242684",
-        "stats": [
-          23,
-          17,
-          5,
-          17,
-          17
-        ],
-        "atkCS": 0,
-        "atk": 23,
-        "defCS": 0,
-        "def": 17,
-        "spatkCS": -2,
-        "spatk": 8,
-        "spdefCS": 0,
-        "spdef": 17,
-        "spdCS": 0,
-        "spd": 17,
-        "initiativeBonus": 0,
-        "initiative": 17,
-        "evadeBonus": 0,
-        "physEvade": 3,
-        "speEvade": 3,
-        "spdEvade": 3,
-        "armorClass": 1,
-        "overland": 6,
-        "isCrit": false,
-        "recklessAdvance": false,
-        "rockHead": false,
-        "injuries": null,
-        "intimidate": 6,
-        "pushItToTheLimit": false,
-        "pushIntimidateBonus": 0,
-        "weaponDB": 9,
-        "fastHandsBonus": 1,
-        "critRange": 20,
-        "acBonus": 0
-      }
+      ]
     },
     {
       "label": "Stryfe",
@@ -793,8 +754,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {}
+      ]
     },
     {
       "label": "Rixe",
@@ -1151,8 +1111,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {}
+      ]
     },
     {
       "label": "Ace",
@@ -1520,8 +1479,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {}
+      ]
     },
     {
       "label": "Storm",
@@ -1883,8 +1841,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {}
+      ]
     },
     {
       "label": "Verdex",
@@ -2252,8 +2209,7 @@
             }
           ]
         }
-      ],
-      "_resolved": {}
+      ]
     }
   ]
 }
