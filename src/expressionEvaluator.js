@@ -8,6 +8,7 @@
  */
 
 import * as expressionHelpers from "./expressionHelpers.js";
+import * as math from "mathjs";
 
 /**
  * Evaluate a variable expression
@@ -137,7 +138,12 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
       }
     }
     
-    // Step 4: Evaluate the expression with proper async handling
+    // Step 4: Ensure mathjs functions are available in the execution context
+    // This allows using functions like floor(), ceil(), sqrt(), etc. implicitly
+    // (e.g. "floor({spdCS}/2)")
+    Object.assign(contextObj, math);
+
+    // Step 5: Evaluate the expression with proper async handling
     const funcCode = `return (async () => { 
       const { GoogleSheets, Local, ConditionsMarkers, OwlTrackers, StatBubbles, ColoredRings, JustDices, PrettySordid, playerMetadata, sceneMetadata, tokenMetadata, tokenAttachments, Math: MathObj, floor, ceil, round, abs, min, max } = __context__;
       const Math = MathObj || { floor, ceil, round, abs, min, max };

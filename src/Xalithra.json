@@ -197,7 +197,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {def}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -205,7 +205,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - (ConditionsMarkers.hasCondition({token}, 'Rage') ? 5 : 0) - {spdef}), dmg = max(1, a1), temp = OwlTrackers.getValue({token}, 'Temp HP'), tempHit = min(temp, dmg), tempHit > 0 ? OwlTrackers.addValue({token}, 'Temp HP', -tempHit) : null, dmg - tempHit > 0 ? OwlTrackers.addValue({token}, 'HP', -(dmg - tempHit)) : null))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }
@@ -579,7 +579,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -587,7 +587,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }
@@ -953,7 +953,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, maxHP = OwlTrackers.getMax({token}, 'HP'), dmg = dmg > 0.5 * maxHP ? 0.5 * maxHP : dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -961,7 +961,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, maxHP = OwlTrackers.getMax({token}, 'HP'), dmg = dmg > 0.5 * maxHP ? 0.5 * maxHP : dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }
@@ -1315,7 +1315,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -1323,7 +1323,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }
@@ -1685,7 +1685,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -1693,7 +1693,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }
@@ -2043,7 +2043,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {def}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Phys Dmg"
                 },
@@ -2051,7 +2051,7 @@
                   "type": "button",
                   "commands": [
                     "(n = parseFloat({damageInput}), isNaN(n) || n <= 0 ? null : (a1 = (n - {spdef}), dmg = max(1, a1), dmg = {damageModifier}*dmg, OwlTrackers.addValue({token}, 'HP', -dmg)))",
-                    "setValue('damageInput', null)"
+                    "setValue('damageInput', '')"
                   ],
                   "label": "Spe Dmg"
                 }

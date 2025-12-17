@@ -81,7 +81,6 @@
                 {
                     "type": "divider"
                 },
-                
                 {
                     "type": "title",
                     "text": "Conditions Markers"
@@ -607,6 +606,60 @@
                     "commands": [
                         "JustDices.roll('1d20')"
                     ]
+                }
+            ]
+        },
+        {
+            "label": "Tests",
+            "variables": {
+                "spdCS": { "expression": "15" },
+                "floorResult": { "expression": "floor({spdCS} / 2)" }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Testing Area"
+                },
+                {
+                    "type": "text",
+                    "content": "Use this page for testing new features and commands."
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "spdCS",
+                            "label": "spdCS"
+                        },
+                        {
+                            "type": "value",
+                            "var": "floorResult",
+                            "label": "floor({spdCS}/2)"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "JustDices.roll('floorResult: ' + {floorResult})"
+                    ],
+                    "label": "Show floor result"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "n = '1d10'; JustDices.roll(n)"
+                    ],
+                    "label": "Test Roll"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "n = '1d10'",
+                        "JustDices.roll(n)"
+                    ],
+                    "label": "Test Roll2"
                 }
             ]
         }
