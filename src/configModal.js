@@ -1355,28 +1355,20 @@ let _tokenHelperMeId = null;
 
 async function getCurrentUserId() {
   if (_tokenHelperMeId) return _tokenHelperMeId;
+
+  // Use the canonical property exposed by the OBR SDK
   try {
-    // Try several possible OBR user APIs
-    if (OBR && OBR.user) {
-      if (typeof OBR.user.getCurrentUser === 'function') {
-        const u = await OBR.user.getCurrentUser();
-        _tokenHelperMeId = u?.id || u?.userId || null;
-        if (_tokenHelperMeId) return _tokenHelperMeId;
+    if (OBR && OBR.player) {
+      if (OBR.player.id) {
+        _tokenHelperMeId = OBR.player.id;
+        console.log('[TOKEN_HELPER] detected current user via OBR.player.id:', _tokenHelperMeId);
+        return _tokenHelperMeId;
       }
-      if (typeof OBR.user.get === 'function') {
-        const u = await OBR.user.get();
-        _tokenHelperMeId = u?.id || u?.userId || null;
-        if (_tokenHelperMeId) return _tokenHelperMeId;
-      }
-    }
-    if (OBR && OBR.session && typeof OBR.session.getCurrentUserId === 'function') {
-      _tokenHelperMeId = await OBR.session.getCurrentUserId();
-      if (_tokenHelperMeId) return _tokenHelperMeId;
     }
   } catch (err) {
-    console.warn('[TOKEN_HELPER] getCurrentUserId fallback failed:', err);
+    console.warn('[TOKEN_HELPER] getCurrentUserId unexpected error:', err);
   }
-  // Unknown - leave null
+
   return null;
 }
 
@@ -1548,6 +1540,12 @@ function renderTokenHelperList(items) {
       meta.style.color = '#bbb';
       meta.style.fontSize = '0.9em';
       meta.textContent = `${it.layer || ''} • ${it.visible ? 'visible' : 'hidden'}`;
+      // show an abbreviated creator id and reveal full id on hover
+      const creator = it.createdUserId || it.createdBy || it.ownerId || it.lastModifiedUserId || null;
+      if (creator) {
+        meta.textContent += ` • creator: ${String(creator).substring(0, 8)}`;
+        meta.title = `creator: ${creator}`;
+      }
       left.appendChild(meta);
 
       summary.appendChild(left);
@@ -1637,15 +1635,46 @@ async function refreshTokenHelper() {
   }
 }
 
-function applyTokensFiltersAndRender() {
+async function applyTokensFiltersAndRender() {
   try {
     const q = (document.getElementById('tokensSearch')?.value || '').trim().toLowerCase();
     const filter = document.getElementById('tokensFilter')?.value || 'all';
-    const me = _tokenHelperMeId;
+
+    // Ensure we have current user id when 'me' filter is requested
+    if (filter === 'me' && !_tokenHelperMeId) {
+      const status = document.getElementById('tokensStatus');
+      if (status) status.textContent = 'Detecting current user...';
+      const detected = await getCurrentUserId();
+      _tokenHelperMeId = detected;
+      if (!detected) {
+        // Inform the user and show no items (safer than showing all)
+        const container = document.getElementById('tokensList');
+        if (container) container.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID — cannot filter by "Me". Try Refresh.</div>';
+        if (status) status.textContent = 'Could not detect current user ID';
+        return;
+      }
+      if (status) status.textContent = '';
+    }
 
     let items = Array.from(_tokenHelperCache || []);
-    if (filter === 'me' && me) {
-      items = items.filter(i => i.createdUserId === me);
+    // Diagnostics: log total and some creator ids
+    try {
+      const creators = Array.from(new Set(items.map(it => it.createdUserId).filter(Boolean)));
+      console.log('[TOKEN_HELPER] applyFilters', { filter, me: _tokenHelperMeId, total: items.length, creators: creators.slice(0, 20) });
+    } catch (err) {
+      console.warn('[TOKEN_HELPER] diagnostics failure', err);
+    }
+
+    // Use a robust getter for creator id to handle different possible shapes
+    function getCreatorId(it) {
+      return (it && (it.createdUserId || it.createdBy || it.created || it.ownerId || it.lastModifiedUserId)) || null;
+    }
+
+    if (filter === 'me' && _tokenHelperMeId) {
+      items = items.filter(i => {
+        const cid = getCreatorId(i);
+        return cid && String(cid).trim() === String(_tokenHelperMeId).trim();
+      });
     }
     if (q) {
       items = items.filter(i => {
