@@ -405,6 +405,22 @@ export async function executeCommand(command, page) {
  */
 export async function executeCommands(commands, page, onVariableResolved = null) {
   const results = [];
+
+  // If there are multiple commands, join them into a single semicolon-separated command
+  // so variables assigned in earlier statements are visible to later statements.
+  if (commands.length > 1) {
+    try {
+      const combined = commands.join('; ');
+      console.log('[EXECUTOR] Executing combined commands:', combined);
+      const result = await executeCommand(combined, page);
+      results.push({ ok: true, result });
+    } catch (error) {
+      console.error('[EXECUTOR] Combined command execution failed:', error);
+      results.push({ ok: false, error: error.message });
+    }
+    return results;
+  }
+
   for (const command of commands) {
     try {
       const result = await executeCommand(command, page, onVariableResolved);
