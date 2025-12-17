@@ -358,13 +358,33 @@ export async function executeCommand(command, page) {
         }
       }
     }
-    
+
+    // Debug: show the parsed command after async wrapping
+    console.log('[EXECUTOR] Parsed command after async wrapping:', parsedCommand);
+    console.log('[EXECUTOR] Detected async methods:', asyncMethods);
+
     // Build and execute the function
     // We use a function to safely evaluate the command with the context
     try {
-      const functionCode = `return (async () => { return ${parsedCommand}; })()`;
+      // If the command contains multiple statements, execute them and return the last expression's value
+      let finalCommand = parsedCommand;
+      if (/;|\\n/.test(parsedCommand)) {
+        const parts = parsedCommand.split(';').map(p => p.trim()).filter(p => p.length > 0);
+        if (parts.length > 1) {
+          const last = parts.pop();
+          const body = parts.join(';') + (parts.length ? ';' : '');
+          finalCommand = `(async () => { ${body} return (${last}); })()`;
+        }
+      }
+
+      // Debug: show the final command that will be executed
+      console.log('[EXECUTOR] Final command to execute:', finalCommand);
+
+      const functionCode = `return (async () => { return ${finalCommand}; })()`;
       const func = new Function(...Object.keys(context), functionCode);
+      console.log('[EXECUTOR] Invoking command function...');
       const result = await func(...Object.values(context));
+      console.log('[EXECUTOR] Command invocation result:', result);
       return result;
     } catch (syntaxError) {
       console.error(`[EXECUTOR] Syntax error executing: ${parsedCommand}`);
