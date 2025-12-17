@@ -145,22 +145,7 @@ class IntegrationsManager {
       sceneMetadata,
       tokenMetadata,
       tokenAttachments,
-      // Math functions - exposed both under Math object and directly
-      Math: {
-        floor: Math.floor,
-        ceil: Math.ceil,
-        round: Math.round,
-        abs: Math.abs,
-        min: Math.min,
-        max: Math.max,
-      },
-      // Direct math functions for convenience
-      floor: Math.floor,
-      ceil: Math.ceil,
-      round: Math.round,
-      abs: Math.abs,
-      min: Math.min,
-      max: Math.max,
+      // ...existing code...
     };
   }
 }
