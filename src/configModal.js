@@ -1352,6 +1352,21 @@ document.getElementById("addPageBtn").onclick = () => {
 // --- Token Helper Utilities ---
 let _tokenHelperCache = [];
 let _tokenHelperMeId = null;
+// Cached DOM refs for token helper to avoid repeated lookups
+let _tokensListEl = null;
+let _tokensStatusEl = null;
+let _tokensSearchEl = null;
+let _tokensFilterEl = null;
+let _tokensRefreshBtn = null;
+
+// Utility: debounce function to limit frequent calls (search input)
+function debounce(fn, wait = 200) {
+  let timer = null;
+  return function debounced(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
 
 async function getCurrentUserId() {
   if (_tokenHelperMeId) return _tokenHelperMeId;
@@ -1442,10 +1457,11 @@ async function copyToClipboard(text) {
 }
 
 function renderTokenHelperList(items) {
-  const container = document.getElementById('tokensList');
-  const status = document.getElementById('tokensStatus');
+  const container = _tokensListEl || document.getElementById('tokensList');
+  const status = _tokensStatusEl || document.getElementById('tokensStatus');
   if (!container) return;
-  container.innerHTML = '';
+  // Clear previous content efficiently
+  container.textContent = '';
 
   if (!items || items.length === 0) {
     container.innerHTML = '<div style="color:#666">No items found in the scene.</div>';
@@ -1499,6 +1515,8 @@ function renderTokenHelperList(items) {
     groupDiv.appendChild(header);
 
     const list = document.createElement('div');
+    // Use a fragment for batch DOM updates
+    const frag = document.createDocumentFragment();
     groups[layer].forEach(it => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'variable-item token-item';
@@ -1591,13 +1609,25 @@ function renderTokenHelperList(items) {
       details.style.display = 'none';
       details.style.marginTop = '8px';
       details.style.width = '100%';
-      details.innerHTML = `<pre style="white-space:pre-wrap; font-family:monospace; font-size:0.85em; margin:0;">${JSON.stringify(it, null, 2)}</pre>`;
-
+      // Lazy-populate JSON only when expanded to avoid heavy work on large lists
+      details.dataset.populated = 'false';
       itemDiv.appendChild(details);
 
-      // Toggle
+      // Toggle (lazy details population)
       summary.onclick = () => {
-        if (details.style.display === 'none') {
+        const expanded = details.style.display !== 'none';
+        if (!expanded) {
+          // Populate details only once
+          if (details.dataset.populated !== 'true') {
+            const pre = document.createElement('pre');
+            pre.style.whiteSpace = 'pre-wrap';
+            pre.style.fontFamily = 'monospace';
+            pre.style.fontSize = '0.85em';
+            pre.style.margin = '0';
+            pre.textContent = JSON.stringify(it, null, 2);
+            details.appendChild(pre);
+            details.dataset.populated = 'true';
+          }
           details.style.display = 'block';
           itemDiv.classList.add('expanded');
         } else {
@@ -1606,9 +1636,9 @@ function renderTokenHelperList(items) {
         }
       };
 
-      list.appendChild(itemDiv);
+      frag.appendChild(itemDiv);
     });
-
+    list.appendChild(frag);
     groupDiv.appendChild(list);
     container.appendChild(groupDiv);
   });
@@ -1838,13 +1868,15 @@ OBR.onReady(() => {
         switchTab(tab.dataset.tab);
       });
     });
-    // Token helper UI handlers
-    const tokensSearch = document.getElementById('tokensSearch');
-    const tokensFilter = document.getElementById('tokensFilter');
-    const tokensRefresh = document.getElementById('tokensRefresh');
-    if (tokensSearch) tokensSearch.addEventListener('input', () => applyTokensFiltersAndRender());
-    if (tokensFilter) tokensFilter.addEventListener('change', () => applyTokensFiltersAndRender());
-    if (tokensRefresh) tokensRefresh.addEventListener('click', () => refreshTokenHelper());
+      // Token helper UI handlers - cache elements and add debounce for search
+      _tokensListEl = document.getElementById('tokensList');
+      _tokensStatusEl = document.getElementById('tokensStatus');
+      _tokensSearchEl = document.getElementById('tokensSearch');
+      _tokensFilterEl = document.getElementById('tokensFilter');
+      _tokensRefreshBtn = document.getElementById('tokensRefresh');
+      if (_tokensSearchEl) _tokensSearchEl.addEventListener('input', debounce(() => applyTokensFiltersAndRender(), 220));
+      if (_tokensFilterEl) _tokensFilterEl.addEventListener('change', () => applyTokensFiltersAndRender());
+      if (_tokensRefreshBtn) _tokensRefreshBtn.addEventListener('click', () => refreshTokenHelper());
     // No delegated fallback — explicit handlers above are sufficient and less intrusive.
     // Ensure initial tab state
     switchTab(currentTab);
@@ -1858,5 +1890,4 @@ OBR.onReady(() => {
   } catch (err) {
     console.error('[TOKEN_HELPER] Init error:', err);
   }
-  document.getElementById('tokensFilter')?.addEventListener('change', applyTokensFiltersAndRender);
 });
