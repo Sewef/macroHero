@@ -256,7 +256,6 @@
       padding: 8px;
       margin-bottom: 6px;
       display: flex;
-      align-items: center;
       gap: 12px;
     }
 
@@ -553,6 +552,7 @@
         <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
         <button type="button" class="tab" data-tab="json">JSON Editor</button>
         <button type="button" class="tab" data-tab="gsheets">Google Sheets</button>
+        <button type="button" class="tab" data-tab="tokens">Token Helper</button>
       </div>
     </div>
     <div class="header-actions">
@@ -613,6 +613,20 @@
         <label for="sheetIdInput">Sheet ID</label>
         <input type="password" id="sheetIdInput" placeholder="Enter Google Sheet ID" autocomplete="off" />
       </div>
+    </div>
+
+    <!-- Token Helper Tab -->
+    <div id="tokens-tab" class="tab-content">
+      <div class="input-group" style="display:flex; gap:8px; align-items:center;">
+        <input type="text" id="tokensSearch" placeholder="Search tokens by name, id, or text..." style="flex:1;" />
+        <select id="tokensFilter" style="width:140px;">
+          <option value="all">Creator: All</option>
+          <option value="me">Creator: Me</option>
+        </select>
+        <button type="button" id="tokensRefresh">Refresh</button>
+      </div>
+      <div id="tokensList" style="margin-top:12px; overflow:auto; max-height:60vh;"></div>
+      <div id="tokensStatus" style="color:#888; font-size:0.9em; margin-top:8px;"></div>
     </div>
 
     <!-- Actions are in top header -->

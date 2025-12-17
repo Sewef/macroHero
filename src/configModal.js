@@ -211,6 +211,16 @@ function switchTab(tabName) {
   if (tabName === 'json') {
     syncToJson();
   }
+
+  // When switching to the Token Helper tab, fetch and render tokens
+  if (tabName === 'tokens') {
+    // Ensure we have a current user cached (non-blocking)
+    getCurrentUserId().then(id => {
+      _tokenHelperMeId = id;
+    }).catch(() => {});
+    // Refresh token data
+    refreshTokenHelper();
+  }
 }
 
 // Sync visual editor to JSON
@@ -1339,6 +1349,318 @@ document.getElementById("addPageBtn").onclick = () => {
   renderEditor(currentConfig);
 };
 
+// --- Token Helper Utilities ---
+let _tokenHelperCache = [];
+let _tokenHelperMeId = null;
+
+async function getCurrentUserId() {
+  if (_tokenHelperMeId) return _tokenHelperMeId;
+  try {
+    // Try several possible OBR user APIs
+    if (OBR && OBR.user) {
+      if (typeof OBR.user.getCurrentUser === 'function') {
+        const u = await OBR.user.getCurrentUser();
+        _tokenHelperMeId = u?.id || u?.userId || null;
+        if (_tokenHelperMeId) return _tokenHelperMeId;
+      }
+      if (typeof OBR.user.get === 'function') {
+        const u = await OBR.user.get();
+        _tokenHelperMeId = u?.id || u?.userId || null;
+        if (_tokenHelperMeId) return _tokenHelperMeId;
+      }
+    }
+    if (OBR && OBR.session && typeof OBR.session.getCurrentUserId === 'function') {
+      _tokenHelperMeId = await OBR.session.getCurrentUserId();
+      if (_tokenHelperMeId) return _tokenHelperMeId;
+    }
+  } catch (err) {
+    console.warn('[TOKEN_HELPER] getCurrentUserId fallback failed:', err);
+  }
+  // Unknown - leave null
+  return null;
+}
+
+async function fetchSceneItemsForTokenHelper() {
+  try {
+    // Try the more specific API first, then fallback
+    let items = [];
+    if (OBR && OBR.scene && OBR.scene.items && typeof OBR.scene.items.getItems === 'function') {
+      items = await OBR.scene.items.getItems();
+    } else if (OBR && OBR.scene && typeof OBR.scene.getItems === 'function') {
+      items = await OBR.scene.getItems();
+    } else {
+      throw new Error('No compatible OBR scene item API found');
+    }
+
+    _tokenHelperCache = Array.isArray(items) ? items : [];
+    return _tokenHelperCache;
+  } catch (err) {
+    console.error('[TOKEN_HELPER] Error fetching scene items:', err);
+    _tokenHelperCache = [];
+    throw err;
+  }
+}
+
+function truncated(str, len = 36) {
+  if (!str) return '';
+  return str.length > len ? str.substring(0, len) + '…' : str;
+}
+
+async function copyToClipboard(text) {
+  // Primary: modern Clipboard API (may be blocked by permissions policy)
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (err) {
+      console.warn('[TOKEN_HELPER] navigator.clipboard.writeText failed:', err);
+      // fall through to fallback methods
+    }
+  }
+
+  // Fallback: execCommand with a temporary textarea
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    // Keep off-screen and non-intrusive
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) return;
+    console.warn('[TOKEN_HELPER] document.execCommand returned false');
+  } catch (err) {
+    console.warn('[TOKEN_HELPER] execCommand fallback failed:', err);
+  }
+
+  // Last resort: show a prompt with the text so the user can copy manually
+  try {
+    window.prompt('Copy the ID (Ctrl/Cmd+C then Enter):', text);
+    return;
+  } catch (err) {
+    console.warn('[TOKEN_HELPER] prompt fallback failed:', err);
+  }
+
+  throw new Error('Copy to clipboard failed (all fallbacks)');
+}
+
+function renderTokenHelperList(items) {
+  const container = document.getElementById('tokensList');
+  const status = document.getElementById('tokensStatus');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (!items || items.length === 0) {
+    container.innerHTML = '<div style="color:#666">No items found in the scene.</div>';
+    if (status) status.textContent = '';
+    return;
+  }
+
+  // Group by layer
+  const groups = {};
+  items.forEach(it => {
+    const layer = it.layer || 'UNKNOWN';
+    if (!groups[layer]) groups[layer] = [];
+    groups[layer].push(it);
+  });
+
+  Object.keys(groups).sort().forEach(layer => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'page-item';
+    groupDiv.style.marginBottom = '10px';
+
+    const header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.marginBottom = '8px';
+
+    const title = document.createElement('div');
+    title.innerHTML = `<strong style="color:#4ea1ff">${layer}</strong> — ${groups[layer].length} items`;
+    header.appendChild(title);
+
+    const expandAllBtn = document.createElement('div');
+    expandAllBtn.innerHTML = `<button type="button" class="btn-small">Expand all</button>`;
+    expandAllBtn.firstChild.onclick = (e) => {
+      const itemsEls = groupDiv.querySelectorAll('.token-item');
+      itemsEls.forEach(el => el.classList.add('expanded'));
+    };
+    const collapseAllBtn = document.createElement('div');
+    collapseAllBtn.innerHTML = `<button type="button" class="btn-small">Collapse all</button>`;
+    collapseAllBtn.firstChild.onclick = (e) => {
+      const itemsEls = groupDiv.querySelectorAll('.token-item');
+      itemsEls.forEach(el => el.classList.remove('expanded'));
+    };
+
+    const actions = document.createElement('div');
+    actions.style.display = 'flex';
+    actions.style.gap = '8px';
+    actions.appendChild(expandAllBtn);
+    actions.appendChild(collapseAllBtn);
+
+    header.appendChild(actions);
+    groupDiv.appendChild(header);
+
+    const list = document.createElement('div');
+    groups[layer].forEach(it => {
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'variable-item token-item';
+      itemDiv.style.cursor = 'pointer';
+      itemDiv.style.flexDirection = 'column';
+
+      const summary = document.createElement('div');
+      summary.style.display = 'flex';
+      summary.style.justifyContent = 'space-between';
+      summary.style.alignItems = 'center';
+      summary.style.gap = '12px';
+
+      const left = document.createElement('div');
+      left.style.display = 'flex';
+      left.style.gap = '12px';
+      left.style.alignItems = 'center';
+      left.style.flex = '1';
+
+      const lblType = document.createElement('span');
+      lblType.className = 'layout-item-type';
+      lblType.textContent = it.type || 'unknown';
+      left.appendChild(lblType);
+
+      const txt = document.createElement('span');
+      // Prefer explicit name, then plainText, then richText first child's text, then id
+      const displayText = it.name || (it.text && (it.text.plainText || (
+        (it.text.richText && it.text.richText[0] && it.text.richText[0].text) || ''
+      ))) || it.id || '';
+      txt.innerHTML = `<strong>${truncated(displayText, 36)}</strong>`;
+      // Ensure the main text expands and is left-aligned (not centered)
+      txt.style.flex = '1';
+      txt.style.textAlign = 'left';
+      txt.style.overflow = 'hidden';
+      txt.style.textOverflow = 'ellipsis';
+      txt.style.whiteSpace = 'nowrap';
+      left.appendChild(txt);
+
+      const meta = document.createElement('span');
+      meta.style.color = '#bbb';
+      meta.style.fontSize = '0.9em';
+      meta.textContent = `${it.layer || ''} • ${it.visible ? 'visible' : 'hidden'}`;
+      left.appendChild(meta);
+
+      summary.appendChild(left);
+
+      const right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.gap = '8px';
+      right.style.alignItems = 'center';
+
+      const idSpan = document.createElement('code');
+      idSpan.style.fontSize = '0.8em';
+      idSpan.textContent = truncated(it.id, 20);
+      idSpan.title = it.id;
+      right.appendChild(idSpan);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'btn-small';
+      copyBtn.textContent = 'Copy ID';
+      copyBtn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          await copyToClipboard(`'${it.id}'`);
+          const original = copyBtn.textContent;
+          copyBtn.textContent = 'Copied';
+          setTimeout(() => { copyBtn.textContent = original; }, 1200);
+        } catch (err) {
+          console.warn('[TOKEN_HELPER] copy failed:', err);
+          // copyToClipboard already used prompt fallback - inform user in status
+          const s = document.getElementById('tokensStatus');
+          if (s) s.textContent = 'Copy failed — please copy the ID from the prompt or manually.';
+        }
+      };
+      right.appendChild(copyBtn);
+
+      summary.appendChild(right);
+
+      itemDiv.appendChild(summary);
+
+      // Details (collapsed by default)
+      const details = document.createElement('div');
+      details.style.display = 'none';
+      details.style.marginTop = '8px';
+      details.style.width = '100%';
+      details.innerHTML = `<pre style="white-space:pre-wrap; font-family:monospace; font-size:0.85em; margin:0;">${JSON.stringify(it, null, 2)}</pre>`;
+
+      itemDiv.appendChild(details);
+
+      // Toggle
+      summary.onclick = () => {
+        if (details.style.display === 'none') {
+          details.style.display = 'block';
+          itemDiv.classList.add('expanded');
+        } else {
+          details.style.display = 'none';
+          itemDiv.classList.remove('expanded');
+        }
+      };
+
+      list.appendChild(itemDiv);
+    });
+
+    groupDiv.appendChild(list);
+    container.appendChild(groupDiv);
+  });
+
+  if (status) status.textContent = `Loaded ${items.length} items`;
+}
+
+async function refreshTokenHelper() {
+  const status = document.getElementById('tokensStatus');
+  const refreshBtn = document.getElementById('tokensRefresh');
+  try {
+    if (refreshBtn) refreshBtn.disabled = true;
+    if (status) status.textContent = 'Fetching scene items...';
+    const me = await getCurrentUserId();
+    _tokenHelperMeId = me; // cache
+    const items = await fetchSceneItemsForTokenHelper();
+    // Apply current filter/search
+    applyTokensFiltersAndRender();
+  } catch (err) {
+    const s = document.getElementById('tokensStatus');
+    if (s) s.textContent = 'Failed to fetch items.';
+  } finally {
+    if (refreshBtn) refreshBtn.disabled = false;
+  }
+}
+
+function applyTokensFiltersAndRender() {
+  try {
+    const q = (document.getElementById('tokensSearch')?.value || '').trim().toLowerCase();
+    const filter = document.getElementById('tokensFilter')?.value || 'all';
+    const me = _tokenHelperMeId;
+
+    let items = Array.from(_tokenHelperCache || []);
+    if (filter === 'me' && me) {
+      items = items.filter(i => i.createdUserId === me);
+    }
+    if (q) {
+      items = items.filter(i => {
+        const textPart = i.text ? (i.text.plainText || (i.text.richText && i.text.richText.map(p => (p.children || []).map(c => c.text || '').join('')).join(' '))) : '';
+        const name = `${i.name || ''} ${i.id || ''} ${i.type || ''} ${textPart}`;
+        return name.toLowerCase().includes(q);
+      });
+    }
+
+    renderTokenHelperList(items);
+  } catch (err) {
+    console.error('[TOKEN_HELPER] Filter/render failed:', err);
+  }
+}
+
 // Tab click handlers will be attached when the modal is ready (inside OBR.onReady)
 
 // Sync from JSON button
@@ -1481,16 +1803,31 @@ OBR.onReady(() => {
     renderEditor(cfg);
     document.getElementById("cfgArea").value = JSON.stringify(cfg, null, 2);
     // Attach tab handlers now that DOM is ready
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-          e.preventDefault();
-          switchTab(tab.dataset.tab);
-        });
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab(tab.dataset.tab);
       });
-      // No delegated fallback — explicit handlers above are sufficient and less intrusive.
+    });
+    // Token helper UI handlers
+    const tokensSearch = document.getElementById('tokensSearch');
+    const tokensFilter = document.getElementById('tokensFilter');
+    const tokensRefresh = document.getElementById('tokensRefresh');
+    if (tokensSearch) tokensSearch.addEventListener('input', () => applyTokensFiltersAndRender());
+    if (tokensFilter) tokensFilter.addEventListener('change', () => applyTokensFiltersAndRender());
+    if (tokensRefresh) tokensRefresh.addEventListener('click', () => refreshTokenHelper());
+    // No delegated fallback — explicit handlers above are sufficient and less intrusive.
     // Ensure initial tab state
     switchTab(currentTab);
   }).catch(error => {
     console.error("Error loading config in modal:", error);
   });
+  
+  // --- Token Helper Init ---
+  try {
+    refreshTokenHelper();
+  } catch (err) {
+    console.error('[TOKEN_HELPER] Init error:', err);
+  }
+  document.getElementById('tokensFilter')?.addEventListener('change', applyTokensFiltersAndRender);
 });
