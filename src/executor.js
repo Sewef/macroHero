@@ -6,6 +6,41 @@
 import * as math from "mathjs";
 import * as parser from "./parser.js";
 import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, getDependentVariables } from "./expressionEvaluator.js";
+import { updateRenderedValue } from "./ui.js";
+import OBR from "@owlbear-rodeo/sdk";
+import { ensureOBRReady } from "./config.js";
+// --- LocalStorage helpers for evaluated variables ---
+async function getRoomScopedEvaluatedVarsKey() {
+  await ensureOBRReady();
+  const roomId = (window.OBR && OBR.room && OBR.room.id) ? OBR.room.id : (OBR.room && typeof OBR.room.getId === 'function' ? await OBR.room.getId() : 'unknown');
+  return `macroHero_evaluatedVariables_${roomId}`;
+}
+
+async function loadEvaluatedVariables() {
+  const key = await getRoomScopedEvaluatedVarsKey();
+  try {
+    const json = localStorage.getItem(key);
+    return json ? JSON.parse(json) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function saveEvaluatedVariable(pageIndex, varName, value) {
+  const key = await getRoomScopedEvaluatedVarsKey();
+  let allVars = {};
+  try {
+    allVars = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : {};
+  } catch {}
+  if (!allVars[pageIndex]) allVars[pageIndex] = {};
+  allVars[pageIndex][varName] = value;
+  localStorage.setItem(key, JSON.stringify(allVars));
+}
+
+async function loadEvaluatedVariablesForPage(pageIndex) {
+  const allVars = await loadEvaluatedVariables();
+  return allVars[pageIndex] || {};
+}
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
 
 /**
@@ -27,6 +62,9 @@ function createExecutionContext(page) {
     page._modifiedVars = new Set();
   }
 
+  // Find the page index if available (for localStorage keying)
+  const pageIndex = page && typeof page._pageIndex !== 'undefined' ? page._pageIndex : 0;
+
   return {
     // Integrations from Manager
     ...integrations,
@@ -35,54 +73,52 @@ function createExecutionContext(page) {
     ...math,
     
     // Variable manipulation functions
-    setValue: (varName, value) => {
+    setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
         throw new Error(`Variable "${varName}" not found in current page`);
       }
-      
       const variable = page.variables[varName];
       let newValue = value;
-      
-      // Apply min/max constraints
       if (variable.min !== undefined && newValue < variable.min) {
         newValue = variable.min;
       }
       if (variable.max !== undefined && newValue > variable.max) {
         newValue = variable.max;
       }
-      
-      // Update both expression and resolved value
-      variable.expression = String(newValue);
+      // Only update resolved value, not the config/JSON
+      variable.expression = newValue; // Keep variable.expression in sync
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);
-      
-      console.log(`[setValue] ${varName} = ${newValue}`);
+      await saveEvaluatedVariable(pageIndex, varName, newValue);
+      // Trigger UI update for Input/Value items
+      if (typeof updateRenderedValue === 'function') {
+        updateRenderedValue(varName, newValue);
+      }
+      console.log(`[setValue] ${varName} = ${newValue} (persisted in localStorage)`);
       return newValue;
     },
-    
-    addValue: (varName, delta) => {
+    addValue: async (varName, delta) => {
       if (!page.variables || !(varName in page.variables)) {
         throw new Error(`Variable "${varName}" not found in current page`);
       }
-      
       const variable = page.variables[varName];
       const currentValue = Number(page._resolved[varName]) || 0;
       let newValue = currentValue + Number(delta);
-      
-      // Apply min/max constraints
       if (variable.min !== undefined && newValue < variable.min) {
         newValue = variable.min;
       }
       if (variable.max !== undefined && newValue > variable.max) {
         newValue = variable.max;
       }
-      
-      // Update both expression and resolved value
-      variable.expression = String(newValue);
+      variable.expression = newValue; // Keep variable.expression in sync
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);
-      
-      console.log(`[addValue] ${varName} += ${delta} => ${newValue}`);
+      await saveEvaluatedVariable(pageIndex, varName, newValue);
+      // Trigger UI update for Input/Value items
+      if (typeof updateRenderedValue === 'function') {
+        updateRenderedValue(varName, newValue);
+      }
+      console.log(`[addValue] ${varName} += ${delta} => ${newValue} (persisted in localStorage)`);
       return newValue;
     },
   };

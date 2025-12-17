@@ -442,7 +442,10 @@ function renderInput(item, page, inStack = false) {
   input.type = "text";
   input.className = "mh-input-field";
   input.placeholder = item.placeholder ?? "Enter value";
-  input.value = variable.expression ?? variable.default ?? "";
+  // Always use the latest resolved value for the input field, like Value items
+  input.value = (page._resolved && page._resolved[item.var] !== undefined)
+    ? page._resolved[item.var]
+    : (variable.expression ?? variable.default ?? "");
 
   // Store reference for dynamic updates
   renderedValueElements[item.var] = container;

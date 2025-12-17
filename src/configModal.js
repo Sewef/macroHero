@@ -279,7 +279,7 @@ function renderEditor(config) {
   document.getElementById("globalWidth").value = config.global?.width || 600;
   document.getElementById("globalHeight").value = config.global?.height || 600;
   
-  // Render global variables
+  // Render global variables (definitions only)
   const globalVarsContainer = document.getElementById('globalVariablesList');
   if (globalVarsContainer) {
     const globals = config.global?.variables || {};
@@ -287,16 +287,30 @@ function renderEditor(config) {
     if (keys.length === 0) {
       globalVarsContainer.innerHTML = '<div style="color: #666; font-size: 0.85em;">No global variables</div>';
     } else {
-      globalVarsContainer.innerHTML = keys.map(k => `
+      globalVarsContainer.innerHTML = keys.map(k => {
+        const v = globals[k];
+        // Only show definition fields
+        let def = '';
+        if (typeof v === 'object' && v !== null) {
+          def = [
+            v.expression !== undefined ? `expr: <code>${v.expression}</code>` : '',
+            v.min !== undefined ? `min: ${v.min}` : '',
+            v.max !== undefined ? `max: ${v.max}` : ''
+          ].filter(Boolean).join(', ');
+        } else {
+          def = String(v);
+        }
+        return `
         <div class="variable-item" data-var-key="${k}">
           <span class="variable-key">${k}</span>
-          <span class="variable-value">${typeof globals[k] === 'object' ? JSON.stringify(globals[k]) : globals[k]}</span>
+          <span class="variable-value">${def}</span>
           <div class="variable-actions">
             <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">Edit</button>
             <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">×</button>
           </div>
         </div>
-      `).join('');
+        `;
+      }).join('');
     }
     const addGlobalBtn = document.getElementById('addGlobalVariableBtn');
     if (addGlobalBtn) {
@@ -474,16 +488,29 @@ function renderEditor(config) {
           <div style="margin-bottom: 16px;">
             <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Variables</h4>
             <div class="variables-list" data-page-index="${index}">
-              ${page.variables ? Object.entries(page.variables).map(([key, value]) => `
-                <div class="variable-item" data-var-key="${key}">
-                  <span class="variable-key">${key}</span>
-                  <span class="variable-value">${typeof value === 'object' ? JSON.stringify(value) : value}</span>
-                  <div class="variable-actions">
-                    <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${index}, '${key}')">Edit</button>
-                    <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${index}, '${key}')">×</button>
+              ${page.variables ? Object.entries(page.variables).map(([key, value]) => {
+                // Only show definition fields
+                let def = '';
+                if (typeof value === 'object' && value !== null) {
+                  def = [
+                    value.expression !== undefined ? `expr: <code>${value.expression}</code>` : '',
+                    value.min !== undefined ? `min: ${value.min}` : '',
+                    value.max !== undefined ? `max: ${value.max}` : ''
+                  ].filter(Boolean).join(', ');
+                } else {
+                  def = String(value);
+                }
+                return `
+                  <div class="variable-item" data-var-key="${key}">
+                    <span class="variable-key">${key}</span>
+                    <span class="variable-value">${def}</span>
+                    <div class="variable-actions">
+                      <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${index}, '${key}')">Edit</button>
+                      <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${index}, '${key}')">×</button>
+                    </div>
                   </div>
-                </div>
-              `).join('') : '<div style="color: #666; font-size: 0.85em;">No variables</div>'}
+                `;
+              }).join('') : '<div style="color: #666; font-size: 0.85em;">No variables</div>'}
             </div>
             <button type="button" class="btn-small" onclick="event.stopPropagation(); addVariable(${index})" style="margin-top: 8px;">+ Variable</button>
           </div>
