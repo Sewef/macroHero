@@ -221,7 +221,7 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
   // This preserves operators like + in the output string when they are outside curly braces
   // For example: {var1}+{var2} with var1="hello", var2="world" 
   // produces "hello+world" not "helloworld"
-  // Note: Expressions inside curly braces like {var1+var2} are still evaluated (by lines 189-193)
+  // Note: Expressions inside curly braces like {var1+var2} are still evaluated (by lines 186-194 above)
 
   return result;
 }
