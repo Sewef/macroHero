@@ -217,10 +217,11 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
   }
   
-  // When inside a string literal, do NOT evaluate the expression
-  // This preserves operators like + in the output string
-  // For example: {var1+var2} with var1="hello", var2="world" 
-  // should produce "hello+world" not "helloworld"
+  // When inside a string literal, do NOT evaluate plain variable references after substitution
+  // This preserves operators like + in the output string when they are outside curly braces
+  // For example: {var1}+{var2} with var1="hello", var2="world" 
+  // produces "hello+world" not "helloworld"
+  // Note: Expressions inside curly braces like {var1+var2} are still evaluated (by lines 189-193)
 
   return result;
 }
