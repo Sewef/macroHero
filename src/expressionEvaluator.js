@@ -18,6 +18,10 @@ import * as math from "mathjs";
  */
 export async function evaluateExpression(expression, resolvedVars = {}) {
   try {
+    // If expression is explicitly null/undefined, return as-is
+    if (expression === null || expression === undefined) return expression;
+    // If expression is not a string (e.g., a numeric literal 0), return it unchanged
+    if (typeof expression !== 'string') return expression;
     // Step 1: Substitute variables with {varName} syntax
     let processed = expression;
     
@@ -344,7 +348,8 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   for (const varName of sorted) {
     // No need to filter here anymore - sorted only contains what we need
     const varConfig = variablesConfig[varName];
-    if (!varConfig?.expression) {
+    // Treat undefined/null as "no expression". Allow 0 or empty-string expressions.
+    if (varConfig?.expression === undefined || varConfig?.expression === null) {
       continue;
     }
     

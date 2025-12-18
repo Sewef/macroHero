@@ -68,7 +68,7 @@
             },            {
               "type":"stack",
               "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D21')} + {skillModifier})"],"label": "Perception"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D23')} + ${skillModifier})"], "label": "Charm"}
+{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D23')} + {skillModifier})"], "label": "Charm"}
               ]
             }
 

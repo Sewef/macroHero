@@ -71,7 +71,9 @@ function createExecutionContext(page) {
     
     // Expose all mathjs functions directly (floor, ceil, sqrt, etc.)
     ...math,
-    
+      // Include resolved page variables so commands can reference them directly
+      // e.g., a command using `skillModifier` will find it in the function context
+      ...(page && page._resolved ? { ...page._resolved } : {}),
     // Variable manipulation functions
     setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
@@ -547,18 +549,21 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     const usedVars = getVariablesUsedInCommands(commands);
     console.log("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
     
-    // Only resolve variables that are actually needed for command execution
+    // Resolve all page variables to ensure they are available for command execution
     // Pass the callback so UI updates for these variables too
-    if (usedVars.size > 0) {
-      console.log("[EXECUTOR] Resolving only required variables for command execution...");
-      const freshResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
-        const oldValue = oldResolved[varName];
-        if (oldValue !== value && onVariableResolved) {
-          onVariableResolved(varName, value);
-        }
-      }, usedVars);
-      page._resolved = { ...page._resolved, ...freshResolved };
-    }
+    console.log("[EXECUTOR] Resolving all page variables for command execution...");
+    console.log('[EXECUTOR] page.variables keys:', Object.keys(page.variables || {}));
+    console.log('[EXECUTOR] oldResolved before resolving:', oldResolved);
+    console.log('[EXECUTOR] usedVars detected:', Array.from(usedVars));
+    const freshResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
+      const oldValue = oldResolved[varName];
+      if (oldValue !== value && onVariableResolved) {
+        onVariableResolved(varName, value);
+      }
+    });
+    console.log('[EXECUTOR] freshResolved from resolveVariables:', freshResolved);
+    page._resolved = { ...page._resolved, ...freshResolved };
+    console.log('[EXECUTOR] page._resolved after merge:', page._resolved);
     
       console.log(`[EXECUTOR] Variables resolved for commands (${usedVars.size} used)`);
 
