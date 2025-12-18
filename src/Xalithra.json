@@ -560,6 +560,28 @@
                 "ConditionsMarkers.addCondition({token}, 'Rage')"
               ],
               "label": "Rage (AC 2)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
+                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', floor(min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))) : null",
+                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
+                "JustDices.roll('{{isCrit}+1}db{12+{weaponDB}/3} + {{pushItToTheLimit}+1}*{pushIntimidateBonus} + {{recklessAdvance}*8} + {fastHandsBonus} + {atk}')"
+              ],
+              "label": "Double-Edge (AC 2)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "{pushItToTheLimit} ? OwlTrackers.addValue({token}, 'Injuries', +1) : null",
+                "{pushItToTheLimit} ? OwlTrackers.setValue({token}, 'HP', floor(min(OwlTrackers.getValue({token}, 'HP'), OwlTrackers.getMax({token}, 'HP') * max(1 - OwlTrackers.getValue({token}, 'Injuries') * 0.1, 0.5)))) : null",
+                "{pushItToTheLimit} ? (OwlTrackers.getValue({token}, 'Temp HP') < OwlTrackers.getMax({token}, 'HP') * 0.1 ? OwlTrackers.setValue({token}, 'Temp HP', floor(OwlTrackers.getMax({token}, 'HP') * 0.1)) : null) : null",
+                "JustDices.roll('{{isCrit}+1}db{12+{weaponDB}/3} + {{pushItToTheLimit}+1}*{pushIntimidateBonus} + {{recklessAdvance}*8} + {fastHandsBonus} + {atk}')",
+                "ConditionsMarkers.addCondition({token}, 'Rage')",
+                "ConditionsMarkers.addCondition({token}, 'Confused')"
+              ],
+              "label": "Thrash (AC 3)"
             }
           ]
         },
