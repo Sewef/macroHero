@@ -1414,14 +1414,34 @@ function truncated(str, len = 36) {
 }
 
 async function copyToClipboard(text) {
-  // Primary: modern Clipboard API (may be blocked by permissions policy)
-  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+  // Primary: try to use modern Clipboard API when it's likely allowed.
+  // Query the Permissions API first to avoid gratuitous browser policy logs
+  // in contexts where clipboard access is blocked by embedding policies.
+  let tryClipboard = false;
+  try {
+    if (navigator.permissions && typeof navigator.permissions.query === 'function') {
+      try {
+        const perm = await navigator.permissions.query({ name: 'clipboard-write' });
+        tryClipboard = (perm.state === 'granted' || perm.state === 'prompt');
+      } catch (permErr) {
+        // Some browsers or embedding contexts may throw; fall back to attempting clipboard
+        tryClipboard = true;
+      }
+    } else {
+      tryClipboard = true;
+    }
+  } catch (err) {
+    tryClipboard = true;
+  }
+
+  if (tryClipboard && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
     try {
       await navigator.clipboard.writeText(text);
       return;
     } catch (err) {
-      console.warn('[TOKEN_HELPER] navigator.clipboard.writeText failed:', err);
-      // fall through to fallback methods
+      // Use debug-level logging here — browser will often emit a policy violation message
+      // that cannot be suppressed; keep our log quieter and continue to fallbacks.
+      console.debug('[TOKEN_HELPER] navigator.clipboard.writeText failed (falling back):', err);
     }
   }
 
