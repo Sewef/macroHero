@@ -348,8 +348,8 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
   for (const varName of sorted) {
     // No need to filter here anymore - sorted only contains what we need
     const varConfig = variablesConfig[varName];
-    // Treat undefined/null as "no expression". Allow 0 or empty-string expressions.
-    if (varConfig?.expression === undefined || varConfig?.expression === null) {
+    // Treat undefined/null/empty as "no expression". Allow 0 or other falsy expressions.
+    if (varConfig?.expression === undefined || varConfig?.expression === null || varConfig?.expression === '') {
       continue;
     }
     
@@ -398,8 +398,7 @@ export function getDependentVariables(variablesConfig, changedVars) {
   const reverseDeps = new Map(); // varName -> Set of vars that depend on it
   
   for (const [varName, varConfig] of Object.entries(variablesConfig)) {
-    const expr = varConfig.expression || '';
-    
+    const expr = String(varConfig.expression || '');
     // Extract all variable references {varName} and {varName[index]} etc.
     const matches = expr.matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
     for (const match of matches) {
