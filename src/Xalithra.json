@@ -13,7 +13,7 @@
           "expression": 0
         },
         "partyTokens": {
-          "expression": "['57cefc5e-23b0-40f8-ad32-31a1c331c501', '8442e2e9-aa1d-4ee2-9795-fbd028e1ab90', 'ff089ce3-620c-426a-8f2b-a8ace7273e9e', '747878ab-48c2-4c87-a4e6-2635addbc99d', '3662a34b-5685-4ece-9cbe-245dcd573f93', '5784ad36-4f6a-4d1b-b810-b145b4bb53c0']"
+          "expression": "['86338ffe-a797-44ff-be57-9fa8c5242684', '8442e2e9-aa1d-4ee2-9795-fbd028e1ab90', 'ff089ce3-620c-426a-8f2b-a8ace7273e9e', '747878ab-48c2-4c87-a4e6-2635addbc99d', '3662a34b-5685-4ece-9cbe-245dcd573f93', '5784ad36-4f6a-4d1b-b810-b145b4bb53c0']"
         }
       },
       "layout": [
@@ -42,7 +42,8 @@
                     "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D9')} + {skillModifier})"
                   ],
                   "label": "Athletics"
-                },{
+                },
+                {
                   "type": "button",
                   "commands": [
                     "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D10')} + {skillModifier})"
@@ -190,9 +191,26 @@
             {
               "type": "button",
               "commands": [
-                "OwlTrackers.setValue({partyTokens[0]}, 'HP', 10)"
+                "OwlTrackers.setValue({partyTokens[0]}, 'HP', floor(OwlTrackers.getMax({partyTokens[0]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[0]}, 'Injuries') * 0.1)))",
+                "OwlTrackers.setValue({partyTokens[1]}, 'HP', floor(OwlTrackers.getMax({partyTokens[1]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[1]}, 'Injuries') * 0.1)))",
+                "OwlTrackers.setValue({partyTokens[2]}, 'HP', floor(OwlTrackers.getMax({partyTokens[2]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[2]}, 'Injuries') * 0.1)))",
+                "OwlTrackers.setValue({partyTokens[3]}, 'HP', floor(OwlTrackers.getMax({partyTokens[3]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[3]}, 'Injuries') * 0.1)))",
+                "OwlTrackers.setValue({partyTokens[4]}, 'HP', floor(OwlTrackers.getMax({partyTokens[4]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[4]}, 'Injuries') * 0.1)))",
+                "OwlTrackers.setValue({partyTokens[5]}, 'HP', floor(OwlTrackers.getMax({partyTokens[5]}, 'HP') * (1 - OwlTrackers.getValue({partyTokens[5]}, 'Injuries') * 0.1)))"
               ],
               "label": "Full Heal Team"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "OwlTrackers.setValue({partyTokens[0]}, 'Injuries', 0)",
+                "OwlTrackers.setValue({partyTokens[1]}, 'Injuries', 0)",
+                "OwlTrackers.setValue({partyTokens[2]}, 'Injuries', 0)",
+                "OwlTrackers.setValue({partyTokens[3]}, 'Injuries', 0)",
+                "OwlTrackers.setValue({partyTokens[4]}, 'Injuries', 0)",
+                "OwlTrackers.setValue({partyTokens[5]}, 'Injuries', 0)"
+              ],
+              "label": "Remove All injuries"
             }
           ]
         }
