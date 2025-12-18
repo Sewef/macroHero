@@ -164,9 +164,6 @@ function evaluateExpression(expression, page) {
 function substituteVariables(expression, scope = {}, inStringLiteral = false) {
   let result = expression;
   
-  // Check if this expression should be evaluated (in string literal with operators/braces)
-  const shouldEvaluate = inStringLiteral && /[+\-*\/(){}]/.test(expression);
-
   // Process {expression} - substitute vars then evaluate if complex
   result = result.replace(/\{([^{}]+)\}/g, (match, inner) => {
     if (/^\w+$/.test(inner)) {
@@ -220,15 +217,10 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
   }
   
-  // Evaluate if needed (expression in string literal with operators)
-  if (shouldEvaluate) {
-    try {
-      const evaluated = Function('"use strict"; return (' + result + ')')();
-      result = String(evaluated);
-    } catch (err) {
-      // Keep as-is if evaluation fails
-    }
-  }
+  // When inside a string literal, do NOT evaluate the expression
+  // This preserves operators like + in the output string
+  // For example: {var1+var2} with var1="hello", var2="world" 
+  // should produce "hello+world" not "helloworld"
 
   return result;
 }
