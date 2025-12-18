@@ -175,7 +175,7 @@ export function getVariablesUsedInCommands(commands) {
   
   for (const cmd of commands) {
     // Extract {varName} references
-    const matches = cmd.matchAll(/\{(\w+)\}/g);
+      const matches = String(cmd).matchAll(/\{(\w+)\}/g);
     for (const match of matches) {
       usedVars.add(match[1]);
     }
@@ -198,7 +198,7 @@ export function getAffectedVariables(commands, variablesConfig) {
   // Extract integration calls from commands (e.g., "OwlTrackers.addValue")
   const integrationCalls = new Set();
   for (const cmd of commands) {
-    const matches = cmd.matchAll(/(\w+)\.\w+\(/g);
+      const matches = String(cmd).matchAll(/(\w+)\.\w+\(/g);
     for (const match of matches) {
       integrationCalls.add(match[1]); // e.g., "OwlTrackers", "ConditionsMarkers"
     }
@@ -220,7 +220,7 @@ export function getAffectedVariables(commands, variablesConfig) {
     }
     
     // Extract variable dependencies {varName}
-    const matches = expr.matchAll(/\{(\w+)\}/g);
+      const matches = String(expr).matchAll(/\{(\w+)\}/g);
     for (const match of matches) {
       const depVar = match[1];
       if (depVar in variablesConfig && depVar !== varName) {
@@ -281,7 +281,7 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     
     // Extract all variable references {varName} and {varName[index]} etc.
     // Pattern matches {word} or {word[...]} where [...] can be nested
-    const matches = expr.matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
+      const matches = String(expr).matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
     for (const match of matches) {
       const depVar = match[1]; // Extract just the variable name, ignore indexing
       if (depVar in variablesConfig && depVar !== varName) {
