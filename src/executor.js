@@ -182,6 +182,11 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
         if (typeof val === 'boolean') return val ? '1' : '0';
         if (typeof val === 'number') return String(val);
         if (typeof val === 'string') return inStringLiteral ? val : `'${val.replace(/'/g, "\\'")}'`;
+        if (Array.isArray(val)) {
+          // For arrays, preserve JSON array syntax when used in expressions,
+          // but join as CSV when inserting into string literals.
+          return inStringLiteral ? val.join(',') : JSON.stringify(val);
+        }
         return String(val);
       }
       // If variable is missing, treat as 0 in math context
@@ -192,6 +197,10 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     const subst = substituteVariables(inner, scope, false);
     try {
       const evaluated = Function('"use strict"; return (' + subst + ')')();
+      // If evaluation produced a string, return it quoted for use in expressions
+      if (typeof evaluated === 'string') {
+        return `'${evaluated.replace(/'/g, "\\'")}'`;
+      }
       return String(evaluated);
     } catch (err) {
       console.error(`[EXECUTOR] Failed to eval {${inner}}: ${err.message}`);
@@ -213,6 +222,11 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
         valueStr = inStringLiteral ? value : `'${value.replace(/'/g, "\\'")}'`;
       } else if (typeof value === 'number') {
         valueStr = String(value);
+      } else if (Array.isArray(value)) {
+        // When substituting an array into an expression, keep it as a JSON array
+        // so that indexes like `partyTokens[0]` work. When inside a string literal
+        // join as CSV to avoid injecting brackets into text.
+        valueStr = inStringLiteral ? value.join(',') : JSON.stringify(value);
       } else {
         valueStr = String(value);
       }

@@ -11,6 +11,9 @@
       "variables": {
         "skillModifier": {
           "expression": 0
+        },
+        "partyTokens": {
+          "expression": "['57cefc5e-23b0-40f8-ad32-31a1c331c501', '8442e2e9-aa1d-4ee2-9795-fbd028e1ab90', 'ff089ce3-620c-426a-8f2b-a8ace7273e9e', '747878ab-48c2-4c87-a4e6-2635addbc99d', '3662a34b-5685-4ece-9cbe-245dcd573f93', '5784ad36-4f6a-4d1b-b810-b145b4bb53c0']"
         }
       },
       "layout": [
@@ -24,68 +27,173 @@
               "step": 1
             },
             {
-              "type":"stack",
-              "children":[
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D8')} + {skillModifier})"],"label": "Acrobatics"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D9')} + {skillModifier})"],"label": "Athletics"}
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D8')} + {skillModifier})"
+                  ],
+                  "label": "Acrobatics"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D9')} + {skillModifier})"
+                  ],
+                  "label": "Athletics"
+                },{
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D10')} + {skillModifier})"
+                  ],
+                  "label": "Combat"
+                }
               ]
             },
             {
-              "type":"stack",
-              "children":[
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D10')} + {skillModifier})"],"label": "Combat"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D11')} + {skillModifier})"],"label": "Intimidate"}]
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D11')} + {skillModifier})"
+                  ],
+                  "label": "Intimidate"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D12')} + {skillModifier})"
+                  ],
+                  "label": "Stealth"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D13')} + {skillModifier})"
+                  ],
+                  "label": "Survival"
+                }
+              ]
             },
             {
-              "type":"stack",
-              "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D12')} + {skillModifier})"],"label": "Stealth"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D13')} + {skillModifier})"],"label": "Survival"}]
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D15')} + {skillModifier})"
+                  ],
+                  "label": "General Edu"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D16')} + {skillModifier})"
+                  ],
+                  "label": "Medecine Edu"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D17')} + {skillModifier})"
+                  ],
+                  "label": "Occult Edu"
+                }
+              ]
             }
-
-
           ]
         },
         {
-          "type":"row",
-          "children":[
+          "type": "row",
+          "children": [
             {
-              "type":"stack",
-              "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D15')} + {skillModifier})"],"label": "General Edu"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D16')} + {skillModifier})"],"label": "Medecine Edu"}
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D18')} + {skillModifier})"
+                  ],
+                  "label": "PokéEdu"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D19')} + {skillModifier})"
+                  ],
+                  "label": "TechEdu"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D20')} + {skillModifier})"
+                  ],
+                  "label": "Guile"
+                }
               ]
             },
             {
-              "type":"stack",
-              "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D17')} + {skillModifier})"],"label": "Occult Edu"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D18')} + {skillModifier})"],"label": "PokéEdu"}
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D21')} + {skillModifier})"
+                  ],
+                  "label": "Perception"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D23')} + {skillModifier})"
+                  ],
+                  "label": "Charm"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D24')} + {skillModifier})"
+                  ],
+                  "label": "Command"
+                }
               ]
             },
             {
-              "type":"stack",
-              "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D19')} + {skillModifier})"],"label": "TechEdu"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D20')} + {skillModifier})"],"label": "Guile"}
-              ]
-            },            {
-              "type":"stack",
-              "children":[{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D21')} + {skillModifier})"],"label": "Perception"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D23')} + {skillModifier})"], "label": "Charm"}
+              "type": "stack",
+              "children": [
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D25')} + {skillModifier})"
+                  ],
+                  "label": "Focus"
+                },
+                {
+                  "type": "button",
+                  "commands": [
+                    "JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D26')} + {skillModifier})"
+                  ],
+                  "label": "Intuition"
+                }
               ]
             }
-
-
-
-
-
           ]
         },
         {
-          "type":"row",
-          "children":[
-
-            
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D24')} + {skillModifier})"],"label": "Command"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D25')} + {skillModifier})"],"label": "Focus"},
-{"type": "button","commands": ["JustDices.roll({GoogleSheets.getValue('Xalithra Général', 'D26')} + {skillModifier})"],"label": "Intuition"}
+          "type": "divider"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "OwlTrackers.setValue({partyTokens[0]}, 'HP', 10)"
+              ],
+              "label": "Full Heal Team"
+            }
           ]
         }
       ]
