@@ -359,6 +359,93 @@ export async function executeCommand(command, page) {
       }
     }
 
+    // Extra pass: rewrite specific patterns where an awaited string is added to a number/var
+    // e.g. (await GoogleSheets.getValue(...)) + 1  =>  String((await GoogleSheets.getValue(...))) + ' + ' + String(1)
+    const awaitedAddPattern = /(\(await\s+[^\)]+\))\s*\+\s*(String\([^\)]+\)|Number\([^\)]+\)|'[^']*'|"[^"]*"|\d+|\w+)/g;
+    let m;
+    let replacedAny = false;
+    parsedCommand = parsedCommand.replace(awaitedAddPattern, (match, left, right) => {
+      replacedAny = true;
+      const replacement = `String(${left}) + ' + ' + String(${right})`;
+      console.log('[EXECUTOR] awaitedAddPattern match:', match, '=>', replacement);
+      return replacement;
+    });
+    console.log('[EXECUTOR] awaitedAddPattern replacedAny=', replacedAny, 'parsedCommand now:', parsedCommand);
+
+    // Robust rewrite: transform JustDices.roll(args_with_top_level_plus) to force string 'left + right'
+    function rewriteJustDicesRollArgs(str) {
+      console.log('[EXECUTOR] rewriteJustDicesRollArgs start');
+      let i = 0;
+      let found = false;
+
+      while ((i = str.indexOf('JustDices.roll', i)) !== -1) {
+        const open = str.indexOf('(', i + 'JustDices.roll'.length);
+        if (open === -1) break;
+        // find matching closing paren for this call
+        let depth = 0;
+        let inS = false;
+        let inD = false;
+        let close = -1;
+        for (let j = open; j < str.length; j++) {
+          const ch = str[j];
+          if (ch === "'" && !inD) inS = !inS;
+          else if (ch === '"' && !inS) inD = !inD;
+          if (inS || inD) continue;
+          if (ch === '(') depth++;
+          else if (ch === ')') {
+            depth--;
+            if (depth === 0) { close = j; break; }
+          }
+        }
+        if (close === -1) break;
+
+        const args = str.slice(open + 1, close);
+        // find top-level + inside args
+        let plusIdx = -1;
+        depth = 0;
+        inS = false;
+        inD = false;
+        for (let k = 0; k < args.length; k++) {
+          const ch = args[k];
+          if (ch === "'" && !inD) inS = !inS;
+          else if (ch === '"' && !inS) inD = !inD;
+          if (inS || inD) continue;
+          if (ch === '(') depth++;
+          else if (ch === ')') depth--;
+          else if (ch === '+' && depth === 0) { plusIdx = k; break; }
+        }
+
+        if (plusIdx !== -1) {
+          const left = args.slice(0, plusIdx).trim();
+          const right = args.slice(plusIdx + 1).trim();
+          console.log('[EXECUTOR] JustDices.roll arg top-level + found; left:', left, 'right:', right);
+
+          // Heuristic: perform rewrite for common cases (await, String(), Number(), numeric literal, quoted string, identifier)
+          const should = (/\bawait\b/.test(left) || /\bawait\b/.test(right) || /\bString\s*\(/.test(left) || /\bString\s*\(/.test(right) || /\bNumber\s*\(/.test(left) || /\bNumber\s*\(/.test(right) || /^\d+$/.test(right) || /^\d+d\d+/i.test(left) || /^['"]/.test(left) || /^[a-zA-Z_$][a-zA-Z0-9_$]*/.test(left));
+
+          console.log('[EXECUTOR] rewrite heuristic:', should);
+          if (should) {
+            const newArgs = `String(${left}) + ' + ' + String(${right})`;
+            str = str.slice(0, open + 1) + newArgs + str.slice(close);
+            found = true;
+            console.log('[EXECUTOR] Rewrote JustDices.roll args to:', newArgs);
+            // advance index past this call
+            i = open + 1 + newArgs.length + 1;
+            continue;
+          }
+        }
+
+        i = close + 1;
+      }
+
+      console.log('[EXECUTOR] rewriteJustDicesRollArgs end, found=', found);
+      return str;
+    }
+
+    // Apply this rewrite before final execution
+    parsedCommand = rewriteJustDicesRollArgs(parsedCommand);
+    console.log('[EXECUTOR] parsedCommand after JustDices.roll arg rewrite:', parsedCommand);
+
     // Debug: show the parsed command after async wrapping
     console.log('[EXECUTOR] Parsed command after async wrapping:', parsedCommand);
     console.log('[EXECUTOR] Detected async methods:', asyncMethods);
