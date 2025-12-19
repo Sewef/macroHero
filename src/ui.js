@@ -8,11 +8,12 @@ let currentPage = null;
 let globalVariables = {}; // Store global variables for use in button clicks
 let renderedValueElements = {}; // Map of varName -> DOM element for live updates
 let renderedCheckboxElements = {}; // Map of varName -> checkbox input element for live updates
+let renderedExpressionElements = []; // Array of { element, item, page } for title/text expression evaluation
 
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
-import { resolveVariables, getDependentVariables } from "./expressionEvaluator.js";
+import { resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
 
 /**
  * Initialize the UI with the given configuration
@@ -123,6 +124,7 @@ function renderPageContent(page) {
   // Clear previous element maps
   renderedValueElements = {};
   renderedCheckboxElements = {};
+  renderedExpressionElements = [];
 
   // Render layout if defined
   if (page.layout && Array.isArray(page.layout)) {
@@ -189,6 +191,22 @@ export function updateRenderedValue(varName, value) {
   if (checkbox) {
     checkbox.checked = Boolean(value);
   }
+
+  // Re-evaluate any expression-based title/text elements that depend on this variable
+  for (const entry of renderedExpressionElements) {
+    try {
+      if (!entry || !entry.item || !entry.element) continue;
+      // Only re-evaluate if the page's resolved set contains this varName
+      if (entry.page && entry.page._resolved && (varName in entry.page._resolved)) {
+        const resolvedVars = { ...globalVariables, ...(entry.page._resolved || {}) };
+        evaluateExpression(entry.item.expression, resolvedVars)
+          .then(res => { entry.element.textContent = (res === null || res === undefined) ? "" : String(res); })
+          .catch(err => console.error('[UI] Error evaluating layout expression:', err));
+      }
+    } catch (err) {
+      console.error('[UI] Error updating expression element:', err);
+    }
+  }
 }
 
 // ============================================
@@ -207,7 +225,7 @@ function renderLayout(container, layoutItems, page) {
 function renderLayoutElement(layoutItem, page) {
   switch (layoutItem.type) {
     case "title":
-      return renderTitle(layoutItem);
+      return renderTitle(layoutItem, page);
     
     case "row":
       return renderRow(layoutItem, page);
@@ -231,7 +249,7 @@ function renderLayoutElement(layoutItem, page) {
       return renderCounter(layoutItem, page);
     
     case "text":
-      return renderText(layoutItem);
+      return renderText(layoutItem, page);
     
     case "divider":
       return renderDivider();
@@ -246,10 +264,23 @@ function renderLayoutElement(layoutItem, page) {
 // RENDER HELPERS - Layout Elements
 // ============================================
 
-function renderTitle(item) {
+function renderTitle(item, page) {
   const title = document.createElement("h3");
   title.className = "mh-layout-title";
-  title.textContent = item.text ?? "";
+
+  // If an expression is provided, evaluate it (async) and register for updates
+  if (item.expression !== undefined) {
+    // Show a placeholder while evaluating
+    title.textContent = "";
+    renderedExpressionElements.push({ element: title, item, page });
+    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+    evaluateExpression(item.expression, resolvedVars)
+      .then(res => { title.textContent = (res === null || res === undefined) ? "" : String(res); })
+      .catch(err => { console.error('[UI] Error evaluating title expression:', err); });
+  } else {
+    title.textContent = item.text ?? "";
+  }
+
   return title;
 }
 
@@ -415,10 +446,21 @@ function renderValue(item, page, inStack = false) {
   return valueDiv;
 }
 
-function renderText(item) {
+function renderText(item, page) {
   const text = document.createElement("div");
   text.className = "mh-layout-text";
-  text.textContent = item.content ?? item.text ?? "";
+
+  if (item.expression !== undefined) {
+    text.textContent = "";
+    renderedExpressionElements.push({ element: text, item, page });
+    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+    evaluateExpression(item.expression, resolvedVars)
+      .then(res => { text.textContent = (res === null || res === undefined) ? "" : String(res); })
+      .catch(err => { console.error('[UI] Error evaluating text expression:', err); });
+  } else {
+    text.textContent = item.content ?? item.text ?? "";
+  }
+
   return text;
 }
 

@@ -62,11 +62,11 @@
             "layout": [
                 {
                     "type": "title",
-                    "text": "Google Sheets"
+                    "expression": "{sheetValue}"
                 },
                 {
                     "type": "text",
-                    "content": "Read values from Google Sheets (requires API key)"
+                    "expression": "{sheetValue}"
                 },
                 {
                     "type": "row",
@@ -83,11 +83,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "Conditions Markers"
+                    "expression": "Conditions Markers"
                 },
                 {
                     "type": "text",
-                    "content": "Check and read condition markers on tokens"
+                    "expression": "Check and read condition markers on tokens"
                 },
                 {
                     "type": "row",
@@ -130,11 +130,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "Owl Trackers"
+                    "expression": "Owl Trackers"
                 },
                 {
                     "type": "text",
-                    "content": "Get and modify tracker values on tokens"
+                    "expression": "Get and modify tracker values on tokens"
                 },
                 {
                     "type": "row",
@@ -182,11 +182,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "StatBubbles"
+                    "expression": "StatBubbles"
                 },
                 {
                     "type": "text",
-                    "content": "Manage health, AC, and temp HP via StatBubbles extension"
+                    "expression": "Manage health, AC, and temp HP via StatBubbles extension"
                 },
                 {
                     "type": "row",
@@ -251,11 +251,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "Colored Rings"
+                    "expression": "Colored Rings"
                 },
                 {
                     "type": "text",
-                    "content": "Add and remove colored status rings on tokens"
+                    "expression": "Add and remove colored status rings on tokens"
                 },
                 {
                     "type": "row",
@@ -324,11 +324,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "Pretty Sordid"
+                    "expression": "Pretty Sordid"
                 },
                 {
                     "type": "text",
-                    "content": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+                    "expression": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
                 },
                 {
                     "type": "row",
@@ -381,11 +381,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "JustDices"
+                    "expression": "JustDices"
                 },
                 {
                     "type": "text",
-                    "content": "Roll dice and get results in Owlbear Rodeo"
+                    "expression": "Roll dice and get results in Owlbear Rodeo"
                 },
                 {
                     "type": "row",
@@ -418,11 +418,11 @@
                 },
                 {
                     "type": "title",
-                    "text": "Local Storage"
+                    "expression": "Local Storage"
                 },
                 {
                     "type": "text",
-                    "content": "Store and retrieve values in browser localStorage"
+                    "expression": "Store and retrieve values in browser localStorage"
                 },
                 {
                     "type": "input",
@@ -487,18 +487,18 @@
             "layout": [
                 {
                     "type": "title",
-                    "text": "Layout Examples"
+                    "expression": "Layout Examples"
                 },
                 {
                     "type": "text",
-                    "content": "This page demonstrates all available layout types"
+                    "expression": "This page demonstrates all available layout types"
                 },
                 {
                     "type": "divider"
                 },
                 {
                     "type": "title",
-                    "text": "Display Types"
+                    "expression": "Display Types"
                 },
                 {
                     "type": "row",
@@ -520,7 +520,7 @@
                 },
                 {
                     "type": "title",
-                    "text": "Input Types"
+                    "expression": "Input Types"
                 },
                 {
                     "type": "row",
@@ -554,18 +554,18 @@
                 },
                 {
                     "type": "title",
-                    "text": "Stack Demo"
+                    "expression": "Stack Demo"
                 },
                 {
                     "type": "text",
-                    "content": "Demonstrates the `stack` container."
+                    "expression": "Demonstrates the `stack` container."
                 },
                 {
                     "type": "row",
                     "children": [
                         {
                             "type": "text",
-                            "content": "This is a row containing a stack:"
+                            "expression": "This is a row containing a stack:"
                         },
                         {
                             "type": "stack",
@@ -598,7 +598,7 @@
                 },
                 {
                     "type": "title",
-                    "text": "Button"
+                    "expression": "Button"
                 },
                 {
                     "type": "button",
@@ -618,11 +618,11 @@
             "layout": [
                 {
                     "type": "title",
-                    "text": "Testing Area"
+                    "expression": "Testing Area"
                 },
                 {
                     "type": "text",
-                    "content": "Use this page for testing new features and commands."
+                    "expression": "Use this page for testing new features and commands."
                 },
                 {
                     "type": "row",
