@@ -22,16 +22,18 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     if (expression === null || expression === undefined) return expression;
     // If expression is not a string (e.g., a numeric literal 0), return it unchanged
     if (typeof expression !== 'string') return expression;
+    
+    // Check if expression contains unresolved variables - if so, return null early
+    // This happens when layout elements reference variables that haven't resolved yet
+    const missingVars = (expression.match(/\{(\w+)(?:\[.*?\])?\}/g) || []).map(v => v.slice(1, -1).split('[')[0]).filter(v => !(v in resolvedVars));
+    if (missingVars.length > 0) {
+      // Expression contains unresolved variables - this is expected during initial render
+      // Return null without logging an error, will be re-evaluated once variables resolve
+      return null;
+    }
+    
     // Step 1: Substitute variables with {varName} syntax
     let processed = expression;
-    
-    // Log available variables for debugging
-    if (expression.includes('{')) {
-      const missingVars = (expression.match(/\{(\w+)(?:\[.*?\])?\}/g) || []).map(v => v.slice(1, -1).split('[')[0]).filter(v => !(v in resolvedVars));
-      if (missingVars.length > 0) {
-        console.warn(`[EVAL] Missing variables for "${expression}":`, missingVars, "Available:", Object.keys(resolvedVars));
-      }
-    }
     
     // Match both {varName} and {varName[index]} or {varName[index][index2]} etc.
     const varPattern = /\{(\w+)((?:\[[^\]]+\])*)\}/g;
@@ -160,7 +162,10 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     const result = await asyncFunc(contextObj);
     return result;
   } catch (error) {
-    console.error(`[EVAL] Error evaluating "${expression}":`, error.message);
+    // Only log errors that aren't about undefined variables (those are expected when variables haven't resolved yet)
+    if (!error.message.includes('is not defined')) {
+      console.error(`[EVAL] Error evaluating "${expression}":`, error.message);
+    }
     return null;
   }
 }
