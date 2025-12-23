@@ -768,7 +768,6 @@ function renderCounter(item, page) {
   }, { passive: false });
 
   let updateTimer = null;
-  let pendingUpdate = false;
 
   const updateValue = async (newValue) => {
     const oldValue = Number(input.value) || 0;
@@ -781,11 +780,11 @@ function renderCounter(item, page) {
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
     
+    // Clear any pending timer to restart the debounce
     clearTimeout(updateTimer);
+    
+    // Schedule evaluation and saving after 300ms of inactivity
     updateTimer = setTimeout(async () => {
-      if (pendingUpdate) return;
-      pendingUpdate = true;
-      
       try {
         await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
         
@@ -797,10 +796,10 @@ function renderCounter(item, page) {
           };
           await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
         }
-      } finally {
-        pendingUpdate = false;
+      } catch (err) {
+        console.error("[UI] Error in counter update:", err);
       }
-    }, 150);
+    }, 300);
   };
 
   const incrementBtn = document.createElement("button");
