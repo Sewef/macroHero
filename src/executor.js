@@ -10,31 +10,58 @@ import { updateRenderedValue } from "./ui.js";
 import OBR from "@owlbear-rodeo/sdk";
 import { ensureOBRReady } from "./config.js";
 // --- LocalStorage helpers for evaluated variables ---
+let evaluatedVarsKeyCache = null;
+let evaluatedVarsCache = null;
+let evaluatedVarsSaveTimer = null;
+
 async function getRoomScopedEvaluatedVarsKey() {
   await ensureOBRReady();
-  const roomId = (window.OBR && OBR.room && OBR.room.id) ? OBR.room.id : (OBR.room && typeof OBR.room.getId === 'function' ? await OBR.room.getId() : 'unknown');
-  return `macroHero_evaluatedVariables_${roomId}`;
+  if (evaluatedVarsKeyCache) return evaluatedVarsKeyCache;
+  const roomId = (window.OBR && OBR.room && OBR.room.id)
+    ? OBR.room.id
+    : (OBR.room && typeof OBR.room.getId === "function" ? await OBR.room.getId() : "unknown");
+  evaluatedVarsKeyCache = `macroHero_evaluatedVariables_${roomId}`;
+  return evaluatedVarsKeyCache;
 }
 
 async function loadEvaluatedVariables() {
   const key = await getRoomScopedEvaluatedVarsKey();
+  // Use in-memory cache if present
+  if (evaluatedVarsCache) return evaluatedVarsCache;
   try {
     const json = localStorage.getItem(key);
-    return json ? JSON.parse(json) : {};
+    evaluatedVarsCache = json ? JSON.parse(json) : {};
+    return evaluatedVarsCache;
   } catch {
-    return {};
+    evaluatedVarsCache = {};
+    return evaluatedVarsCache;
   }
 }
 
 async function saveEvaluatedVariable(pageIndex, varName, value) {
   const key = await getRoomScopedEvaluatedVarsKey();
-  let allVars = {};
-  try {
-    allVars = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : {};
-  } catch {}
-  if (!allVars[pageIndex]) allVars[pageIndex] = {};
-  allVars[pageIndex][varName] = value;
-  localStorage.setItem(key, JSON.stringify(allVars));
+
+  if (!evaluatedVarsCache) {
+    // Prime cache from localStorage
+    try {
+      evaluatedVarsCache = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : {};
+    } catch {
+      evaluatedVarsCache = {};
+    }
+  }
+
+  if (!evaluatedVarsCache[pageIndex]) evaluatedVarsCache[pageIndex] = {};
+  evaluatedVarsCache[pageIndex][varName] = value;
+
+  // Debounce writes to localStorage to coalesce frequent updates
+  if (evaluatedVarsSaveTimer) clearTimeout(evaluatedVarsSaveTimer);
+  evaluatedVarsSaveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(evaluatedVarsCache));
+    } catch {
+      // swallow write errors to avoid breaking the UI loop
+    }
+  }, 100);
 }
 
 async function loadEvaluatedVariablesForPage(pageIndex) {

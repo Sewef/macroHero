@@ -22,10 +22,6 @@ async function loadEvaluatedVariablesForPage(pageIndex) {
     return allVars[pageIndex] || {};
 }
 
-// IMPORTANT: Using ROOM metadata instead of PLAYER metadata
-// Reason: Player metadata is session-scoped and lost on page refresh
-// Room metadata persists across the entire room session (for all players)
-// We store player-specific config in room metadata with player ID as the key
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
 export const MODAL_LABEL = "macrohero.config";
@@ -200,7 +196,6 @@ export async function loadConfig() {
         if (localStorageConfig) {
             config = JSON.parse(JSON.stringify(localStorageConfig));
         } else {
-            // Try several sensible locations for the packaged default.json
             const tryPaths = ['/src/default.json', '/default.json', '/assets/default.json'];
             let packaged = null;
             for (const p of tryPaths) {
@@ -218,9 +213,6 @@ export async function loadConfig() {
 
             if (packaged) {
                 config = JSON.parse(JSON.stringify(packaged));
-
-                // Persist the packaged default to room-scoped localStorage so
-                // subsequent loads find it as the saved full config.
                 try {
                     await saveConfigToLocalStorage(config);
                     console.log('[CONFIG] Packaged default persisted to room-scoped localStorage');
@@ -298,10 +290,10 @@ export async function openConfigModal() {
         console.log("[MODAL] Received broadcast 'macrohero.config.result':", event.data);
         try {
             if (event.data?.updatedConfig) {
-                console.log("[MODAL] Updated config found, saving to metadata...", event.data.updatedConfig);
+                console.log("[MODAL] Updated config found; persisting via saveConfig...", event.data.updatedConfig);
                 try {
                     await saveConfig(event.data.updatedConfig);
-                    console.log("[MODAL] Config saved to metadata via updatedConfig path");
+                    console.log("[MODAL] Config persisted via updatedConfig path");
                 } catch (error) {
                     console.error("✗ [MODAL] Failed to save config (updatedConfig path):", error);
                 }
@@ -310,10 +302,10 @@ export async function openConfigModal() {
                 try {
                     const cfg = await loadConfigFromLocalStorage();
                     if (cfg) {
-                        console.log("[MODAL] Full config loaded from localStorage, saving to metadata...");
+                        console.log("[MODAL] Full config loaded from localStorage; persisting via saveConfig...");
                         await saveConfig(cfg);
                     } else {
-                        console.warn("[MODAL] No full config found in localStorage to save to metadata");
+                        console.warn("[MODAL] No full config found in localStorage to persist");
                     }
                 } catch (error) {
                     console.error("✗ [MODAL] Error loading/saving config from localStorage:", error);

@@ -843,25 +843,34 @@ function renderCounter(item, page) {
 // RENDER HELPERS - Utilities
 // ============================================
 
+let renderScheduled = false;
+
 export function renderConfigUI() {
-  if (!config) {
-    console.warn("[UI] No config available");
-    return;
-  }
-  
-  renderPageButtons();
-  
-  // If we have a current page index, re-render it; otherwise select first
-  if (currentPage !== null && currentPage !== undefined) {
-    const page = config.pages?.[currentPage];
-    if (page) {
-      renderPageContent(page);
+  if (renderScheduled) return;
+  renderScheduled = true;
+
+  requestAnimationFrame(() => {
+    renderScheduled = false;
+
+    if (!config) {
+      console.warn("[UI] No config available");
+      return;
+    }
+
+    renderPageButtons();
+
+    // If we have a current page index, re-render it; otherwise select first
+    if (currentPage !== null && currentPage !== undefined) {
+      const page = config.pages?.[currentPage];
+      if (page) {
+        renderPageContent(page);
+      } else {
+        selectFirstPage();
+      }
     } else {
       selectFirstPage();
     }
-  } else {
-    selectFirstPage();
-  }
+  });
 }
 
 export async function updateConfig(newConfig) {

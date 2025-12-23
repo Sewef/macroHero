@@ -51,12 +51,14 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
       } else if (varValue === undefined) {
         substitutedValue = 'undefined';
       } else if (typeof varValue === 'string') {
-        // If it looks like a number, convert it
-        if (!isNaN(varValue) && varValue.trim() !== '') {
-          substitutedValue = Number(varValue);
+        // Standardize strings: handle boolean-like and numeric-like strings, and escape quotes
+        const trimmed = varValue.trim();
+        if (/^(true|false)$/i.test(trimmed)) {
+          substitutedValue = trimmed.toLowerCase() === 'true';
+        } else if (!isNaN(trimmed) && trimmed !== '') {
+          substitutedValue = Number(trimmed);
         } else {
-          // Keep as string literal
-          substitutedValue = `'${varValue}'`;
+          substitutedValue = `'${varValue.replace(/'/g, "\\'")}'`;
         }
       } else if (Array.isArray(varValue) || typeof varValue === 'object') {
         // For arrays and objects, use JSON representation
@@ -75,54 +77,52 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     // Step 3: Transform the expression to properly await async function calls
     // Replace patterns like OwlTrackers.getValue(...) with (await OwlTrackers.getValue(...))
     // This ensures the promise is awaited before any arithmetic operations
+    // ... existing code ...
+    // Step 3: Use cached async methods instead of scanning the context every time
+    const cachedAsyncMethods = expressionHelpers.getAsyncMethods();
+    
     let transformed = processed;
     
-    // Dynamically discover async methods from the context
-    const asyncMethods = [];
+    // Dynamically discover async methods from the context and merge with cache
+    const asyncMethodsSet = new Set(Array.isArray(cachedAsyncMethods) ? cachedAsyncMethods : []);
     for (const [objectName, objectValue] of Object.entries(contextObj)) {
       if (typeof objectValue === 'object' && objectValue !== null) {
         for (const [methodName, methodValue] of Object.entries(objectValue)) {
           if (typeof methodValue === 'function') {
-            // Check if it's an async function or returns a promise
             const methodStr = methodValue.toString();
             if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
-              asyncMethods.push(`${objectName}.${methodName}`);
+              asyncMethodsSet.add(`${objectName}.${methodName}`);
             }
           }
         }
       }
     }
     
-    // console.log('[EVAL] Detected async methods:', asyncMethods);
+    // Materialize the merged list for downstream use
+    const asyncMethods = [...asyncMethodsSet];
     
     // For each async method, find all calls and wrap them with (await ...)
     for (const method of asyncMethods) {
-      const escapedMethod = method.replace(/\./g, '\\.');
-      // Match method calls with their arguments: Method.name(...)
-      // We need to match balanced parentheses
-      const regex = new RegExp(`${escapedMethod}\\s*\\(`, 'g');
-      
+      const escapedMethod = method.replace(/\./g, "\\.");
+      const regex = new RegExp(`${escapedMethod}\\s*\\(`, "g");
+    
       let match;
-      let offset = 0;
       const matches = [];
-      
-      // Find all occurrences
+    
       while ((match = regex.exec(transformed)) !== null) {
         matches.push({ index: match.index, method: method });
       }
-      
-      // Process matches in reverse order to maintain indices
+    
       for (let i = matches.length - 1; i >= 0; i--) {
         const { index, method: methodName } = matches[i];
-        
-        // Find the matching closing parenthesis
+    
         let parenCount = 0;
         let startIdx = index + methodName.length;
         let endIdx = startIdx;
-        
+    
         for (let j = startIdx; j < transformed.length; j++) {
-          if (transformed[j] === '(') parenCount++;
-          if (transformed[j] === ')') {
+          if (transformed[j] === "(") parenCount++;
+          if (transformed[j] === ")") {
             parenCount--;
             if (parenCount === 0) {
               endIdx = j + 1;
@@ -130,14 +130,10 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
             }
           }
         }
-        
-        // Extract the full function call
+    
         const fullCall = transformed.substring(index, endIdx);
-        
-        // Check if it's already wrapped with await
         const beforeCall = transformed.substring(Math.max(0, index - 10), index).trim();
-        if (!beforeCall.endsWith('await')) {
-          // Wrap with (await ...)
+        if (!beforeCall.endsWith("await")) {
           const wrappedCall = `(await ${fullCall})`;
           transformed = transformed.substring(0, index) + wrappedCall + transformed.substring(endIdx);
         }
@@ -286,7 +282,7 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     
     // Extract all variable references {varName} and {varName[index]} etc.
     // Pattern matches {word} or {word[...]} where [...] can be nested
-      const matches = String(expr).matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
+    const matches = String(expr).matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
     for (const match of matches) {
       const depVar = match[1]; // Extract just the variable name, ignore indexing
       if (depVar in variablesConfig && depVar !== varName) {
