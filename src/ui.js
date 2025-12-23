@@ -357,12 +357,15 @@ function createDynamicLabel(item, page, inStack = false, suffix = "") {
 // ============================================
 
 function renderLayout(container, layoutItems, page) {
+  // Batch all layout elements before single append to container
+  const frag = document.createDocumentFragment();
   layoutItems.forEach(layoutItem => {
     const element = renderLayoutElement(layoutItem, page);
     if (element) {
-      container.appendChild(element);
+      frag.appendChild(element);
     }
   });
+  container.appendChild(frag);
 }
 
 function renderLayoutElement(layoutItem, page) {
@@ -424,12 +427,15 @@ function renderRow(item, page) {
   row.className = "mh-layout-row";
 
   if (item.children && Array.isArray(item.children)) {
+    // Use a fragment to batch DOM updates for row children
+    const frag = document.createDocumentFragment();
     item.children.forEach(child => {
       const element = renderLayoutElement(child, page);
       if (element) {
-        row.appendChild(element);
+        frag.appendChild(element);
       }
     });
+    row.appendChild(frag);
   }
 
   return row;
