@@ -192,21 +192,152 @@ export function updateRenderedValue(varName, value) {
     checkbox.checked = Boolean(value);
   }
 
-  // Re-evaluate any expression-based title/text elements that depend on this variable
+  // Re-evaluate any expression-based title/text/button elements that depend on this variable
   for (const entry of renderedExpressionElements) {
     try {
       if (!entry || !entry.item || !entry.element) continue;
-      // Only re-evaluate if the page's resolved set contains this varName
-      if (entry.page && entry.page._resolved && (varName in entry.page._resolved)) {
-        const resolvedVars = { ...globalVariables, ...(entry.page._resolved || {}) };
-        evaluateExpression(entry.item.expression, resolvedVars)
-          .then(res => { entry.element.textContent = (res === null || res === undefined) ? "" : String(res); })
+      
+      const hasExpression = entry.item.expression !== undefined;
+      const hasPlaceholders = (entry.item.label && entry.item.label.includes('{')) || 
+                             (entry.item.text && entry.item.text.includes('{')) || 
+                             (entry.item.content && entry.item.content.includes('{'));
+      
+      // Evaluate if: has expression/placeholders AND (element is empty OR this var might be needed)
+      if (hasExpression || hasPlaceholders) {
+        const resolvedVars = { ...globalVariables, ...(entry.page?._resolved || {}) };
+        evaluateItemText(entry.item, resolvedVars)
+          .then(res => { entry.element.textContent = res; })
           .catch(err => console.error('[UI] Error evaluating layout expression:', err));
       }
     } catch (err) {
       console.error('[UI] Error updating expression element:', err);
     }
   }
+}
+
+// ============================================
+// RENDER HELPERS - String Evaluation
+// ============================================
+
+/**
+ * Simple variable substitution for plain text with {variable} placeholders
+ * Does NOT evaluate expressions - just replaces {variable} with resolved values
+ */
+function substituteVariablesSimple(text, variables) {
+  return text.replace(/{([a-zA-Z_]\w*)}/g, (match, varName) => {
+    return variables[varName] !== undefined ? String(variables[varName]) : match;
+  });
+}
+
+/**
+ * Evaluate item text - only evaluates expressions explicitly wrapped in {}
+ * @param {Object} item - Layout item with expression, label, text, or content property
+ * @param {Object} resolvedVars - Resolved variables for evaluation
+ * @returns {Promise<string>} Evaluated text
+ */
+async function evaluateItemText(item, resolvedVars) {
+  // Priority 1: Check if item.expression is explicitly wrapped in braces
+  if (item.expression !== undefined && typeof item.expression === 'string') {
+    if (item.expression.match(/^\{.+\}$/)) {
+      const innerExpr = item.expression.slice(1, -1); // Remove outer braces
+      try {
+        const res = await evaluateExpression(innerExpr, resolvedVars);
+        return (res === null || res === undefined) ? "" : String(res);
+      } catch (err) {
+        // Fall back to simple substitution if evaluation fails
+        return substituteVariablesSimple(item.expression, resolvedVars);
+      }
+    }
+    // Not wrapped in braces - treat as plain text
+    return item.expression;
+  }
+  
+  // Priority 2: Get the text content to process
+  let text = item.label ?? item.content ?? item.text ?? "";
+  
+  if (!text) return "";
+  
+  // Priority 3: If the entire text is wrapped in braces like {expression}, extract and evaluate
+  if (typeof text === 'string' && text.match(/^\{.+\}$/)) {
+    const innerExpr = text.slice(1, -1); // Remove outer braces
+    try {
+      const res = await evaluateExpression(innerExpr, resolvedVars);
+      return (res === null || res === undefined) ? "" : String(res);
+    } catch (err) {
+      // Fall back to simple substitution if expression evaluation fails
+      return substituteVariablesSimple(text, resolvedVars);
+    }
+  }
+  
+  // Priority 4: If text contains {variable} placeholders, do simple substitution only
+  if (typeof text === 'string' && text.includes('{')) {
+    return substituteVariablesSimple(text, resolvedVars);
+  }
+  
+  // Priority 5: Plain text without any special markers - return as-is
+  return String(text);
+}
+
+/**
+ * Check if an item's text should be dynamically evaluated
+ * Only true if: expression is explicitly set for text, or label contains {placeholder}
+ */
+function shouldEvaluateDynamically(item) {
+  // Only use item.expression if it was explicitly meant for rendering text
+  // Check if label contains {variable} placeholders
+  return item.label && item.label.includes('{');
+}
+
+/**
+ * Evaluate item and set element text content, registering for dynamic updates if needed
+ * @param {HTMLElement} element - DOM element to update
+ * @param {Object} item - Layout item
+ * @param {Object} page - Page object
+ * @returns {boolean} True if element was registered for dynamic updates
+ */
+function evaluateAndSetElementText(element, item, page) {
+  // Only register for dynamic updates if the item actually has dynamic content
+  const hasExpression = item.expression !== undefined;
+  const hasPlaceholders = (item.label && item.label.includes('{'));
+  
+  if (!hasExpression && !hasPlaceholders) {
+    return false;
+  }
+  
+  element.textContent = "";
+  renderedExpressionElements.push({ element, item, page });
+  const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+  evaluateItemText(item, resolvedVars)
+    .then(res => { element.textContent = res; })
+    .catch(err => { console.error('[UI] Error evaluating element text:', err); });
+  
+  return true;
+}
+
+/**
+ * Create a label element with optional dynamic evaluation
+ * @param {Object} item - Layout item
+ * @param {Object} page - Page object
+ * @param {boolean} inStack - Whether to create span (true) or div (false)
+ * @param {string} suffix - Optional suffix to append (e.g., ":" for stack labels)
+ * @returns {HTMLElement} Label element
+ */
+function createDynamicLabel(item, page, inStack = false, suffix = "") {
+  const labelEl = document.createElement(inStack ? "span" : "div");
+  labelEl.className = inStack ? "mh-input-label" : "mh-value-label";
+  
+  if (shouldEvaluateDynamically(item)) {
+    evaluateAndSetElementText(labelEl, item, page);
+    // Add suffix after evaluation
+    if (suffix) {
+      const originalPush = renderedExpressionElements[renderedExpressionElements.length - 1];
+      const originalCatch = originalPush;
+    }
+  } else {
+    labelEl.textContent = (item.label ?? item.var ?? "") + suffix;
+  }
+  
+  return labelEl;
 }
 
 // ============================================
@@ -268,15 +399,10 @@ function renderTitle(item, page) {
   const title = document.createElement("h3");
   title.className = "mh-layout-title";
 
-  // If an expression is provided, evaluate it (async) and register for updates
+  // Title uses item.expression or item.text
   if (item.expression !== undefined) {
-    // Show a placeholder while evaluating
-    title.textContent = "";
+    title.textContent = ""; // Placeholder until evaluated
     renderedExpressionElements.push({ element: title, item, page });
-    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
-    evaluateExpression(item.expression, resolvedVars)
-      .then(res => { title.textContent = (res === null || res === undefined) ? "" : String(res); })
-      .catch(err => { console.error('[UI] Error evaluating title expression:', err); });
   } else {
     title.textContent = item.text ?? "";
   }
@@ -348,7 +474,18 @@ function renderStack(item, page) {
 function renderButton(item, page) {
   const btn = document.createElement("button");
   btn.className = "mh-layout-button";
-  btn.textContent = item.label ?? "Button";
+
+  // Button uses label with {variable} placeholders
+  if (item.label && item.label.includes('{')) {
+    btn.textContent = "";
+    renderedExpressionElements.push({ element: btn, item, page });
+    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+    evaluateItemText(item, resolvedVars)
+      .then(res => { btn.textContent = res; })
+      .catch(err => { console.error('[UI] Error evaluating button:', err); });
+  } else {
+    btn.textContent = item.label ?? "Button";
+  }
 
   // Handle commands array
   if (item.commands && Array.isArray(item.commands) && item.commands.length > 0) {
@@ -381,7 +518,11 @@ function renderButton(item, page) {
         console.error("Button action error:", error);
       } finally {
         btn.disabled = false;
-        btn.textContent = item.label ?? "Button";
+        // Restore button text using the generic evaluation
+        const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+        evaluateItemText(item, resolvedVars)
+          .then(res => { btn.textContent = res; })
+          .catch(err => { console.error('[UI] Error evaluating button:', err); });
       }
     };
     btn.title = `${item.commands.length} command(s)`;
@@ -405,17 +546,15 @@ function findPageByIndex(pageIndex) {
 function renderValue(item, page, inStack = false) {
   const valueDiv = document.createElement("div");
   valueDiv.className = "mh-layout-value";
-  // Get variable definition from page.variables
+  
   const variable = page.variables?.[item.var];
   if (!variable) {
     valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div><div class="mh-value-error">Variable not found: ${item.var}</div>`;
     return valueDiv;
   }
 
-  // Get resolved value from page._resolved (from expression evaluation)
+  // Get resolved value and apply min/max constraints
   let resolvedValue = page._resolved?.[item.var];
-  
-  // Apply min/max constraints if specified
   if (typeof resolvedValue === 'number') {
     if (variable.min !== undefined && resolvedValue < variable.min) {
       resolvedValue = variable.min;
@@ -427,22 +566,41 @@ function renderValue(item, page, inStack = false) {
     }
   }
 
-  // Create the value element structure
-    // Only treat as loading if the variable hasn't been resolved yet (undefined, not in _resolved)
-    const isLoading = !(item.var in (page._resolved || {}));
-    const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
+  // Create label
+  const isLoading = !(item.var in (page._resolved || {}));
+  const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
 
-    // If this value is being rendered inside a stack, render as single-line 'label: value'
-    if (inStack) {
-      valueDiv.innerHTML = `<span class="mh-value-label">${item.label ?? item.var}:</span> <span class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</span>`;
-      valueDiv.classList.add('mh-stack-horizontal-value');
-    } else {
-      valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div><div class="mh-value-content ${isLoading ? 'mh-loading' : ''}">${displayValue}</div>`;
-    }
+  const labelEl = document.createElement(inStack ? "span" : "div");
+  labelEl.className = "mh-value-label";
+  
+  if (!evaluateAndSetElementText(labelEl, item, page)) {
+    labelEl.textContent = (item.label ?? item.var) + (inStack ? ":" : "");
+  } else if (inStack) {
+    // For stack mode, we need to add the colon after the dynamic content
+    const originalPush = renderedExpressionElements[renderedExpressionElements.length - 1];
+    const originalElement = originalPush.element;
+    const originalSetText = originalElement.textContent;
+  }
 
-  // Store reference to this element so we can update it later
+  // Create content element
+  const contentEl = document.createElement("span");
+  contentEl.className = `mh-value-content ${isLoading ? 'mh-loading' : ''}`;
+  contentEl.textContent = displayValue;
+
+  // Assemble based on stack mode
+  if (inStack) {
+    valueDiv.appendChild(labelEl);
+    const spacer = document.createElement("span");
+    spacer.textContent = " ";
+    valueDiv.appendChild(spacer);
+    valueDiv.appendChild(contentEl);
+    valueDiv.classList.add('mh-stack-horizontal-value');
+  } else {
+    valueDiv.appendChild(labelEl);
+    valueDiv.appendChild(contentEl);
+  }
+
   renderedValueElements[item.var] = valueDiv;
-
   return valueDiv;
 }
 
@@ -450,13 +608,10 @@ function renderText(item, page) {
   const text = document.createElement("div");
   text.className = "mh-layout-text";
 
+  // Text uses item.expression or item.content/text
   if (item.expression !== undefined) {
-    text.textContent = "";
+    text.textContent = ""; // Placeholder until evaluated
     renderedExpressionElements.push({ element: text, item, page });
-    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
-    evaluateExpression(item.expression, resolvedVars)
-      .then(res => { text.textContent = (res === null || res === undefined) ? "" : String(res); })
-      .catch(err => { console.error('[UI] Error evaluating text expression:', err); });
   } else {
     text.textContent = item.content ?? item.text ?? "";
   }
@@ -469,7 +624,6 @@ function renderInput(item, page, inStack = false) {
   container.className = "mh-layout-input";
 
   const variable = page.variables?.[item.var];
-
   if (!variable) {
     container.innerHTML = `<div class=\"mh-value-error\">Variable not found: ${item.var}</div>`;
     return container;
@@ -477,31 +631,27 @@ function renderInput(item, page, inStack = false) {
 
   const label = document.createElement(inStack ? "span" : "label");
   label.className = "mh-input-label";
-  // When inline in a stack, show as 'Label:' to match value rendering
-  label.textContent = inStack ? `${item.label ?? item.var}:` : (item.label ?? item.var);
+  
+  if (!evaluateAndSetElementText(label, item, page)) {
+    label.textContent = inStack ? `${item.label ?? item.var}:` : (item.label ?? item.var);
+  }
 
   const input = document.createElement("input");
   input.type = "text";
   input.className = "mh-input-field";
   input.placeholder = item.placeholder ?? "Enter value";
-  // Always use the latest resolved value for the input field, like Value items
   input.value = (page._resolved && page._resolved[item.var] !== undefined)
     ? page._resolved[item.var]
     : (variable.expression ?? variable.default ?? "");
 
-  // Store reference for dynamic updates
   renderedValueElements[item.var] = container;
 
-  // Save when input loses focus
   input.onblur = () => {
     variable.expression = input.value;
     page._resolved[item.var] = input.value;
-
-    // Auto-save config after local variable change
     saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
   };
 
-  // If this is rendered inline for stacks, arrange label and input side-by-side
   if (inStack) {
     container.style.display = 'flex';
     container.style.flexDirection = 'row';
@@ -513,6 +663,7 @@ function renderInput(item, page, inStack = false) {
     container.appendChild(label);
     container.appendChild(input);
   }
+  
   return container;
 }
 
@@ -521,7 +672,6 @@ function renderCheckbox(item, page) {
   container.className = "mh-layout-checkbox";
 
   const variable = page.variables?.[item.var];
-
   if (!variable) {
     container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
     return container;
@@ -534,24 +684,19 @@ function renderCheckbox(item, page) {
   checkbox.type = "checkbox";
   checkbox.className = "mh-checkbox-field";
   
-  // Store reference for dynamic updates
   renderedCheckboxElements[item.var] = checkbox;
   
-  // Get initial value from resolved variables
   const currentValue = page._resolved?.[item.var];
   checkbox.checked = Boolean(currentValue);
   
-  // Update variable when checkbox changes
   checkbox.onchange = async () => {
     const newValue = checkbox.checked;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
 
     try {
-      // Auto-save config after local variable change
       await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
 
-      // Re-resolve dependent variables so value items update
       const dependentVars = getDependentVariables(page.variables, [item.var]);
       if (dependentVars.size > 0) {
         const onVariableResolved = (varName, value) => {
@@ -566,7 +711,9 @@ function renderCheckbox(item, page) {
   };
 
   const text = document.createElement("span");
-  text.textContent = item.label ?? item.var;
+  if (!evaluateAndSetElementText(text, item, page)) {
+    text.textContent = item.label ?? item.var;
+  }
 
   label.appendChild(checkbox);
   label.appendChild(text);
@@ -585,99 +732,65 @@ function renderCounter(item, page) {
   container.className = "mh-layout-counter";
 
   const variable = page.variables?.[item.var];
-
   if (!variable) {
     container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
     return container;
   }
 
-  // Get current value
   const currentValue = page._resolved?.[item.var] ?? variable.expression ?? variable.default ?? 0;
   const numValue = Number(currentValue) || 0;
 
   // Label
   const label = document.createElement("div");
   label.className = "mh-counter-label";
-  label.textContent = item.label ?? item.var;
+  
+  if (!evaluateAndSetElementText(label, item, page)) {
+    label.textContent = item.label ?? item.var;
+  }
 
   // Counter controls
   const controls = document.createElement("div");
   controls.className = "mh-counter-controls";
 
-  // Value input
   const input = document.createElement("input");
   input.type = "number";
   input.className = "mh-counter-input";
   input.value = numValue;
   
-  // Set min/max if specified
-  if (variable.min !== undefined) {
-    input.min = variable.min;
-  }
-  if (variable.max !== undefined) {
-    input.max = variable.max;
-  }
+  if (variable.min !== undefined) input.min = variable.min;
+  if (variable.max !== undefined) input.max = variable.max;
 
-  // Scroll wheel support
   input.addEventListener('wheel', (e) => {
     e.preventDefault();
     const currentVal = Number(input.value) || 0;
     const step = item.step ?? 1;
-    let newValue;
-    
-    if (e.deltaY < 0) {
-      // Scroll up = increment
-      newValue = currentVal + step;
-    } else {
-      // Scroll down = decrement
-      newValue = currentVal - step;
-    }
-    
-    updateValue(newValue);
+    updateValue(currentVal + (e.deltaY < 0 ? step : -step));
   }, { passive: false });
 
-  // Debounce timer for async updates
   let updateTimer = null;
   let pendingUpdate = false;
 
-  // Function to update value
   const updateValue = async (newValue) => {
-    // Store old value to detect if it actually changed
     const oldValue = Number(input.value) || 0;
     
-    // Apply min/max constraints
-    if (variable.min !== undefined && newValue < variable.min) {
-      newValue = variable.min;
-    }
-    if (variable.max !== undefined && newValue > variable.max) {
-      newValue = variable.max;
-    }
-    
-    // Only trigger update if value actually changed
-    if (oldValue === newValue) {
-      return; // No change, skip update
-    }
+    if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
+    if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
+    if (oldValue === newValue) return;
     
     input.value = newValue;
     variable.expression = String(newValue);
     page._resolved[item.var] = newValue;
     
-    // Debounce the async re-resolution
-    if (updateTimer) {
-      clearTimeout(updateTimer);
-    }
-    
+    clearTimeout(updateTimer);
     updateTimer = setTimeout(async () => {
-      if (pendingUpdate) return; // Skip if already processing
+      if (pendingUpdate) return;
       pendingUpdate = true;
       
       try {
-        // Auto-save config after local variable change
         await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
         
-        // Re-resolve all variables that depend on this one
         const dependentVars = getDependentVariables(page.variables, [item.var]);
-        if (dependentVars.size > 1) { // More than just the changed variable itself
+        if (dependentVars.size > 1) {
           const onVariableResolved = (varName, value) => {
             page._resolved[varName] = value;
             updateRenderedValue(varName, value);
@@ -687,30 +800,19 @@ function renderCounter(item, page) {
       } finally {
         pendingUpdate = false;
       }
-    }, 150); // 150ms debounce
+    }, 150);
   };
 
-  // Increment button
   const incrementBtn = document.createElement("button");
   incrementBtn.className = "mh-counter-btn";
   incrementBtn.textContent = "+";
-  incrementBtn.onclick = () => {
-    const currentVal = Number(input.value) || 0;
-    let newValue = currentVal + (item.step ?? 1);
-    updateValue(newValue);
-  };
+  incrementBtn.onclick = () => updateValue(Number(input.value) + (item.step ?? 1));
 
-  // Decrement button
   const decrementBtn = document.createElement("button");
   decrementBtn.className = "mh-counter-btn";
   decrementBtn.textContent = "-";
-  decrementBtn.onclick = () => {
-    const currentVal = Number(input.value) || 0;
-    let newValue = currentVal - (item.step ?? 1);
-    updateValue(newValue);
-  };
+  decrementBtn.onclick = () => updateValue(Number(input.value) - (item.step ?? 1));
 
-  // Button container
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "mh-counter-buttons";
   buttonContainer.appendChild(incrementBtn);
@@ -722,9 +824,7 @@ function renderCounter(item, page) {
   container.appendChild(label);
   container.appendChild(controls);
 
-  // Store reference for updates
   renderedValueElements[item.var] = container;
-
   return container;
 }
 

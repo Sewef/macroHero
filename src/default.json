@@ -660,6 +660,14 @@
                         "JustDices.roll(n)"
                     ],
                     "label": "Test Roll2"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "n = '1d10'",
+                        "JustDices.roll(n)"
+                    ],
+                    "label": "Test {spdCS}"
                 }
             ]
         }
