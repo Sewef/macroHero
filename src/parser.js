@@ -13,19 +13,27 @@ export function tokenize(expression) {
   let current = 0;
   const length = expression.length;
 
+  const isWhitespace = (c) => /\s/.test(c);
+  const isDigit = (c) => /\d/.test(c);
+  const isIdentStart = (c) => /[a-zA-Z_$]/.test(c);
+  const isIdentPart = (c) => /[a-zA-Z0-9_$]/.test(c);
+
+  const twoCharOps = new Set(["==", "!=", "<=", ">=", "&&", "||", "**"]);
+  const threeCharOps = new Set(["===","!=="]);
+
   while (current < length) {
     const char = expression[current];
 
     // Skip whitespace
-    if (/\s/.test(char)) {
+    if (isWhitespace(char)) {
       current++;
       continue;
     }
 
     // Numbers
-    if (/\d/.test(char)) {
+    if (isDigit(char)) {
       let value = "";
-      while (current < length && (/\d/.test(expression[current]) || expression[current] === ".")) {
+      while (current < length && (isDigit(expression[current]) || expression[current] === ".")) {
         value += expression[current];
         current++;
       }
@@ -33,10 +41,33 @@ export function tokenize(expression) {
       continue;
     }
 
-    // Identifiers and keywords
-    if (/[a-zA-Z_$]/.test(char)) {
+    // String literals: " ' `
+    if (char === '"' || char === "'" || char === "`") {
+      const quote = char;
       let value = "";
-      while (current < length && /[a-zA-Z0-9_$]/.test(expression[current])) {
+      current++; // skip opening quote
+      while (current < length) {
+        const c = expression[current];
+        if (c === "\\" && current + 1 < length) {
+          value += c + expression[current + 1];
+          current += 2;
+          continue;
+        }
+        if (c === quote) {
+          current++; // consume closing quote
+          break;
+        }
+        value += c;
+        current++;
+      }
+      tokens.push({ type: "STRING", value });
+      continue;
+    }
+
+    // Identifiers
+    if (isIdentStart(char)) {
+      let value = "";
+      while (current < length && isIdentPart(expression[current])) {
         value += expression[current];
         current++;
       }
@@ -44,48 +75,64 @@ export function tokenize(expression) {
       continue;
     }
 
-    // Operators
-    if ("+-*/%".includes(char)) {
-      tokens.push({ type: "OPERATOR", value: char });
+    // Dot as separate token for property access
+    if (char === ".") {
+      tokens.push({ type: "DOT", value: "." });
       current++;
       continue;
     }
 
-    // Comparison operators
-    if ("=<>!".includes(char)) {
-      let value = char;
-      if (current + 1 < length && "=<>".includes(expression[current + 1])) {
-        value += expression[current + 1];
-        current += 2;
-      } else {
-        current++;
-      }
-      tokens.push({ type: "COMPARISON", value });
+    // Multi-character operators
+    const next = current + 1 < length ? expression[current + 1] : "";
+    const next2 = current + 2 < length ? expression[current + 2] : "";
+    const two = char + next;
+    const three = two + next2;
+
+    if (threeCharOps.has(three)) {
+      tokens.push({ type: "COMPARISON", value: three });
+      current += 3;
+      continue;
+    }
+    if (twoCharOps.has(two)) {
+      const type = (two === "==" || two === "!=" || two === "<=" || two === ">=") ? "COMPARISON" : "OPERATOR";
+      tokens.push({ type, value: two });
+      current += 2;
       continue;
     }
 
-    // Parentheses
+    // Single-char operators and punctuation
+    if ("+-*/%!".includes(char)) {
+      tokens.push({ type: "OPERATOR", value: char });
+      current++;
+      continue;
+    }
+    if ("=<>".includes(char)) {
+      tokens.push({ type: "COMPARISON", value: char });
+      current++;
+      continue;
+    }
     if ("()".includes(char)) {
       tokens.push({ type: char === "(" ? "LPAREN" : "RPAREN", value: char });
       current++;
       continue;
     }
-
-    // Brackets
+    if ("{}".includes(char)) {
+      tokens.push({ type: char === "{" ? "LBRACE" : "RBRACE", value: char });
+      current++;
+      continue;
+    }
     if ("[]".includes(char)) {
       tokens.push({ type: char === "[" ? "LBRACKET" : "RBRACKET", value: char });
       current++;
       continue;
     }
-
-    // Comma
     if (char === ",") {
       tokens.push({ type: "COMMA", value: char });
       current++;
       continue;
     }
 
-    // Unknown character
+    // Unknown character - skip
     current++;
   }
 
@@ -102,10 +149,12 @@ export function parseCommand(command) {
   let current = 0;
   let stringPart = "";
 
-  while (current < command.length) {
+  const length = command.length;
+
+  while (current < length) {
     const char = command[current];
 
-    // Look for {expression} blocks
+    // Look for {expression} blocks when not inside a string
     if (char === "{") {
       if (stringPart) {
         segments.push({ type: "literal", value: stringPart });
@@ -116,10 +165,38 @@ export function parseCommand(command) {
       let depth = 1;
       let expr = "";
       current++;
-      while (current < command.length && depth > 0) {
-        if (command[current] === "{") depth++;
-        if (command[current] === "}") depth--;
-        if (depth > 0) expr += command[current];
+
+      let inString = false;
+      let quote = "";
+
+      while (current < length && depth > 0) {
+        const c = command[current];
+
+        // handle string boundaries inside expression
+        if (!inString && (c === '"' || c === "'" || c === "`")) {
+          inString = true;
+          quote = c;
+          current++;
+          continue;
+        } else if (inString) {
+          if (c === "\\" && current + 1 < length) {
+            expr += c + command[current + 1];
+            current += 2;
+            continue;
+          }
+          if (c === quote) {
+            inString = false;
+            quote = "";
+          }
+          expr += c;
+          current++;
+          continue;
+        }
+
+        if (c === "{") depth++;
+        else if (c === "}") depth--;
+
+        if (depth > 0) expr += c;
         current++;
       }
 
@@ -159,14 +236,35 @@ export function extractFunctionCalls(command) {
   while ((match = functionRegex.exec(command)) !== null) {
     const functionName = match[1];
     const startPos = match.index;
-    
-    // Find matching closing parenthesis
+
+    // Find matching closing parenthesis, respecting strings
     let depth = 0;
-    let endPos = match.index + match[0].length - 1;
-    
+    let endPos = match.index + match[0].length - 1; // points at '('
+
+    let inString = false;
+    let quote = "";
+
     for (let i = endPos; i < command.length; i++) {
-      if (command[i] === "(") depth++;
-      if (command[i] === ")") {
+      const c = command[i];
+
+      if (!inString && (c === '"' || c === "'" || c === "`")) {
+        inString = true;
+        quote = c;
+        continue;
+      } else if (inString) {
+        if (c === "\\" && i + 1 < command.length) {
+          i++; // skip escaped char
+          continue;
+        }
+        if (c === quote) {
+          inString = false;
+          quote = "";
+        }
+        continue;
+      }
+
+      if (c === "(") depth++;
+      else if (c === ")") {
         depth--;
         if (depth === 0) {
           endPos = i;
@@ -207,8 +305,8 @@ export function parseFunctionArgs(argsString) {
   for (let i = 0; i < argsString.length; i++) {
     const char = argsString[i];
 
-    // Handle string boundaries
-    if ((char === '"' || char === "'") && argsString[i - 1] !== "\\") {
+    // Handle string boundaries: " ' `
+    if ((char === '"' || char === "'" || char === "`") && argsString[i - 1] !== "\\") {
       if (!inString) {
         inString = true;
         stringChar = char;
@@ -290,8 +388,8 @@ export function validateExpression(expression) {
     errors.push("Unmatched opening bracket");
   }
 
-  // Check for consecutive operators
-  if (/([\+\-\*\/%])\s*([\+\-\*\/%])/.test(expression)) {
+  // Check for consecutive math operators (ignore logical &&, || and equality ===, !==)
+  if (/([+\-*/%])\s*([+\-*/%])/.test(expression)) {
     errors.push("Consecutive operators detected");
   }
 
