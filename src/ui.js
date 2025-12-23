@@ -240,6 +240,12 @@ async function evaluateItemText(item, resolvedVars) {
   if (item.expression !== undefined && typeof item.expression === 'string') {
     if (item.expression.match(/^\{.+\}$/)) {
       const innerExpr = item.expression.slice(1, -1); // Remove outer braces
+      
+            // Check if innerExpr is a simple variable reference (just a word)
+            if (/^\w+$/.test(innerExpr) && innerExpr in resolvedVars) {
+              const value = resolvedVars[innerExpr];
+              return (value === null || value === undefined) ? "" : String(value);
+            }
       try {
         const res = await evaluateExpression(innerExpr, resolvedVars);
         return (res === null || res === undefined) ? "" : String(res);
@@ -260,6 +266,12 @@ async function evaluateItemText(item, resolvedVars) {
   // Priority 3: If the entire text is wrapped in braces like {expression}, extract and evaluate
   if (typeof text === 'string' && text.match(/^\{.+\}$/)) {
     const innerExpr = text.slice(1, -1); // Remove outer braces
+    
+        // Check if innerExpr is a simple variable reference (just a word)
+        if (/^\w+$/.test(innerExpr) && innerExpr in resolvedVars) {
+          const value = resolvedVars[innerExpr];
+          return (value === null || value === undefined) ? "" : String(value);
+        }
     try {
       const res = await evaluateExpression(innerExpr, resolvedVars);
       return (res === null || res === undefined) ? "" : String(res);
@@ -399,11 +411,8 @@ function renderTitle(item, page) {
   const title = document.createElement("h3");
   title.className = "mh-layout-title";
 
-  // Title uses item.expression or item.text
-  if (item.expression !== undefined) {
-    title.textContent = ""; // Placeholder until evaluated
-    renderedExpressionElements.push({ element: title, item, page });
-  } else {
+  // Title uses item.expression or item.text; evaluate immediately if dynamic
+  if (!evaluateAndSetElementText(title, item, page)) {
     title.textContent = item.text ?? "";
   }
 
@@ -608,11 +617,8 @@ function renderText(item, page) {
   const text = document.createElement("div");
   text.className = "mh-layout-text";
 
-  // Text uses item.expression or item.content/text
-  if (item.expression !== undefined) {
-    text.textContent = ""; // Placeholder until evaluated
-    renderedExpressionElements.push({ element: text, item, page });
-  } else {
+  // Text uses item.expression or item.content/text; evaluate immediately if dynamic
+  if (!evaluateAndSetElementText(text, item, page)) {
     text.textContent = item.content ?? item.text ?? "";
   }
 
