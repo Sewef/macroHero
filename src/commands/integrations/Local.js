@@ -7,7 +7,6 @@
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('Local') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('Local') && console.error(...args);
 const debugWarn = (...args) => isDebugEnabled('Local') && console.warn(...args);

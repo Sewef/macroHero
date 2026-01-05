@@ -8,7 +8,6 @@ import { flushPendingChanges } from "./storage.js";
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('main') && console.log(...args);
 const debugWarn = (...args) => isDebugEnabled('main') && console.warn(...args);
 const debugError = (...args) => isDebugEnabled('main') && console.error(...args);
@@ -54,8 +53,10 @@ OBR.onReady(async () => {
 
     // Don't pre-resolve page variables here - let renderPageContent do it
     // This allows live updates as variables resolve
-    for (const page of cfg.pages || []) {
+    for (let i = 0; i < (cfg.pages || []).length; i++) {
+      const page = cfg.pages[i];
       page._resolved = {}; // Start with empty resolved set
+      page._pageIndex = i; // Store page index for later use
     }
 
     // Initialize UI immediately so it's visible even if the scene isn't ready yet.

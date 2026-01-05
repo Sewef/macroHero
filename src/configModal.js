@@ -1,12 +1,12 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
+import { isDebugEnabled } from "./debugMode.js";
 
-// Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+// Debug mode constants - use centralized debugMode module
+const debugLog = (...args) => isDebugEnabled('configModal') && console.log(...args);
+const debugWarn = (...args) => isDebugEnabled('configModal') && console.warn(...args);
+const debugError = (...args) => isDebugEnabled('configModal') && console.error(...args);
 
 let currentConfig = null;
 let currentTab = 'editor';

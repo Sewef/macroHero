@@ -7,7 +7,6 @@ import { initializeIntegrations, getIntegrationsContext } from "./commands/integ
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('expressionHelpers') && console.log(...args);
 
 /**
@@ -19,12 +18,13 @@ export function initializeExpressions(config) {
   initializeIntegrations(config);
   // Cache the context on init; reset async methods so they can be recomputed
   cachedContext = null;
-  cachedAsyncMethods = null;
+  invalidateAsyncMethodsCache();
 }
 
 // Add lightweight caching to avoid recomputing context and async method list on every evaluation
 let cachedContext = null;
 let cachedAsyncMethods = null;
+let contextInitCounter = 0; // Track context resets to invalidate cache
 
 export function getExpressionContext() {
   // Return cached context if available; integrations Manager returns a stable object per init
@@ -32,6 +32,15 @@ export function getExpressionContext() {
     cachedContext = getIntegrationsContext();
   }
   return cachedContext;
+}
+
+/**
+ * Invalidate async methods cache when context is reinitialized
+ * Called from initializeExpressions
+ */
+export function invalidateAsyncMethodsCache() {
+  cachedAsyncMethods = null;
+  contextInitCounter++;
 }
 
 /**

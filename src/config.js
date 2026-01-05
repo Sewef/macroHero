@@ -1,6 +1,5 @@
 // config.js
 import OBR from "@owlbear-rodeo/sdk";
-import { initUI } from "./ui.js";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
 import { isDebugEnabled } from "./debugMode.js";
 
@@ -9,7 +8,6 @@ export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
 export const MODAL_LABEL = "macrohero.config";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('config') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('config') && console.error(...args);
 const debugWarn = (...args) => isDebugEnabled('config') && console.warn(...args);
@@ -168,13 +166,6 @@ export async function loadConfig() {
         // Get room metadata (persists across page reloads)
         const roomMetadata = await OBR.room.getMetadata();
         debugLog("[CONFIG] Room metadata keys:", Object.keys(roomMetadata));
-        
-        // Get the player configs object from Room Metadata
-        const playerConfigs = roomMetadata[STORAGE_KEY] || {};
-        debugLog("[CONFIG] Player configs from Room Metadata:", playerConfigs);
-        
-        // Get saved local variables for this player from Room Metadata
-        const savedLocalVars = playerConfigs[playerId];
         
         // Start with full config from room-scoped localStorage.
         // If not found, try to load the bundled `src/default.json` shipped with the extension.

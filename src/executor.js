@@ -9,23 +9,30 @@ import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, get
 import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable, loadEvaluatedVariablesForPage } from "./storage.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
+import { getAsyncMethods } from "./expressionHelpers.js";
 import { isDebugEnabled } from "./debugMode.js";
 
 // ===== PERFORMANCE OPTIMIZATION =====
-const DEBUG_MODE_STATIC = false; // Static fallback for initialization phase
 const debugLog = (...args) => isDebugEnabled('executor') && console.log(...args);
 const debugWarn = (...args) => isDebugEnabled('executor') && console.warn(...args);
 const debugError = (...args) => isDebugEnabled('executor') && console.error(...args);
 
-// Cache for regex and async methods discovery
+// Cache for regex only
 const regexCache = new Map();
-const asyncMethodsCache = new Map(); // page context -> async methods list
+
+// Memory management: limit cache sizes
+const MAX_REGEX_CACHE = 300;
 
 /**
  * Get or create a regex for variable substitution (cached)
  */
 function getCachedRegex(varRef) {
   if (!regexCache.has(varRef)) {
+    // Trim cache if needed before adding new entry
+    if (regexCache.size >= MAX_REGEX_CACHE) {
+      const firstKey = regexCache.keys().next().value;
+      regexCache.delete(firstKey);
+    }
     regexCache.set(varRef, new RegExp(`\\b${varRef}\\b`, 'g'));
   }
   return regexCache.get(varRef);
@@ -35,11 +42,11 @@ function getCachedRegex(varRef) {
  * Clear regex cache if it grows too large (memory optimization)
  */
 function maintainRegexCache() {
-  if (regexCache.size > 500) {
-    // Keep only the last 250 entries
+  // Now handled in getCachedRegex with FIFO eviction
+  if (regexCache.size > MAX_REGEX_CACHE) {
     const entries = Array.from(regexCache.entries());
     regexCache.clear();
-    entries.slice(-250).forEach(([key, value]) => regexCache.set(key, value));
+    entries.slice(-Math.floor(MAX_REGEX_CACHE * 0.8)).forEach(([key, value]) => regexCache.set(key, value));
   }
 }
 
@@ -247,9 +254,6 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
     }
   }
 
-  // Maintain regex cache size
-  maintainRegexCache();
-
   return result;
 }
 
@@ -313,38 +317,9 @@ export async function executeCommand(command, page) {
     // Create execution context with resolved variables
     const context = createExecutionContext(page);
     
-    // ===== OPTIMIZATION: Cache async methods discovery =====
-    // Instead of discovering every time, use a cached set if same context structure
-    let asyncMethods = [];
-    const contextKey = Object.keys(context).sort().join('|');
-    
-    if (asyncMethodsCache.has(contextKey)) {
-      asyncMethods = asyncMethodsCache.get(contextKey);
-    } else {
-      // Dynamically discover async methods from the context
-      for (const [objectName, objectValue] of Object.entries(context)) {
-        if (typeof objectValue === 'object' && objectValue !== null) {
-          for (const [methodName, methodValue] of Object.entries(objectValue)) {
-            if (typeof methodValue === 'function') {
-              // Check if it's an async function or returns a promise
-              const methodStr = methodValue.toString();
-              if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
-                asyncMethods.push(`${objectName}.${methodName}`);
-              }
-            }
-          }
-        }
-      }
-      
-      // Cache the result
-      if (asyncMethodsCache.size > 50) {
-        // Keep only the last 25 entries to avoid memory bloat
-        const entries = Array.from(asyncMethodsCache.entries());
-        asyncMethodsCache.clear();
-        entries.slice(-25).forEach(([key, value]) => asyncMethodsCache.set(key, value));
-      }
-      asyncMethodsCache.set(contextKey, asyncMethods);
-    }
+    // ===== OPTIMIZATION: Use centralized async methods detection =====
+    // Instead of discovering each time, use expressionHelpers cache
+    const asyncMethods = getAsyncMethods();
     
     // For each async method, find all calls and wrap them with (await ...)
     for (const method of asyncMethods) {

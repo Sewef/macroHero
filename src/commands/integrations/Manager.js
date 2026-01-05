@@ -18,7 +18,6 @@ import * as GoogleSheets from "./GoogleSheets.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('Manager') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('Manager') && console.error(...args);
 const debugWarn = (...args) => isDebugEnabled('Manager') && console.warn(...args);
@@ -169,9 +168,9 @@ export function initializeIntegrations(config) {
   const gsheetConfig = config?.gsheet || config;
   
   if (gsheetConfig?.apiKey && gsheetConfig?.sheetId) {
-    debugLog("[IntegrationsManager] Initializing GSheets with config");
     manager.initializeGSheets(gsheetConfig);
-  } else {
+  } else if (config) {
+    // Only warn if config was actually provided but incomplete
     debugWarn("[IntegrationsManager] GSheets config incomplete or missing");
   }
 }

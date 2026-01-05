@@ -1,18 +1,8 @@
-/**
- * Expression Evaluator
- * Evaluates variable expressions with support for:
- * - GoogleSheets.getValue(sheet, range)
- * - Local.value(key, default)
- * - Mathematical expressions
- * - Variable substitution with {varName} syntax
- */
-
 import * as expressionHelpers from "./expressionHelpers.js";
 import * as math from "mathjs";
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugError = (...args) => isDebugEnabled('expressionEvaluator') && console.error(...args);
 
 /**
@@ -82,29 +72,10 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     // Step 3: Transform the expression to properly await async function calls
     // Replace patterns like OwlTrackers.getValue(...) with (await OwlTrackers.getValue(...))
     // This ensures the promise is awaited before any arithmetic operations
-    // ... existing code ...
-    // Step 3: Use cached async methods instead of scanning the context every time
-    const cachedAsyncMethods = expressionHelpers.getAsyncMethods();
+    // Use centralized async method detection to avoid duplication
+    const asyncMethods = expressionHelpers.getAsyncMethods();
     
     let transformed = processed;
-    
-    // Dynamically discover async methods from the context and merge with cache
-    const asyncMethodsSet = new Set(Array.isArray(cachedAsyncMethods) ? cachedAsyncMethods : []);
-    for (const [objectName, objectValue] of Object.entries(contextObj)) {
-      if (typeof objectValue === 'object' && objectValue !== null) {
-        for (const [methodName, methodValue] of Object.entries(objectValue)) {
-          if (typeof methodValue === 'function') {
-            const methodStr = methodValue.toString();
-            if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
-              asyncMethodsSet.add(`${objectName}.${methodName}`);
-            }
-          }
-        }
-      }
-    }
-    
-    // Materialize the merged list for downstream use
-    const asyncMethods = [...asyncMethodsSet];
     
     // For each async method, find all calls and wrap them with (await ...)
     for (const method of asyncMethods) {

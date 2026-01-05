@@ -6,7 +6,6 @@
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugWarn = (...args) => isDebugEnabled('parser') && console.warn(...args);
 
 /**

@@ -9,7 +9,6 @@ import { ensureOBRReady } from "./config.js";
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('storage') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('storage') && console.error(...args);
 
@@ -38,22 +37,6 @@ async function getRoomScopedEvaluatedVarsKey() {
     roomIdCache = `macroHero_evaluatedVariables_${roomId}`;
   }
   return roomIdCache;
-}
-
-/**
- * Get room-scoped key for storing full config
- */
-async function getRoomScopedConfigKey() {
-  if (!roomIdCache) {
-    await ensureOBRReady();
-    const roomId = (window.OBR && OBR.room && OBR.room.id)
-      ? OBR.room.id
-      : (OBR.room && typeof OBR.room.getId === 'function' 
-        ? await OBR.room.getId() 
-        : 'unknown');
-    roomIdCache = `macroHero_evaluatedVariables_${roomId}`;
-  }
-  return `com.sewef.macrohero/fullConfig/${roomIdCache.split('_')[roomIdCache.split('_').length - 1]}`;
 }
 
 /**

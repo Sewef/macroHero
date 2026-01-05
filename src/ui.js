@@ -6,7 +6,6 @@
 import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
 const debugWarn = (...args) => isDebugEnabled('ui') && console.warn(...args);
 const debugError = (...args) => isDebugEnabled('ui') && console.error(...args);
@@ -86,6 +85,8 @@ function renderPageButtons() {
     btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
     btn.addEventListener('click', () => {
       currentPage = index;
+      // Ensure page has pageIndex set
+      if (!p._pageIndex) p._pageIndex = index;
       renderPageButtons();
       renderPageContent(p);
     });

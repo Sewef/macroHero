@@ -3,7 +3,6 @@ import { getAttachmentsWithMetadata } from "../tokenAttachments.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('ColoredRings') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('ColoredRings') && console.error(...args);
 const debugWarn = (...args) => isDebugEnabled('ColoredRings') && console.warn(...args);

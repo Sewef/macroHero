@@ -4,11 +4,9 @@
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import * as ConditionsMarkers from "./integrations/ConditionsMarkers.js";
 import { isDebugEnabled } from "../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE_STATIC = false;
 const debugLog = (...args) => isDebugEnabled('tokenAttachments') && console.log(...args);
 const debugError = (...args) => isDebugEnabled('tokenAttachments') && console.error(...args);
 const debugWarn = (...args) => isDebugEnabled('tokenAttachments') && console.warn(...args);
@@ -117,14 +115,15 @@ export async function setAttachmentsVisible(attachmentIds, visible) {
 }
 
 /**
- * Get condition markers on a token
+ * Get condition marker attachments on a token
  * Delegates to ConditionsMarkers integration
  * @param {string} tokenId - Token ID
  * @param {Array} allItems - All scene items (optional)
  * @returns {Promise<Array>} Array of condition marker attachments
  */
 export async function getConditionMarkers(tokenId, allItems = null) {
-  return ConditionsMarkers.getConditionMarkerAttachments(tokenId, allItems);
+  // Use the generic getAttachmentsWithMetadata pattern for condition markers
+  return getAttachmentsWithMetadata(tokenId, "com.conditions-markers/conditions", allItems);
 }
 
 /**
