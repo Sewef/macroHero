@@ -1,4 +1,11 @@
 import OBR from "@owlbear-rodeo/sdk";
+import { isDebugEnabled } from "../debugMode.js";
+
+// Debug mode constants
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('sceneMetadata') && console.log(...args);
+const debugError = (...args) => isDebugEnabled('sceneMetadata') && console.error(...args);
+const debugWarn = (...args) => isDebugEnabled('sceneMetadata') && console.warn(...args);
 
 /**
  * Get all scene metadata

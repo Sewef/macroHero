@@ -2,16 +2,17 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { initUI } from "./ui.js";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
+import { isDebugEnabled } from "./debugMode.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
 export const MODAL_LABEL = "macrohero.config";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('config') && console.log(...args);
+const debugError = (...args) => isDebugEnabled('config') && console.error(...args);
+const debugWarn = (...args) => isDebugEnabled('config') && console.warn(...args);
 
 let isOBRReady = false;
 let currentPlayerId = null;

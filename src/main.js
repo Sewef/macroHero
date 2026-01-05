@@ -5,12 +5,13 @@ import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
 import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { flushPendingChanges } from "./storage.js";
+import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('main') && console.log(...args);
+const debugWarn = (...args) => isDebugEnabled('main') && console.warn(...args);
+const debugError = (...args) => isDebugEnabled('main') && console.error(...args);
 
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;

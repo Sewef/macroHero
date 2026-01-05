@@ -1748,6 +1748,246 @@ async function applyTokensFiltersAndRender() {
 
 // Tab click handlers will be attached when the modal is ready (inside OBR.onReady)
 
+// Debug Mode Management
+const DEBUG_MODULES_BY_CATEGORY = {
+  'Core Modules': [
+    'executor',
+    'expressionEvaluator',
+    'expressionHelpers',
+    'ui',
+    'storage',
+    'parser',
+    'main',
+    'config',
+    'configModal'
+  ],
+  'Command Modules': [
+    'playerMetadata',
+    'sceneMetadata',
+    'tokenMetadata',
+    'tokenAttachments'
+  ],
+  'Integration Modules': [
+    'GoogleSheets',
+    'Local',
+    'ConditionsMarkers',
+    'OwlTrackers',
+    'StatBubbles',
+    'ColoredRings',
+    'JustDices',
+    'PrettySordid',
+    'Manager'
+  ]
+};
+
+/**
+ * Load debug mode states from localStorage
+ * @returns {Object} Object mapping module names to boolean debug states
+ */
+function loadDebugModes() {
+  const stored = localStorage.getItem('macroHero_debugMode');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      debugError('Failed to parse debug modes from localStorage:', e);
+      return {};
+    }
+  }
+  return {};
+}
+
+/**
+ * Save debug mode states to localStorage
+ * @param {Object} debugModes - Object mapping module names to boolean debug states
+ */
+function saveDebugModesToStorage(debugModes) {
+  try {
+    localStorage.setItem('macroHero_debugMode', JSON.stringify(debugModes));
+    debugLog('Debug modes saved to localStorage:', debugModes);
+  } catch (e) {
+    debugError('Failed to save debug modes to localStorage:', e);
+  }
+}
+
+/**
+ * Broadcast debug mode changes via OBR local message
+ * @param {Object} debugModes - Object mapping module names to boolean debug states
+ */
+async function broadcastDebugModes(debugModes) {
+  try {
+    await OBR.broadcast.sendMessage('macrohero.debug.modes', debugModes, { destination: 'LOCAL' });
+    debugLog('Debug modes broadcasted locally:', debugModes);
+  } catch (err) {
+    debugWarn('Failed to broadcast debug modes:', err);
+  }
+}
+
+/**
+ * Initialize debug mode UI by rendering checkboxes for each module organized by categories
+ */
+function initializeDebugModeUI() {
+  const container = document.getElementById('debugModulesContainer');
+  if (!container) return;
+
+  const debugModes = loadDebugModes();
+  container.innerHTML = '';
+
+  // Iterate through categories
+  Object.entries(DEBUG_MODULES_BY_CATEGORY).forEach(([categoryName, modules]) => {
+    // Create category container
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'debug-category';
+
+    // Create category header with checkbox to select all in category
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'debug-category-header';
+    
+    const categoryCheckbox = document.createElement('input');
+    categoryCheckbox.type = 'checkbox';
+    categoryCheckbox.className = 'debug-category-checkbox';
+    categoryCheckbox.id = `debug-category-${categoryName}`;
+    
+    // Check if all modules in category are enabled
+    const allEnabled = modules.every(m => debugModes[m]);
+    const someEnabled = modules.some(m => debugModes[m]);
+    categoryCheckbox.checked = allEnabled;
+    categoryCheckbox.indeterminate = someEnabled && !allEnabled;
+
+    const categoryLabel = document.createElement('label');
+    categoryLabel.className = 'debug-category-title';
+    categoryLabel.htmlFor = `debug-category-${categoryName}`;
+    categoryLabel.textContent = categoryName;
+    categoryLabel.style.cursor = 'pointer';
+
+    categoryHeader.appendChild(categoryCheckbox);
+    categoryHeader.appendChild(categoryLabel);
+
+    // Category header click handler (for label/entire header except checkbox)
+    categoryHeader.addEventListener('click', async (e) => {
+      if (e.target === categoryCheckbox) return; // Let checkbox handle itself
+      // Toggle checkbox and call change event
+      categoryCheckbox.checked = !categoryCheckbox.checked;
+      // Dispatch change event to trigger the change listener
+      const changeEvent = new Event('change', { bubbles: true });
+      categoryCheckbox.dispatchEvent(changeEvent);
+    });
+
+    // Category checkbox change handler
+    categoryCheckbox.addEventListener('change', async (e) => {
+      await updateCategoryModules(categoryName, modules, categoryCheckbox.checked);
+    });
+
+    // Create modules container
+    const modulesContainer = document.createElement('div');
+    modulesContainer.className = 'debug-category-modules';
+
+    // Add modules to category
+    modules.forEach(moduleName => {
+      const isEnabled = debugModes[moduleName] || false;
+      
+      const item = document.createElement('div');
+      item.className = 'debug-module-item';
+      item.innerHTML = `
+        <input 
+          type="checkbox" 
+          id="debug-${moduleName}" 
+          class="debug-checkbox"
+          ${isEnabled ? 'checked' : ''}
+          data-module="${moduleName}"
+          data-category="${categoryName}"
+        />
+        <label class="debug-module-label" for="debug-${moduleName}">${moduleName}</label>
+      `;
+
+      modulesContainer.appendChild(item);
+
+      // Make entire item clickable for checkbox
+      item.addEventListener('click', async (e) => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (e.target === checkbox) return; // Let checkbox handle itself
+        checkbox.checked = !checkbox.checked;
+        await handleModuleToggle(moduleName, checkbox.checked, categoryName, categoryCheckbox, modules);
+      });
+
+      // Add event listener for checkbox changes
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', async (e) => {
+        await handleModuleToggle(moduleName, e.target.checked, categoryName, categoryCheckbox, modules);
+      });
+    });
+
+    categoryDiv.appendChild(categoryHeader);
+    categoryDiv.appendChild(modulesContainer);
+    container.appendChild(categoryDiv);
+  });
+}
+
+/**
+ * Handle toggling a single module and updating category checkbox state
+ */
+async function handleModuleToggle(moduleName, isChecked, categoryName, categoryCheckbox, categoryModules) {
+  const updatedModes = loadDebugModes();
+  updatedModes[moduleName] = isChecked;
+  
+  // Save to localStorage
+  saveDebugModesToStorage(updatedModes);
+  
+  // Broadcast changes
+  await broadcastDebugModes(updatedModes);
+  
+  // Update category checkbox state based on current module states
+  const allEnabled = categoryModules.every(m => updatedModes[m]);
+  const someEnabled = categoryModules.some(m => updatedModes[m]);
+  
+  // Temporarily remove change listener to avoid recursion
+  const oldChangeHandler = categoryCheckbox.onchange;
+  categoryCheckbox.onchange = null;
+  
+  categoryCheckbox.checked = allEnabled;
+  categoryCheckbox.indeterminate = someEnabled && !allEnabled;
+  
+  // Restore change listener
+  categoryCheckbox.onchange = oldChangeHandler;
+  
+  debugLog(`Debug mode toggled for ${moduleName}:`, isChecked);
+}
+
+/**
+ * Handle toggling all modules in a category
+ */
+async function updateCategoryModules(categoryName, modules, isChecked) {
+  const updatedModes = loadDebugModes();
+  
+  // Update all modules in category
+  modules.forEach(moduleName => {
+    updatedModes[moduleName] = isChecked;
+  });
+  
+  // Save to localStorage
+  saveDebugModesToStorage(updatedModes);
+  
+  // Broadcast changes
+  await broadcastDebugModes(updatedModes);
+  
+  // Update visual checkboxes in DOM for each module in this category
+  modules.forEach(moduleName => {
+    const checkbox = document.getElementById(`debug-${moduleName}`);
+    if (checkbox) {
+      checkbox.checked = isChecked;
+    }
+  });
+  
+  // Ensure category checkbox state is correct (should be fully checked after this operation)
+  const categoryCheckbox = document.getElementById(`debug-category-${categoryName}`);
+  if (categoryCheckbox) {
+    categoryCheckbox.checked = isChecked;
+    categoryCheckbox.indeterminate = false;
+  }
+  
+  debugLog(`Debug category '${categoryName}' toggled to:`, isChecked);
+}
+
 // Sync from JSON button
 document.getElementById("syncFromJson").onclick = syncFromJson;
 
@@ -1903,6 +2143,10 @@ OBR.onReady(() => {
       if (_tokensSearchEl) _tokensSearchEl.addEventListener('input', debounce(() => applyTokensFiltersAndRender(), 220));
       if (_tokensFilterEl) _tokensFilterEl.addEventListener('change', () => applyTokensFiltersAndRender());
       if (_tokensRefreshBtn) _tokensRefreshBtn.addEventListener('click', () => refreshTokenHelper());
+    
+    // Initialize Debug Mode UI
+    initializeDebugModeUI();
+    
     // No delegated fallback — explicit handlers above are sufficient and less intrusive.
     // Ensure initial tab state
     switchTab(currentTab);

@@ -9,12 +9,13 @@ import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, get
 import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable, loadEvaluatedVariablesForPage } from "./storage.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
+import { isDebugEnabled } from "./debugMode.js";
 
 // ===== PERFORMANCE OPTIMIZATION =====
-const DEBUG_MODE = false; // Set to true for debugging, false for production
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const DEBUG_MODE_STATIC = false; // Static fallback for initialization phase
+const debugLog = (...args) => isDebugEnabled('executor') && console.log(...args);
+const debugWarn = (...args) => isDebugEnabled('executor') && console.warn(...args);
+const debugError = (...args) => isDebugEnabled('executor') && console.error(...args);
 
 // Cache for regex and async methods discovery
 const regexCache = new Map();

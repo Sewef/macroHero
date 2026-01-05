@@ -3,9 +3,11 @@
  * Handles parsing, tokenizing, and validating expressions and commands
  */
 
+import { isDebugEnabled } from "./debugMode.js";
+
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugWarn = (...args) => isDebugEnabled('parser') && console.warn(...args);
 
 /**
  * Tokenize an expression into meaningful parts

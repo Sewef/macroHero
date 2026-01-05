@@ -9,10 +9,11 @@
 
 import * as expressionHelpers from "./expressionHelpers.js";
 import * as math from "mathjs";
+import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugError = (...args) => isDebugEnabled('expressionEvaluator') && console.error(...args);
 
 /**
  * Evaluate a variable expression

@@ -1,11 +1,12 @@
 import OBR, { buildShape } from "@owlbear-rodeo/sdk";
 import { getAttachmentsWithMetadata } from "../tokenAttachments.js";
+import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('ColoredRings') && console.log(...args);
+const debugError = (...args) => isDebugEnabled('ColoredRings') && console.error(...args);
+const debugWarn = (...args) => isDebugEnabled('ColoredRings') && console.warn(...args);
 
 const COLORED_RINGS_METADATA_KEY = "rodeo.owlbear.colored-rings/metadata";
 

@@ -6,11 +6,12 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { ensureOBRReady } from "./config.js";
+import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('storage') && console.log(...args);
+const debugError = (...args) => isDebugEnabled('storage') && console.error(...args);
 
 // Cache for room ID to avoid repeated lookups
 let roomIdCache = null;

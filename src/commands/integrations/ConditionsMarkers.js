@@ -4,12 +4,13 @@
  */
 
 import OBR from "@owlbear-rodeo/sdk";
+import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
-const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
-const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const DEBUG_MODE_STATIC = false;
+const debugLog = (...args) => isDebugEnabled('ConditionsMarkers') && console.log(...args);
+const debugError = (...args) => isDebugEnabled('ConditionsMarkers') && console.error(...args);
+const debugWarn = (...args) => isDebugEnabled('ConditionsMarkers') && console.warn(...args);
 
 /**
  * Get conditions applied to an item
