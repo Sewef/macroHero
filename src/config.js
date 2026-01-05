@@ -1,26 +1,7 @@
 // config.js
 import OBR from "@owlbear-rodeo/sdk";
 import { initUI } from "./ui.js";
-
-// --- Evaluated variable helpers (from executor.js) ---
-async function getRoomScopedEvaluatedVarsKey() {
-    await ensureOBRReady();
-    const roomId = (window.OBR && OBR.room && OBR.room.id) ? OBR.room.id : (OBR.room && typeof OBR.room.getId === 'function' ? await OBR.room.getId() : 'unknown');
-    return `macroHero_evaluatedVariables_${roomId}`;
-}
-async function loadEvaluatedVariables() {
-    const key = await getRoomScopedEvaluatedVarsKey();
-    try {
-        const json = localStorage.getItem(key);
-        return json ? JSON.parse(json) : {};
-    } catch {
-        return {};
-    }
-}
-async function loadEvaluatedVariablesForPage(pageIndex) {
-    const allVars = await loadEvaluatedVariables();
-    return allVars[pageIndex] || {};
-}
+import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
@@ -225,7 +206,10 @@ export async function loadConfig() {
             }
         }
         
-        // Instead of merging from room metadata, merge evaluated values from localStorage only
+// Instead of merging from room metadata, merge evaluated values from localStorage only
+        // Load all variables once at startup (more efficient than loading per-page)
+        await loadAllEvaluatedVariables();
+        
         for (let i = 0; i < (config.pages?.length || 0); i++) {
             const evalVars = await loadEvaluatedVariablesForPage(i);
             if (config.pages[i]?.variables && evalVars) {

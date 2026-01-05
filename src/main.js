@@ -4,9 +4,15 @@ import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./u
 import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
 import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
+import { flushPendingChanges } from "./storage.js";
 
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;
+
+// Ensure pending localStorage changes are saved before page unloads
+window.addEventListener('beforeunload', async () => {
+  await flushPendingChanges();
+});
 
 // Chargement initial
 OBR.onReady(async () => {

@@ -7,67 +7,7 @@ import * as math from "mathjs";
 import * as parser from "./parser.js";
 import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, getDependentVariables } from "./expressionEvaluator.js";
 import { updateRenderedValue } from "./ui.js";
-import OBR from "@owlbear-rodeo/sdk";
-import { ensureOBRReady } from "./config.js";
-// --- LocalStorage helpers for evaluated variables ---
-let evaluatedVarsKeyCache = null;
-let evaluatedVarsCache = null;
-let evaluatedVarsSaveTimer = null;
-
-async function getRoomScopedEvaluatedVarsKey() {
-  await ensureOBRReady();
-  if (evaluatedVarsKeyCache) return evaluatedVarsKeyCache;
-  const roomId = (window.OBR && OBR.room && OBR.room.id)
-    ? OBR.room.id
-    : (OBR.room && typeof OBR.room.getId === "function" ? await OBR.room.getId() : "unknown");
-  evaluatedVarsKeyCache = `macroHero_evaluatedVariables_${roomId}`;
-  return evaluatedVarsKeyCache;
-}
-
-async function loadEvaluatedVariables() {
-  const key = await getRoomScopedEvaluatedVarsKey();
-  // Use in-memory cache if present
-  if (evaluatedVarsCache) return evaluatedVarsCache;
-  try {
-    const json = localStorage.getItem(key);
-    evaluatedVarsCache = json ? JSON.parse(json) : {};
-    return evaluatedVarsCache;
-  } catch {
-    evaluatedVarsCache = {};
-    return evaluatedVarsCache;
-  }
-}
-
-async function saveEvaluatedVariable(pageIndex, varName, value) {
-  const key = await getRoomScopedEvaluatedVarsKey();
-
-  if (!evaluatedVarsCache) {
-    // Prime cache from localStorage
-    try {
-      evaluatedVarsCache = localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)) : {};
-    } catch {
-      evaluatedVarsCache = {};
-    }
-  }
-
-  if (!evaluatedVarsCache[pageIndex]) evaluatedVarsCache[pageIndex] = {};
-  evaluatedVarsCache[pageIndex][varName] = value;
-
-  // Debounce writes to localStorage to coalesce frequent updates
-  if (evaluatedVarsSaveTimer) clearTimeout(evaluatedVarsSaveTimer);
-  evaluatedVarsSaveTimer = setTimeout(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(evaluatedVarsCache));
-    } catch {
-      // swallow write errors to avoid breaking the UI loop
-    }
-  }, 100);
-}
-
-async function loadEvaluatedVariablesForPage(pageIndex) {
-  const allVars = await loadEvaluatedVariables();
-  return allVars[pageIndex] || {};
-}
+import { updateEvaluatedVariable, loadEvaluatedVariablesForPage } from "./storage.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
 
 /**
@@ -118,12 +58,12 @@ function createExecutionContext(page) {
       variable.expression = newValue; // Keep variable.expression in sync
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);
-      await saveEvaluatedVariable(pageIndex, varName, newValue);
+      await updateEvaluatedVariable(pageIndex, varName, newValue);
       // Trigger UI update for Input/Value items
       if (typeof updateRenderedValue === 'function') {
         updateRenderedValue(varName, newValue);
       }
-      console.log(`[setValue] ${varName} = ${newValue} (persisted in localStorage)`);
+      console.log(`[setValue] ${varName} = ${newValue} (queued for localStorage persistence)`);
       return newValue;
     },
     addValue: async (varName, delta) => {
@@ -142,12 +82,12 @@ function createExecutionContext(page) {
       variable.expression = newValue; // Keep variable.expression in sync
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);
-      await saveEvaluatedVariable(pageIndex, varName, newValue);
+      await updateEvaluatedVariable(pageIndex, varName, newValue);
       // Trigger UI update for Input/Value items
       if (typeof updateRenderedValue === 'function') {
         updateRenderedValue(varName, newValue);
       }
-      console.log(`[addValue] ${varName} += ${delta} => ${newValue} (persisted in localStorage)`);
+      console.log(`[addValue] ${varName} += ${delta} => ${newValue} (queued for localStorage persistence)`);
       return newValue;
     },
   };
