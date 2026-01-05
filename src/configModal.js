@@ -2,6 +2,12 @@ import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
 let currentConfig = null;
 let currentTab = 'editor';
 let editingPageIndex = null;
@@ -165,31 +171,31 @@ async function closeModal(data) {
           } else {
             await OBR.broadcast.sendMessage("macrohero.config.result", data);
           }
-          console.log(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
+          debugLog(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
           sent = true;
           break;
         } catch (err) {
           // Log detailed info for debugging
           try {
-            console.warn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
+            debugWarn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
           } catch (logErr) {
-            console.warn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
+            debugWarn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
           }
         }
       }
 
       if (!sent) {
-        console.error('[MODAL] ERROR: All attempts to broadcast config.result failed');
+        debugError('[MODAL] ERROR: All attempts to broadcast config.result failed');
       }
     }
   } catch (err) {
-    console.error("[MODAL] Unexpected error while broadcasting config result:", err);
+    debugError("[MODAL] Unexpected error while broadcasting config result:", err);
   }
 
   try {
     await OBR.modal.close(MODAL_LABEL);
   } catch (err) {
-    console.warn("[MODAL] Warning: modal.close failed:", err);
+    debugWarn("[MODAL] Warning: modal.close failed:", err);
   }
 }
 
@@ -1376,12 +1382,12 @@ async function getCurrentUserId() {
     if (OBR && OBR.player) {
       if (OBR.player.id) {
         _tokenHelperMeId = OBR.player.id;
-        console.log('[TOKEN_HELPER] detected current user via OBR.player.id:', _tokenHelperMeId);
+        debugLog('[TOKEN_HELPER] detected current user via OBR.player.id:', _tokenHelperMeId);
         return _tokenHelperMeId;
       }
     }
   } catch (err) {
-    console.warn('[TOKEN_HELPER] getCurrentUserId unexpected error:', err);
+    debugWarn('[TOKEN_HELPER] getCurrentUserId unexpected error:', err);
   }
 
   return null;
@@ -1402,7 +1408,7 @@ async function fetchSceneItemsForTokenHelper() {
     _tokenHelperCache = Array.isArray(items) ? items : [];
     return _tokenHelperCache;
   } catch (err) {
-    console.error('[TOKEN_HELPER] Error fetching scene items:', err);
+    debugError('[TOKEN_HELPER] Error fetching scene items:', err);
     _tokenHelperCache = [];
     throw err;
   }
@@ -1460,9 +1466,9 @@ async function copyToClipboard(text) {
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     if (ok) return;
-    console.warn('[TOKEN_HELPER] document.execCommand returned false');
+    debugWarn('[TOKEN_HELPER] document.execCommand returned false');
   } catch (err) {
-    console.warn('[TOKEN_HELPER] execCommand fallback failed:', err);
+    debugWarn('[TOKEN_HELPER] execCommand fallback failed:', err);
   }
 
   // Last resort: show a prompt with the text so the user can copy manually
@@ -1470,7 +1476,7 @@ async function copyToClipboard(text) {
     window.prompt('Copy the ID (Ctrl/Cmd+C then Enter):', text);
     return;
   } catch (err) {
-    console.warn('[TOKEN_HELPER] prompt fallback failed:', err);
+    debugWarn('[TOKEN_HELPER] prompt fallback failed:', err);
   }
 
   throw new Error('Copy to clipboard failed (all fallbacks)');
@@ -1612,7 +1618,7 @@ function renderTokenHelperList(items) {
           copyBtn.textContent = 'Copied';
           setTimeout(() => { copyBtn.textContent = original; }, 1200);
         } catch (err) {
-          console.warn('[TOKEN_HELPER] copy failed:', err);
+          debugWarn('[TOKEN_HELPER] copy failed:', err);
           // copyToClipboard already used prompt fallback - inform user in status
           const s = document.getElementById('tokensStatus');
           if (s) s.textContent = 'Copy failed — please copy the ID from the prompt or manually.';
@@ -1710,9 +1716,9 @@ async function applyTokensFiltersAndRender() {
     // Diagnostics: log total and some creator ids
     try {
       const creators = Array.from(new Set(items.map(it => it.createdUserId).filter(Boolean)));
-      console.log('[TOKEN_HELPER] applyFilters', { filter, me: _tokenHelperMeId, total: items.length, creators: creators.slice(0, 20) });
+      debugLog('[TOKEN_HELPER] applyFilters', { filter, me: _tokenHelperMeId, total: items.length, creators: creators.slice(0, 20) });
     } catch (err) {
-      console.warn('[TOKEN_HELPER] diagnostics failure', err);
+      debugWarn('[TOKEN_HELPER] diagnostics failure', err);
     }
 
     // Use a robust getter for creator id to handle different possible shapes
@@ -1736,7 +1742,7 @@ async function applyTokensFiltersAndRender() {
 
     renderTokenHelperList(items);
   } catch (err) {
-    console.error('[TOKEN_HELPER] Filter/render failed:', err);
+    debugError('[TOKEN_HELPER] Filter/render failed:', err);
   }
 }
 
@@ -1747,7 +1753,7 @@ document.getElementById("syncFromJson").onclick = syncFromJson;
 
 // Cancel
 document.getElementById("cancelBtn").onclick = () => {
-  console.log("Cancel clicked");
+  debugLog("Cancel clicked");
   closeModal()
 };
 
@@ -1756,7 +1762,7 @@ document.getElementById("saveBtn").onclick = async () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const sheetIdInput = document.getElementById("sheetIdInput");
   
-  console.log("Save clicked, validating...");
+  debugLog("Save clicked, validating...");
 
   try {
     let config;
@@ -1769,7 +1775,7 @@ document.getElementById("saveBtn").onclick = async () => {
       config = buildConfigFromEditor();
     }
     
-    console.log("✓ Config built successfully:", config);
+    debugLog("✓ Config built successfully:", config);
     
     // Validate structure
     if (!config.global || !Array.isArray(config.pages)) {
@@ -1824,15 +1830,15 @@ document.getElementById("saveBtn").onclick = async () => {
     // Persist full config to room-scoped localStorage (modal context)
     try {
       await saveConfigToLocalStorage(config);
-      console.log("✓ Config saved to room-scoped localStorage by modal");
+      debugLog("✓ Config saved to room-scoped localStorage by modal");
     } catch (err) {
-      console.warn("[MODAL] Failed to save full config to localStorage:", err);
+      debugWarn("[MODAL] Failed to save full config to localStorage:", err);
     }
 
-    console.log("✓ Config valid, notifying main app to reload from storage...");
+    debugLog("✓ Config valid, notifying main app to reload from storage...");
     await closeModal({ savedFromModal: true, gsheetUpdated: true });
   } catch (e) {
-    console.error("✗ Validation error:", e);
+    debugError("✗ Validation error:", e);
     alert("Error: " + e.message);
   }
 };
@@ -1854,7 +1860,7 @@ function maskSensitiveData(str, visibleChars = 4) {
 }
 
 OBR.onReady(() => {
-  console.log("=== Config Modal Ready ===");
+  debugLog("=== Config Modal Ready ===");
   
   // Load Google Sheets credentials from localStorage
   const { apiKey, sheetId } = getGoogleSheetsCredentials();
@@ -1877,7 +1883,7 @@ OBR.onReady(() => {
   
   // Load current config
   loadConfig().then(cfg => {
-    console.log("Modal loaded current config:", cfg);
+    debugLog("Modal loaded current config:", cfg);
     currentConfig = cfg;
     renderEditor(cfg);
     document.getElementById("cfgArea").value = JSON.stringify(cfg, null, 2);
@@ -1901,13 +1907,13 @@ OBR.onReady(() => {
     // Ensure initial tab state
     switchTab(currentTab);
   }).catch(error => {
-    console.error("Error loading config in modal:", error);
+    debugError("Error loading config in modal:", error);
   });
   
   // --- Token Helper Init ---
   try {
     refreshTokenHelper();
   } catch (err) {
-    console.error('[TOKEN_HELPER] Init error:', err);
+    debugError('[TOKEN_HELPER] Init error:', err);
   }
 });

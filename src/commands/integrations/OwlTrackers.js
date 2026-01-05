@@ -5,6 +5,12 @@ import {
   getTokenMetadataValue
 } from "../tokenMetadata.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 
 /**
@@ -22,11 +28,11 @@ export async function getValue(tokenId, trackerName) {
   try {
     const value = await getMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName);
     if (value === null) {
-      console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+      debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
     }
     return value;
   } catch (error) {
-    console.error(`[OwlTrackers] Failed to get tracker "${trackerName}" value from token ${tokenId}:`, error.message);
+    debugError(`[OwlTrackers] Failed to get tracker "${trackerName}" value from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -41,19 +47,19 @@ export async function getMax(tokenId, trackerName) {
   try {
     const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
     if (!Array.isArray(trackers)) {
-      console.warn(`[OwlTrackers] No trackers found on token ${tokenId}`);
+      debugWarn(`[OwlTrackers] No trackers found on token ${tokenId}`);
       return null;
     }
     
     const tracker = trackers.find(t => t.name === trackerName);
     if (!tracker) {
-      console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+      debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
       return null;
     }
     
     return tracker.max ?? null;
   } catch (error) {
-    console.error(`[OwlTrackers] Failed to get tracker "${trackerName}" max from token ${tokenId}:`, error.message);
+    debugError(`[OwlTrackers] Failed to get tracker "${trackerName}" max from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -77,19 +83,19 @@ export async function setValue(tokenId, trackerName, value) {
  * @returns {Promise<void>}
  */
 export async function addValue(tokenId, trackerName, delta = 1) {
-  console.log(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
+  debugLog(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
   const currentValue = await getValue(tokenId, trackerName);
-  console.log(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
+  debugLog(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
   
   if (currentValue === null) {
-    console.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
+    debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
     return;
   }
   
   const newValue = currentValue + Number(delta);
-  console.log(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
+  debugLog(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
   await setValue(tokenId, trackerName, newValue);
-  console.log(`[OwlTrackers.addValue] Complete`);
+  debugLog(`[OwlTrackers.addValue] Complete`);
 }
 
 export default {

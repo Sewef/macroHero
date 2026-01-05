@@ -6,6 +6,12 @@
 import OBR from "@owlbear-rodeo/sdk";
 import * as ConditionsMarkers from "./integrations/ConditionsMarkers.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 /**
  * Get all attachments for a token
  * @param {string} tokenId - Token ID
@@ -16,10 +22,10 @@ export async function getTokenAttachments(tokenId, allItems = null) {
   try {
     const items = allItems || await OBR.scene.items.getItems();
     const attachments = items.filter(item => item.attachedTo === tokenId);
-    console.log(`[TokenAttachments] Found ${attachments.length} attachments for token ${tokenId}`);
+    debugLog(`[TokenAttachments] Found ${attachments.length} attachments for token ${tokenId}`);
     return attachments;
   } catch (error) {
-    console.error("[TokenAttachments] Error fetching attachments:", error);
+    debugError("[TokenAttachments] Error fetching attachments:", error);
     return [];
   }
 }
@@ -85,9 +91,9 @@ export async function setAttachmentVisible(attachmentId, visible) {
         item.visible = visible;
       });
     });
-    console.log(`[TokenAttachments] Set attachment ${attachmentId} visible to ${visible}`);
+    debugLog(`[TokenAttachments] Set attachment ${attachmentId} visible to ${visible}`);
   } catch (error) {
-    console.error("[TokenAttachments] Error setting visibility:", error);
+    debugError("[TokenAttachments] Error setting visibility:", error);
   }
 }
 
@@ -103,9 +109,9 @@ export async function setAttachmentsVisible(attachmentIds, visible) {
         item.visible = visible;
       });
     });
-    console.log(`[TokenAttachments] Set ${attachmentIds.length} attachments visible to ${visible}`);
+    debugLog(`[TokenAttachments] Set ${attachmentIds.length} attachments visible to ${visible}`);
   } catch (error) {
-    console.error("[TokenAttachments] Error setting visibility:", error);
+    debugError("[TokenAttachments] Error setting visibility:", error);
   }
 }
 

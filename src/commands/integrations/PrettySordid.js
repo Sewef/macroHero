@@ -1,5 +1,11 @@
 import OBR from "@owlbear-rodeo/sdk";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 const METADATA_KEY = "com.pretty-initiative/metadata";
 
 /**
@@ -14,7 +20,7 @@ async function _ensureItem(itemOrId) {
       const items = await OBR.scene.items.getItems([itemOrId]);
       return items && items.length ? items[0] : null;
     } catch (err) {
-      console.error('[PrettySordid] Error fetching item by id', itemOrId, err);
+      debugError('[PrettySordid] Error fetching item by id', itemOrId, err);
       return null;
     }
   }
@@ -28,7 +34,7 @@ export function hasInitiative(itemOrId) {
     if (!item) return false; // for a sync check we need the object
     return item.metadata && item.metadata[METADATA_KEY] !== undefined;
   } catch (err) {
-    console.warn('[PrettySordid] hasInitiative error', err);
+    debugWarn('[PrettySordid] hasInitiative error', err);
     return false;
   }
 }

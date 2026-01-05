@@ -3,6 +3,12 @@
  * Handles rendering and updating the user interface
  */
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
 let config = null;
 let currentPage = null;
 let globalVariables = {}; // Store global variables for use in button clicks
@@ -34,7 +40,7 @@ function showLoadingOverlay() {
     const content = document.getElementById('content');
     if (loader) loader.classList.remove('hidden');
     if (content) content.classList.add('hidden');
-  } catch (e) { console.warn('[UI] Failed to show loading overlay', e); }
+  } catch (e) { debugWarn('[UI] Failed to show loading overlay', e); }
 }
 
 // Hide the loading overlay and show the main content
@@ -44,7 +50,7 @@ function hideLoadingOverlay() {
     const content = document.getElementById('content');
     if (loader) loader.classList.add('hidden');
     if (content) content.classList.remove('hidden');
-  } catch (e) { console.warn('[UI] Failed to hide loading overlay', e); }
+  } catch (e) { debugWarn('[UI] Failed to hide loading overlay', e); }
 }
 
 /**
@@ -53,7 +59,7 @@ function hideLoadingOverlay() {
  */
 export function setGlobalVariables(vars) {
   globalVariables = vars;
-  console.log("[UI] Global variables stored:", globalVariables);
+  debugLog("[UI] Global variables stored:", globalVariables);
 }
 
 // ============================================
@@ -207,10 +213,10 @@ export function updateRenderedValue(varName, value) {
         const resolvedVars = { ...globalVariables, ...(entry.page?._resolved || {}) };
         evaluateItemText(entry.item, resolvedVars)
           .then(res => { entry.element.textContent = res; })
-          .catch(err => console.error('[UI] Error evaluating layout expression:', err));
+          .catch(err => debugError('[UI] Error evaluating layout expression:', err));
       }
     } catch (err) {
-      console.error('[UI] Error updating expression element:', err);
+      debugError('[UI] Error updating expression element:', err);
     }
   }
 }
@@ -321,7 +327,7 @@ function evaluateAndSetElementText(element, item, page) {
   const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
   evaluateItemText(item, resolvedVars)
     .then(res => { element.textContent = res; })
-    .catch(err => { console.error('[UI] Error evaluating element text:', err); });
+    .catch(err => { debugError('[UI] Error evaluating element text:', err); });
   
   return true;
 }
@@ -401,7 +407,7 @@ function renderLayoutElement(layoutItem, page) {
       return renderDivider();
     
     default:
-      console.warn("Unknown layout type:", layoutItem.type);
+      debugWarn("Unknown layout type:", layoutItem.type);
       return null;
   }
 }
@@ -497,7 +503,7 @@ function renderButton(item, page) {
     const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
     evaluateItemText(item, resolvedVars)
       .then(res => { btn.textContent = res; })
-      .catch(err => { console.error('[UI] Error evaluating button:', err); });
+      .catch(err => { debugError('[UI] Error evaluating button:', err); });
   } else {
     btn.textContent = item.label ?? "Button";
   }
@@ -526,18 +532,18 @@ function renderButton(item, page) {
         await handleButtonClick(item.commands, pageObj, globalVariables, onVariableResolved);
         
         // Auto-save config after commands that may have modified variables
-        await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config after button:", err));
+        await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config after button:", err));
         
         // No need to re-render the entire page - individual values were updated via callback
       } catch (error) {
-        console.error("Button action error:", error);
+        debugError("Button action error:", error);
       } finally {
         btn.disabled = false;
         // Restore button text using the generic evaluation
         const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
         evaluateItemText(item, resolvedVars)
           .then(res => { btn.textContent = res; })
-          .catch(err => { console.error('[UI] Error evaluating button:', err); });
+          .catch(err => { debugError('[UI] Error evaluating button:', err); });
       }
     };
     btn.title = `${item.commands.length} command(s)`;
@@ -661,7 +667,7 @@ function renderInput(item, page, inStack = false) {
   input.onblur = () => {
     variable.expression = input.value;
     page._resolved[item.var] = input.value;
-    saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+    saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
   };
 
   if (inStack) {
@@ -707,7 +713,7 @@ function renderCheckbox(item, page) {
     page._resolved[item.var] = newValue;
 
     try {
-      await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+      await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
 
       const dependentVars = getDependentVariables(page.variables, [item.var]);
       if (dependentVars.size > 0) {
@@ -718,7 +724,7 @@ function renderCheckbox(item, page) {
         await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
       }
     } catch (err) {
-      console.error('[UI] Error handling checkbox change:', err);
+      debugError('[UI] Error handling checkbox change:', err);
     }
   };
 
@@ -798,7 +804,7 @@ function renderCounter(item, page) {
     // Schedule evaluation and saving after 300ms of inactivity
     updateTimer = setTimeout(async () => {
       try {
-        await saveConfig(config).catch(err => console.error("[UI] Error auto-saving config:", err));
+        await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
         
         const dependentVars = getDependentVariables(page.variables, [item.var]);
         if (dependentVars.size > 1) {
@@ -809,7 +815,7 @@ function renderCounter(item, page) {
           await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
         }
       } catch (err) {
-        console.error("[UI] Error in counter update:", err);
+        debugError("[UI] Error in counter update:", err);
       }
     }, 300);
   };
@@ -859,7 +865,7 @@ export function renderConfigUI() {
     renderScheduled = false;
 
     if (!config) {
-      console.warn("[UI] No config available");
+      debugWarn("[UI] No config available");
       return;
     }
 
@@ -880,7 +886,7 @@ export function renderConfigUI() {
 }
 
 export async function updateConfig(newConfig) {
-  console.log("[UI] Config updated, refreshing UI");
+  debugLog("[UI] Config updated, refreshing UI");
   // Show the loading overlay while we re-resolve and re-render
   showLoadingOverlay();
   config = newConfig;
@@ -904,12 +910,12 @@ export async function updateConfig(newConfig) {
         // Use globalVars as previouslyResolved so expressions can access globals
         page._resolved = await resolveVariables(page.variables, globalVars, null);
       } catch (err) {
-        console.error('[UI] Error resolving current page variables during config update:', err);
+        debugError('[UI] Error resolving current page variables during config update:', err);
         // leave page._resolved as {} to allow render-time resolution
       }
     }
   } catch (error) {
-    console.error("[UI] Error re-resolving variables:", error);
+    debugError("[UI] Error re-resolving variables:", error);
   }
 
   renderConfigUI();

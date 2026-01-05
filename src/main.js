@@ -6,6 +6,12 @@ import { initializeExpressions } from "./expressionHelpers.js";
 import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { flushPendingChanges } from "./storage.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;
 
@@ -17,7 +23,7 @@ window.addEventListener('beforeunload', async () => {
 // Chargement initial
 OBR.onReady(async () => {
   try {
-    console.log("[MAIN] App loading...");
+    debugLog("[MAIN] App loading...");
 
     const cfg = await loadConfig();
 
@@ -27,7 +33,7 @@ OBR.onReady(async () => {
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
     } else {
-      console.warn("[MAIN] Google Sheets not configured - missing credentials");
+      debugWarn("[MAIN] Google Sheets not configured - missing credentials");
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
@@ -73,13 +79,13 @@ OBR.onReady(async () => {
           }
         }
       } catch (err) {
-        console.warn('[MAIN] Scene logging skipped or failed:', err);
+        debugWarn('[MAIN] Scene logging skipped or failed:', err);
       }
     })();
 
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
-      console.log("[MAIN] Config updated via modal");
+      debugLog("[MAIN] Config updated via modal");
 
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
       const { apiKey, sheetId } = getGoogleSheetsCredentials();
@@ -96,11 +102,11 @@ OBR.onReady(async () => {
           if (cfg) {
             newConfig = cfg;
           } else {
-            console.warn('[MAIN] No config found in localStorage after modal saved');
+            debugWarn('[MAIN] No config found in localStorage after modal saved');
             return;
           }
         } catch (err) {
-          console.error('[MAIN] Failed to load config from localStorage after modal saved:', err);
+          debugError('[MAIN] Failed to load config from localStorage after modal saved:', err);
           return;
         }
       }
@@ -116,7 +122,7 @@ OBR.onReady(async () => {
       updateConfig(newConfig);
     });
   } catch (error) {
-    console.error("Error during initialization:", error);
+    debugError("Error during initialization:", error);
   }
 });
 
@@ -126,9 +132,9 @@ async function logOBRImageItems() {
 
   try {
     const items = await OBR.scene.items.getItems();
-    console.log("[MAIN] Scene items:", items);
+    debugLog("[MAIN] Scene items:", items);
   } catch (err) {
-    console.error("[MAIN] Error fetching scene items:", err);
+    debugError("[MAIN] Error fetching scene items:", err);
   }
 
 }
@@ -136,8 +142,8 @@ async function logOBRImageItems() {
 async function logOBRSceneMetadata() {
   try {
     const metadata = await OBR.scene.getMetadata();
-    console.log("[MAIN] Scene metadata:", metadata);
+    debugLog("[MAIN] Scene metadata:", metadata);
   } catch (err) {
-    console.error("[MAIN] Error fetching scene metadata:", err);
+    debugError("[MAIN] Error fetching scene metadata:", err);
   }
 }

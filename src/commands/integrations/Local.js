@@ -4,12 +4,18 @@
  * Persists to browser localStorage for cross-session access
  */
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 class LocalIntegration {
   constructor() {
     this.storage = {};
     this.localStorageKey = "macroHero_localStorage";
     this.loadFromLocalStorage();
-    console.log("[LocalIntegration] ✓ Initialized with localStorage persistence");
+    debugLog("[LocalIntegration] ✓ Initialized with localStorage persistence");
   }
 
   /**
@@ -20,10 +26,10 @@ class LocalIntegration {
       const json = localStorage.getItem(this.localStorageKey);
       if (json) {
         this.storage = JSON.parse(json);
-        console.log("[LocalIntegration] Loaded from browser localStorage:", this.storage);
+        debugLog("[LocalIntegration] Loaded from browser localStorage:", this.storage);
       }
     } catch (error) {
-      console.warn("[LocalIntegration] Error loading from localStorage:", error);
+      debugWarn("[LocalIntegration] Error loading from localStorage:", error);
       this.storage = {};
     }
   }
@@ -35,7 +41,7 @@ class LocalIntegration {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(this.storage));
     } catch (error) {
-      console.warn("[LocalIntegration] Error saving to localStorage:", error);
+      debugWarn("[LocalIntegration] Error saving to localStorage:", error);
     }
   }
 
@@ -46,9 +52,9 @@ class LocalIntegration {
    * @returns {any} Stored value or default
    */
   value(key, defaultValue = null) {
-    console.log(`[LocalIntegration.value] Getting "${key}"`);
+    debugLog(`[LocalIntegration.value] Getting "${key}"`);
     const result = this.storage[key] ?? defaultValue;
-    console.log(`[LocalIntegration.value] ✓ Got:`, result);
+    debugLog(`[LocalIntegration.value] ✓ Got:`, result);
     return result;
   }
 
@@ -58,7 +64,7 @@ class LocalIntegration {
    * @param {any} value - Value to store
    */
   set(key, value) {
-    console.log(`[LocalIntegration.set] Setting "${key}" =`, value);
+    debugLog(`[LocalIntegration.set] Setting "${key}" =`, value);
     this.storage[key] = value;
     this.saveToLocalStorage();
     return value;
@@ -68,7 +74,7 @@ class LocalIntegration {
    * Clear all local storage
    */
   clear() {
-    console.log("[LocalIntegration.clear] Clearing all storage");
+    debugLog("[LocalIntegration.clear] Clearing all storage");
     this.storage = {};
     localStorage.removeItem(this.localStorageKey);
   }

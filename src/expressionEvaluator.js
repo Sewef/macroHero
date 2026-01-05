@@ -10,6 +10,10 @@
 import * as expressionHelpers from "./expressionHelpers.js";
 import * as math from "mathjs";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
 /**
  * Evaluate a variable expression
  * @param {string} expression - Expression to evaluate (e.g., "GoogleSheets.getValue('Sheet', 'A1')" or "floor({speedBonus} / 10)")
@@ -160,7 +164,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
   } catch (error) {
     // Only log errors that aren't about undefined variables (those are expected when variables haven't resolved yet)
     if (!error.message.includes('is not defined')) {
-      console.error(`[EVAL] Error evaluating "${expression}":`, error.message);
+      debugError(`[EVAL] Error evaluating "${expression}":`, error.message);
     }
     return null;
   }
@@ -364,7 +368,7 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
         onVariableResolved(varName, value);
       }
     } catch (error) {
-      console.error(`[EVALUATOR] Error resolving "${varName}":`, error.message);
+      debugError(`[EVALUATOR] Error resolving "${varName}":`, error.message);
       resolved[varName] = null;
       
       if (onVariableResolved) {

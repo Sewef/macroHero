@@ -1,6 +1,12 @@
 import OBR, { buildShape } from "@owlbear-rodeo/sdk";
 import { getAttachmentsWithMetadata } from "../tokenAttachments.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 const COLORED_RINGS_METADATA_KEY = "rodeo.owlbear.colored-rings/metadata";
 
 /**
@@ -18,10 +24,10 @@ export async function getRings(tokenId) {
   try {
     const rings = await getAttachmentsWithMetadata(tokenId, COLORED_RINGS_METADATA_KEY);
     const colors = rings.map(ring => ring.style?.strokeColor).filter(Boolean);
-    console.log(`[ColoredRings] Found ${colors.length} colored rings on token ${tokenId}`);
+    debugLog(`[ColoredRings] Found ${colors.length} colored rings on token ${tokenId}`);
     return colors;
   } catch (error) {
-    console.error(`[ColoredRings] Failed to get rings from token ${tokenId}:`, error.message);
+    debugError(`[ColoredRings] Failed to get rings from token ${tokenId}:`, error.message);
     return [];
   }
 }
@@ -41,7 +47,7 @@ export async function hasRing(tokenId, color = null) {
     const normalizedColor = color.toLowerCase();
     return colors.some(c => c.toLowerCase() === normalizedColor);
   } catch (error) {
-    console.error(`[ColoredRings] Failed to check ring on token ${tokenId}:`, error.message);
+    debugError(`[ColoredRings] Failed to check ring on token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -54,11 +60,11 @@ export async function hasRing(tokenId, color = null) {
  */
 export async function addRing(tokenId, color) {
   try {
-    console.log(`[ColoredRings] Attempting to add ring with color "${color}" to token ${tokenId}`);
+    debugLog(`[ColoredRings] Attempting to add ring with color "${color}" to token ${tokenId}`);
     
     // Check if ring already exists
     if (await hasRing(tokenId, color)) {
-      console.warn(`[ColoredRings] Ring with color "${color}" already exists on token ${tokenId}`);
+      debugWarn(`[ColoredRings] Ring with color "${color}" already exists on token ${tokenId}`);
       return false;
     }
 
@@ -66,7 +72,7 @@ export async function addRing(tokenId, color) {
     const items = await OBR.scene.items.getItems([tokenId]);
     
     if (!items || items.length === 0) {
-      console.error(`[ColoredRings] Token ${tokenId} not found`);
+      debugError(`[ColoredRings] Token ${tokenId} not found`);
       return false;
     }
 
@@ -114,10 +120,10 @@ export async function addRing(tokenId, color) {
       .build();
 
     await OBR.scene.items.addItems([ring]);
-    console.log(`[ColoredRings] ✓ Added ring with color "${color}" to token ${tokenId} (scale: ${scale})`);
+    debugLog(`[ColoredRings] ✓ Added ring with color "${color}" to token ${tokenId} (scale: ${scale})`);
     return true;
   } catch (error) {
-    console.error(`[ColoredRings] Failed to add ring to token ${tokenId}:`, error.message, error);
+    debugError(`[ColoredRings] Failed to add ring to token ${tokenId}:`, error.message, error);
     return false;
   }
 }
@@ -152,10 +158,10 @@ async function updateRingScales(tokenId) {
       }
     );
     
-    console.log(`[ColoredRings] Updated scales for ${rings.length} rings on token ${tokenId}`);
+    debugLog(`[ColoredRings] Updated scales for ${rings.length} rings on token ${tokenId}`);
     return true;
   } catch (error) {
-    console.error(`[ColoredRings] Failed to update ring scales for token ${tokenId}:`, error.message);
+    debugError(`[ColoredRings] Failed to update ring scales for token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -173,19 +179,19 @@ export async function removeRing(tokenId, color) {
     const ring = rings.find(r => r.style?.strokeColor?.toLowerCase() === normalizedColor);
     
     if (!ring) {
-      console.warn(`[ColoredRings] Ring with color "${color}" not found on token ${tokenId}`);
+      debugWarn(`[ColoredRings] Ring with color "${color}" not found on token ${tokenId}`);
       return false;
     }
 
     await OBR.scene.items.deleteItems([ring.id]);
-    console.log(`[ColoredRings] Removed ring with color "${color}" from token ${tokenId}`);
+    debugLog(`[ColoredRings] Removed ring with color "${color}" from token ${tokenId}`);
     
     // Update remaining ring scales to remove gaps
     await updateRingScales(tokenId);
     
     return true;
   } catch (error) {
-    console.error(`[ColoredRings] Failed to remove ring from token ${tokenId}:`, error.message);
+    debugError(`[ColoredRings] Failed to remove ring from token ${tokenId}:`, error.message);
     return false;
   }
 }

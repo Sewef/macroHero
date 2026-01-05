@@ -7,6 +7,11 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { ensureOBRReady } from "./config.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
 // Cache for room ID to avoid repeated lookups
 let roomIdCache = null;
 
@@ -59,10 +64,10 @@ export async function loadAllEvaluatedVariables() {
   try {
     const json = localStorage.getItem(key);
     evaluatedVariablesCache = json ? JSON.parse(json) : {};
-    console.log("[STORAGE] Evaluated variables loaded from localStorage", evaluatedVariablesCache);
+    debugLog("[STORAGE] Evaluated variables loaded from localStorage", evaluatedVariablesCache);
     return evaluatedVariablesCache;
   } catch (error) {
-    console.error("[STORAGE] Error loading evaluated variables:", error);
+    debugError("[STORAGE] Error loading evaluated variables:", error);
     evaluatedVariablesCache = {};
     return evaluatedVariablesCache;
   }
@@ -106,7 +111,7 @@ export async function updateEvaluatedVariable(pageIndex, varName, value) {
   // Schedule a batched write
   await scheduleBatchSave();
   
-  console.log(`[STORAGE] Variable queued: page${pageIndex}.${varName} = ${value}`);
+  debugLog(`[STORAGE] Variable queued: page${pageIndex}.${varName} = ${value}`);
 }
 
 /**
@@ -130,12 +135,12 @@ async function scheduleBatchSave() {
       const json = JSON.stringify(evaluatedVariablesCache);
       localStorage.setItem(key, json);
       const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-      console.log(`[STORAGE] Batch saved evaluated variables (${sizeKB}KB)`);
+      debugLog(`[STORAGE] Batch saved evaluated variables (${sizeKB}KB)`);
       
       // Clear pending changes after successful save
       pendingChanges = {};
     } catch (error) {
-      console.error("[STORAGE] Error during batch save:", error);
+      debugError("[STORAGE] Error during batch save:", error);
       // Keep pending changes for retry
     }
     
@@ -154,7 +159,7 @@ export async function flushPendingChanges() {
   }
   
   if (Object.keys(pendingChanges).length === 0) {
-    console.log("[STORAGE] No pending changes to flush");
+    debugLog("[STORAGE] No pending changes to flush");
     return;
   }
   
@@ -163,10 +168,10 @@ export async function flushPendingChanges() {
     const json = JSON.stringify(evaluatedVariablesCache);
     localStorage.setItem(key, json);
     const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-    console.log(`[STORAGE] Flushed evaluated variables (${sizeKB}KB)`);
+    debugLog(`[STORAGE] Flushed evaluated variables (${sizeKB}KB)`);
     pendingChanges = {};
   } catch (error) {
-    console.error("[STORAGE] Error flushing changes:", error);
+    debugError("[STORAGE] Error flushing changes:", error);
   }
 }
 
@@ -180,9 +185,9 @@ export async function clearAllEvaluatedVariables() {
   try {
     const key = await getRoomScopedEvaluatedVarsKey();
     localStorage.removeItem(key);
-    console.log("[STORAGE] All evaluated variables cleared");
+    debugLog("[STORAGE] All evaluated variables cleared");
   } catch (error) {
-    console.error("[STORAGE] Error clearing variables:", error);
+    debugError("[STORAGE] Error clearing variables:", error);
   }
 }
 

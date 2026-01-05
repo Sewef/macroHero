@@ -5,12 +5,16 @@
 
 import { initializeIntegrations, getIntegrationsContext } from "./commands/integrations/Manager.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+
 /**
  * Initialize expression helpers with configuration
  * @param {Object} config - Configuration object with gsheet settings
  */
 export function initializeExpressions(config) {
-  console.log("[expressionHelpers] Initializing integrations...");
+  debugLog("[expressionHelpers] Initializing integrations...");
   initializeIntegrations(config);
   // Cache the context on init; reset async methods so they can be recomputed
   cachedContext = null;

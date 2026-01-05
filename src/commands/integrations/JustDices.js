@@ -5,6 +5,12 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 let SELF_ID_PROMISE = null;
 
 /**
@@ -89,7 +95,7 @@ export async function roll(expression, hiddenOrOptions = {}) {
     const response = await waitResponse;
     return response.data?.total;
   } catch (error) {
-    console.error("[JustDices] Roll failed:", error.message);
+    debugError("[JustDices] Roll failed:", error.message);
     throw error;
   }
 }
@@ -161,7 +167,7 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
 
     return await waitResponse;
   } catch (error) {
-    console.error("[JustDices] getRollObject failed:", error.message);
+    debugError("[JustDices] getRollObject failed:", error.message);
     throw error;
   }
 }

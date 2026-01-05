@@ -10,6 +10,38 @@ import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable, loadEvaluatedVariablesForPage } from "./storage.js";
 import { getIntegrationsContext } from "./commands/integrations/Manager.js";
 
+// ===== PERFORMANCE OPTIMIZATION =====
+const DEBUG_MODE = false; // Set to true for debugging, false for production
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+
+// Cache for regex and async methods discovery
+const regexCache = new Map();
+const asyncMethodsCache = new Map(); // page context -> async methods list
+
+/**
+ * Get or create a regex for variable substitution (cached)
+ */
+function getCachedRegex(varRef) {
+  if (!regexCache.has(varRef)) {
+    regexCache.set(varRef, new RegExp(`\\b${varRef}\\b`, 'g'));
+  }
+  return regexCache.get(varRef);
+}
+
+/**
+ * Clear regex cache if it grows too large (memory optimization)
+ */
+function maintainRegexCache() {
+  if (regexCache.size > 500) {
+    // Keep only the last 250 entries
+    const entries = Array.from(regexCache.entries());
+    regexCache.clear();
+    entries.slice(-250).forEach(([key, value]) => regexCache.set(key, value));
+  }
+}
+
 /**
  * Create a context object for command execution
  * @param {Object} page - The current page config
@@ -17,7 +49,7 @@ import { getIntegrationsContext } from "./commands/integrations/Manager.js";
  */
 function createExecutionContext(page) {
   if (!page) {
-    console.warn("No page provided to execution context");
+    debugWarn("No page provided to execution context");
     page = { variables: {} };
   }
 
@@ -63,7 +95,7 @@ function createExecutionContext(page) {
       if (typeof updateRenderedValue === 'function') {
         updateRenderedValue(varName, newValue);
       }
-      console.log(`[setValue] ${varName} = ${newValue} (queued for localStorage persistence)`);
+      debugLog(`[setValue] ${varName} = ${newValue}`);
       return newValue;
     },
     addValue: async (varName, delta) => {
@@ -87,7 +119,7 @@ function createExecutionContext(page) {
       if (typeof updateRenderedValue === 'function') {
         updateRenderedValue(varName, newValue);
       }
-      console.log(`[addValue] ${varName} += ${delta} => ${newValue} (queued for localStorage persistence)`);
+      debugLog(`[addValue] ${varName} += ${delta} => ${newValue}`);
       return newValue;
     },
   };
@@ -104,20 +136,20 @@ function evaluateExpression(expression, page) {
     // Use pre-resolved variables from page
     const scope = page?._resolved || {};
 
-    console.log(`Evaluating "${expression}" with scope:`, scope);
+    debugLog(`Evaluating "${expression}" with scope:`, scope);
 
     // Try to evaluate with mathjs, but silently return the original if it fails
     try {
       const result = math.evaluate(expression, scope);
-      console.log(`Expression "${expression}" evaluated to:`, result);
+      debugLog(`Expression "${expression}" evaluated to:`, result);
       return result;
     } catch (mathError) {
       // If mathjs fails, just return the expression as-is (could be dice notation or other)
-      console.log(`Math evaluation failed for "${expression}" (likely dice notation or special syntax), returning as string`);
+      debugLog(`Math evaluation failed for "${expression}" (likely dice notation or special syntax), returning as string`);
       return expression;
     }
   } catch (error) {
-    console.error(`Error in evaluateExpression for "${expression}":`, error);
+    debugError(`Error in evaluateExpression for "${expression}":`, error);
     // Return the expression as-is if anything fails
     return expression;
   }
@@ -170,7 +202,7 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
       }
       return String(evaluated);
     } catch (err) {
-      console.error(`[EXECUTOR] Failed to eval {${inner}}: ${err.message}`);
+      debugError(`[EXECUTOR] Failed to eval {${inner}}: ${err.message}`);
       return match;
     }
   });
@@ -198,7 +230,8 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
         valueStr = String(value);
       }
       
-      const regex = new RegExp(`\\b${varRef}\\b`, 'g');
+      // Use cached regex instead of creating new one each time
+      const regex = getCachedRegex(varRef);
       result = result.replace(regex, valueStr);
     }
   }
@@ -212,6 +245,9 @@ function substituteVariables(expression, scope = {}, inStringLiteral = false) {
       // Keep as-is if evaluation fails
     }
   }
+
+  // Maintain regex cache size
+  maintainRegexCache();
 
   return result;
 }
@@ -255,7 +291,7 @@ function parseCommandString(command, page) {
  */
 export async function executeCommand(command, page) {
   try {
-    console.log(`[EXECUTOR] Executing command: ${command}`);
+    debugLog(`[EXECUTOR] Executing command: ${command}`);
     
     if (!page) {
       throw new Error("No page provided to executeCommand");
@@ -276,24 +312,37 @@ export async function executeCommand(command, page) {
     // Create execution context with resolved variables
     const context = createExecutionContext(page);
     
-    // Transform the command to properly await async function calls
-    // This is critical for expressions like: OwlTrackers.setValue(token, 'HP', OwlTrackers.getValue(token, 'HP')*1.1)
-    // We need to ensure OwlTrackers.getValue is awaited before the multiplication
+    // ===== OPTIMIZATION: Cache async methods discovery =====
+    // Instead of discovering every time, use a cached set if same context structure
+    let asyncMethods = [];
+    const contextKey = Object.keys(context).sort().join('|');
     
-    // Dynamically discover async methods from the context
-    const asyncMethods = [];
-    for (const [objectName, objectValue] of Object.entries(context)) {
-      if (typeof objectValue === 'object' && objectValue !== null) {
-        for (const [methodName, methodValue] of Object.entries(objectValue)) {
-          if (typeof methodValue === 'function') {
-            // Check if it's an async function or returns a promise
-            const methodStr = methodValue.toString();
-            if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
-              asyncMethods.push(`${objectName}.${methodName}`);
+    if (asyncMethodsCache.has(contextKey)) {
+      asyncMethods = asyncMethodsCache.get(contextKey);
+    } else {
+      // Dynamically discover async methods from the context
+      for (const [objectName, objectValue] of Object.entries(context)) {
+        if (typeof objectValue === 'object' && objectValue !== null) {
+          for (const [methodName, methodValue] of Object.entries(objectValue)) {
+            if (typeof methodValue === 'function') {
+              // Check if it's an async function or returns a promise
+              const methodStr = methodValue.toString();
+              if (methodStr.startsWith('async ') || methodStr.includes('Promise')) {
+                asyncMethods.push(`${objectName}.${methodName}`);
+              }
             }
           }
         }
       }
+      
+      // Cache the result
+      if (asyncMethodsCache.size > 50) {
+        // Keep only the last 25 entries to avoid memory bloat
+        const entries = Array.from(asyncMethodsCache.entries());
+        asyncMethodsCache.clear();
+        entries.slice(-25).forEach(([key, value]) => asyncMethodsCache.set(key, value));
+      }
+      asyncMethodsCache.set(contextKey, asyncMethods);
     }
     
     // For each async method, find all calls and wrap them with (await ...)
@@ -350,14 +399,14 @@ export async function executeCommand(command, page) {
     parsedCommand = parsedCommand.replace(awaitedAddPattern, (match, left, right) => {
       replacedAny = true;
       const replacement = `String(${left}) + ' + ' + String(${right})`;
-      console.log('[EXECUTOR] awaitedAddPattern match:', match, '=>', replacement);
+      debugLog('[EXECUTOR] awaitedAddPattern match:', match, '=>', replacement);
       return replacement;
     });
-    console.log('[EXECUTOR] awaitedAddPattern replacedAny=', replacedAny, 'parsedCommand now:', parsedCommand);
+    debugLog('[EXECUTOR] awaitedAddPattern replacedAny=', replacedAny, 'parsedCommand now:', parsedCommand);
 
     // Robust rewrite: transform JustDices.roll(args_with_top_level_plus) to force string 'left + right'
     function rewriteJustDicesRollArgs(str) {
-      console.log('[EXECUTOR] rewriteJustDicesRollArgs start');
+      debugLog('[EXECUTOR] rewriteJustDicesRollArgs start');
       let i = 0;
       let found = false;
 
@@ -401,17 +450,17 @@ export async function executeCommand(command, page) {
         if (plusIdx !== -1) {
           const left = args.slice(0, plusIdx).trim();
           const right = args.slice(plusIdx + 1).trim();
-          console.log('[EXECUTOR] JustDices.roll arg top-level + found; left:', left, 'right:', right);
+          debugLog('[EXECUTOR] JustDices.roll arg top-level + found; left:', left, 'right:', right);
 
           // Heuristic: perform rewrite for common cases (await, String(), Number(), numeric literal, quoted string, identifier)
           const should = (/\bawait\b/.test(left) || /\bawait\b/.test(right) || /\bString\s*\(/.test(left) || /\bString\s*\(/.test(right) || /\bNumber\s*\(/.test(left) || /\bNumber\s*\(/.test(right) || /^\d+$/.test(right) || /^\d+d\d+/i.test(left) || /^['"]/.test(left) || /^[a-zA-Z_$][a-zA-Z0-9_$]*/.test(left));
 
-          console.log('[EXECUTOR] rewrite heuristic:', should);
+          debugLog('[EXECUTOR] rewrite heuristic:', should);
           if (should) {
             const newArgs = `String(${left}) + ' + ' + String(${right})`;
             str = str.slice(0, open + 1) + newArgs + str.slice(close);
             found = true;
-            console.log('[EXECUTOR] Rewrote JustDices.roll args to:', newArgs);
+            debugLog('[EXECUTOR] Rewrote JustDices.roll args to:', newArgs);
             // advance index past this call
             i = open + 1 + newArgs.length + 1;
             continue;
@@ -421,17 +470,17 @@ export async function executeCommand(command, page) {
         i = close + 1;
       }
 
-      console.log('[EXECUTOR] rewriteJustDicesRollArgs end, found=', found);
+      debugLog('[EXECUTOR] rewriteJustDicesRollArgs end, found=', found);
       return str;
     }
 
     // Apply this rewrite before final execution
     parsedCommand = rewriteJustDicesRollArgs(parsedCommand);
-    console.log('[EXECUTOR] parsedCommand after JustDices.roll arg rewrite:', parsedCommand);
+    debugLog('[EXECUTOR] parsedCommand after JustDices.roll arg rewrite:', parsedCommand);
 
     // Debug: show the parsed command after async wrapping
-    console.log('[EXECUTOR] Parsed command after async wrapping:', parsedCommand);
-    console.log('[EXECUTOR] Detected async methods:', asyncMethods);
+    debugLog('[EXECUTOR] Parsed command after async wrapping:', parsedCommand);
+    debugLog('[EXECUTOR] Detected async methods:', asyncMethods);
 
     // Build and execute the function
     // We use a function to safely evaluate the command with the context
@@ -448,21 +497,21 @@ export async function executeCommand(command, page) {
       }
 
       // Debug: show the final command that will be executed
-      console.log('[EXECUTOR] Final command to execute:', finalCommand);
+      debugLog('[EXECUTOR] Final command to execute:', finalCommand);
 
       const functionCode = `return (async () => { return ${finalCommand}; })()`;
       const func = new Function(...Object.keys(context), functionCode);
-      console.log('[EXECUTOR] Invoking command function...');
+      debugLog('[EXECUTOR] Invoking command function...');
       const result = await func(...Object.values(context));
-      console.log('[EXECUTOR] Command invocation result:', result);
+      debugLog('[EXECUTOR] Command invocation result:', result);
       return result;
     } catch (syntaxError) {
-      console.error(`[EXECUTOR] Syntax error executing: ${parsedCommand}`);
-      console.error(`[EXECUTOR] Error:`, syntaxError);
+      debugError(`[EXECUTOR] Syntax error executing: ${parsedCommand}`);
+      debugError(`[EXECUTOR] Error:`, syntaxError);
       throw syntaxError;
     }
   } catch (error) {
-    console.error(`[EXECUTOR] Error executing command:`, error);
+    debugError(`[EXECUTOR] Error executing command:`, error);
     throw error;
   }
 }
@@ -481,11 +530,11 @@ export async function executeCommands(commands, page, onVariableResolved = null)
   if (commands.length > 1) {
     try {
       const combined = commands.join('; ');
-      console.log('[EXECUTOR] Executing combined commands:', combined);
+      debugLog('[EXECUTOR] Executing combined commands:', combined);
       const result = await executeCommand(combined, page);
       results.push({ ok: true, result });
     } catch (error) {
-      console.error('[EXECUTOR] Combined command execution failed:', error);
+      debugError('[EXECUTOR] Combined command execution failed:', error);
       results.push({ ok: false, error: error.message });
     }
     return results;
@@ -496,7 +545,7 @@ export async function executeCommands(commands, page, onVariableResolved = null)
       const result = await executeCommand(command, page, onVariableResolved);
       results.push({ ok: true, result });
     } catch (error) {
-      console.error(`[EXECUTOR] Command execution failed:`, error);
+      debugError(`[EXECUTOR] Command execution failed:`, error);
       results.push({ ok: false, error: error.message });
     }
   }
@@ -513,12 +562,12 @@ export async function executeCommands(commands, page, onVariableResolved = null)
  */
 export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null) {
   if (!Array.isArray(commands) || commands.length === 0) {
-    console.warn("No commands to execute");
+    debugWarn("No commands to execute");
     return;
   }
   
   try {
-    console.log("[EXECUTOR] Button clicked, analyzing command requirements...");
+    debugLog("[EXECUTOR] Button clicked, analyzing command requirements...");
     
     // Initialize tracking for modified variables
     page._modifiedVars = new Set();
@@ -528,25 +577,25 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     
     // Find which variables are used in the commands
     const usedVars = getVariablesUsedInCommands(commands);
-    console.log("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
+    debugLog("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
     
     // Resolve all page variables to ensure they are available for command execution
     // Pass the callback so UI updates for these variables too
-    console.log("[EXECUTOR] Resolving all page variables for command execution...");
-    console.log('[EXECUTOR] page.variables keys:', Object.keys(page.variables || {}));
-    console.log('[EXECUTOR] oldResolved before resolving:', oldResolved);
-    console.log('[EXECUTOR] usedVars detected:', Array.from(usedVars));
+    debugLog("[EXECUTOR] Resolving all page variables for command execution...");
+    debugLog('[EXECUTOR] page.variables keys:', Object.keys(page.variables || {}));
+    debugLog('[EXECUTOR] oldResolved before resolving:', oldResolved);
+    debugLog('[EXECUTOR] usedVars detected:', Array.from(usedVars));
     const freshResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
       const oldValue = oldResolved[varName];
       if (oldValue !== value && onVariableResolved) {
         onVariableResolved(varName, value);
       }
     });
-    console.log('[EXECUTOR] freshResolved from resolveVariables:', freshResolved);
+    debugLog('[EXECUTOR] freshResolved from resolveVariables:', freshResolved);
     page._resolved = { ...page._resolved, ...freshResolved };
-    console.log('[EXECUTOR] page._resolved after merge:', page._resolved);
+    debugLog('[EXECUTOR] page._resolved after merge:', page._resolved);
     
-      console.log(`[EXECUTOR] Variables resolved for commands (${usedVars.size} used)`);
+      debugLog(`[EXECUTOR] Variables resolved for commands (${usedVars.size} used)`);
 
     // Execute the commands
     const results = await executeCommands(commands, page);    // After commands execute, resolve variables that were affected by integrations or modified by setValue/addValue
@@ -565,7 +614,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     const allAffected = getDependentVariables(page.variables, affectedVars);
     
     if (allAffected.size > 0) {
-      console.log(`[EXECUTOR] Re-resolving ${allAffected.size} affected variables and their dependents`);
+      debugLog(`[EXECUTOR] Re-resolving ${allAffected.size} affected variables and their dependents`);
       // Update old values before re-resolving
       const currentResolved = { ...page._resolved };
       const updatedResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
@@ -584,7 +633,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     page._modifiedVars = new Set();
     
   } catch (error) {
-    console.error("Button action failed:", error);
+    debugError("Button action failed:", error);
   }
 }
 

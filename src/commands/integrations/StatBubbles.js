@@ -4,6 +4,12 @@ import {
   getFlatMetadata
 } from "../tokenMetadata.js";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata";
 
 /**
@@ -22,7 +28,7 @@ export async function getValue(tokenId, statName) {
   try {
     return await getFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName);
   } catch (error) {
-    console.error(`[StatBubbles] Failed to get stat "${statName}" value from token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to get stat "${statName}" value from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -38,11 +44,11 @@ export async function setValue(tokenId, statName, value) {
   try {
     const success = await setFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName, value);
     if (success) {
-      console.log(`[StatBubbles] Set stat "${statName}" to ${value} on token ${tokenId}`);
+      debugLog(`[StatBubbles] Set stat "${statName}" to ${value} on token ${tokenId}`);
     }
     return success;
   } catch (error) {
-    console.error(`[StatBubbles] Failed to set stat "${statName}" on token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to set stat "${statName}" on token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -58,16 +64,16 @@ export async function addValue(tokenId, statName, amount) {
   try {
     const currentValue = await getValue(tokenId, statName);
     if (currentValue === null) {
-      console.warn(`[StatBubbles] Cannot add to stat "${statName}" - not found on token ${tokenId}`);
+      debugWarn(`[StatBubbles] Cannot add to stat "${statName}" - not found on token ${tokenId}`);
       return false;
     }
     
     const newValue = currentValue + amount;
     await setValue(tokenId, statName, newValue);
-    console.log(`[StatBubbles] Added ${amount} to stat "${statName}" on token ${tokenId} (${currentValue} → ${newValue})`);
+    debugLog(`[StatBubbles] Added ${amount} to stat "${statName}" on token ${tokenId} (${currentValue} → ${newValue})`);
     return true;
   } catch (error) {
-    console.error(`[StatBubbles] Failed to add to stat "${statName}" on token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to add to stat "${statName}" on token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -81,7 +87,7 @@ export async function getAllStats(tokenId) {
   try {
     return await getFlatMetadata(tokenId, STAT_BUBBLES_METADATA_KEY);
   } catch (error) {
-    console.error(`[StatBubbles] Failed to get all stats from token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to get all stats from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -97,13 +103,13 @@ export async function getHealthPercentage(tokenId) {
     const maxHealth = await getValue(tokenId, "max health");
     
     if (health === null || maxHealth === null || maxHealth === 0) {
-      console.warn(`[StatBubbles] Cannot calculate health percentage for token ${tokenId}`);
+      debugWarn(`[StatBubbles] Cannot calculate health percentage for token ${tokenId}`);
       return null;
     }
     
     return Math.round((health / maxHealth) * 100);
   } catch (error) {
-    console.error(`[StatBubbles] Failed to get health percentage from token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to get health percentage from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -120,16 +126,16 @@ export async function heal(tokenId, amount) {
     const maxHealth = await getValue(tokenId, "max health");
     
     if (health === null || maxHealth === null) {
-      console.warn(`[StatBubbles] Cannot heal token ${tokenId} - health stats not found`);
+      debugWarn(`[StatBubbles] Cannot heal token ${tokenId} - health stats not found`);
       return false;
     }
     
     const newHealth = Math.min(health + amount, maxHealth);
     await setValue(tokenId, "health", newHealth);
-    console.log(`[StatBubbles] Healed token ${tokenId} by ${amount} (${health} → ${newHealth})`);
+    debugLog(`[StatBubbles] Healed token ${tokenId} by ${amount} (${health} → ${newHealth})`);
     return true;
   } catch (error) {
-    console.error(`[StatBubbles] Failed to heal token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to heal token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -145,16 +151,16 @@ export async function damage(tokenId, amount) {
     const health = await getValue(tokenId, "health");
     
     if (health === null) {
-      console.warn(`[StatBubbles] Cannot damage token ${tokenId} - health not found`);
+      debugWarn(`[StatBubbles] Cannot damage token ${tokenId} - health not found`);
       return false;
     }
     
     const newHealth = health - amount;
     await setValue(tokenId, "health", newHealth);
-    console.log(`[StatBubbles] Damaged token ${tokenId} by ${amount} (${health} → ${newHealth})`);
+    debugLog(`[StatBubbles] Damaged token ${tokenId} by ${amount} (${health} → ${newHealth})`);
     return true;
   } catch (error) {
-    console.error(`[StatBubbles] Failed to damage token ${tokenId}:`, error.message);
+    debugError(`[StatBubbles] Failed to damage token ${tokenId}:`, error.message);
     return false;
   }
 }

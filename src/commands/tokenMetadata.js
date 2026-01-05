@@ -1,5 +1,11 @@
 import OBR from "@owlbear-rodeo/sdk";
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? (...args) => console.log(...args) : () => {};
+const debugError = DEBUG_MODE ? (...args) => console.error(...args) : () => {};
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 const OWL_TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 
 /**
@@ -11,12 +17,12 @@ export async function getTokenMetadata(tokenId) {
   try {
     const items = await OBR.scene.items.getItems([tokenId]);
     if (!items || items.length === 0) {
-      console.warn(`[tokenMetadata] Token ${tokenId} not found`);
+      debugWarn(`[tokenMetadata] Token ${tokenId} not found`);
       return null;
     }
     return items[0].metadata;
   } catch (error) {
-    console.error(`[tokenMetadata] Error getting metadata for token ${tokenId}:`, error.message);
+    debugError(`[tokenMetadata] Error getting metadata for token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -65,14 +71,14 @@ export async function updateTokenMetadata(tokenId, updates) {
     // Get current item to merge metadata
     const items = await OBR.scene.items.getItems([tokenId]);
     if (!items || items.length === 0) {
-      console.warn(`[tokenMetadata] Token ${tokenId} not found`);
+      debugWarn(`[tokenMetadata] Token ${tokenId} not found`);
       return;
     }
     
     const currentMetadata = items[0].metadata || {};
     const mergedMetadata = { ...currentMetadata, ...updates };
     
-    console.log(`[tokenMetadata] Updating item ${tokenId} with merged metadata:`, mergedMetadata);
+    debugLog(`[tokenMetadata] Updating item ${tokenId} with merged metadata:`, mergedMetadata);
     
     // Use correct OBR signature: filter/items array + update function
     await OBR.scene.items.updateItems(
@@ -85,7 +91,7 @@ export async function updateTokenMetadata(tokenId, updates) {
       }
     );
   } catch (error) {
-    console.error(`[tokenMetadata] Error updating metadata for token ${tokenId}:`, error);
+    debugError(`[tokenMetadata] Error updating metadata for token ${tokenId}:`, error);
     throw error;
   }
 }
@@ -149,29 +155,29 @@ export async function getValue(tokenId, metadataKey, itemName) {
 export async function setValue(tokenId, metadataKey, itemName, value) {
   try {
     const items = await getTokenMetadataValue(tokenId, metadataKey);
-    console.log(`[tokenMetadata.setValue] Current items for ${itemName}:`, items);
+    debugLog(`[tokenMetadata.setValue] Current items for ${itemName}:`, items);
     
     if (!Array.isArray(items)) {
-      console.error(`[tokenMetadata.setValue] Metadata at ${metadataKey} is not an array on token ${tokenId}`);
+      debugError(`[tokenMetadata.setValue] Metadata at ${metadataKey} is not an array on token ${tokenId}`);
       return;
     }
     
     const item = items.find(i => i.name === itemName);
     if (!item) {
-      console.error(`[tokenMetadata.setValue] Item "${itemName}" not found in ${metadataKey} on token ${tokenId}`);
+      debugError(`[tokenMetadata.setValue] Item "${itemName}" not found in ${metadataKey} on token ${tokenId}`);
       return;
     }
     
-    console.log(`[tokenMetadata.setValue] Setting ${itemName} from ${item.value} to ${value}`);
+    debugLog(`[tokenMetadata.setValue] Setting ${itemName} from ${item.value} to ${value}`);
     item.value = value;
     
     const updateObj = { [metadataKey]: items };
-    console.log(`[tokenMetadata.setValue] Updating with:`, updateObj);
+    debugLog(`[tokenMetadata.setValue] Updating with:`, updateObj);
     
     await updateTokenMetadata(tokenId, updateObj);
-    console.log(`[tokenMetadata.setValue] Update complete for ${itemName}`);
+    debugLog(`[tokenMetadata.setValue] Update complete for ${itemName}`);
   } catch (error) {
-    console.error(`[tokenMetadata.setValue] Error setting ${itemName}:`, error);
+    debugError(`[tokenMetadata.setValue] Error setting ${itemName}:`, error);
   }
 }
 
@@ -186,7 +192,7 @@ export async function setValue(tokenId, metadataKey, itemName, value) {
 export async function addValue(tokenId, metadataKey, itemName, delta) {
   const currentValue = await getValue(tokenId, metadataKey, itemName);
   if (currentValue === null) {
-    console.warn(`Item "${itemName}" not found in ${metadataKey} on token ${tokenId}`);
+    debugWarn(`Item "${itemName}" not found in ${metadataKey} on token ${tokenId}`);
     return;
   }
   const newValue = currentValue + delta;
@@ -204,25 +210,25 @@ export async function getFlatValue(tokenId, metadataKey, propertyName) {
   try {
     const items = await OBR.scene.items.getItems([tokenId]);
     if (!items || items.length === 0) {
-      console.warn(`[tokenMetadata.getFlatValue] Token ${tokenId} not found`);
+      debugWarn(`[tokenMetadata.getFlatValue] Token ${tokenId} not found`);
       return null;
     }
     
     const metadata = items[0].metadata?.[metadataKey];
     if (!metadata) {
-      console.warn(`[tokenMetadata.getFlatValue] No metadata found at key "${metadataKey}" on token ${tokenId}`);
+      debugWarn(`[tokenMetadata.getFlatValue] No metadata found at key "${metadataKey}" on token ${tokenId}`);
       return null;
     }
     
     const value = metadata[propertyName];
     if (value === undefined || value === null) {
-      console.warn(`[tokenMetadata.getFlatValue] Property "${propertyName}" not found in "${metadataKey}" on token ${tokenId}`);
+      debugWarn(`[tokenMetadata.getFlatValue] Property "${propertyName}" not found in "${metadataKey}" on token ${tokenId}`);
       return null;
     }
     
     return value;
   } catch (error) {
-    console.error(`[tokenMetadata.getFlatValue] Failed to get property "${propertyName}" from token ${tokenId}:`, error.message);
+    debugError(`[tokenMetadata.getFlatValue] Failed to get property "${propertyName}" from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -245,10 +251,10 @@ export async function setFlatValue(tokenId, metadataKey, propertyName, value) {
         item.metadata[metadataKey][propertyName] = value;
       });
     });
-    console.log(`[tokenMetadata.setFlatValue] Set "${propertyName}" to ${value} in "${metadataKey}" on token ${tokenId}`);
+    debugLog(`[tokenMetadata.setFlatValue] Set "${propertyName}" to ${value} in "${metadataKey}" on token ${tokenId}`);
     return true;
   } catch (error) {
-    console.error(`[tokenMetadata.setFlatValue] Failed to set property "${propertyName}" on token ${tokenId}:`, error.message);
+    debugError(`[tokenMetadata.setFlatValue] Failed to set property "${propertyName}" on token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -263,18 +269,18 @@ export async function getFlatMetadata(tokenId, metadataKey) {
   try {
     const items = await OBR.scene.items.getItems([tokenId]);
     if (!items || items.length === 0) {
-      console.warn(`[tokenMetadata.getFlatMetadata] Token ${tokenId} not found`);
+      debugWarn(`[tokenMetadata.getFlatMetadata] Token ${tokenId} not found`);
       return null;
     }
     
     const metadata = items[0].metadata?.[metadataKey];
     if (!metadata) {
-      console.warn(`[tokenMetadata.getFlatMetadata] No metadata found at key "${metadataKey}" on token ${tokenId}`);
+      debugWarn(`[tokenMetadata.getFlatMetadata] No metadata found at key "${metadataKey}" on token ${tokenId}`);
       return null;
     }
     return metadata;
   } catch (error) {
-    console.error(`[tokenMetadata.getFlatMetadata] Failed to get metadata from token ${tokenId}:`, error.message);
+    debugError(`[tokenMetadata.getFlatMetadata] Failed to get metadata from token ${tokenId}:`, error.message);
     return null;
   }
 }

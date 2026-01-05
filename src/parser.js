@@ -3,6 +3,10 @@
  * Handles parsing, tokenizing, and validating expressions and commands
  */
 
+// Debug mode constants
+const DEBUG_MODE = false;
+const debugWarn = DEBUG_MODE ? (...args) => console.warn(...args) : () => {};
+
 /**
  * Tokenize an expression into meaningful parts
  * @param {string} expression - Expression to tokenize
@@ -203,7 +207,7 @@ export function parseCommand(command) {
       if (depth === 0) {
         segments.push({ type: "expression", value: expr.trim() });
       } else {
-        console.warn("Unmatched { in command");
+        debugWarn("Unmatched { in command");
         stringPart += "{" + expr;
       }
     } else {
