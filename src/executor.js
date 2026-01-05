@@ -381,6 +381,7 @@ export async function executeCommand(command, page) {
     debugLog('[EXECUTOR] awaitedAddPattern replacedAny=', replacedAny, 'parsedCommand now:', parsedCommand);
 
     // Robust rewrite: transform JustDices.roll(args_with_top_level_plus) to force string 'left + right'
+    // Split ALL top-level + into individual String(...) calls joined with ' + '
     function rewriteJustDicesRollArgs(str) {
       debugLog('[EXECUTOR] rewriteJustDicesRollArgs start');
       let i = 0;
@@ -408,32 +409,56 @@ export async function executeCommand(command, page) {
         if (close === -1) break;
 
         const args = str.slice(open + 1, close);
-        // find top-level + inside args
-        let plusIdx = -1;
+        
+        // Find ALL top-level + inside args (not just the first)
+        const segments = [];
+        let currentSegment = "";
         depth = 0;
         inS = false;
         inD = false;
+        
         for (let k = 0; k < args.length; k++) {
           const ch = args[k];
           if (ch === "'" && !inD) inS = !inS;
           else if (ch === '"' && !inS) inD = !inD;
-          if (inS || inD) continue;
-          if (ch === '(') depth++;
-          else if (ch === ')') depth--;
-          else if (ch === '+' && depth === 0) { plusIdx = k; break; }
+          
+          if (!inS && !inD) {
+            if (ch === '(') depth++;
+            else if (ch === ')') depth--;
+            else if (ch === '+' && depth === 0) {
+              // Found a top-level +, save segment and continue
+              segments.push(currentSegment.trim());
+              currentSegment = "";
+              continue;
+            }
+          }
+          
+          currentSegment += ch;
+        }
+        
+        if (currentSegment) {
+          segments.push(currentSegment.trim());
         }
 
-        if (plusIdx !== -1) {
-          const left = args.slice(0, plusIdx).trim();
-          const right = args.slice(plusIdx + 1).trim();
-          debugLog('[EXECUTOR] JustDices.roll arg top-level + found; left:', left, 'right:', right);
+        // If we found multiple segments separated by +, rewrite them
+        if (segments.length > 1) {
+          debugLog('[EXECUTOR] JustDices.roll segments found:', segments);
+          
+          // Check if ANY segment contains await, String(), Number(), etc. (heuristic)
+          const shouldRewrite = segments.some(seg => 
+            /\bawait\b/.test(seg) || 
+            /\bString\s*\(/.test(seg) || 
+            /\bNumber\s*\(/.test(seg) || 
+            /^['"]/.test(seg) || 
+            /^\d+d\d+/i.test(seg) ||
+            /^\d+$/.test(seg)
+          );
 
-          // Heuristic: perform rewrite for common cases (await, String(), Number(), numeric literal, quoted string, identifier)
-          const should = (/\bawait\b/.test(left) || /\bawait\b/.test(right) || /\bString\s*\(/.test(left) || /\bString\s*\(/.test(right) || /\bNumber\s*\(/.test(left) || /\bNumber\s*\(/.test(right) || /^\d+$/.test(right) || /^\d+d\d+/i.test(left) || /^['"]/.test(left) || /^[a-zA-Z_$][a-zA-Z0-9_$]*/.test(left));
-
-          debugLog('[EXECUTOR] rewrite heuristic:', should);
-          if (should) {
-            const newArgs = `String(${left}) + ' + ' + String(${right})`;
+          debugLog('[EXECUTOR] rewrite heuristic for multi-segment:', shouldRewrite);
+          if (shouldRewrite) {
+            // Wrap each segment in String(...) and join with ' + '
+            const wrappedSegments = segments.map(seg => `String(${seg})`);
+            const newArgs = wrappedSegments.join(" + ' + ' + ");
             str = str.slice(0, open + 1) + newArgs + str.slice(close);
             found = true;
             debugLog('[EXECUTOR] Rewrote JustDices.roll args to:', newArgs);
