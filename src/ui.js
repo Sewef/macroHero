@@ -530,7 +530,6 @@ function renderButton(item, page) {
   if (item.commands && Array.isArray(item.commands) && item.commands.length > 0) {
     btn.onclick = async () => {
       btn.disabled = true;
-      btn.textContent = "Execution...";
       try {
         const pageObj = (currentPage !== null && currentPage !== undefined) ? findPageByIndex(currentPage) : page;
         
@@ -557,11 +556,6 @@ function renderButton(item, page) {
         debugError("Button action error:", error);
       } finally {
         btn.disabled = false;
-        // Restore button text using the generic evaluation
-        const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
-        evaluateItemText(item, resolvedVars)
-          .then(res => { btn.textContent = res; })
-          .catch(err => { debugError('[UI] Error evaluating button:', err); });
       }
     };
     btn.title = `${item.commands.length} command(s)`;
