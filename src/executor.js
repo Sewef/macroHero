@@ -30,7 +30,7 @@ function getCachedRegex(varRef) {
   if (!regexCache.has(varRef)) {
     // Trim cache if needed before adding new entry
     if (regexCache.size >= MAX_REGEX_CACHE) {
-      const firstKey = regexCache.keys().next().value;
+      const firstKey = Array.from(regexCache.keys())[0];
       regexCache.delete(firstKey);
     }
     regexCache.set(varRef, new RegExp(`\\b${varRef}\\b`, 'g'));

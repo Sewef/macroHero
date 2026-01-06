@@ -69,37 +69,52 @@ export function setGlobalVariables(vars) {
 
 function renderPageButtons() {
   const bar = document.getElementById("pageBar");
-  bar.innerHTML = "";
-  // Accessibility: indicate tablist role
-  bar.setAttribute('role', 'tablist');
-
+  
+  // Only update attributes and classes on existing buttons instead of rebuilding
+  const existingButtons = bar.querySelectorAll('button.tab');
+  
   if (!config.pages?.length) {
     bar.innerHTML = "<i>No pages</i>";
     return;
   }
-
-  config.pages.forEach((p, index) => {
-    const btn = document.createElement("button");
-    // Use the same tab style as the modal - add 'tab' class
-    btn.classList.add('tab');
-    btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
-    btn.addEventListener('click', () => {
-      currentPage = index;
-      // Ensure page has pageIndex set
-      if (!p._pageIndex) p._pageIndex = index;
-      renderPageButtons();
-      renderPageContent(p);
+  
+  // If buttons already exist and count matches, just update their state
+  if (existingButtons.length === config.pages.length) {
+    existingButtons.forEach((btn, index) => {
+      if (currentPage === index) {
+        btn.classList.add("active");
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.classList.remove("active");
+        btn.setAttribute('aria-selected', 'false');
+      }
     });
+  } else {
+    // First time or page count changed - rebuild
+    bar.innerHTML = "";
+    bar.setAttribute('role', 'tablist');
 
-    if (currentPage === index) {
-      btn.classList.add("active");
-      btn.setAttribute('aria-selected', 'true');
-    } else {
-      btn.setAttribute('aria-selected', 'false');
-    }
+    config.pages.forEach((p, index) => {
+      const btn = document.createElement("button");
+      btn.classList.add('tab');
+      btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
+      btn.addEventListener('click', () => {
+        currentPage = index;
+        if (!p._pageIndex) p._pageIndex = index;
+        renderPageButtons();
+        renderPageContent(p);
+      });
 
-    bar.appendChild(btn);
-  });
+      if (currentPage === index) {
+        btn.classList.add("active");
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.setAttribute('aria-selected', 'false');
+      }
+
+      bar.appendChild(btn);
+    });
+  }
 }
 
 function selectFirstPage() {

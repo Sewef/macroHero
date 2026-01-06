@@ -5,6 +5,10 @@ import { isDebugEnabled } from "./debugMode.js";
 // Debug mode constants
 const debugError = (...args) => isDebugEnabled('expressionEvaluator') && console.error(...args);
 
+// Regex patterns compiled once for reuse
+const VAR_REFERENCE_PATTERN = /\{(\w+)(?:\[[^\]]+\])*\}/g;
+const VAR_REFERENCE_PATTERN_FOR_EXTRACTION = /\{(\w+)(?:\[[^\]]+\])*\}/g;
+
 /**
  * Evaluate a variable expression
  * @param {string} expression - Expression to evaluate (e.g., "GoogleSheets.getValue('Sheet', 'A1')" or "floor({speedBonus} / 10)")
@@ -77,25 +81,29 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     
     let transformed = processed;
     
-    // For each async method, find all calls and wrap them with (await ...)
-    for (const method of asyncMethods) {
-      const escapedMethod = method.replace(/\./g, "\\.");
-      const regex = new RegExp(`${escapedMethod}\\s*\\(`, "g");
-    
-      let match;
+    // Build a single regex pattern for all async methods to avoid multiple passes
+    if (asyncMethods.length > 0) {
+      // Escape and join all methods into single pattern: method1\s*\(|method2\s*\(|...
+      const methodPatterns = asyncMethods.map(m => m.replace(/\./g, "\\.") + "\\s*\\(").join("|");
+      const combinedRegex = new RegExp(`(${methodPatterns})`, "g");
+      
+      // Find all matches in a single pass
       const matches = [];
-    
-      while ((match = regex.exec(transformed)) !== null) {
-        matches.push({ index: match.index, method: method });
+      let match;
+      while ((match = combinedRegex.exec(transformed)) !== null) {
+        matches.push(match.index);
       }
-    
+      
+      // Process matches in reverse order to maintain indices
       for (let i = matches.length - 1; i >= 0; i--) {
-        const { index, method: methodName } = matches[i];
+        const index = matches[i];
+        const matchedMethod = transformed.substring(index).match(/^[\w.]+/)[0];
     
         let parenCount = 0;
-        let startIdx = index + methodName.length;
+        let startIdx = index + matchedMethod.length;
         let endIdx = startIdx;
     
+        // Find matching closing parenthesis
         for (let j = startIdx; j < transformed.length; j++) {
           if (transformed[j] === "(") parenCount++;
           if (transformed[j] === ")") {
@@ -258,8 +266,10 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     
     // Extract all variable references {varName} and {varName[index]} etc.
     // Pattern matches {word} or {word[...]} where [...] can be nested
-    const matches = String(expr).matchAll(/\{(\w+)(?:\[[^\]]+\])*\}/g);
-    for (const match of matches) {
+    // Using pre-compiled pattern for better performance
+    VAR_REFERENCE_PATTERN_FOR_EXTRACTION.lastIndex = 0; // Reset regex state
+    let match;
+    while ((match = VAR_REFERENCE_PATTERN_FOR_EXTRACTION.exec(expr)) !== null) {
       const depVar = match[1]; // Extract just the variable name, ignore indexing
       if (depVar in variablesConfig && depVar !== varName) {
         deps.push(depVar);
@@ -286,24 +296,25 @@ export async function resolveVariables(variablesConfig, previouslyResolved = {},
     }
   }
   
-  // Topological sort using Kahn's algorithm
+  // Topological sort using Kahn's algorithm with memoization
   // Only sort variables we need to resolve
   const sorted = [];
   const inProgress = new Set();
   const completed = new Set();
   
-  function visit(varName) {
-    if (completed.has(varName)) return;
-    if (inProgress.has(varName)) return; // Cycle detection
+  // Memoize visited nodes to avoid re-processing in complex dependency graphs
+  function visit(varName, memo = new Set()) {
+    if (completed.has(varName)) return; // Already processed
+    if (memo.has(varName)) return; // Cycle detection in current path
     
-    inProgress.add(varName);
+    memo.add(varName);
     
     const deps = dependencies.get(varName) || [];
     for (const dep of deps) {
-      visit(dep);
+      visit(dep, memo);
     }
     
-    inProgress.delete(varName);
+    memo.delete(varName);
     completed.add(varName);
     sorted.push(varName);
   }
