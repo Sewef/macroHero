@@ -9,8 +9,8 @@ export const MODAL_LABEL = "macrohero.config";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('config') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('config') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('config') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 let isOBRReady = false;
 let currentPlayerId = null;

@@ -7,8 +7,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('StatBubbles') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('StatBubbles') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('StatBubbles') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata";
 

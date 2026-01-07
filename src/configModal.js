@@ -5,8 +5,8 @@ import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants - use centralized debugMode module
 const debugLog = (...args) => isDebugEnabled('configModal') && console.log(...args);
-const debugWarn = (...args) => isDebugEnabled('configModal') && console.warn(...args);
-const debugError = (...args) => isDebugEnabled('configModal') && console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
+const debugError = (...args) => console.error(...args);
 
 let currentConfig = null;
 let currentTab = 'editor';

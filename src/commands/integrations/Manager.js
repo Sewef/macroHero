@@ -19,8 +19,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Manager') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('Manager') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('Manager') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 class IntegrationsManager {
   constructor() {

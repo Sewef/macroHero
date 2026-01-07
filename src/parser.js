@@ -7,7 +7,8 @@
 
 import { isDebugEnabled } from "./debugMode.js";
 
-const debugWarn = (...args) => isDebugEnabled('parser') && console.warn(...args);
+const debugLog = (...args) => isDebugEnabled('parser') && console.log(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 /**
  * Validate an expression for basic syntax errors

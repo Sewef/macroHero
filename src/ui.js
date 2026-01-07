@@ -7,8 +7,8 @@ import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
-const debugWarn = (...args) => isDebugEnabled('ui') && console.warn(...args);
-const debugError = (...args) => isDebugEnabled('ui') && console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
+const debugError = (...args) => console.error(...args);
 
 let config = null;
 let currentPage = null;

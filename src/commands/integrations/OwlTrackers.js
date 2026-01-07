@@ -8,8 +8,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('OwlTrackers') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('OwlTrackers') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('OwlTrackers') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 

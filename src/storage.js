@@ -10,7 +10,7 @@ import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('storage') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('storage') && console.error(...args);
+const debugError = (...args) => console.error(...args);
 
 // Cache for room ID to avoid repeated lookups
 let roomIdCache = null;

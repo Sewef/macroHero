@@ -13,8 +13,8 @@ import { getExpressionContext } from "./expressionHelpers.js";
 import { isDebugEnabled } from "./debugMode.js";
 
 const debugLog = (...args) => isDebugEnabled('executor') && console.log(...args);
-const debugWarn = (...args) => isDebugEnabled('executor') && console.warn(...args);
-const debugError = (...args) => isDebugEnabled('executor') && console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
+const debugError = (...args) => console.error(...args);
 
 /**
  * Create execution context with all variables, integrations, and helpers

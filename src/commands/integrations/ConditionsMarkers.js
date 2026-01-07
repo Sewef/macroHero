@@ -8,8 +8,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ConditionsMarkers') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('ConditionsMarkers') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('ConditionsMarkers') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 /**
  * Get conditions applied to an item

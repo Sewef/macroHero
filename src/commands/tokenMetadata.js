@@ -3,8 +3,8 @@ import { isDebugEnabled } from "../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('tokenMetadata') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('tokenMetadata') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('tokenMetadata') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 const OWL_TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 

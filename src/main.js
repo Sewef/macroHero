@@ -9,8 +9,8 @@ import { isDebugEnabled } from "./debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('main') && console.log(...args);
-const debugWarn = (...args) => isDebugEnabled('main') && console.warn(...args);
-const debugError = (...args) => isDebugEnabled('main') && console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
+const debugError = (...args) => console.error(...args);
 
 document.getElementById("configBtn").onclick = openConfigModal;
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;

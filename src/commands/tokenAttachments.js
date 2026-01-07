@@ -8,8 +8,8 @@ import { isDebugEnabled } from "../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('tokenAttachments') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('tokenAttachments') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('tokenAttachments') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 /**
  * Get all attachments for a token

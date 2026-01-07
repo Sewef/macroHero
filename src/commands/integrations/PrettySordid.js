@@ -3,8 +3,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('PrettySordid') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('PrettySordid') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('PrettySordid') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 const METADATA_KEY = "com.pretty-initiative/metadata";
 

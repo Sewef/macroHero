@@ -8,8 +8,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Local') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('Local') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('Local') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 class LocalIntegration {
   constructor() {

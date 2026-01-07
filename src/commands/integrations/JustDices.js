@@ -8,8 +8,8 @@ import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('JustDices') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('JustDices') && console.error(...args);
-const debugWarn = (...args) => isDebugEnabled('JustDices') && console.warn(...args);
+const debugError = (...args) => console.error(...args);
+const debugWarn = (...args) => console.warn(...args);
 
 let SELF_ID_PROMISE = null;
 

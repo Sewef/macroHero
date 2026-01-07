@@ -14,7 +14,7 @@ import { getExpressionContext } from "./expressionHelpers.js";
 import { isDebugEnabled } from "./debugMode.js";
 
 const debugLog = (...args) => isDebugEnabled('expressionEvaluator') && console.log(...args);
-const debugError = (...args) => isDebugEnabled('expressionEvaluator') && console.error(...args);
+const debugError = (...args) => console.error(...args);
 
 /**
  * Evaluate a single variable expression
