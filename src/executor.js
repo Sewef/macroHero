@@ -57,12 +57,9 @@ function createExecutionContext(page) {
       if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
       if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
       
-      // Update
-      if (variable.value !== undefined) {
-        variable.value = newValue;
-      } else {
-        variable.eval = String(newValue);
-      }
+      // Update variable definition - always use value for user-modified values
+      variable.value = newValue;
+      delete variable.eval; // Remove eval if present
       
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);
@@ -90,12 +87,9 @@ function createExecutionContext(page) {
       if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
       if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
       
-      // Update
-      if (variable.value !== undefined) {
-        variable.value = newValue;
-      } else {
-        variable.eval = String(newValue);
-      }
+      // Update variable definition - always use value for user-modified values
+      variable.value = newValue;
+      delete variable.eval; // Remove eval if present
       
       page._resolved[varName] = newValue;
       page._modifiedVars.add(varName);

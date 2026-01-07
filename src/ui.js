@@ -165,20 +165,18 @@ function renderPageContent(page) {
     updateRenderedValue(varName, value);
   };
   
-  // Start resolving variables (don't await - let it happen in background)
-  // Use any previously-resolved page values plus globals as the starting set
-  const previouslyResolved = { ...globalVariables, ...(page._resolved || {}) };
-
-  // Determine which variables still need resolving (skip already-resolved ones)
-  const allVarNames = Object.keys(page.variables || {});
-  const varsToResolve = allVarNames.filter(v => !(v in (page._resolved || {})));
-
-  if (varsToResolve.length === 0) {
-    // Nothing to resolve — ensure _resolved includes globals
-    page._resolved = { ...previouslyResolved };
+  // Initialize _resolved with global variables
+  if (!page._resolved) {
+    page._resolved = { ...globalVariables };
   } else {
-    // Resolve only the missing variables (resolveVariables will include dependencies)
-    resolveVariables(page.variables, previouslyResolved, onVariableResolved, new Set(varsToResolve)).then((allResolved) => {
+    // Merge in any new global variables
+    page._resolved = { ...globalVariables, ...page._resolved };
+  }
+
+  // Always resolve all variables to ensure we pick up any value changes
+  // (variables can change via checkboxes, counters, inputs, etc.)
+  if (page.variables && Object.keys(page.variables).length > 0) {
+    resolveVariables(page.variables, globalVariables, onVariableResolved).then((allResolved) => {
       page._resolved = allResolved;
     });
   }
@@ -670,15 +668,20 @@ function renderInput(item, page, inStack = false) {
   input.type = "text";
   input.className = "mh-input-field";
   input.placeholder = item.placeholder ?? "Enter value";
-  input.value = (page._resolved && page._resolved[item.var] !== undefined)
+  // Get current value from resolved or variable.value/eval
+  const currentValue = (page._resolved && page._resolved[item.var] !== undefined)
     ? page._resolved[item.var]
-    : (variable.expression ?? variable.default ?? "");
+    : (variable.value ?? variable.eval ?? "");
+  input.value = currentValue;
 
   renderedValueElements[item.var] = container;
 
   input.onblur = () => {
-    variable.expression = input.value;
-    page._resolved[item.var] = input.value;
+    const newValue = input.value;
+    // Store as value (not eval since it's user input)
+    variable.value = newValue;
+    delete variable.eval; // Remove eval if it exists
+    page._resolved[item.var] = newValue;
     saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
   };
 
@@ -716,12 +719,15 @@ function renderCheckbox(item, page) {
   
   renderedCheckboxElements[item.var] = checkbox;
   
-  const currentValue = page._resolved?.[item.var];
+  // Get current value from resolved variables or variable.value
+  const currentValue = page._resolved?.[item.var] ?? variable.value ?? false;
   checkbox.checked = Boolean(currentValue);
   
   checkbox.onchange = async () => {
     const newValue = checkbox.checked;
-    variable.expression = String(newValue);
+    // Update the variable definition with the new value
+    variable.value = newValue;
+    delete variable.eval; // Remove eval if it exists, we're storing a static value
     page._resolved[item.var] = newValue;
 
     try {
@@ -767,7 +773,8 @@ function renderCounter(item, page) {
     return container;
   }
 
-  const currentValue = page._resolved?.[item.var] ?? variable.expression ?? variable.default ?? 0;
+  // Get current value from resolved variables or variable.value
+  const currentValue = page._resolved?.[item.var] ?? variable.value ?? item.min ?? 0;
   const numValue = Number(currentValue) || 0;
 
   // Label
@@ -802,12 +809,16 @@ function renderCounter(item, page) {
   const updateValue = async (newValue) => {
     const oldValue = Number(input.value) || 0;
     
+    if (item.min !== undefined && newValue < item.min) newValue = item.min;
+    if (item.max !== undefined && newValue > item.max) newValue = item.max;
     if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
     if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
     if (oldValue === newValue) return;
     
     input.value = newValue;
-    variable.expression = String(newValue);
+    // Update the variable definition with the new value
+    variable.value = newValue;
+    delete variable.eval; // Remove eval if it exists, we're storing a static value
     page._resolved[item.var] = newValue;
     
     // Clear any pending timer to restart the debounce

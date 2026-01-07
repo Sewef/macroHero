@@ -33,7 +33,7 @@ function ensureVariableModalInDom() {
       // Inline modal HTML directly to avoid fetch timing issues
       const html = `
       <div id="variableModal" class="modal">
-        <div class="modal-content" style="width: 420px; max-width: 95vw;">
+        <div class="modal-content" style="width: 500px; max-width: 95vw;">
           <div class="modal-header">
             <h3 id="variableModalTitle">Edit Variable</h3>
             <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">×</button>
@@ -43,8 +43,18 @@ function ensureVariableModalInDom() {
             <input type="text" id="variableKey" />
           </div>
           <div class="input-group">
-            <label for="variableExpression">Expression</label>
-            <input type="text" id="variableExpression" placeholder="e.g. player.hp + 5" />
+            <label>
+              <input type="radio" name="variableType" value="value" id="variableTypeValue" checked />
+              Literal Value
+            </label>
+            <input type="text" id="variableValue" placeholder="e.g. 42 or 'text' or true" />
+          </div>
+          <div class="input-group">
+            <label>
+              <input type="radio" name="variableType" value="eval" id="variableTypeEval" />
+              Expression (Eval)
+            </label>
+            <input type="text" id="variableEval" placeholder="e.g. Math.floor(atk * 1.5)" disabled />
           </div>
           <div class="row" style="margin-top: 8px; gap: 8px;">
             <div class="input-group" style="flex:1; margin-bottom:0;">
@@ -65,8 +75,25 @@ function ensureVariableModalInDom() {
       </div>
       `;
       document.body.insertAdjacentHTML('beforeend', html);
-      // small delay to ensure inserted elements are available
-      setTimeout(resolve, 0);
+      // Add event listeners for radio buttons to enable/disable inputs
+      setTimeout(() => {
+        const valueRadio = document.getElementById('variableTypeValue');
+        const evalRadio = document.getElementById('variableTypeEval');
+        const valueInput = document.getElementById('variableValue');
+        const evalInput = document.getElementById('variableEval');
+        
+        if (valueRadio && evalRadio && valueInput && evalInput) {
+          valueRadio.addEventListener('change', () => {
+            valueInput.disabled = false;
+            evalInput.disabled = true;
+          });
+          evalRadio.addEventListener('change', () => {
+            valueInput.disabled = true;
+            evalInput.disabled = false;
+          });
+        }
+        resolve();
+      }, 0);
     }
   });
 }
@@ -79,19 +106,60 @@ function openVariableModal(pageIndex, key = '', value = '', isEdit = false) {
   const keyInput = document.getElementById('variableKey');
   if (keyInput) keyInput.value = key;
   if (keyInput) keyInput.disabled = isEdit;
-  // Populate expression/min/max fields
-  const exprInput = document.getElementById('variableExpression');
+  
+  // Get input elements
+  const valueRadio = document.getElementById('variableTypeValue');
+  const evalRadio = document.getElementById('variableTypeEval');
+  const valueInput = document.getElementById('variableValue');
+  const evalInput = document.getElementById('variableEval');
   const minInput = document.getElementById('variableMin');
   const maxInput = document.getElementById('variableMax');
-  if (typeof value === 'object' && value !== null && ('expression' in value || 'min' in value || 'max' in value)) {
-    if (exprInput) exprInput.value = value.expression ?? '';
+  
+  // Reset form
+  if (valueInput) valueInput.value = '';
+  if (evalInput) evalInput.value = '';
+  if (minInput) minInput.value = '';
+  if (maxInput) maxInput.value = '';
+  
+  // Populate fields based on variable structure
+  if (typeof value === 'object' && value !== null) {
+    // New format: {value: ..., eval: ..., min: ..., max: ...}
+    if ('value' in value) {
+      if (valueRadio) valueRadio.checked = true;
+      if (valueInput) {
+        valueInput.disabled = false;
+        valueInput.value = typeof value.value === 'string' ? value.value : JSON.stringify(value.value);
+      }
+      if (evalInput) evalInput.disabled = true;
+    } else if ('eval' in value) {
+      if (evalRadio) evalRadio.checked = true;
+      if (evalInput) {
+        evalInput.disabled = false;
+        evalInput.value = value.eval ?? '';
+      }
+      if (valueInput) valueInput.disabled = true;
+    } else if ('expression' in value) {
+      // Legacy format - treat as eval
+      if (evalRadio) evalRadio.checked = true;
+      if (evalInput) {
+        evalInput.disabled = false;
+        evalInput.value = value.expression ?? '';
+      }
+      if (valueInput) valueInput.disabled = true;
+    }
+    
     if (minInput) minInput.value = (value.min !== undefined && value.min !== null) ? value.min : '';
     if (maxInput) maxInput.value = (value.max !== undefined && value.max !== null) ? value.max : '';
   } else {
-    if (exprInput) exprInput.value = (value !== undefined && value !== null) ? String(value) : '';
-    if (minInput) minInput.value = '';
-    if (maxInput) maxInput.value = '';
+    // Simple value
+    if (valueRadio) valueRadio.checked = true;
+    if (valueInput) {
+      valueInput.disabled = false;
+      valueInput.value = (value !== undefined && value !== null) ? String(value) : '';
+    }
+    if (evalInput) evalInput.disabled = true;
   }
+  
   const err = document.getElementById('variableError');
   if (err) err.style.display = 'none';
   const modal = document.getElementById('variableModal');
@@ -107,17 +175,51 @@ function closeVariableModal() {
 
 function saveVariableFromModal(currentConfigParam) {
   const keyEl = document.getElementById('variableKey');
-  const exprEl = document.getElementById('variableExpression');
+  const valueRadio = document.getElementById('variableTypeValue');
+  const valueInput = document.getElementById('variableValue');
+  const evalInput = document.getElementById('variableEval');
   const minEl = document.getElementById('variableMin');
   const maxEl = document.getElementById('variableMax');
-  if (!keyEl || !exprEl || !minEl || !maxEl) return false;
+  
+  if (!keyEl || !valueRadio || !valueInput || !evalInput || !minEl || !maxEl) return false;
+  
   const key = keyEl.value.trim();
-  const exprRaw = exprEl.value.trim();
+  const isValue = valueRadio.checked;
+  const valueRaw = valueInput.value.trim();
+  const evalRaw = evalInput.value.trim();
   const minRaw = minEl.value.trim();
   const maxRaw = maxEl.value.trim();
+  
+  if (!key) {
+    showVariableError('Variable name is required.');
+    return false;
+  }
+  
   // Build value object
   let value = {};
-  if (exprRaw !== '') value.expression = exprRaw;
+  
+  if (isValue) {
+    // Literal value - try to parse as JSON for proper types
+    if (valueRaw === '') {
+      showVariableError('Value is required.');
+      return false;
+    }
+    try {
+      // Try parsing as JSON to get proper types (numbers, booleans, etc.)
+      value.value = JSON.parse(valueRaw);
+    } catch {
+      // If not valid JSON, treat as string
+      value.value = valueRaw;
+    }
+  } else {
+    // Expression to eval
+    if (evalRaw === '') {
+      showVariableError('Expression is required.');
+      return false;
+    }
+    value.eval = evalRaw;
+  }
+  
   if (minRaw !== '') {
     const m = Number(minRaw);
     if (!Number.isFinite(m)) {
@@ -134,10 +236,7 @@ function saveVariableFromModal(currentConfigParam) {
     }
     value.max = M;
   }
-  if (!key) {
-    showVariableError('Variable name is required.');
-    return false;
-  }
+  
   if (editingVariablePageIndex === 'global') {
     if (!currentConfigParam.global) currentConfigParam.global = {};
     if (!currentConfigParam.global.variables) currentConfigParam.global.variables = {};
@@ -309,7 +408,9 @@ function renderEditor(config) {
         let def = '';
         if (typeof v === 'object' && v !== null) {
           def = [
-            v.expression !== undefined ? `expr: <code>${v.expression}</code>` : '',
+            v.value !== undefined ? `value: <code>${typeof v.value === 'string' ? v.value : JSON.stringify(v.value)}</code>` : '',
+            v.eval !== undefined ? `eval: <code>${v.eval}</code>` : '',
+            v.expression !== undefined ? `expr: <code>${v.expression}</code>` : '', // legacy fallback
             v.min !== undefined ? `min: ${v.min}` : '',
             v.max !== undefined ? `max: ${v.max}` : ''
           ].filter(Boolean).join(', ');
@@ -509,7 +610,9 @@ function renderEditor(config) {
                 let def = '';
                 if (typeof value === 'object' && value !== null) {
                   def = [
-                    value.expression !== undefined ? `expr: <code>${value.expression}</code>` : '',
+                    value.value !== undefined ? `value: <code>${typeof value.value === 'string' ? value.value : JSON.stringify(value.value)}</code>` : '',
+                    value.eval !== undefined ? `eval: <code>${value.eval}</code>` : '',
+                    value.expression !== undefined ? `expr: <code>${value.expression}</code>` : '', // legacy fallback
                     value.min !== undefined ? `min: ${value.min}` : '',
                     value.max !== undefined ? `max: ${value.max}` : ''
                   ].filter(Boolean).join(', ');
