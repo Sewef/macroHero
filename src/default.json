@@ -5,7 +5,7 @@
         "height": 600,
         "variables": {
             "playerName": {
-                "expression": "Local.value('playerName', 'myGlobalVarPlayerName')"
+                "eval": "Local.value('playerName', 'myGlobalVarPlayerName')"
             }
         }
     },
@@ -14,49 +14,49 @@
             "label": "Integrations",
             "variables": {
                 "token": {
-                    "expression": "'57cefc5e-23b0-40f8-ad32-31a1c331c501'"
+                    "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
                 },
                 "sheetValue": {
-                    "expression": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
+                    "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
                 },
                 "inputName": {
-                    "expression": "'Enter name here'"
+                    "value": "Enter name here"
                 },
                 "isBandaged": {
-                    "expression": "ConditionsMarkers.hasCondition({token}, 'Bandaged')"
+                    "eval": "ConditionsMarkers.hasCondition(token, 'Bandaged')"
                 },
                 "conditionValue": {
-                    "expression": "ConditionsMarkers.getValue({token}, 'Bandaged')"
+                    "eval": "ConditionsMarkers.getValue(token, 'Bandaged')"
                 },
                 "trackerHP": {
-                    "expression": "OwlTrackers.getValue({token}, 'HP')"
+                    "eval": "OwlTrackers.getValue(token, 'HP')"
                 },
                 "trackerMaxHP": {
-                    "expression": "OwlTrackers.getMax({token}, 'HP')"
+                    "eval": "OwlTrackers.getMax(token, 'HP')"
                 },
                 "bubbleHealth": {
-                    "expression": "StatBubbles.getValue({token}, 'health')"
+                    "eval": "StatBubbles.getValue(token, 'health')"
                 },
                 "bubbleMaxHealth": {
-                    "expression": "StatBubbles.getValue({token}, 'max health')"
+                    "eval": "StatBubbles.getValue(token, 'max health')"
                 },
                 "bubbleAC": {
-                    "expression": "StatBubbles.getValue({token}, 'armor class')"
+                    "eval": "StatBubbles.getValue(token, 'armor class')"
                 },
                 "ringColors": {
-                    "expression": "ColoredRings.getRings({token})"
+                    "eval": "ColoredRings.getRings(token)"
                 },
                 "hasBlueRing": {
-                    "expression": "ColoredRings.hasRing({token}, '#1a6aff')"
+                    "eval": "ColoredRings.hasRing(token, '#1a6aff')"
                 },
                 "prettyHasInitiative": {
-                    "expression": "PrettySordid.hasInitiative({token})"
+                    "eval": "PrettySordid.hasInitiative(token)"
                 },
                 "prettyInitiativeCount": {
-                    "expression": "PrettySordid.getInitiativeCount({token})"
+                    "eval": "PrettySordid.getInitiativeCount(token)"
                 },
                 "prettyActive": {
-                    "expression": "PrettySordid.isActiveTurn({token})"
+                    "eval": "PrettySordid.isActiveTurn(token)"
                 }
             },
             "layout": [
@@ -107,21 +107,21 @@
                 {
                     "type": "button",
                     "commands": [
-                        "{isBandaged} ? OwlTrackers.addValue({token}, 'HP', 10) : OwlTrackers.addValue({token}, 'HP', -5)"
+                        "isBandaged ? OwlTrackers.addValue(token, 'HP', 10) : OwlTrackers.addValue(token, 'HP', -5)"
                     ],
                     "label": "Heal if Bandaged"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.toggleCondition({token}, 'Bandaged')"
+                        "ConditionsMarkers.toggleCondition(token, 'Bandaged')"
                     ],
                     "label": "Toggle Bandage"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.addCondition({token}, 'Bandaged', {{conditionValue}+1})"
+                        "ConditionsMarkers.addCondition(token, 'Bandaged', conditionValue + 1)"
                     ],
                     "label": "Increment Bandage"
                 },
@@ -157,14 +157,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "OwlTrackers.addValue({token}, 'HP', 10)"
+                                "OwlTrackers.addValue(token, 'HP', 10)"
                             ],
                             "label": "Heal 10"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "OwlTrackers.addValue({token}, 'HP', -5)"
+                                "OwlTrackers.addValue(token, 'HP', -5)"
                             ],
                             "label": "Damage 5"
                         }
@@ -173,7 +173,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "OwlTrackers.setValue({token}, 'HP', {trackerMaxHP})"
+                        "OwlTrackers.setValue(token, 'HP', trackerMaxHP)"
                     ],
                     "label": "Heal to Max"
                 },
@@ -214,14 +214,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.heal({token}, 15)"
+                                "StatBubbles.heal(token, 15)"
                             ],
                             "label": "Heal 15"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.damage({token}, 8)"
+                                "StatBubbles.damage(token, 8)"
                             ],
                             "label": "Damage 8"
                         }
@@ -233,14 +233,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.setValue({token}, 'temporary health', 20)"
+                                "StatBubbles.setValue(token, 'temporary health', 20)"
                             ],
                             "label": "Set Temp HP 20"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.addValue({token}, 'armor class', 2)"
+                                "StatBubbles.addValue(token, 'armor class', 2)"
                             ],
                             "label": "AC +2"
                         }
@@ -273,21 +273,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing({token}, '#1a6aff')"
+                                "ColoredRings.addRing(token, '#1a6aff')"
                             ],
                             "label": "Add Blue"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing({token}, '#ff7433')"
+                                "ColoredRings.addRing(token, '#ff7433')"
                             ],
                             "label": "Add Orange"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing({token}, '#00ff00')"
+                                "ColoredRings.addRing(token, '#00ff00')"
                             ],
                             "label": "Add Green"
                         }
@@ -299,21 +299,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing({token}, '#1a6aff')"
+                                "ColoredRings.removeRing(token, '#1a6aff')"
                             ],
                             "label": "Remove Blue"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing({token}, '#ff7433')"
+                                "ColoredRings.removeRing(token, '#ff7433')"
                             ],
                             "label": "Remove Orange"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing({token}, '#00ff00')"
+                                "ColoredRings.removeRing(token, '#00ff00')"
                             ],
                             "label": "Remove Green"
                         }
@@ -356,21 +356,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.hasInitiative({token}) ? PrettySordid.setInitiativeCount({token}, PrettySordid.getInitiativeCount({token}) + 1) : PrettySordid.setInitiativeCount({token}, 1)"
+                                "PrettySordid.hasInitiative(token) ? PrettySordid.setInitiativeCount(token, PrettySordid.getInitiativeCount(token) + 1) : PrettySordid.setInitiativeCount(token, 1)"
                             ],
                             "label": "Increment / Assign 1"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.hasInitiative({token}) ? PrettySordid.setInitiativeCount({token}, PrettySordid.getInitiativeCount({token}) - 1) : null"
+                                "PrettySordid.hasInitiative(token) ? PrettySordid.setInitiativeCount(token, PrettySordid.getInitiativeCount(token) - 1) : null"
                             ],
                             "label": "Decrement"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.setInitiativeCount({token}, 0)"
+                                "PrettySordid.setInitiativeCount(token, 0)"
                             ],
                             "label": "Reset to 0"
                         }
@@ -409,7 +409,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d20 + {bubbleAC}') > 15 ? StatBubbles.damage({token}, 10) : null"
+                        "JustDices.roll('1d20 + ' + bubbleAC) > 15 ? StatBubbles.damage(token, 10) : null"
                     ],
                     "label": "Attack Roll (DC 15)"
                 },
@@ -436,14 +436,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('Global Player Name: ' + {playerName})"
+                                "JustDices.roll('Global Player Name: ' + playerName)"
                             ],
                             "label": "Show Global Name"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('Input Name: ' + {inputName})"
+                                "JustDices.roll('Input Name: ' + inputName)"
                             ],
                             "label": "Show Input Name"
                         }
@@ -469,19 +469,19 @@
             "label": "Layout",
             "variables": {
                 "textVar": {
-                    "expression": "'Hello World'"
+                    "value": "Hello World"
                 },
                 "numberVar": {
-                    "expression": "42"
+                    "value": 42
                 },
                 "counterVar": {
-                    "expression": "10"
+                    "value": 10
                 },
                 "checkboxVar": {
-                    "expression": "true"
+                    "value": true
                 },
                 "inputVar": {
-                    "expression": "'Enter text here'"
+                    "value": "Enter text here"
                 }
             },
             "layout": [
@@ -612,8 +612,8 @@
         {
             "label": "Tests",
             "variables": {
-                "spdCS": { "expression": "15" },
-                "floorResult": { "expression": "floor({spdCS} / 2)" }
+                "spdCS": { "value": 15 },
+                "floorResult": { "eval": "Math.floor(spdCS / 2)" }
             },
             "layout": [
                 {
@@ -642,32 +642,30 @@
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('floorResult: ' + {floorResult})"
+                        "JustDices.roll('floorResult: ' + floorResult)"
                     ],
                     "label": "Show floor result"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "n = '1d10'; JustDices.roll(n)"
+                        "JustDices.roll('1d10')"
                     ],
                     "label": "Test Roll"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "n = '1d10'",
-                        "JustDices.roll(n)"
+                        "JustDices.roll('1d10')"
                     ],
                     "label": "Test Roll2"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "n = '1d10'",
-                        "JustDices.roll(n)"
+                        "JustDices.roll('1d10 + ' + spdCS)"
                     ],
-                    "label": "Test {spdCS}"
+                    "label": "Test with spdCS"
                 }
             ]
         }

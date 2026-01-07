@@ -1,6 +1,10 @@
 /**
  * Expression Helpers
  * Provides integrations context for variable expressions
+ * 
+ * Works with unified evaluation system supporting:
+ * - ${expression} for full expressions
+ * - {varName} for simple variable substitution
  */
 
 import { initializeIntegrations, getIntegrationsContext } from "./commands/integrations/Manager.js";
