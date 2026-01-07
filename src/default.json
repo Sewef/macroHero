@@ -666,6 +666,16 @@
                         "JustDices.roll('1d10 + ' + spdCS)"
                     ],
                     "label": "Test with spdCS"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "result = await JustDices.roll('1d20')",
+                        "message = result > 10 ? 'Effect' : 'No Effect'",
+                        "message += result > 10 ? ' \\\\(Critical\\\\)' : ''",
+                        "JustDices.roll(`\\\\Result: ${result} \\\\: ${message}`)"
+                    ],
+                    "label": "Test Async"
                 }
             ]
         }
