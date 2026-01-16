@@ -1904,7 +1904,8 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'sceneMetadata',
     'tokenMetadata',
     'tokenAttachments',
-    'sceneHelpers'
+    'sceneHelpers',
+    'tokenHelpers'
   ],
   'Integration Modules': [
     'GoogleSheets',

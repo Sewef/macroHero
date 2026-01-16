@@ -959,6 +959,189 @@
                     "label": "Get Map ID from Token"
                 }
             ]
+        },
+        {
+            "label": "Tokens",
+            "variables": {
+                "tokenUrl": {
+                    "value": "https://docs.owlbear.rodeo/img/logo.svg"
+                },
+                "tokenName": {
+                    "value": "New Token"
+                },
+                "tokenX": {
+                    "value": 500
+                },
+                "tokenY": {
+                    "value": 500
+                },
+                "tokenSize": {
+                    "value": 1.0
+                },
+                "gridX": {
+                    "value": 5
+                },
+                "gridY": {
+                    "value": 5
+                },
+                "createdTokenId": {
+                    "value": ""
+                }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Token Creation"
+                },
+                {
+                    "type": "text",
+                    "text": "Create tokens on the scene using tokenHelpers"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Simple Token Creation"
+                },
+                {
+                    "type": "input",
+                    "var": "tokenUrl",
+                    "label": "Token Image URL"
+                },
+                {
+                    "type": "input",
+                    "var": "tokenName",
+                    "label": "Token Name"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "input",
+                            "var": "tokenX",
+                            "label": "Position X"
+                        },
+                        {
+                            "type": "input",
+                            "var": "tokenY",
+                            "label": "Position Y"
+                        }
+                    ]
+                },
+                {
+                    "type": "input",
+                    "var": "tokenSize",
+                    "label": "Token Size (grid cells)"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const tokenId = await tokenHelpers.createSimpleToken({",
+                        "  url: tokenUrl,",
+                        "  name: tokenName,",
+                        "  position: { x: tokenX, y: tokenY },",
+                        "  size: tokenSize",
+                        "});",
+                        "await setValue('createdTokenId', tokenId);"
+                    ],
+                    "label": "Create Simple Token"
+                },
+                {
+                    "type": "value",
+                    "var": "createdTokenId",
+                    "label": "Created Token ID"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Grid-Based Token Creation"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "input",
+                            "var": "gridX",
+                            "label": "Grid X"
+                        },
+                        {
+                            "type": "input",
+                            "var": "gridY",
+                            "label": "Grid Y"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const tokenId = await tokenHelpers.createTokenAtGrid({",
+                        "  url: tokenUrl,",
+                        "  gridX: gridX,",
+                        "  gridY: gridY,",
+                        "  name: tokenName,",
+                        "  size: tokenSize",
+                        "});",
+                        "await setValue('createdTokenId', tokenId);"
+                    ],
+                    "label": "Create Token at Grid Position"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Quick Examples"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "await tokenHelpers.createSimpleToken({",
+                        "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
+                        "  name: 'Hero',",
+                        "  position: { x: 300, y: 300 },",
+                        "  size: 1.5",
+                        "});"
+                    ],
+                    "label": "Create Demo Hero (1.5 cells)"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const enemyPositions = [",
+                        "  { x: 600, y: 400 },",
+                        "  { x: 800, y: 400 },",
+                        "  { x: 700, y: 600 }",
+                        "];",
+                        "const tokens = enemyPositions.map((pos, i) => ({",
+                        "  url: 'https://sewef.github.io/macrohero/logo.png',",
+                        "  size: 1.0,",
+                        "  position: pos,",
+                        "  name: `Enemy ${i + 1}`,",
+                        "  plainText: `E${i + 1}`",
+                        "}));",
+                        "await tokenHelpers.createTokens(tokens);"
+                    ],
+                    "label": "Create 3 Enemies (1 cell each)"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const tokenId = await tokenHelpers.createSimpleToken({",
+                        "  url: 'https://sewef.github.io/justDices/JustDices.png',",
+                        "  position: { x: 500, y: 500 },",
+                        "  name: 'Boss',",
+                        "  size: 3.0",
+                        "});",
+                        "await OwlTrackers.setValue(tokenId, 'HP', 100);",
+                        "await tokenMetadata.updateTokenMetadata(tokenId, { ac: 18, isBoss: true });",
+                        "console.log('Created boss with ID:', tokenId);"
+                    ],
+                    "label": "Create Boss (3 cells) with HP & Metadata"
+                }
+            ]
         }
     ]
 }

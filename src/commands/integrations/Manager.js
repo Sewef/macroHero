@@ -15,6 +15,7 @@ import * as sceneMetadata from "../sceneMetadata.js";
 import * as tokenMetadata from "../tokenMetadata.js";
 import * as tokenAttachments from "../tokenAttachments.js";
 import * as sceneHelpers from "../sceneHelpers.js";
+import * as tokenHelpers from "../tokenHelpers.js";
 import * as GoogleSheets from "./GoogleSheets.js";
 import * as Weather from "./Weather.js";
 import { isDebugEnabled } from "../../debugMode.js";
@@ -162,6 +163,7 @@ class IntegrationsManager {
       tokenMetadata,
       tokenAttachments,
       sceneHelpers,
+      tokenHelpers,
       // ...existing code...
     };
   }
