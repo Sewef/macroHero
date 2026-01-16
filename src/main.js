@@ -98,17 +98,17 @@ OBR.onReady(async () => {
 
       // If the modal sent a small flag, load full config from room-scoped localStorage
       let newConfig = event.data;
-      if (event.data && event.data.savedFromModal) {
+      if (event.data && (event.data.savedFromModal || event.data.savedFromUI)) {
         try {
           const cfg = await loadConfigFromLocalStorage();
           if (cfg) {
             newConfig = cfg;
           } else {
-            debugWarn('[MAIN] No config found in localStorage after modal saved');
+            debugWarn('[MAIN] No config found in localStorage after config saved');
             return;
           }
         } catch (err) {
-          debugError('[MAIN] Failed to load config from localStorage after modal saved:', err);
+          debugError('[MAIN] Failed to load config from localStorage after config saved:', err);
           return;
         }
       }

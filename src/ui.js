@@ -23,6 +23,18 @@ import { handleButtonClick } from "./executor.js";
 import { resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
 
 /**
+ * Broadcast config update notification to refresh pages across the app
+ */
+async function broadcastConfigUpdated() {
+  try {
+    await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromUI: true }, { destination: "LOCAL" });
+    debugLog("[UI] Config update broadcasted");
+  } catch (err) {
+    debugWarn("[UI] Warning: failed to broadcast config update:", err);
+  }
+}
+
+/**
  * Initialize the UI with the given configuration
  * @param {Object} cfg - Configuration object
  */
@@ -551,6 +563,7 @@ function renderButton(item, page) {
         
         // Auto-save config after commands that may have modified variables
         await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config after button:", err));
+        await broadcastConfigUpdated();
         
         // No need to re-render the entire page - individual values were updated via callback
       } catch (error) {
@@ -735,6 +748,7 @@ function renderCheckbox(item, page) {
 
     try {
       await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
+      await broadcastConfigUpdated();
 
       const dependentVars = getDependentVariables(page.variables, [item.var]);
       if (dependentVars.size > 0) {
@@ -831,6 +845,7 @@ function renderCounter(item, page) {
     updateTimer = setTimeout(async () => {
       try {
         await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
+        await broadcastConfigUpdated();
         
         const dependentVars = getDependentVariables(page.variables, [item.var]);
         if (dependentVars.size > 1) {
@@ -948,6 +963,7 @@ function renderDropdown(item, page) {
 
     try {
       await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
+      await broadcastConfigUpdated();
 
       // Re-evaluate dependent variables
       const dependentVars = getDependentVariables(page.variables, [item.var]);
