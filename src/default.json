@@ -556,23 +556,37 @@
                     "label": "Checkbox Example"
                 },
                 {
-                    "type": "dropdown",
-                    "var": "dropdownVar",
-                    "label": "Dropdown Example",
-                    "options": [
-                        "Option 1",
-                        "Option 2",
-                        "Option 3"
-                    ]
-                },
-                {
-                    "type": "dropdown",
-                    "var": "dropdownModeVar",
-                    "label": "Mode de jeu",
-                    "options": [
-                        {"label": "Facile", "value": "easy"},
-                        {"label": "Normal", "value": "normal"},
-                        {"label": "Difficile", "value": "hard"}
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "dropdown",
+                            "var": "dropdownVar",
+                            "label": "Dropdown Example",
+                            "options": [
+                                "Option 1",
+                                "Option 2",
+                                "Option 3"
+                            ]
+                        },
+                        {
+                            "type": "dropdown",
+                            "var": "dropdownModeVar",
+                            "label": "Mode de jeu",
+                            "options": [
+                                {
+                                    "label": "Facile",
+                                    "value": "easy"
+                                },
+                                {
+                                    "label": "Normal",
+                                    "value": "normal"
+                                },
+                                {
+                                    "label": "Difficile",
+                                    "value": "hard"
+                                }
+                            ]
+                        }
                     ]
                 },
                 {
@@ -638,8 +652,12 @@
         {
             "label": "Tests",
             "variables": {
-                "spdCS": { "value": 15 },
-                "floorResult": { "eval": "Math.floor(spdCS / 2)" },
+                "spdCS": {
+                    "value": 15
+                },
+                "floorResult": {
+                    "eval": "Math.floor(spdCS / 2)"
+                },
                 "testToken": {
                     "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
                 },
