@@ -893,8 +893,26 @@ function renderDropdown(item, page) {
   const select = document.createElement("select");
   select.className = "mh-dropdown-select";
 
-  // Get options from item.options array
-  const options = item.options ?? [];
+  // Get options from item.options array or from a variable
+  let options = item.options ?? [];
+  
+  // If optionsVar is specified, use variable containing array
+  if (item.optionsVar) {
+    const optionsVariable = page.variables?.[item.optionsVar];
+    if (optionsVariable) {
+      const optionsValue = page._resolved?.[item.optionsVar] ?? optionsVariable.value;
+      if (Array.isArray(optionsValue)) {
+        options = optionsValue;
+      } else {
+        debugWarn(`[UI] optionsVar "${item.optionsVar}" for dropdown "${item.var}" is not an array`);
+        options = [];
+      }
+    } else {
+      debugWarn(`[UI] optionsVar "${item.optionsVar}" not found for dropdown "${item.var}"`);
+      options = [];
+    }
+  }
+  
   if (options.length === 0) {
     const defaultOption = document.createElement("option");
     defaultOption.textContent = "No options available";

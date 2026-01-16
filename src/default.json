@@ -793,6 +793,12 @@
                 },
                 "mapIdFromToken": {
                     "eval": "sceneHelpers.getMapIdFromToken(testToken)"
+                },
+                "dropdownOptions": {
+                    "value": ["Option A", "Option B", "Option C", "Option D"]
+                },
+                "selectedOption": {
+                    "value": "Option A"
                 }
             },
             "layout": [
@@ -894,6 +900,29 @@
                         "}"
                     ],
                     "label": "Loop Example"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "expression": "Dropdown with Array"
+                },
+                {
+                    "type": "dropdown",
+                    "var": "selectedOption",
+                    "label": "Select from Array",
+                    "optionsVar": "dropdownOptions"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "selectedOption",
+                            "label": "Selected Value"
+                        }
+                    ]
                 },
                 {
                     "type": "divider"
