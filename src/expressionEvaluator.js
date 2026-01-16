@@ -169,9 +169,6 @@ export async function resolveVariables(variablesConfig, globalVars = {}, onVaria
       } else if (varConfig.eval !== undefined) {
         // Evaluate expression
         value = await evaluateExpression(varConfig.eval, resolved);
-      } else if (varConfig.expression !== undefined) {
-        // Legacy support - treat as eval
-        value = await evaluateExpression(varConfig.expression, resolved);
       } else {
         value = null;
       }
@@ -229,7 +226,7 @@ export function getAffectedVariables(commands, variablesConfig) {
 
   // Find variables that use these integrations
   for (const [varName, varConfig] of Object.entries(variablesConfig)) {
-    const expr = String(varConfig.eval || varConfig.expression || '');
+    const expr = String(varConfig.eval || '');
     for (const integration of integrationCalls) {
       if (expr.includes(integration + '.')) {
         affected.add(varName);
@@ -252,7 +249,7 @@ export function getDependentVariables(variablesConfig, changedVars) {
 
   // Build reverse dependency map
   for (const [varName, varConfig] of Object.entries(variablesConfig)) {
-    const expr = String(varConfig.eval || varConfig.expression || '');
+    const expr = String(varConfig.eval || '');
     
     // Find dependencies
     const thisRefs = expr.match(/\bthis\.(\w+)/g) || [];

@@ -62,11 +62,11 @@
             "layout": [
                 {
                     "type": "title",
-                    "expression": "{sheetValue}"
+                    "text": "{sheetValue}"
                 },
                 {
                     "type": "text",
-                    "expression": "{sheetValue}"
+                    "text": "{sheetValue}"
                 },
                 {
                     "type": "row",
@@ -83,11 +83,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Conditions Markers"
+                    "text": "Conditions Markers"
                 },
                 {
                     "type": "text",
-                    "expression": "Check and read condition markers on tokens"
+                    "text": "Check and read condition markers on tokens"
                 },
                 {
                     "type": "row",
@@ -130,11 +130,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Owl Trackers"
+                    "text": "Owl Trackers"
                 },
                 {
                     "type": "text",
-                    "expression": "Get and modify tracker values on tokens"
+                    "text": "Get and modify tracker values on tokens"
                 },
                 {
                     "type": "row",
@@ -182,11 +182,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "StatBubbles"
+                    "text": "StatBubbles"
                 },
                 {
                     "type": "text",
-                    "expression": "Manage health, AC, and temp HP via StatBubbles extension"
+                    "text": "Manage health, AC, and temp HP via StatBubbles extension"
                 },
                 {
                     "type": "row",
@@ -251,11 +251,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Colored Rings"
+                    "text": "Colored Rings"
                 },
                 {
                     "type": "text",
-                    "expression": "Add and remove colored status rings on tokens"
+                    "text": "Add and remove colored status rings on tokens"
                 },
                 {
                     "type": "row",
@@ -324,11 +324,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Pretty Sordid"
+                    "text": "Pretty Sordid"
                 },
                 {
                     "type": "text",
-                    "expression": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+                    "text": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
                 },
                 {
                     "type": "row",
@@ -381,11 +381,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "JustDices"
+                    "text": "JustDices"
                 },
                 {
                     "type": "text",
-                    "expression": "Roll dice and get results in Owlbear Rodeo"
+                    "text": "Roll dice and get results in Owlbear Rodeo"
                 },
                 {
                     "type": "row",
@@ -418,11 +418,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Local Storage"
+                    "text": "Local Storage"
                 },
                 {
                     "type": "text",
-                    "expression": "Store and retrieve values in browser localStorage"
+                    "text": "Store and retrieve values in browser localStorage"
                 },
                 {
                     "type": "input",
@@ -468,11 +468,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Weather Tests"
+                    "text": "Weather Tests"
                 },
                 {
                     "type": "text",
-                    "expression": "Add weather effects to maps"
+                    "text": "Add weather effects to maps"
                 },
                 {
                     "type": "row",
@@ -623,18 +623,18 @@
             "layout": [
                 {
                     "type": "title",
-                    "expression": "Layout Examples"
+                    "text": "Layout Examples"
                 },
                 {
                     "type": "text",
-                    "expression": "This page demonstrates all available layout types"
+                    "text": "This page demonstrates all available layout types"
                 },
                 {
                     "type": "divider"
                 },
                 {
                     "type": "title",
-                    "expression": "Display Types"
+                    "text": "Display Types"
                 },
                 {
                     "type": "row",
@@ -656,7 +656,7 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Input Types"
+                    "text": "Input Types"
                 },
                 {
                     "type": "row",
@@ -724,18 +724,18 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Stack Demo"
+                    "text": "Stack Demo"
                 },
                 {
                     "type": "text",
-                    "expression": "Demonstrates the `stack` container."
+                    "text": "Demonstrates the `stack` container."
                 },
                 {
                     "type": "row",
                     "children": [
                         {
                             "type": "text",
-                            "expression": "This is a row containing a stack:"
+                            "text": "This is a row containing a stack:"
                         },
                         {
                             "type": "stack",
@@ -768,7 +768,7 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Button"
+                    "text": "Button"
                 },
                 {
                     "type": "button",
@@ -804,11 +804,11 @@
             "layout": [
                 {
                     "type": "title",
-                    "expression": "Testing Area"
+                    "text": "Testing Area"
                 },
                 {
                     "type": "text",
-                    "expression": "Use this page for testing new features and commands."
+                    "text": "Use this page for testing new features and commands."
                 },
                 {
                     "type": "row",
@@ -906,7 +906,7 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Dropdown with Array"
+                    "text": "Dropdown with Array"
                 },
                 {
                     "type": "dropdown",
@@ -929,11 +929,11 @@
                 },
                 {
                     "type": "title",
-                    "expression": "Scene Helpers Tests"
+                    "text": "Scene Helpers Tests"
                 },
                 {
                     "type": "text",
-                    "expression": "Test scene helper functions"
+                    "text": "Test scene helper functions"
                 },
                 {
                     "type": "row",

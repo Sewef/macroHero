@@ -138,14 +138,6 @@ function openVariableModal(pageIndex, key = '', value = '', isEdit = false) {
         evalInput.value = value.eval ?? '';
       }
       if (valueInput) valueInput.disabled = true;
-    } else if ('expression' in value) {
-      // Legacy format - treat as eval
-      if (evalRadio) evalRadio.checked = true;
-      if (evalInput) {
-        evalInput.disabled = false;
-        evalInput.value = value.expression ?? '';
-      }
-      if (valueInput) valueInput.disabled = true;
     }
     
     if (minInput) minInput.value = (value.min !== undefined && value.min !== null) ? value.min : '';
@@ -410,7 +402,6 @@ function renderEditor(config) {
           def = [
             v.value !== undefined ? `value: <code>${typeof v.value === 'string' ? v.value : JSON.stringify(v.value)}</code>` : '',
             v.eval !== undefined ? `eval: <code>${v.eval}</code>` : '',
-            v.expression !== undefined ? `expr: <code>${v.expression}</code>` : '', // legacy fallback
             v.min !== undefined ? `min: ${v.min}` : '',
             v.max !== undefined ? `max: ${v.max}` : ''
           ].filter(Boolean).join(', ');
@@ -451,7 +442,7 @@ function renderEditor(config) {
       
       const layoutItemsHtml = page.layout ? page.layout.map((item, itemIndex) => {
         const typeLabel = item.type || 'unknown';
-        const label = item.label || item.expression || item.text || item.var || '';
+        const label = item.label || item.text || item.var || '';
         
         // Handle row items (treat as container even if children is missing)
         if (item.type === 'row') {
@@ -461,8 +452,8 @@ function renderEditor(config) {
             if (child.type === 'stack') {
               const nested = (child.children && Array.isArray(child.children)) ? child.children : [];
               const nestedHtml = nested.map((nChild, nestedIndex) => {
-                const nLabel = nChild.label || nChild.expression || nChild.text || nChild.var || '';
-                const nContent = nChild.type === 'text' && nChild.expression ? nChild.expression.substring(0, 50) + (nChild.expression.length > 50 ? '...' : '') : nLabel;
+                const nLabel = nChild.label || nChild.text || nChild.var || '';
+                const nContent = nChild.type === 'text' && nChild.text ? nChild.text.substring(0, 50) + (nChild.text.length > 50 ? '...' : '') : nLabel;
                 return `
                   <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-nested-index="${nestedIndex}" data-page-index="${index}">
                     <div class="layout-item-info">
@@ -497,8 +488,8 @@ function renderEditor(config) {
               `;
             }
 
-            const childLabel = child.label || child.expression || child.text || child.var || '';
-            const childContent = child.type === 'text' && child.expression ? child.expression.substring(0, 50) + (child.expression.length > 50 ? '...' : '') : childLabel;
+            const childLabel = child.label || child.text || child.var || '';
+            const childContent = child.type === 'text' && child.text ? child.text.substring(0, 50) + (child.text.length > 50 ? '...' : '') : childLabel;
             return `
               <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
                 <div class="layout-item-info">
@@ -536,8 +527,8 @@ function renderEditor(config) {
         if (item.type === 'stack') {
           const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
           const childrenHtml = childrenArr.map((child, childIndex) => {
-            const childLabel = child.label || child.expression || child.text || child.var || '';
-            const childContent = child.type === 'text' && child.expression ? child.expression.substring(0, 50) + (child.expression.length > 50 ? '...' : '') : childLabel;
+            const childLabel = child.label || child.text || child.var || '';
+            const childContent = child.type === 'text' && child.text ? child.text.substring(0, 50) + (child.text.length > 50 ? '...' : '') : childLabel;
             return `
               <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
                 <div class="layout-item-info">
@@ -572,7 +563,7 @@ function renderEditor(config) {
           `;
         }
         
-        const content = item.type === 'text' && item.expression ? item.expression.substring(0, 50) + (item.expression.length > 50 ? '...' : '') : label;
+        const content = item.type === 'text' && item.text ? item.text.substring(0, 50) + (item.text.length > 50 ? '...' : '') : label;
         
         return `
           <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-page-index="${index}">
@@ -612,7 +603,6 @@ function renderEditor(config) {
                   def = [
                     value.value !== undefined ? `value: <code>${typeof value.value === 'string' ? value.value : JSON.stringify(value.value)}</code>` : '',
                     value.eval !== undefined ? `eval: <code>${value.eval}</code>` : '',
-                    value.expression !== undefined ? `expr: <code>${value.expression}</code>` : '', // legacy fallback
                     value.min !== undefined ? `min: ${value.min}` : '',
                     value.max !== undefined ? `max: ${value.max}` : ''
                   ].filter(Boolean).join(', ');
@@ -1344,16 +1334,16 @@ window.updateElementFields = function(existingElement = null) {
     case 'title':
       html = `
         <div class="input-group">
-          <label>Expression</label>
-          <input type="text" id="elem_expression" value="${existingElement?.expression || ''}" placeholder="Title expression (e.g. '{sheetValue}')" />
+          <label>Text</label>
+          <input type="text" id="elem_text" value="${existingElement?.text || ''}" placeholder="Title text (e.g. '{sheetValue}')" />
         </div>
       `;
       break;
     case 'text':
       html = `
         <div class="input-group">
-          <label>Expression</label>
-          <textarea id="elem_expression">${existingElement?.expression || ''}</textarea>
+          <label>Text</label>
+          <textarea id="elem_text">${existingElement?.text || ''}</textarea>
         </div>
       `;
       break;
@@ -1416,10 +1406,10 @@ window.saveElement = function() {
       if (step) element.step = parseInt(step);
       break;
     case 'title':
-      element.expression = document.getElementById("elem_expression")?.value || '';
+      element.text = document.getElementById("elem_text")?.value || '';
       break;
     case 'text':
-      element.expression = document.getElementById("elem_expression")?.value || '';
+      element.text = document.getElementById("elem_text")?.value || '';
       break;
     case 'row':
       // Initialize with empty children array if creating new row

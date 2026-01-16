@@ -110,11 +110,11 @@ function renderPageButtons() {
       const btn = document.createElement("button");
       btn.classList.add('tab');
       btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         currentPage = index;
         if (!p._pageIndex) p._pageIndex = index;
         renderPageButtons();
-        renderPageContent(p);
+        await renderPageContent(p);
       });
 
       if (currentPage === index) {
@@ -135,7 +135,7 @@ function selectFirstPage() {
     currentPage = 0;
     // Ensure the tabs update to reflect the selected page
     renderPageButtons();
-    renderPageContent(first);
+    renderPageContent(first).catch(err => debugError('[UI] Error rendering first page:', err));
   } else {
       // No pages configured
       currentPage = null;
@@ -146,14 +146,14 @@ function selectFirstPage() {
 // RENDER HELPERS - Page Content
 // ============================================
 
-export function reloadCurrentPage() {
+export async function reloadCurrentPage() {
   if (currentPage !== null && config?.pages?.[currentPage]) {
     const page = config.pages[currentPage];
-    renderPageContent(page);
+    await renderPageContent(page);
   }
 }
 
-function renderPageContent(page) {
+async function renderPageContent(page) {
   const container = document.getElementById("content");
   container.innerHTML = "";
   
@@ -162,21 +162,6 @@ function renderPageContent(page) {
   renderedCheckboxElements = {};
   renderedExpressionElements = [];
 
-  // Render layout if defined
-  if (page.layout && Array.isArray(page.layout)) {
-    renderLayout(container, page.layout, page);
-  } else {
-    const emptyMsg = document.createElement("i");
-    emptyMsg.textContent = "No layout defined for this page";
-    container.appendChild(emptyMsg);
-  }
-  
-  // Now resolve variables with callback to update UI as they resolve
-  const onVariableResolved = (varName, value) => {
-    page._resolved[varName] = value;
-    updateRenderedValue(varName, value);
-  };
-  
   // Initialize _resolved with global variables
   if (!page._resolved) {
     page._resolved = { ...globalVariables };
@@ -185,12 +170,23 @@ function renderPageContent(page) {
     page._resolved = { ...globalVariables, ...page._resolved };
   }
 
-  // Always resolve all variables to ensure we pick up any value changes
-  // (variables can change via checkboxes, counters, inputs, etc.)
+  // Resolve all variables BEFORE rendering layout so expressions can reference them
   if (page.variables && Object.keys(page.variables).length > 0) {
-    resolveVariables(page.variables, globalVariables, onVariableResolved).then((allResolved) => {
-      page._resolved = allResolved;
-    });
+    const onVariableResolved = (varName, value) => {
+      page._resolved[varName] = value;
+    };
+    
+    const allResolved = await resolveVariables(page.variables, globalVariables, onVariableResolved);
+    page._resolved = allResolved;
+  }
+
+  // Now render layout with resolved variables
+  if (page.layout && Array.isArray(page.layout)) {
+    renderLayout(container, page.layout, page);
+  } else {
+    const emptyMsg = document.createElement("i");
+    emptyMsg.textContent = "No layout defined for this page";
+    container.appendChild(emptyMsg);
   }
 }
 
@@ -231,13 +227,12 @@ export function updateRenderedValue(varName, value) {
     try {
       if (!entry || !entry.item || !entry.element) continue;
       
-      const hasExpression = entry.item.expression !== undefined;
       const hasPlaceholders = (entry.item.label && entry.item.label.includes('{')) || 
                              (entry.item.text && entry.item.text.includes('{')) || 
                              (entry.item.content && entry.item.content.includes('{'));
       
-      // Evaluate if: has expression/placeholders AND (element is empty OR this var might be needed)
-      if (hasExpression || hasPlaceholders) {
+      // Evaluate if: has placeholders AND (element is empty OR this var might be needed)
+      if (hasPlaceholders) {
         const resolvedVars = { ...globalVariables, ...(entry.page?._resolved || {}) };
         evaluateItemText(entry.item, resolvedVars)
           .then(res => { entry.element.textContent = res; })
@@ -265,39 +260,17 @@ function substituteVariablesSimple(text, variables) {
 
 /**
  * Evaluate item text - only evaluates expressions explicitly wrapped in {}
- * @param {Object} item - Layout item with expression, label, text, or content property
+ * @param {Object} item - Layout item with label, text, or content property
  * @param {Object} resolvedVars - Resolved variables for evaluation
  * @returns {Promise<string>} Evaluated text
  */
 async function evaluateItemText(item, resolvedVars) {
-  // Priority 1: Check if item.expression is explicitly wrapped in braces
-  if (item.expression !== undefined && typeof item.expression === 'string') {
-    if (item.expression.match(/^\{.+\}$/)) {
-      const innerExpr = item.expression.slice(1, -1); // Remove outer braces
-      
-            // Check if innerExpr is a simple variable reference (just a word)
-            if (/^\w+$/.test(innerExpr) && innerExpr in resolvedVars) {
-              const value = resolvedVars[innerExpr];
-              return (value === null || value === undefined) ? "" : String(value);
-            }
-      try {
-        const res = await evaluateExpression(innerExpr, resolvedVars);
-        return (res === null || res === undefined) ? "" : String(res);
-      } catch (err) {
-        // Fall back to simple substitution if evaluation fails
-        return substituteVariablesSimple(item.expression, resolvedVars);
-      }
-    }
-    // Not wrapped in braces - treat as plain text
-    return item.expression;
-  }
-  
-  // Priority 2: Get the text content to process
+  // Get the text content to process
   let text = item.label ?? item.content ?? item.text ?? "";
   
   if (!text) return "";
   
-  // Priority 3: If the entire text is wrapped in braces like {expression}, extract and evaluate
+  // If the entire text is wrapped in braces like {expression}, extract and evaluate
   if (typeof text === 'string' && text.match(/^\{.+\}$/)) {
     const innerExpr = text.slice(1, -1); // Remove outer braces
     
@@ -326,12 +299,12 @@ async function evaluateItemText(item, resolvedVars) {
 
 /**
  * Check if an item's text should be dynamically evaluated
- * Only true if: expression is explicitly set for text, or label contains {placeholder}
+ * Only true if: label, text, or content contains {placeholder}
  */
 function shouldEvaluateDynamically(item) {
-  // Only use item.expression if it was explicitly meant for rendering text
-  // Check if label contains {variable} placeholders
-  return item.label && item.label.includes('{');
+  // Check if label, text, or content contains {variable} placeholders
+  const textToCheck = item.label || item.text || item.content || '';
+  return textToCheck.includes('{');
 }
 
 /**
@@ -343,10 +316,10 @@ function shouldEvaluateDynamically(item) {
  */
 function evaluateAndSetElementText(element, item, page) {
   // Only register for dynamic updates if the item actually has dynamic content
-  const hasExpression = item.expression !== undefined;
-  const hasPlaceholders = (item.label && item.label.includes('{'));
+  const textToCheck = item.label || item.text || item.content || '';
+  const hasPlaceholders = textToCheck.includes('{');
   
-  if (!hasExpression && !hasPlaceholders) {
+  if (!hasPlaceholders) {
     return false;
   }
   
@@ -451,7 +424,7 @@ function renderTitle(item, page) {
   const title = document.createElement("h3");
   title.className = "mh-layout-title";
 
-  // Title uses item.expression or item.text; evaluate immediately if dynamic
+  // Title uses item.text; evaluate immediately if dynamic
   if (!evaluateAndSetElementText(title, item, page)) {
     title.textContent = item.text ?? "";
   }
@@ -655,7 +628,7 @@ function renderText(item, page) {
   const text = document.createElement("div");
   text.className = "mh-layout-text";
 
-  // Text uses item.expression or item.content/text; evaluate immediately if dynamic
+  // Text uses item.content/text; evaluate immediately if dynamic
   if (!evaluateAndSetElementText(text, item, page)) {
     text.textContent = item.content ?? item.text ?? "";
   }
