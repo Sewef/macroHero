@@ -340,7 +340,7 @@ h1 {
   font-size: 1rem;
   font-weight: 600;
   color: var(--mh-accent);
-  font-family: 'Courier New', monospace;
+  font-family: monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -374,7 +374,7 @@ h1 {
   padding: 4px 6px;
   border-radius: 4px;
   font-size: 1rem;
-  font-family: 'Courier New', monospace;
+  font-family: monospace;
   box-sizing: border-box;
   height: 28px;
   outline-offset: 2px;
@@ -558,7 +558,7 @@ h1 {
   border-radius: 4px;
   font-size: 1rem;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
+  font-family: monospace;
   height: 24px;
   line-height: 24px;
   min-width: 0;
