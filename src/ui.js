@@ -155,7 +155,6 @@ export async function reloadCurrentPage() {
 
 async function renderPageContent(page) {
   const container = document.getElementById("content");
-  container.innerHTML = "";
   
   // Clear previous element maps
   renderedValueElements = {};
@@ -170,23 +169,46 @@ async function renderPageContent(page) {
     page._resolved = { ...globalVariables, ...page._resolved };
   }
 
-  // Resolve all variables BEFORE rendering layout so expressions can reference them
-  if (page.variables && Object.keys(page.variables).length > 0) {
-    const onVariableResolved = (varName, value) => {
-      page._resolved[varName] = value;
-    };
-    
-    const allResolved = await resolveVariables(page.variables, globalVariables, onVariableResolved);
-    page._resolved = allResolved;
-  }
-
-  // Now render layout with resolved variables
+  // Build new content in a temporary container (off-DOM for smoother rendering)
+  const tempContainer = document.createElement('div');
+  
   if (page.layout && Array.isArray(page.layout)) {
-    renderLayout(container, page.layout, page);
+    renderLayout(tempContainer, page.layout, page);
   } else {
     const emptyMsg = document.createElement("i");
     emptyMsg.textContent = "No layout defined for this page";
-    container.appendChild(emptyMsg);
+    tempContainer.appendChild(emptyMsg);
+  }
+  
+  // Replace content in one atomic operation to minimize visual disruption
+  container.innerHTML = "";
+  // Transfer all children from temp to container
+  while (tempContainer.firstChild) {
+    container.appendChild(tempContainer.firstChild);
+  }
+
+  // Resolve variables in background and update UI as they resolve
+  if (page.variables && Object.keys(page.variables).length > 0) {
+    // Find which variables need resolution (not already in _resolved)
+    const varsToResolve = new Set();
+    for (const varName in page.variables) {
+      if (!(varName in page._resolved)) {
+        varsToResolve.add(varName);
+      }
+    }
+    
+    // Only resolve if there are unresolved variables
+    if (varsToResolve.size > 0) {
+      const onVariableResolved = (varName, value) => {
+        page._resolved[varName] = value;
+        // Update UI immediately as each variable resolves
+        updateRenderedValue(varName, value);
+      };
+      
+      // Resolve only the needed variables, passing existing _resolved as base
+      const allResolved = await resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve);
+      page._resolved = allResolved;
+    }
   }
 }
 
@@ -999,8 +1021,7 @@ export function renderConfigUI() {
 
 export async function updateConfig(newConfig) {
   debugLog("[UI] Config updated, refreshing UI");
-  // Show the loading overlay while we re-resolve and re-render
-  showLoadingOverlay();
+  // Don't show loading overlay - let the UI update progressively
   config = newConfig;
   
   // Re-resolve variables when config updates
@@ -1010,31 +1031,14 @@ export async function updateConfig(newConfig) {
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
 
-    // Reset page resolved sets, and resolve only the current page to avoid spamming external integrations
+    // Reset page resolved sets - they will resolve progressively when rendered
     for (const page of config.pages || []) {
-      page._resolved = {}; // cleared — will resolve lazily per-page
-    }
-
-    // If we have a current page selected, resolve only that page's variables now
-    if (currentPage !== null && currentPage !== undefined && config.pages?.[currentPage]) {
-      try {
-        const page = config.pages[currentPage];
-        // Use globalVars as previouslyResolved so expressions can access globals
-        page._resolved = await resolveVariables(page.variables, globalVars, null);
-      } catch (err) {
-        debugError('[UI] Error resolving current page variables during config update:', err);
-        // leave page._resolved as {} to allow render-time resolution
-      }
+      page._resolved = { ...globalVars }; // Start with global vars
     }
   } catch (error) {
-    debugError("[UI] Error re-resolving variables:", error);
+    debugError("[UI] Error re-resolving global variables:", error);
   }
 
+  // Re-render UI immediately - variables will resolve in background
   renderConfigUI();
-  // Hide overlay after render is actually complete (next frame after scheduled render)
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      hideLoadingOverlay();
-    });
-  });
 }

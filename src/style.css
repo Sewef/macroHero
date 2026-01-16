@@ -245,6 +245,7 @@ h1 {
   flex: 1;
   padding: 12px;
   overflow-y: auto;
+  transition: opacity 0.15s ease-in-out;
 }
 
 /* LAYOUT ELEMENTS */
@@ -353,6 +354,17 @@ h1 {
   color: #888;
   font-style: italic;
   opacity: 0.7;
+}
+
+.mh-value-content.mh-loading::after {
+  content: '●';
+  animation: mh-loading-pulse 1.5s ease-in-out infinite;
+  margin-left: 4px;
+}
+
+@keyframes mh-loading-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 .mh-value-calc {

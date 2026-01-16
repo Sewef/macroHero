@@ -87,7 +87,13 @@ OBR.onReady(async () => {
 
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
-      debugLog("[MAIN] Config updated via modal");
+      debugLog("[MAIN] Config updated via broadcast");
+
+      // If this is just an UI update (button click, counter change, etc.), skip re-resolution
+      if (event.data && event.data.savedFromUI && !event.data.savedFromModal) {
+        debugLog("[MAIN] Skipping re-resolution for UI-only update");
+        return;
+      }
 
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
       const { apiKey, sheetId } = getGoogleSheetsCredentials();

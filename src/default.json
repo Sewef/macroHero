@@ -795,7 +795,12 @@
                     "eval": "sceneHelpers.getMapIdFromToken(testToken)"
                 },
                 "dropdownOptions": {
-                    "value": ["Option A", "Option B", "Option C", "Option D"]
+                    "value": [
+                        "Option A",
+                        "Option B",
+                        "Option C",
+                        "Option D"
+                    ]
                 },
                 "selectedOption": {
                     "value": "Option A"
