@@ -1313,6 +1313,34 @@ window.updateElementFields = function(existingElement = null) {
         </div>
       `;
       break;
+    case 'dropdown':
+      // Format options for editing: support both string and {label, value} formats
+      let optionsText = '';
+      if (existingElement?.options) {
+        optionsText = existingElement.options.map(opt => {
+          if (typeof opt === 'string') {
+            return opt;
+          } else {
+            return `${opt.label || ''} | ${opt.value || ''}`;
+          }
+        }).join('\n');
+      }
+      html = `
+        <div class="input-group">
+          <label>Variable Name</label>
+          <input type="text" id="elem_var" value="${existingElement?.var || ''}" placeholder="variableName" />
+        </div>
+        <div class="input-group">
+          <label>Label</label>
+          <input type="text" id="elem_label" value="${existingElement?.label || ''}" placeholder="Dropdown Label" />
+        </div>
+        <div class="input-group">
+          <label>Options (one per line)</label>
+          <textarea id="elem_options" placeholder="Option 1\nFacile | easy\nOption 3">${optionsText}</textarea>
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Format: "Label" ou "Label | value"</small>
+        </div>
+      `;
+      break;
     case 'title':
       html = `
         <div class="input-group">
@@ -1358,6 +1386,23 @@ window.saveElement = function() {
     case 'checkbox':
       element.var = document.getElementById("elem_var")?.value || '';
       element.label = document.getElementById("elem_label")?.value || '';
+      break;
+    case 'dropdown':
+      element.var = document.getElementById("elem_var")?.value || '';
+      element.label = document.getElementById("elem_label")?.value || '';
+      const options = document.getElementById("elem_options")?.value || '';
+      element.options = options.split('\n').filter(o => o.trim()).map(line => {
+        // Check if line contains " | " separator for label | value format
+        if (line.includes(' | ')) {
+          const parts = line.split(' | ');
+          return {
+            label: parts[0].trim(),
+            value: parts[1].trim()
+          };
+        }
+        // Otherwise, treat as simple string option
+        return line.trim();
+      });
       break;
     case 'input':
       element.var = document.getElementById("elem_var")?.value || '';

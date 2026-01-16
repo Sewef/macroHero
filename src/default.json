@@ -482,6 +482,12 @@
                 },
                 "inputVar": {
                     "value": "Enter text here"
+                },
+                "dropdownVar": {
+                    "value": "Option 1"
+                },
+                "dropdownModeVar": {
+                    "value": "normal"
                 }
             },
             "layout": [
@@ -548,6 +554,26 @@
                     "type": "checkbox",
                     "var": "checkboxVar",
                     "label": "Checkbox Example"
+                },
+                {
+                    "type": "dropdown",
+                    "var": "dropdownVar",
+                    "label": "Dropdown Example",
+                    "options": [
+                        "Option 1",
+                        "Option 2",
+                        "Option 3"
+                    ]
+                },
+                {
+                    "type": "dropdown",
+                    "var": "dropdownModeVar",
+                    "label": "Mode de jeu",
+                    "options": [
+                        {"label": "Facile", "value": "easy"},
+                        {"label": "Normal", "value": "normal"},
+                        {"label": "Difficile", "value": "hard"}
+                    ]
                 },
                 {
                     "type": "divider"

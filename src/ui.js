@@ -416,6 +416,9 @@ function renderLayoutElement(layoutItem, page) {
     case "counter":
       return renderCounter(layoutItem, page);
     
+    case "dropdown":
+      return renderDropdown(layoutItem, page);
+    
     case "text":
       return renderText(layoutItem, page);
     
@@ -865,6 +868,85 @@ function renderCounter(item, page) {
   container.appendChild(controls);
 
   renderedValueElements[item.var] = container;
+  return container;
+}
+
+function renderDropdown(item, page) {
+  const container = document.createElement("div");
+  container.className = "mh-layout-dropdown";
+
+  const variable = page.variables?.[item.var];
+  if (!variable) {
+    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
+    return container;
+  }
+
+  // Label
+  const label = document.createElement("label");
+  label.className = "mh-dropdown-label";
+  
+  if (!evaluateAndSetElementText(label, item, page)) {
+    label.textContent = item.label ?? item.var;
+  }
+
+  // Select element
+  const select = document.createElement("select");
+  select.className = "mh-dropdown-select";
+
+  // Get options from item.options array
+  const options = item.options ?? [];
+  if (options.length === 0) {
+    const defaultOption = document.createElement("option");
+    defaultOption.textContent = "No options available";
+    defaultOption.disabled = true;
+    select.appendChild(defaultOption);
+  } else {
+    options.forEach(opt => {
+      const option = document.createElement("option");
+      // Options can be strings or {label, value} objects
+      if (typeof opt === 'string') {
+        option.value = opt;
+        option.textContent = opt;
+      } else {
+        option.value = opt.value ?? opt.label ?? '';
+        option.textContent = opt.label ?? opt.value ?? '';
+      }
+      select.appendChild(option);
+    });
+  }
+
+  // Get current value from resolved variables or variable.value
+  const currentValue = page._resolved?.[item.var] ?? variable.value ?? '';
+  select.value = currentValue;
+
+  renderedValueElements[item.var] = container;
+
+  select.onchange = async () => {
+    const newValue = select.value;
+    // Update the variable definition with the new value
+    variable.value = newValue;
+    delete variable.eval; // Remove eval if it exists, we're storing a static value
+    page._resolved[item.var] = newValue;
+
+    try {
+      await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
+
+      // Re-evaluate dependent variables
+      const dependentVars = getDependentVariables(page.variables, [item.var]);
+      if (dependentVars.size > 0) {
+        const onVariableResolved = (varName, value) => {
+          page._resolved[varName] = value;
+          updateRenderedValue(varName, value);
+        };
+        await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
+      }
+    } catch (err) {
+      debugError('[UI] Error handling dropdown change:', err);
+    }
+  };
+
+  container.appendChild(label);
+  container.appendChild(select);
   return container;
 }
 
