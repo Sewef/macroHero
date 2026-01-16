@@ -16,6 +16,7 @@ import * as tokenMetadata from "../tokenMetadata.js";
 import * as tokenAttachments from "../tokenAttachments.js";
 import * as sceneHelpers from "../sceneHelpers.js";
 import * as GoogleSheets from "./GoogleSheets.js";
+import * as Weather from "./Weather.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -146,6 +147,14 @@ class IntegrationsManager {
         getInitiativeCount: this.wrapAsync((itemOrId) => PrettySordid.getInitiativeCount(itemOrId)),
         isActiveTurn: this.wrapAsync((itemOrId) => PrettySordid.isActiveTurn(itemOrId)),
         setInitiativeCount: this.wrapAsync((itemOrId, count) => PrettySordid.setInitiativeCount(itemOrId, count)),
+      },
+      // Weather integration (all async)
+      Weather: {
+        setWeather: this.wrapAsync((mapId, config) => Weather.setWeather(mapId, config)),
+        removeWeather: this.wrapAsync((mapId) => Weather.removeWeather(mapId)),
+        getWeather: this.wrapAsync((mapId) => Weather.getWeather(mapId)),
+        hasWeather: this.wrapAsync((mapId) => Weather.hasWeather(mapId)),
+        updateWeather: this.wrapAsync((mapId, updates) => Weather.updateWeather(mapId, updates)),
       },
       // Metadata modules
       playerMetadata,

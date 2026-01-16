@@ -1925,6 +1925,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'ColoredRings',
     'JustDices',
     'PrettySordid',
+    'Weather',
     'Manager'
   ]
 };

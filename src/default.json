@@ -755,6 +755,136 @@
                         "console.log('Map ID: ' + (mapId || 'Not on a map'))"
                     ],
                     "label": "Get Map ID from Token"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "expression": "Weather Tests"
+                },
+                {
+                    "type": "text",
+                    "expression": "Add weather effects to maps"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 })"
+                            ],
+                            "label": "Snow"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 })"
+                            ],
+                            "label": "Rain"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 })"
+                            ],
+                            "label": "Sand"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 })"
+                            ],
+                            "label": "Fire"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 })"
+                            ],
+                            "label": "Cloud"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 })"
+                            ],
+                            "label": "Bloom"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 })"
+                            ],
+                            "label": "Energy Storm"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 })"
+                            ],
+                            "label": "Water"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 })"
+                            ],
+                            "label": "Current"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.updateWeather(mapId, { tint: '#88aaff' })",
+                                "console.log('Blue tint applied')"
+                            ],
+                            "label": "Blue Tint"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.updateWeather(mapId, { tint: '#ff8844' })",
+                                "console.log('Orange tint applied')"
+                            ],
+                            "label": "Orange Tint"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                                "await Weather.removeWeather(mapId)",
+                                "console.log('Weather removed')"
+                            ],
+                            "label": "Remove Weather"
+                        }
+                    ]
                 }
             ]
         }
