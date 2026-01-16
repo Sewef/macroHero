@@ -47,17 +47,19 @@ function detectMimeType(url) {
  * Create a token/image item on the scene
  * @param {Object} params - Token creation parameters
  * @param {string} params.url - Image URL
- * @param {string} params.mime - Image MIME type (e.g., "image/png", "image/jpeg")
- * @param {number} params.width - Image width in pixels
- * @param {number} params.height - Image height in pixels
- * @param {number} [params.dpi=150] - DPI for grid alignment
- * @param {Object} [params.offset] - Image offset {x, y}
- * @param {Object} [params.position] - Token position {x, y}
- * @param {number} [params.scale=1] - Token scale
+ * @param {string} [params.mime] - Image MIME type (e.g., "image/png", "image/jpeg") - auto-detected from URL if not provided
+ * @param {number} [params.width] - Image width in pixels - auto-detected from image if not provided
+ * @param {number} [params.height] - Image height in pixels - auto-detected from image if not provided
+ * @param {number} [params.size] - Token size in grid cells (e.g., 1.0 = 1 cell, 2.0 = 2 cells) - overrides scale if provided
+ * @param {number} [params.dpi] - DPI for grid alignment - auto-detected from scene grid if not provided
+ * @param {Object} [params.offset] - Image offset {x, y} - auto-calculated as center if not provided
+ * @param {Object} [params.position] - Token position {x, y} or {gridX, gridY} if gridPosition is true
+ * @param {boolean} [params.gridPosition=false] - If true, position is interpreted as grid coordinates instead of scene coordinates
+ * @param {number} [params.scale=1] - Token scale (ignored if size is specified)
  * @param {number} [params.rotation=0] - Token rotation in degrees
  * @param {string} [params.layer="CHARACTER"] - Layer: "CHARACTER", "MOUNT", "PROP", "ATTACHMENT", "MAP", "FOG", "DRAWING", "POINTER", "NOTE", "CONTROL", "RULER"
- * @param {string} [params.name] - Token name/label
- * @param {string} [params.plainText] - Plain text label
+ * @param {string} [params.name] - Token name
+ * @param {string} [params.label] - Token text label
  * @param {boolean} [params.visible=true] - Token visibility
  * @param {boolean} [params.locked=false] - Token locked state
  * @param {Object} [params.metadata] - Custom metadata object
@@ -65,19 +67,21 @@ function detectMimeType(url) {
  */
 export async function createToken(params) {
   try {
-    const {
+    let {
       url,
       mime,
       width,
       height,
-      dpi = 150,
-      offset = { x: width / 2, y: height / 2 },
+      size,
+      dpi,
+      offset,
       position = { x: 0, y: 0 },
+      gridPosition = false,
       scale = 1,
       rotation = 0,
       layer = "CHARACTER",
       name,
-      plainText,
+      label,
       visible = true,
       locked = false,
       metadata = {}
@@ -85,10 +89,53 @@ export async function createToken(params) {
 
     // Validate required parameters
     if (!url) throw new Error("Token URL is required");
-    if (!mime) throw new Error("Token MIME type is required");
-    if (!width || !height) throw new Error("Token width and height are required");
 
-    debugLog(`[tokenHelpers] Creating token:`, { url, width, height, position, layer });
+    // Auto-detect DPI from scene grid if not provided
+    if (!dpi) {
+      dpi = await OBR.scene.grid.getDpi();
+      debugLog(`[tokenHelpers] Auto-detected grid DPI: ${dpi}`);
+    }
+
+    // Auto-detect MIME type if not provided
+    if (!mime) {
+      mime = detectMimeType(url);
+      debugLog(`[tokenHelpers] Auto-detected MIME type: ${mime}`);
+    }
+
+    // Auto-detect dimensions if not provided
+    if (!width || !height) {
+      debugLog(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
+      const dimensions = await getImageDimensions(url);
+      width = dimensions.width;
+      height = dimensions.height;
+      debugLog(`[tokenHelpers] Auto-detected dimensions: ${width}x${height}`);
+    }
+
+    // Auto-calculate offset if not provided
+    if (!offset) {
+      offset = { x: width / 2, y: height / 2 };
+    }
+
+    // Calculate scale from size if provided
+    if (size !== undefined) {
+      const sizeInPixels = size * dpi;
+      const maxDimension = Math.max(width, height);
+      scale = sizeInPixels / maxDimension;
+      debugLog(`[tokenHelpers] Size ${size} cells = ${sizeInPixels}px, calculated scale = ${scale}`);
+    }
+
+    // Convert grid position to scene position if gridPosition is true
+    if (gridPosition && position) {
+      const gridX = position.gridX ?? position.x;
+      const gridY = position.gridY ?? position.y;
+      position = {
+        x: gridX * dpi + dpi / 2,
+        y: gridY * dpi + dpi / 2
+      };
+      debugLog(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, position);
+    }
+
+    debugLog(`[tokenHelpers] Creating token:`, { url, width, height, position, layer, scale });
 
     // Build the image item
     let builder = buildImage(
@@ -116,8 +163,8 @@ export async function createToken(params) {
     }
 
     // Set text label
-    if (plainText) {
-      builder = builder.plainText(plainText);
+    if (label) {
+      builder = builder.plainText(label);
     }
 
     // Set visibility and locked state
@@ -151,7 +198,7 @@ export async function createToken(params) {
  * - width (optional - auto-detected)
  * - height (optional - auto-detected)  
  * - size (optional - in grid cells, used for scaling if width/height auto-detected)
- * - position, scale, rotation, layer, name, plainText, visible, locked, metadata
+ * - position, scale, rotation, layer, name, label, visible, locked, metadata
  * @returns {Promise<string[]>} Array of created token IDs
  */
 export async function createTokens(tokensParams) {
@@ -212,7 +259,7 @@ export async function createTokens(tokensParams) {
         rotation = 0,
         layer = "CHARACTER",
         name,
-        plainText,
+        label,
         visible = true,
         locked = false,
         metadata = {}
@@ -244,8 +291,8 @@ export async function createTokens(tokensParams) {
       }
 
       // Set text label
-      if (plainText) {
-        builder = builder.plainText(plainText);
+      if (label) {
+        builder = builder.plainText(label);
       }
 
       // Set visibility and locked state
@@ -273,104 +320,7 @@ export async function createTokens(tokensParams) {
   }
 }
 
-/**
- * Create a token from a template with default values
- * @param {Object} params - Token parameters
- * @param {string} params.url - Image URL
- * @param {string} [params.name] - Token name
- * @param {Object} [params.position] - Token position {x, y}
- * @param {number} [params.size=1.0] - Token size in grid cells (1.0 = 1 cell, 2.0 = 2 cells, etc.)
- * @param {string} [params.layer="CHARACTER"] - Layer
- * @returns {Promise<string>} Created token ID
- */
-export async function createSimpleToken(params) {
-  const {
-    url,
-    name,
-    position = { x: 0, y: 0 },
-    size = 1.0,
-    layer = "CHARACTER"
-  } = params;
-
-  try {
-    // Get grid DPI from the scene
-    const gridDpi = await OBR.scene.grid.getDpi();
-    debugLog(`[tokenHelpers] Grid DPI: ${gridDpi}`);
-
-    // Detect MIME type from URL extension
-    const mime = detectMimeType(url);
-
-    // Get real image dimensions
-    debugLog(`[tokenHelpers] Loading image to detect dimensions: ${url}`);
-    const dimensions = await getImageDimensions(url);
-    debugLog(`[tokenHelpers] Image dimensions: ${dimensions.width}x${dimensions.height}`);
-
-    // Convert size in grid cells to pixels
-    const sizeInPixels = size * gridDpi;
-    debugLog(`[tokenHelpers] Size: ${size} cells = ${sizeInPixels} pixels (grid: ${gridDpi}px)`);
-
-    // Calculate scale to fit the desired size (use the larger dimension as reference)
-    const maxDimension = Math.max(dimensions.width, dimensions.height);
-    const scale = sizeInPixels / maxDimension;
-
-    return createToken({
-      url,
-      mime,
-      width: dimensions.width,
-      height: dimensions.height,
-      position,
-      scale,
-      layer,
-      name: name || "Token",
-      plainText: name || "Token",
-      dpi: gridDpi,
-      offset: { x: dimensions.width / 2, y: dimensions.height / 2 }
-    });
-  } catch (error) {
-    debugError(`[tokenHelpers] Error in createSimpleToken:`, error.message);
-    throw error;
-  }
-}
-
-/**
- * Create a token at a specific grid position
- * @param {Object} params - Token parameters
- * @param {string} params.url - Image URL
- * @param {number} params.gridX - Grid X coordinate
- * @param {number} params.gridY - Grid Y coordinate
- * @param {string} [params.name] - Token name
- * @param {number} [params.size=1.0] - Token size in grid cells (1.0 = 1 cell, 2.0 = 2 cells, etc.)
- * @returns {Promise<string>} Created token ID
- */
-export async function createTokenAtGrid(params) {
-  const {
-    url,
-    gridX,
-    gridY,
-    name,
-    size = 1.0
-  } = params;
-
-  // Get grid DPI from the scene
-  const gridDpi = await OBR.scene.grid.getDpi();
-
-  // Convert grid coordinates to scene coordinates
-  const position = {
-    x: gridX * gridDpi + gridDpi / 2,
-    y: gridY * gridDpi + gridDpi / 2
-  };
-
-  return createSimpleToken({
-    url,
-    name,
-    position,
-    size
-  });
-}
-
 export default {
   createToken,
-  createTokens,
-  createSimpleToken,
-  createTokenAtGrid
+  createTokens
 };

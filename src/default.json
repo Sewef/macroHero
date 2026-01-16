@@ -1037,15 +1037,15 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createSimpleToken({",
+                        "const tokenId = await tokenHelpers.createToken({",
                         "  url: tokenUrl,",
-                        "  name: tokenName,",
                         "  position: { x: tokenX, y: tokenY },",
-                        "  size: tokenSize",
+                        "  size: tokenSize,",
+                        "  label: tokenName",
                         "});",
                         "await setValue('createdTokenId', tokenId);"
                     ],
-                    "label": "Create Simple Token"
+                    "label": "Create Token"
                 },
                 {
                     "type": "value",
@@ -1077,10 +1077,10 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createTokenAtGrid({",
+                        "const tokenId = await tokenHelpers.createToken({",
                         "  url: tokenUrl,",
-                        "  gridX: gridX,",
-                        "  gridY: gridY,",
+                        "  position: { x: gridX, y: gridY },",
+                        "  gridPosition: true,",
                         "  name: tokenName,",
                         "  size: tokenSize",
                         "});",
@@ -1098,7 +1098,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "await tokenHelpers.createSimpleToken({",
+                        "await tokenHelpers.createToken({",
                         "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
                         "  name: 'Hero',",
                         "  position: { x: 300, y: 300 },",
@@ -1120,7 +1120,7 @@
                         "  size: 1.0,",
                         "  position: pos,",
                         "  name: `Enemy ${i + 1}`,",
-                        "  plainText: `E${i + 1}`",
+                        "  label: `E${i + 1}`",
                         "}));",
                         "await tokenHelpers.createTokens(tokens);"
                     ],
@@ -1129,10 +1129,11 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createSimpleToken({",
+                        "const tokenId = await tokenHelpers.createToken({",
                         "  url: 'https://sewef.github.io/justDices/JustDices.png',",
                         "  position: { x: 500, y: 500 },",
                         "  name: 'Boss',",
+                        "  label: 'BOSS',",
                         "  size: 3.0",
                         "});",
                         "",
@@ -1159,7 +1160,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createSimpleToken({",
+                        "const tokenId = await tokenHelpers.createToken({",
                         "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
                         "  position: { x: 400, y: 400 },",
                         "  name: 'Character with Trackers',",
