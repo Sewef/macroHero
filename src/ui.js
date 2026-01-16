@@ -1024,6 +1024,10 @@ export async function updateConfig(newConfig) {
   }
 
   renderConfigUI();
-  // Hide overlay after render complete
-  hideLoadingOverlay();
+  // Hide overlay after render is actually complete (next frame after scheduled render)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      hideLoadingOverlay();
+    });
+  });
 }
