@@ -1868,7 +1868,8 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'playerMetadata',
     'sceneMetadata',
     'tokenMetadata',
-    'tokenAttachments'
+    'tokenAttachments',
+    'sceneHelpers'
   ],
   'Integration Modules': [
     'GoogleSheets',

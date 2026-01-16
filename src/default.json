@@ -613,7 +613,13 @@
             "label": "Tests",
             "variables": {
                 "spdCS": { "value": 15 },
-                "floorResult": { "eval": "Math.floor(spdCS / 2)" }
+                "floorResult": { "eval": "Math.floor(spdCS / 2)" },
+                "testToken": {
+                    "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
+                },
+                "mapIdFromToken": {
+                    "eval": "sceneHelpers.getMapIdFromToken(testToken)"
+                }
             },
             "layout": [
                 {
@@ -672,10 +678,39 @@
                     "commands": [
                         "result = await JustDices.roll('1d20')",
                         "message = result > 10 ? 'Effect' : 'No Effect'",
-                        "message += result > 10 ? ' \\\\(Critical\\\\)' : ''",
-                        "JustDices.roll(`\\\\Result: ${result} \\\\: ${message}`)"
+                        "message += result == 20 ? ' (Critical)' : ''",
+                        "console.log(`Result: ${result} - ${message}`)"
                     ],
                     "label": "Test Async"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "expression": "Scene Helpers Tests"
+                },
+                {
+                    "type": "text",
+                    "expression": "Test scene helper functions"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "value",
+                            "var": "mapIdFromToken",
+                            "label": "Map ID"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
+                        "console.log('Map ID: ' + (mapId || 'Not on a map'))"
+                    ],
+                    "label": "Get Map ID from Token"
                 }
             ]
         }
