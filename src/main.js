@@ -95,6 +95,13 @@ OBR.onReady(async () => {
         return;
       }
 
+      // If config was saved from modal, reload the page to ensure everything is fresh
+      if (event.data && event.data.savedFromModal) {
+        debugLog("[MAIN] Config saved from modal - reloading page");
+        window.location.reload();
+        return;
+      }
+
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
       const { apiKey, sheetId } = getGoogleSheetsCredentials();
 
