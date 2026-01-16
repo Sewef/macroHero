@@ -107,11 +107,17 @@ function createExecutionContext(page) {
 }
 
 /**
- * Execute a single command as pure JavaScript
+ * Execute a command as pure JavaScript
+ * Commands can be:
+ * - A single string (one line of code)
+ * - An array of strings (multiline script, joined with \n)
  */
 export async function executeCommand(command, page) {
   try {
-    debugLog('[EXECUTOR] Executing:', command);
+    // Convert array of lines to single script
+    const script = Array.isArray(command) ? command.join('\n') : command;
+    
+    debugLog('[EXECUTOR] Executing:', script);
     
     if (!page) {
       throw new Error("No page provided");
@@ -120,47 +126,11 @@ export async function executeCommand(command, page) {
     // Create execution context
     const context = createExecutionContext(page);
     
-    // Auto-detect and wrap async calls
-    let processed = command;
-    
-    // Collect all positions to add 'await' in a single pass to avoid double-awaiting
-    const awaitsToAdd = [];
-    
-    // Find integration method calls (e.g., OwlTrackers.getValue)
-    const integrationsWithMethods = ['GoogleSheets', 'OwlTrackers', 'ConditionsMarkers', 'StatBubbles', 'ColoredRings', 'PrettySordid', 'Local'];
-    for (const integration of integrationsWithMethods) {
-      const regex = new RegExp(`(?<!await\\s+)\\b(${integration}\\.\\w+)\\(`, 'g');
-      let match;
-      while ((match = regex.exec(command)) !== null) {
-        awaitsToAdd.push({ index: match.index, length: 0, text: 'await ' });
-      }
-    }
-    
-    // Find standalone helper function calls (e.g., setValue, addValue) 
-    // but only if not preceded by a dot (to avoid matching OwlTrackers.addValue)
-    const helperFunctions = ['setValue', 'addValue'];
-    for (const helper of helperFunctions) {
-      const regex = new RegExp(`(?<!await\\s+)(?<!\\.)\\b(${helper})\\(`, 'g');
-      let match;
-      while ((match = regex.exec(command)) !== null) {
-        awaitsToAdd.push({ index: match.index, length: 0, text: 'await ' });
-      }
-    }
-    
-    // Sort by position (descending) and apply insertions from end to start
-    awaitsToAdd.sort((a, b) => b.index - a.index);
-    for (const insertion of awaitsToAdd) {
-      processed = processed.slice(0, insertion.index) + insertion.text + processed.slice(insertion.index);
-    }
-    
-    debugLog('[EXECUTOR] Processed:', processed);
-    
     // Execute as async function with proper context binding
-    const code = `return (async () => { return ${processed}; })()`;
     const contextKeys = Object.keys(context);
     const func = new Function('context', `
       const { ${contextKeys.join(', ')} } = context;
-      ${code}
+      return (async () => { ${script} })();
     `);
     const result = await func(context);
     
@@ -174,21 +144,17 @@ export async function executeCommand(command, page) {
 
 /**
  * Execute multiple commands
+ * If commands is an array, it's treated as a single multiline script
  */
 export async function executeCommands(commands, page) {
-  const results = [];
-
-  for (const command of commands) {
-    try {
-      const result = await executeCommand(command, page);
-      results.push({ ok: true, result });
-    } catch (error) {
-      debugError('[EXECUTOR] Command failed:', error);
-      results.push({ ok: false, error: error.message });
-    }
+  // Treat the entire commands array as a single script
+  try {
+    const result = await executeCommand(commands, page);
+    return [{ ok: true, result }];
+  } catch (error) {
+    debugError('[EXECUTOR] Command failed:', error);
+    return [{ ok: false, error: error.message }];
   }
-  
-  return results;
 }
 
 /**

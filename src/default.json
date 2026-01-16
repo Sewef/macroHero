@@ -107,21 +107,21 @@
                 {
                     "type": "button",
                     "commands": [
-                        "isBandaged ? OwlTrackers.addValue(token, 'HP', 10) : OwlTrackers.addValue(token, 'HP', -5)"
+                        "isBandaged ? await OwlTrackers.addValue(token, 'HP', 10) : await OwlTrackers.addValue(token, 'HP', -5);"
                     ],
                     "label": "Heal if Bandaged"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.toggleCondition(token, 'Bandaged')"
+                        "await ConditionsMarkers.toggleCondition(token, 'Bandaged');"
                     ],
                     "label": "Toggle Bandage"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "ConditionsMarkers.addCondition(token, 'Bandaged', conditionValue + 1)"
+                        "await ConditionsMarkers.addCondition(token, 'Bandaged', conditionValue + 1);"
                     ],
                     "label": "Increment Bandage"
                 },
@@ -157,14 +157,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "OwlTrackers.addValue(token, 'HP', 10)"
+                                "await OwlTrackers.addValue(token, 'HP', 10);"
                             ],
                             "label": "Heal 10"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "OwlTrackers.addValue(token, 'HP', -5)"
+                                "await OwlTrackers.addValue(token, 'HP', -5);"
                             ],
                             "label": "Damage 5"
                         }
@@ -173,7 +173,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "OwlTrackers.setValue(token, 'HP', trackerMaxHP)"
+                        "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);"
                     ],
                     "label": "Heal to Max"
                 },
@@ -214,14 +214,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.heal(token, 15)"
+                                "await StatBubbles.heal(token, 15);"
                             ],
                             "label": "Heal 15"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.damage(token, 8)"
+                                "await StatBubbles.damage(token, 8);"
                             ],
                             "label": "Damage 8"
                         }
@@ -233,14 +233,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.setValue(token, 'temporary health', 20)"
+                                "await StatBubbles.setValue(token, 'temporary health', 20);"
                             ],
                             "label": "Set Temp HP 20"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "StatBubbles.addValue(token, 'armor class', 2)"
+                                "await StatBubbles.addValue(token, 'armor class', 2);"
                             ],
                             "label": "AC +2"
                         }
@@ -273,21 +273,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing(token, '#1a6aff')"
+                                "await ColoredRings.addRing(token, '#1a6aff');"
                             ],
                             "label": "Add Blue"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing(token, '#ff7433')"
+                                "await ColoredRings.addRing(token, '#ff7433');"
                             ],
                             "label": "Add Orange"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.addRing(token, '#00ff00')"
+                                "await ColoredRings.addRing(token, '#00ff00');"
                             ],
                             "label": "Add Green"
                         }
@@ -299,21 +299,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing(token, '#1a6aff')"
+                                "await ColoredRings.removeRing(token, '#1a6aff');"
                             ],
                             "label": "Remove Blue"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing(token, '#ff7433')"
+                                "await ColoredRings.removeRing(token, '#ff7433');"
                             ],
                             "label": "Remove Orange"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "ColoredRings.removeRing(token, '#00ff00')"
+                                "await ColoredRings.removeRing(token, '#00ff00');"
                             ],
                             "label": "Remove Green"
                         }
@@ -356,21 +356,21 @@
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.hasInitiative(token) ? PrettySordid.setInitiativeCount(token, PrettySordid.getInitiativeCount(token) + 1) : PrettySordid.setInitiativeCount(token, 1)"
+                                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) + 1) : await PrettySordid.setInitiativeCount(token, 1);"
                             ],
                             "label": "Increment / Assign 1"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.hasInitiative(token) ? PrettySordid.setInitiativeCount(token, PrettySordid.getInitiativeCount(token) - 1) : null"
+                                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) - 1) : null;"
                             ],
                             "label": "Decrement"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "PrettySordid.setInitiativeCount(token, 0)"
+                                "await PrettySordid.setInitiativeCount(token, 0);"
                             ],
                             "label": "Reset to 0"
                         }
@@ -393,14 +393,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('1d20')"
+                                "await JustDices.roll('1d20');"
                             ],
                             "label": "Roll d20"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('2d6 + 3')"
+                                "await JustDices.roll('2d6 + 3');"
                             ],
                             "label": "Roll 2d6+3"
                         }
@@ -409,7 +409,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d20 + ' + bubbleAC) > 15 ? StatBubbles.damage(token, 10) : null"
+                        "await JustDices.roll('1d20 + ' + bubbleAC) > 15 ? await StatBubbles.damage(token, 10) : null;"
                     ],
                     "label": "Attack Roll (DC 15)"
                 },
@@ -436,14 +436,14 @@
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('Global Player Name: ' + playerName)"
+                                "await JustDices.roll('Global Player Name: ' + playerName);"
                             ],
                             "label": "Show Global Name"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "JustDices.roll('Input Name: ' + inputName)"
+                                "await JustDices.roll('Input Name: ' + inputName);"
                             ],
                             "label": "Show Input Name"
                         }
@@ -452,14 +452,14 @@
                 {
                     "type": "button",
                     "commands": [
-                        "Local.set('playerName', 'Xalithra')"
+                        "await Local.set('playerName', 'Xalithra');"
                     ],
                     "label": "Save Player Name"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('Player: ' + Local.value('playerName', 'Unknown'))"
+                        "await JustDices.roll('Player: ' + await Local.value('playerName', 'Unknown'));"
                     ],
                     "label": "Show Player Name"
                 },
@@ -480,24 +480,24 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });"
                             ],
                             "label": "Snow"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });"
                             ],
                             "label": "Rain"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });"
                             ],
                             "label": "Sand"
                         }
@@ -509,24 +509,24 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });"
                             ],
                             "label": "Fire"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });"
                             ],
                             "label": "Cloud"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });"
                             ],
                             "label": "Bloom"
                         }
@@ -538,24 +538,24 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });"
                             ],
                             "label": "Energy Storm"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });"
                             ],
                             "label": "Water"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 })"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });"
                             ],
                             "label": "Current"
                         }
@@ -567,27 +567,27 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.updateWeather(mapId, { tint: '#88aaff' })",
-                                "console.log('Blue tint applied')"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.updateWeather(mapId, { tint: '#88aaff' });",
+                                "console.log('Blue tint applied');"
                             ],
                             "label": "Blue Tint"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.updateWeather(mapId, { tint: '#ff8844' })",
-                                "console.log('Orange tint applied')"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.updateWeather(mapId, { tint: '#ff8844' });",
+                                "console.log('Orange tint applied');"
                             ],
                             "label": "Orange Tint"
                         },
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token)",
-                                "Weather.removeWeather(mapId)",
-                                "console.log('Weather removed')"
+                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "await Weather.removeWeather(mapId);",
+                                "console.log('Weather removed');"
                             ],
                             "label": "Remove Weather"
                         }
@@ -749,14 +749,14 @@
                                     "type": "button",
                                     "label": "Button",
                                     "commands": [
-                                        "JustDices.roll('1d6')"
+                                        "await JustDices.roll('1d6');"
                                     ]
                                 },
                                 {
                                     "type": "button",
                                     "label": "Button",
                                     "commands": [
-                                        "JustDices.roll('1d6')"
+                                        "await JustDices.roll('1d6');"
                                     ]
                                 }
                             ]
@@ -774,7 +774,7 @@
                     "type": "button",
                     "label": "Example Button",
                     "commands": [
-                        "JustDices.roll('1d20')"
+                        "await JustDices.roll('1d20');"
                     ]
                 }
             ]
@@ -822,40 +822,78 @@
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('floorResult: ' + floorResult)"
+                        "await JustDices.roll('floorResult: ' + floorResult);"
                     ],
                     "label": "Show floor result"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d10')"
+                        "await JustDices.roll('1d10');"
                     ],
                     "label": "Test Roll"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d10')"
+                        "await JustDices.roll('1d10');"
                     ],
                     "label": "Test Roll2"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "JustDices.roll('1d10 + ' + spdCS)"
+                        "await JustDices.roll('1d10 + ' + spdCS);"
                     ],
                     "label": "Test with spdCS"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "result = await JustDices.roll('1d20')",
-                        "message = result > 10 ? 'Effect' : 'No Effect'",
-                        "message += result == 20 ? ' (Critical)' : ''",
-                        "console.log(`Result: ${result} - ${message}`)"
+                        "result = await JustDices.roll('1d20');",
+                        "message = result > 10 ? 'Effect' : 'No Effect';",
+                        "message += result == 20 ? ' (Critical)' : '';",
+                        "console.log(`Result: ${result} - ${message}`);"
                     ],
                     "label": "Test Async"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const healAmount = 15;",
+                        "const currentHP = trackerHP;",
+                        "const maxHP = trackerMaxHP;",
+                        "const newHP = min(currentHP + healAmount, maxHP);",
+                        "await OwlTrackers.setValue(token, 'HP', newHP);",
+                        "console.log(`Healed ${newHP - currentHP} HP`);"
+                    ],
+                    "label": "Multi-line Script Example"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "const roll = await JustDices.roll('1d20');",
+                        "if (roll >= 15) {",
+                        "  await addValue('spdCS', 2);",
+                        "  console.log('Success! +2 speed');",
+                        "} else if (roll >= 10) {",
+                        "  await addValue('spdCS', 1);",
+                        "  console.log('Partial success! +1 speed');",
+                        "} else {",
+                        "  console.log('Failure!');",
+                        "}"
+                    ],
+                    "label": "Conditional Logic Example"
+                },
+                {
+                    "type": "button",
+                    "commands": [
+                        "for (let i = 0; i < 3; i++) {",
+                        "  const roll = await JustDices.roll('1d6');",
+                        "  console.log(`Roll ${i + 1}: ${roll}`);",
+                        "}"
+                    ],
+                    "label": "Loop Example"
                 },
                 {
                     "type": "divider"
@@ -881,8 +919,8 @@
                 {
                     "type": "button",
                     "commands": [
-                        "mapId = await sceneHelpers.getMapIdFromToken(testToken)",
-                        "console.log('Map ID: ' + (mapId || 'Not on a map'))"
+                        "mapId = await sceneHelpers.getMapIdFromToken(testToken);",
+                        "console.log('Map ID: ' + (mapId || 'Not on a map'));"
                     ],
                     "label": "Get Map ID from Token"
                 }
