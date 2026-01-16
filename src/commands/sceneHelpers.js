@@ -1,4 +1,4 @@
-import OBR from "@owlbear-rodeo/sdk";
+import OBR, { isImage } from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../debugMode.js";
 
 // Debug mode constants
@@ -13,20 +13,12 @@ const debugWarn = (...args) => console.warn(...args);
  */
 export async function getMapIdFromToken(tokenId) {
   try {
-    // Get all items from the scene
-    const items = await OBR.scene.items.getItems();
-    if (!items || items.length === 0) {
-      debugWarn(`[sceneHelpers] No items found in scene`);
-      return null;
-    }
+    // Get the specific token using filter
+    const tokens = await OBR.scene.items.getItems([tokenId]);
+    const token = tokens[0];
     
-    debugLog(`[sceneHelpers] Found ${items.length} items in scene`);
-    
-    // Find the token
-    const token = items.find(item => item.id === tokenId);
     if (!token) {
       debugWarn(`[sceneHelpers] Token ${tokenId} not found`);
-      debugLog(`[sceneHelpers] Available items:`, items.map(i => ({ id: i.id, name: i.name, layer: i.layer })));
       return null;
     }
     
@@ -39,9 +31,14 @@ export async function getMapIdFromToken(tokenId) {
       return null;
     }
     
-    // Find all map items (layer MAP)
-    const maps = items.filter(item => item.layer === 'MAP');
+    // Get only map items using filter (maps are images on the MAP layer)
+    const maps = await OBR.scene.items.getItems((item) => isImage(item) && item.layer === 'MAP');
     debugLog(`[sceneHelpers] Found ${maps.length} maps in scene`);
+    
+    if (maps.length === 0) {
+      debugWarn(`[sceneHelpers] No maps found in scene`);
+      return null;
+    }
     
     // Sort maps by zIndex (lower zIndex = below, higher = on top)
     // We want to find the topmost map under the token
