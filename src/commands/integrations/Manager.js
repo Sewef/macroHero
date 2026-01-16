@@ -117,6 +117,8 @@ class IntegrationsManager {
         getMax: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getMax(tokenId, trackerName)),
         setValue: this.wrapAsync((tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value)),
         addValue: this.wrapAsync((tokenId, trackerName, delta) => OwlTrackers.addValue(tokenId, trackerName, delta)),
+        addTracker: this.wrapAsync((tokenId, trackerConfig) => OwlTrackers.addTracker(tokenId, trackerConfig)),
+        removeTracker: this.wrapAsync((tokenId, trackerIdentifier) => OwlTrackers.removeTracker(tokenId, trackerIdentifier)),
       },
       // StatBubbles integration (all async)
       StatBubbles: {
