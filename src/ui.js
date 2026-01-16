@@ -169,25 +169,7 @@ async function renderPageContent(page) {
     page._resolved = { ...globalVariables, ...page._resolved };
   }
 
-  // Build new content in a temporary container (off-DOM for smoother rendering)
-  const tempContainer = document.createElement('div');
-  
-  if (page.layout && Array.isArray(page.layout)) {
-    renderLayout(tempContainer, page.layout, page);
-  } else {
-    const emptyMsg = document.createElement("i");
-    emptyMsg.textContent = "No layout defined for this page";
-    tempContainer.appendChild(emptyMsg);
-  }
-  
-  // Replace content in one atomic operation to minimize visual disruption
-  container.innerHTML = "";
-  // Transfer all children from temp to container
-  while (tempContainer.firstChild) {
-    container.appendChild(tempContainer.firstChild);
-  }
-
-  // Resolve variables in background and update UI as they resolve
+  // Resolve variables BEFORE rendering to avoid undefined variable errors
   if (page.variables && Object.keys(page.variables).length > 0) {
     // Find which variables need resolution (not already in _resolved)
     const varsToResolve = new Set();
@@ -209,6 +191,24 @@ async function renderPageContent(page) {
       const allResolved = await resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve);
       page._resolved = allResolved;
     }
+  }
+
+  // Build new content in a temporary container (off-DOM for smoother rendering)
+  const tempContainer = document.createElement('div');
+  
+  if (page.layout && Array.isArray(page.layout)) {
+    renderLayout(tempContainer, page.layout, page);
+  } else {
+    const emptyMsg = document.createElement("i");
+    emptyMsg.textContent = "No layout defined for this page";
+    tempContainer.appendChild(emptyMsg);
+  }
+  
+  // Replace content in one atomic operation to minimize visual disruption
+  container.innerHTML = "";
+  // Transfer all children from temp to container
+  while (tempContainer.firstChild) {
+    container.appendChild(tempContainer.firstChild);
   }
 }
 

@@ -1145,7 +1145,6 @@
                         "  color: 2",
                         "});",
                         "",
-                        "await tokenMetadata.updateTokenMetadata(tokenId, { ac: 18, isBoss: true });",
                         "console.log('Created boss with ID:', tokenId);"
                     ],
                     "label": "Create Boss (3 cells) with HP & Metadata"
