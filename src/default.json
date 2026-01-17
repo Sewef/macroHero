@@ -1037,7 +1037,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createToken({",
+                        "const tokenId = await createToken({",
                         "  url: tokenUrl,",
                         "  position: { x: tokenX, y: tokenY },",
                         "  size: tokenSize,",
@@ -1077,7 +1077,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createToken({",
+                        "const tokenId = await createToken({",
                         "  url: tokenUrl,",
                         "  position: { x: gridX, y: gridY },",
                         "  gridPosition: true,",
@@ -1098,7 +1098,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "await tokenHelpers.createToken({",
+                        "await createToken({",
                         "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
                         "  name: 'Hero',",
                         "  position: { x: 300, y: 300 },",
@@ -1122,14 +1122,14 @@
                         "  name: `Enemy ${i + 1}`,",
                         "  label: `E${i + 1}`",
                         "}));",
-                        "await tokenHelpers.createTokens(tokens);"
+                        "await createTokens(tokens);"
                     ],
                     "label": "Create 3 Enemies (1 cell each)"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createToken({",
+                        "const tokenId = await createToken({",
                         "  url: 'https://sewef.github.io/justDices/JustDices.png',",
                         "  position: { x: 500, y: 500 },",
                         "  name: 'Boss',",
@@ -1160,7 +1160,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "const tokenId = await tokenHelpers.createToken({",
+                        "const tokenId = await createToken({",
                         "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
                         "  position: { x: 400, y: 400 },",
                         "  name: 'Character with Trackers',",

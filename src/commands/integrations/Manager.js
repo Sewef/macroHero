@@ -165,8 +165,9 @@ class IntegrationsManager {
       tokenMetadata,
       tokenAttachments,
       sceneHelpers,
-      tokenHelpers,
-      // ...existing code...
+      // Token helpers - exposed directly
+      createToken: this.wrapAsync((params) => tokenHelpers.createToken(params)),
+      createTokens: this.wrapAsync((tokensParams) => tokenHelpers.createTokens(tokensParams)),
     };
   }
 }

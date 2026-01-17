@@ -319,8 +319,3 @@ export async function createTokens(tokensParams) {
     throw error;
   }
 }
-
-export default {
-  createToken,
-  createTokens
-};
