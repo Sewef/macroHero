@@ -6,19 +6,31 @@ const debugLog = (...args) => isDebugEnabled('tokenHelpers') && console.log(...a
 const debugError = (...args) => console.error(...args);
 const debugWarn = (...args) => console.warn(...args);
 
+// Placeholder image for invalid or empty URLs
+const PLACEHOLDER_IMAGE = "https://macrohero.onrender.com/logo.png";
+
 /**
  * Load an image and get its real dimensions
  * @param {string} url - Image URL
- * @returns {Promise<{width: number, height: number}>} Image dimensions
+ * @param {boolean} usePlaceholderOnError - If true, returns placeholder URL on error
+ * @returns {Promise<{width: number, height: number, url: string}>} Image dimensions and final URL
  */
-async function getImageDimensions(url) {
+async function getImageDimensions(url, usePlaceholderOnError = true) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      resolve({ width: img.naturalWidth, height: img.naturalHeight, url });
     };
     img.onerror = () => {
-      reject(new Error(`Failed to load image: ${url}`));
+      if (usePlaceholderOnError && url !== PLACEHOLDER_IMAGE) {
+        debugWarn(`[tokenHelpers] Failed to load image: ${url}, using placeholder`);
+        // Try with placeholder
+        getImageDimensions(PLACEHOLDER_IMAGE, false)
+          .then(resolve)
+          .catch(() => reject(new Error(`Failed to load image and placeholder: ${url}`)));
+      } else {
+        reject(new Error(`Failed to load image: ${url}`));
+      }
     };
     img.src = url;
   });
@@ -124,7 +136,7 @@ export async function createToken(params) {
 
     // Handle empty or placeholder URL
     if (!url || url === "EMPTY") {
-      url = "https://macrohero.onrender.com/logo.png";
+      url = PLACEHOLDER_IMAGE;
       debugLog(`[tokenHelpers] Using placeholder image`);
     }
 
@@ -162,9 +174,10 @@ export async function createToken(params) {
     // Auto-detect dimensions if not provided
     if (!width || !height) {
       debugLog(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
-      const dimensions = await getImageDimensions(url);
-      width = dimensions.width;
-      height = dimensions.height;
+      const result = await getImageDimensions(url);
+      width = result.width;
+      height = result.height;
+      url = result.url; // Use final URL (may be placeholder if original failed)
       debugLog(`[tokenHelpers] Auto-detected dimensions: ${width}x${height}`);
     }
 
@@ -282,7 +295,7 @@ export async function createTokens(tokensParams) {
       
       // Handle empty or placeholder URL
       if (!url || url === "EMPTY") {
-        url = "https://macrohero.onrender.com/logo.png";
+        url = PLACEHOLDER_IMAGE;
       }
       
       // Replace SELECT with selected asset
@@ -306,9 +319,10 @@ export async function createTokens(tokensParams) {
       // Auto-detect dimensions if not provided
       if (!width || !height) {
         debugLog(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
-        const dimensions = await getImageDimensions(url);
-        width = dimensions.width;
-        height = dimensions.height;
+        const result = await getImageDimensions(url);
+        width = result.width;
+        height = result.height;
+        url = result.url; // Use final URL (may be placeholder if original failed)
         
         // If size is specified (in grid cells), calculate scale to fit
         if (size && !params.scale) {
