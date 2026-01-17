@@ -1099,10 +1099,11 @@
                     "type": "button",
                     "commands": [
                         "await createToken({",
-                        "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
+                        "  url: 'SELECT',",
                         "  name: 'Hero',",
                         "  position: { x: 300, y: 300 },",
-                        "  size: 1.5",
+                        "  size: 1.5,",
+                        "  layer: 'MOUNT',",
                         "});"
                     ],
                     "label": "Create Demo Hero (1.5 cells)"
@@ -1116,7 +1117,7 @@
                         "  { x: 700, y: 600 }",
                         "];",
                         "const tokens = enemyPositions.map((pos, i) => ({",
-                        "  url: 'https://sewef.github.io/macrohero/logo.png',",
+                        "  url: 'EMPTY',",
                         "  size: 1.0,",
                         "  position: pos,",
                         "  name: `Enemy ${i + 1}`,",

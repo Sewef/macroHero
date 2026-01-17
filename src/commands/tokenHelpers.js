@@ -25,6 +25,41 @@ async function getImageDimensions(url) {
 }
 
 /**
+ * Select an asset from the user's library
+ * @param {string} layer - Layer hint for asset type
+ * @returns {Promise<Object>} Selected asset properties
+ */
+async function selectAsset(layer = "CHARACTER") {
+  try {
+    debugLog(`[tokenHelpers] Opening asset picker...`);
+    const images = await OBR.assets.downloadImages(false, undefined, layer);
+    
+    if (!images || images.length === 0) {
+      throw new Error("No image selected");
+    }
+    
+    const selectedImage = images[0];
+    debugLog(`[tokenHelpers] Selected image:`, selectedImage);
+    
+    return {
+      url: selectedImage.image.url,
+      mime: selectedImage.image.mime,
+      width: selectedImage.image.width,
+      height: selectedImage.image.height,
+      rotation: selectedImage.rotation,
+      scale: selectedImage.scale,
+      name: selectedImage.name,
+      label: selectedImage.text?.plainText,
+      visible: selectedImage.visible,
+      locked: selectedImage.locked
+    };
+  } catch (error) {
+    debugError(`[tokenHelpers] Error selecting asset:`, error);
+    throw new Error(`Failed to select asset: ${error.message || JSON.stringify(error)}`);
+  }
+}
+
+/**
  * Detect MIME type from URL extension
  * @param {string} url - Image URL
  * @returns {string} MIME type
@@ -87,8 +122,30 @@ export async function createToken(params) {
       metadata = {}
     } = params;
 
-    // Validate required parameters
-    if (!url) throw new Error("Token URL is required");
+    // Handle empty or placeholder URL
+    if (!url || url === "EMPTY") {
+      url = "https://macrohero.onrender.com/logo.png";
+      debugLog(`[tokenHelpers] Using placeholder image`);
+    }
+
+    // Special case: if url is "SELECT", open asset picker
+    if (url === "SELECT") {
+      const asset = await selectAsset(layer);
+      
+      // Use properties from selected asset
+      url = asset.url;
+      mime = asset.mime;
+      width = asset.width;
+      height = asset.height;
+      
+      // Override with asset defaults if not explicitly provided
+      if (rotation === 0 && asset.rotation) rotation = asset.rotation;
+      if (scale === 1 && asset.scale) scale = asset.scale;
+      if (!name && asset.name) name = asset.name;
+      if (!label && asset.label) label = asset.label;
+      if (visible === true && asset.visible !== undefined) visible = asset.visible;
+      if (locked === false && asset.locked !== undefined) locked = asset.locked;
+    }
 
     // Auto-detect DPI from scene grid if not provided
     if (!dpi) {
@@ -205,6 +262,16 @@ export async function createTokens(tokensParams) {
   try {
     debugLog(`[tokenHelpers] Creating ${tokensParams.length} tokens`);
 
+    // Check if any token uses "SELECT" for URL
+    const needsAssetSelection = tokensParams.some(p => p.url === "SELECT");
+    let selectedAsset = null;
+    
+    if (needsAssetSelection) {
+      // Use layer from first token with SELECT, or default to CHARACTER
+      const firstSelectToken = tokensParams.find(p => p.url === "SELECT");
+      selectedAsset = await selectAsset(firstSelectToken?.layer || "CHARACTER");
+    }
+
     // Get grid DPI once for all tokens
     const gridDpi = await OBR.scene.grid.getDpi();
     debugLog(`[tokenHelpers] Grid DPI: ${gridDpi}`);
@@ -212,6 +279,24 @@ export async function createTokens(tokensParams) {
     // Process each token parameter - detect dimensions if needed
     const processedParams = await Promise.all(tokensParams.map(async (params) => {
       let { url, mime, width, height, size } = params;
+      
+      // Handle empty or placeholder URL
+      if (!url || url === "EMPTY") {
+        url = "https://macrohero.onrender.com/logo.png";
+      }
+      
+      // Replace SELECT with selected asset
+      if (url === "SELECT" && selectedAsset) {
+        url = selectedAsset.url;
+        if (!mime) mime = selectedAsset.mime;
+        if (!width) width = selectedAsset.width;
+        if (!height) height = selectedAsset.height;
+        if (!params.name && selectedAsset.name) params.name = selectedAsset.name;
+        if (!params.label && selectedAsset.label) params.label = selectedAsset.label;
+        if (params.rotation === undefined && selectedAsset.rotation) params.rotation = selectedAsset.rotation;
+        if (params.visible === undefined && selectedAsset.visible !== undefined) params.visible = selectedAsset.visible;
+        if (params.locked === undefined && selectedAsset.locked !== undefined) params.locked = selectedAsset.locked;
+      }
       
       // Auto-detect MIME type if not provided
       if (!mime) {
