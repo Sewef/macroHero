@@ -10,6 +10,27 @@ const debugWarn = (...args) => console.warn(...args);
 const PLACEHOLDER_IMAGE = "https://macrohero.onrender.com/logo.png";
 
 /**
+ * Get the center position of the user's viewport
+ * @returns {Promise<{x: number, y: number}>} Center position in scene coordinates
+ */
+async function getViewportCenter() {
+  try {
+    const viewportWidth = await OBR.viewport.getWidth();
+    const viewportHeight = await OBR.viewport.getHeight();
+    
+    // Transform the center point of the viewport to scene coordinates
+    const viewportCenterPoint = { x: viewportWidth / 2, y: viewportHeight / 2 };
+    const scenePosition = await OBR.viewport.inverseTransformPoint(viewportCenterPoint);
+    
+    debugLog(`[tokenHelpers] Viewport center:`, scenePosition);
+    return scenePosition;
+  } catch (error) {
+    debugError(`[tokenHelpers] Error getting viewport center:`, error);
+    return { x: 0, y: 0 }; // Fallback to origin
+  }
+}
+
+/**
  * Load an image and get its real dimensions
  * @param {string} url - Image URL
  * @param {boolean} usePlaceholderOnError - If true, returns placeholder URL on error
@@ -159,6 +180,12 @@ export async function createToken(params) {
       if (locked === false && asset.locked !== undefined) locked = asset.locked;
     }
 
+    // Special case: if position is "HERE", use viewport center
+    if (position === "HERE") {
+      position = await getViewportCenter();
+      debugLog(`[tokenHelpers] Using viewport center for position:`, position);
+    }
+
     // Auto-detect DPI from scene grid if not provided
     if (!dpi) {
       dpi = await OBR.scene.grid.getDpi();
@@ -285,6 +312,14 @@ export async function createTokens(tokensParams) {
       selectedAsset = await selectAsset(firstSelectToken?.layer || "CHARACTER");
     }
 
+    // Check if any token uses "HERE" for position
+    const needsViewportCenter = tokensParams.some(p => p.position === "HERE");
+    let viewportCenter = null;
+    
+    if (needsViewportCenter) {
+      viewportCenter = await getViewportCenter();
+    }
+
     // Get grid DPI once for all tokens
     const gridDpi = await OBR.scene.grid.getDpi();
     debugLog(`[tokenHelpers] Grid DPI: ${gridDpi}`);
@@ -346,7 +381,7 @@ export async function createTokens(tokensParams) {
 
     // Build all items
     const items = processedParams.map(params => {
-      const {
+      let {
         url,
         mime,
         width,
@@ -363,6 +398,11 @@ export async function createTokens(tokensParams) {
         locked = false,
         metadata = {}
       } = params;
+
+      // Replace HERE with viewport center
+      if (position === "HERE" && viewportCenter) {
+        position = viewportCenter;
+      }
 
       // Build the image item
       let builder = buildImage(
