@@ -1917,6 +1917,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'JustDices',
     'PrettySordid',
     'Weather',
+    'Embers',
     'Manager'
   ]
 };

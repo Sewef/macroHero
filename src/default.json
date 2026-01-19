@@ -592,6 +592,162 @@
                             "label": "Remove Weather"
                         }
                     ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "title",
+                    "text": "Embers - Spell Effects"
+                },
+                {
+                    "type": "text",
+                    "text": "Cast visual spell effects using the Embers extension"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "console.log('[TEST] Testing Embers.castSpellAtToken with fireball...');",
+                                "const targetId = await getSelectedTokenId();",
+                                "await Embers.castSpellAtToken(targetId, {",
+                                "  spellId: 'fireball.explosion',",
+                                "  size: 20,",
+                                "  spellName: 'Fireball'",
+                                "});",
+                                "console.log('[TEST] Message sent');"
+                            ],
+                            "label": "Test Embers (Fireball)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const selection = await getSelectedTokensIds();",
+                                "if (!selection || selection.length === 0) return console.error('No tokens selected');",
+                                "await Embers.castSpellToTarget(selection, {",
+                                "  spellId: 'bless',",
+                                "  size: 10,",
+                                "  spellName: 'Bless'",
+                                "});"
+                            ],
+                            "label": "Bless (selected)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "await Embers.castSpellAtToken(token, {",
+                                "  spellId: 'cure_wounds',",
+                                "  size: 10,",
+                                "  spellName: 'Cure Wounds'",
+                                "});"
+                            ],
+                            "label": "Cure Wounds"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const selection = await getSelectedTokensIds();",
+                                "if (!selection || selection.length === 0) return console.error('No targets selected');",
+                                "for (const targetId of selection) {",
+                                "  await Embers.castProjectileSpell(token, targetId, {",
+                                "    spellId: 'magic_missile',",
+                                "    copies: 3,",
+                                "    spellName: 'Magic Missile'",
+                                "  });",
+                                "}"
+                            ],
+                            "label": "Magic Missile"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target for direction');",
+                                "await Embers.castConeSpell(token, targetId, {",
+                                "  spellId: 'burning_hands',",
+                                "  size: 15,",
+                                "  spellName: 'Burning Hands'",
+                                "});"
+                            ],
+                            "label": "Burning Hands"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "await Embers.castSpellAtToken(token, {",
+                                "  spellId: 'fireball',",
+                                "  size: 20,",
+                                "  duration: 2000,",
+                                "  spellName: 'Fireball'",
+                                "});"
+                            ],
+                            "label": "Fireball (AOE)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const selection = await getSelectedTokensIds();",
+                                "if (!selection || selection.length === 0) return console.error('No target selected');",
+                                "for (const targetId of selection) {",
+                                "  await Embers.castProjectileSpell(token, targetId, {",
+                                "    spellId: 'banishment',",
+                                "    spellName: 'Banishment'",
+                                "  });",
+                                "}"
+                            ],
+                            "label": "Banishment"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const selection = await getSelectedTokensIds();",
+                                "if (!selection || selection.length === 0) return console.error('No target selected');",
+                                "for (const targetId of selection) {",
+                                "  await Embers.castProjectileSpell(token, targetId, {",
+                                "    spellId: 'eldritch_blast',",
+                                "    copies: 2,",
+                                "    delay: 200,",
+                                "    spellName: 'Eldritch Blast'",
+                                "  });",
+                                "}"
+                            ],
+                            "label": "Eldritch Blast"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "await Embers.castSpellAtToken(token, {",
+                                "  spellId: 'healing_word',",
+                                "  size: 8,",
+                                "  loops: 2,",
+                                "  spellName: 'Healing Word'",
+                                "});"
+                            ],
+                            "label": "Healing Word"
+                        }
+                    ]
                 }
             ]
         },

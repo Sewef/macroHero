@@ -18,6 +18,7 @@ import * as sceneHelpers from "../sceneHelpers.js";
 import * as tokenHelpers from "../tokenHelpers.js";
 import * as GoogleSheets from "./GoogleSheets.js";
 import * as Weather from "./Weather.js";
+import * as Embers from "./Embers.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -159,6 +160,13 @@ class IntegrationsManager {
         hasWeather: this.wrapAsync((mapId) => Weather.hasWeather(mapId)),
         updateWeather: this.wrapAsync((mapId, updates) => Weather.updateWeather(mapId, updates)),
       },
+      // Embers integration (spell visual effects - all async)
+      Embers: {
+        castSpellToTarget: this.wrapAsync((targets, config) => Embers.castSpellToTarget(targets, config)),
+        castSpellAtToken: this.wrapAsync((tokenId, config) => Embers.castSpellAtToken(tokenId, config)),
+        castProjectileSpell: this.wrapAsync((casterId, targetId, config) => Embers.castProjectileSpell(casterId, targetId, config)),
+        castConeSpell: this.wrapAsync((casterId, targetId, config) => Embers.castConeSpell(casterId, targetId, config)),
+      },
       // Metadata modules
       playerMetadata,
       sceneMetadata,
@@ -168,6 +176,8 @@ class IntegrationsManager {
       // Token helpers - exposed directly
       createToken: this.wrapAsync((params) => tokenHelpers.createToken(params)),
       createTokens: this.wrapAsync((tokensParams) => tokenHelpers.createTokens(tokensParams)),
+      getSelectedTokenId: this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
+      getSelectedTokensIds: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
     };
   }
 }
