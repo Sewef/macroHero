@@ -10,6 +10,45 @@ const debugWarn = (...args) => console.warn(...args);
 const PLACEHOLDER_IMAGE = "https://macrohero.onrender.com/logo.png";
 
 /**
+ * Get the ID of the currently selected token
+ * @returns {Promise<string|null>} The ID of the first selected token, or null if none selected
+ */
+export async function getSelectedTokenId() {
+  try {
+    const selection = await OBR.player.getSelection();
+    if (!selection || selection.length === 0) {
+      debugLog(`[tokenHelpers] No token selected`);
+      return null;
+    }
+    const selectedId = selection[0];
+    debugLog(`[tokenHelpers] Selected token ID:`, selectedId);
+    return selectedId;
+  } catch (error) {
+    debugError(`[tokenHelpers] Error getting selected token ID:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get the IDs of all currently selected tokens
+ * @returns {Promise<string[]>} Array of selected token IDs (empty array if none selected)
+ */
+export async function getSelectedTokensIds() {
+  try {
+    const selection = await OBR.player.getSelection();
+    if (!selection || selection.length === 0) {
+      debugLog(`[tokenHelpers] No tokens selected`);
+      return [];
+    }
+    debugLog(`[tokenHelpers] Selected ${selection.length} token(s):`, selection);
+    return selection;
+  } catch (error) {
+    debugError(`[tokenHelpers] Error getting selected tokens IDs:`, error);
+    throw error;
+  }
+}
+
+/**
  * Get the center position of the user's viewport
  * @returns {Promise<{x: number, y: number}>} Center position in scene coordinates
  */
