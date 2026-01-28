@@ -35,7 +35,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
     const integrations = getExpressionContext(); // Integrations (GoogleSheets, OwlTrackers, etc.)
     
     // Check if expression contains async calls
-    const hasAsync = /\b(await\s+|GoogleSheets\.|OwlTrackers\.|ConditionsMarkers\.|StatBubbles\.|ColoredRings\.|PrettySordid\.|Local\.)/.test(expression);
+    const hasAsync = /\b(await\s+|GoogleSheets\.|OwlTrackers\.|ConditionMarkers\.|StatBubbles\.|ColoredRings\.|PrettySordid\.|Local\.)/.test(expression);
 
     // Build function code
     let code;
@@ -44,7 +44,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
       let processed = expression;
       
       // Auto-add await to integration method calls if not already present
-      const integrationNames = ['GoogleSheets', 'OwlTrackers', 'ConditionsMarkers', 'StatBubbles', 'ColoredRings', 'PrettySordid', 'Local'];
+      const integrationNames = ['GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles', 'ColoredRings', 'PrettySordid', 'Local'];
       for (const integration of integrationNames) {
         const regex = new RegExp(`(?<!await\\s+)\\b(${integration}\\.\\w+)\\(`, 'g');
         processed = processed.replace(regex, (match, methodCall) => `await ${methodCall}(`);
@@ -218,7 +218,7 @@ export function getAffectedVariables(commands, variablesConfig) {
   // Find integration calls in commands
   const integrationCalls = new Set();
   for (const cmd of commands) {
-    const matches = String(cmd).matchAll(/\b(GoogleSheets|OwlTrackers|ConditionsMarkers|StatBubbles|ColoredRings|PrettySordid|Local)\.\w+/g);
+    const matches = String(cmd).matchAll(/\b(GoogleSheets|OwlTrackers|ConditionMarkers|StatBubbles|ColoredRings|PrettySordid|Local)\.\w+/g);
     for (const match of matches) {
       integrationCalls.add(match[1]);
     }

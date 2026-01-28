@@ -7,7 +7,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('ConditionsMarkers') && console.log(...args);
+const debugLog = (...args) => isDebugEnabled('ConditionMarkers') && console.log(...args);
 const debugError = (...args) => console.error(...args);
 const debugWarn = (...args) => console.warn(...args);
 
@@ -18,17 +18,17 @@ const debugWarn = (...args) => console.warn(...args);
  */
 export async function getConditions(itemId) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers) {
-      const ext = Ext.ConditionsMarkers;
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers) {
+      const ext = Ext.ConditionMarkers;
       if (typeof ext.getItemConditions === 'function') {
         return await ext.getItemConditions(itemId);
       }
       if (typeof ext.getConditions === 'function') {
         return await ext.getConditions(itemId);
       }
-      debugLog("[ConditionsMarkers] Native extension present but no getItemConditions/getConditions method");
+      debugLog("[ConditionMarkers] Native extension present but no getItemConditions/getConditions method");
     } else {
-      debugLog("[ConditionsMarkers] Native extension not present, using fallback");
+      debugLog("[ConditionMarkers] Native extension not present, using fallback");
     }
 
     // Fallback: scan scene attachments for condition markers
@@ -51,9 +51,9 @@ export async function getConditions(itemId) {
 
 export async function addCondition(itemId, conditionName, value = null) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.addCondition === 'function') {
-      debugLog(`[ConditionsMarkers] Using native Ext.ConditionsMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
-      return await Ext.ConditionsMarkers.addCondition(itemId, conditionName, value);
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.addCondition === 'function') {
+      debugLog(`[ConditionMarkers] Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
+      return await Ext.ConditionMarkers.addCondition(itemId, conditionName, value);
     }
     // Fallback: attempt to use the Condition Markers API (request/response pattern)
     const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
@@ -63,7 +63,7 @@ export async function addCondition(itemId, conditionName, value = null) {
     const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     const payload = { callId, requesterId, action: 'add', tokenId: itemId, condition: conditionName, value };
 
-    debugLog(`[ConditionsMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName},' value ${value}`, );
+    debugLog(`[ConditionMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName},' value ${value}`, );
 
     const res = await new Promise((resolve, reject) => {
       let timeoutId = null;
@@ -92,7 +92,7 @@ export async function addCondition(itemId, conditionName, value = null) {
       }, 5000);
     });
 
-    debugLog(`[ConditionsMarkers] API response for add '${conditionName}':`, res);
+    debugLog(`[ConditionMarkers] API response for add '${conditionName}':`, res);
     return res;
   } catch (error) {
     debugError("Failed to add condition:", error);
@@ -110,8 +110,8 @@ export async function addCondition(itemId, conditionName, value = null) {
  */
 export async function removeCondition(itemId, conditionName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.removeCondition === 'function') {
-      return await Ext.ConditionsMarkers.removeCondition(itemId, conditionName);
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.removeCondition === 'function') {
+      return await Ext.ConditionMarkers.removeCondition(itemId, conditionName);
     }
     // Fallback: use Condition Markers API request/response
     const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
@@ -145,7 +145,7 @@ export async function removeCondition(itemId, conditionName) {
       }, 5000);
     });
 
-    debugLog(`[ConditionsMarkers] API response for remove '${conditionName}':`, res);
+    debugLog(`[ConditionMarkers] API response for remove '${conditionName}':`, res);
     return res;
   } catch (error) {
     debugError("Failed to remove condition:", error);
@@ -162,8 +162,8 @@ export async function removeCondition(itemId, conditionName) {
 export async function toggleCondition(itemId, conditionName) {
   try {
     // Prefer native toggle if available
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.toggleCondition === 'function') {
-      return await Ext.ConditionsMarkers.toggleCondition(itemId, conditionName);
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.toggleCondition === 'function') {
+      return await Ext.ConditionMarkers.toggleCondition(itemId, conditionName);
     }
 
     const conditions = await getConditions(itemId);
@@ -187,8 +187,8 @@ export async function toggleCondition(itemId, conditionName) {
  */
 export async function clearAllConditions(itemId) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.clearAllConditions === 'function') {
-      return await Ext.ConditionsMarkers.clearAllConditions(itemId);
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.clearAllConditions === 'function') {
+      return await Ext.ConditionMarkers.clearAllConditions(itemId);
     }
 
     const conditions = await getConditions(itemId);
@@ -210,8 +210,8 @@ export async function clearAllConditions(itemId) {
  */
 export async function hasCondition(itemId, conditionName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionsMarkers && typeof Ext.ConditionsMarkers.hasCondition === 'function') {
-      return await Ext.ConditionsMarkers.hasCondition(itemId, conditionName);
+    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.hasCondition === 'function') {
+      return await Ext.ConditionMarkers.hasCondition(itemId, conditionName);
     }
 
     const conditions = await getConditions(itemId);
@@ -238,7 +238,7 @@ export async function hasCondition(itemId, conditionName) {
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
-    debugLog(`[ConditionsMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
+    debugLog(`[ConditionMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
     
     let tokenItem = null;
     if (allItems) {
@@ -249,7 +249,7 @@ export async function getValue(tokenId, conditionName, allItems = null) {
     }
     
     if (!tokenItem) {
-      debugLog(`[ConditionsMarkers.getValue] Token not found`);
+      debugLog(`[ConditionMarkers.getValue] Token not found`);
       return null;
     }
     
@@ -263,11 +263,11 @@ export async function getValue(tokenId, conditionName, allItems = null) {
       "keegan.dev.condition-markers/metadata" in item.metadata
     );
     
-    debugLog(`[ConditionsMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
+    debugLog(`[ConditionMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
     
     // For each marker, find TEXT labels attached to it
     for (const marker of markers) {
-      debugLog(`[ConditionsMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
+      debugLog(`[ConditionMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
       
       const labels = allSceneItems.filter(item =>
         item.attachedTo === marker.id &&
@@ -277,33 +277,33 @@ export async function getValue(tokenId, conditionName, allItems = null) {
         item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
       );
       
-      debugLog(`[ConditionsMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
+      debugLog(`[ConditionMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
       
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
-        debugLog(`[ConditionsMarkers.getValue] Label text: "${labelText}"`);
+        debugLog(`[ConditionMarkers.getValue] Label text: "${labelText}"`);
         const trimmed = labelText && labelText.trim() ? labelText.trim() : null;
         if (!trimmed) {
-          debugLog(`[ConditionsMarkers.getValue] Returning: null (empty)`);
+          debugLog(`[ConditionMarkers.getValue] Returning: null (empty)`);
           return null;
         }
 
         // Simpler numeric parsing: use Number() and ensure it's finite.
         const n = Number(trimmed);
         if (Number.isFinite(n)) {
-          debugLog(`[ConditionsMarkers.getValue] Parsed number: ${n}`);
+          debugLog(`[ConditionMarkers.getValue] Parsed number: ${n}`);
           return n;
         }
 
-        debugLog(`[ConditionsMarkers.getValue] Label not numeric, returning null`);
+        debugLog(`[ConditionMarkers.getValue] Label not numeric, returning null`);
         return null;
       }
     }
     
-    debugLog(`[ConditionsMarkers.getValue] No matching label found, returning null`);
+    debugLog(`[ConditionMarkers.getValue] No matching label found, returning null`);
     return null;
   } catch (error) {
-    debugError(`[ConditionsMarkers.getValue] Error:`, error);
+    debugError(`[ConditionMarkers.getValue] Error:`, error);
     return null;
   }
 }

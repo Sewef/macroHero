@@ -4,7 +4,7 @@
  */
 
 import LocalIntegration from "./Local.js";
-import * as ConditionsMarkers from "./ConditionsMarkers.js";
+import * as ConditionMarkers from "./ConditionMarkers.js";
 import * as OwlTrackers from "./OwlTrackers.js";
 import * as StatBubbles from "./StatBubbles.js";
 import * as ColoredRings from "./ColoredRings.js";
@@ -103,14 +103,14 @@ class IntegrationsManager {
         keys: () => self.local.keys(),
       },
       // Conditions Markers integration (all async)
-      ConditionsMarkers: {
-        getConditions: this.wrapAsync((tokenId) => ConditionsMarkers.getConditions(tokenId)),
-        getValue: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.getValue(tokenId, conditionName)),
-        hasCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.hasCondition(tokenId, conditionName)),
-        addCondition: this.wrapAsync((tokenId, conditionName, options) => ConditionsMarkers.addCondition(tokenId, conditionName, options)),
-        removeCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.removeCondition(tokenId, conditionName)),
-        toggleCondition: this.wrapAsync((tokenId, conditionName) => ConditionsMarkers.toggleCondition(tokenId, conditionName)),
-        clearAllConditions: this.wrapAsync((tokenId) => ConditionsMarkers.clearAllConditions(tokenId)),
+      ConditionMarkers: {
+        getConditions: this.wrapAsync((tokenId) => ConditionMarkers.getConditions(tokenId)),
+        getValue: this.wrapAsync((tokenId, conditionName) => ConditionMarkers.getValue(tokenId, conditionName)),
+        hasCondition: this.wrapAsync((tokenId, conditionName) => ConditionMarkers.hasCondition(tokenId, conditionName)),
+        addCondition: this.wrapAsync((tokenId, conditionName, options) => ConditionMarkers.addCondition(tokenId, conditionName, options)),
+        removeCondition: this.wrapAsync((tokenId, conditionName) => ConditionMarkers.removeCondition(tokenId, conditionName)),
+        toggleCondition: this.wrapAsync((tokenId, conditionName) => ConditionMarkers.toggleCondition(tokenId, conditionName)),
+        clearAllConditions: this.wrapAsync((tokenId) => ConditionMarkers.clearAllConditions(tokenId)),
       },
       // Owl Trackers integration (all async)
       OwlTrackers: {

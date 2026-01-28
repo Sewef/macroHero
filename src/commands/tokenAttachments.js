@@ -116,7 +116,7 @@ export async function setAttachmentsVisible(attachmentIds, visible) {
 
 /**
  * Get condition marker attachments on a token
- * Delegates to ConditionsMarkers integration
+ * Delegates to ConditionMarkers integration
  * @param {string} tokenId - Token ID
  * @param {Array} allItems - All scene items (optional)
  * @returns {Promise<Array>} Array of condition marker attachments

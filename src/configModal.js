@@ -1910,7 +1910,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
   'Integration Modules': [
     'GoogleSheets',
     'Local',
-    'ConditionsMarkers',
+    'ConditionMarkers',
     'OwlTrackers',
     'StatBubbles',
     'ColoredRings',

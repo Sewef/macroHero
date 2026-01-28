@@ -23,10 +23,10 @@
                     "value": "Enter name here"
                 },
                 "isBandaged": {
-                    "eval": "ConditionsMarkers.hasCondition(token, 'Bandaged')"
+                    "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
                 },
                 "conditionValue": {
-                    "eval": "ConditionsMarkers.getValue(token, 'Bandaged')"
+                    "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
                 },
                 "trackerHP": {
                     "eval": "OwlTrackers.getValue(token, 'HP')"
@@ -114,14 +114,14 @@
                 {
                     "type": "button",
                     "commands": [
-                        "await ConditionsMarkers.toggleCondition(token, 'Bandaged');"
+                        "await ConditionMarkers.toggleCondition(token, 'Bandaged');"
                     ],
                     "label": "Toggle Bandage"
                 },
                 {
                     "type": "button",
                     "commands": [
-                        "await ConditionsMarkers.addCondition(token, 'Bandaged', conditionValue + 1);"
+                        "await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);"
                     ],
                     "label": "Increment Bandage"
                 },
