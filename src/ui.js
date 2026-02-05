@@ -498,6 +498,9 @@ function renderStack(item, page) {
         } else if (child.type === 'input') {
           // Render input with inStack=true so it becomes inline (label + input)
           element = renderInput(child, page, true);
+        } else if (child.type === 'counter') {
+          // Render counter compactly inside stacks
+          element = renderCounter(child, page, true);
         } else {
           element = renderLayoutElement(child, page);
         }
@@ -775,9 +778,12 @@ function renderDivider() {
   return divider;
 }
 
-function renderCounter(item, page) {
+function renderCounter(item, page, inStack = false) {
   const container = document.createElement("div");
   container.className = "mh-layout-counter";
+  if (inStack) {
+    container.classList.add("mh-stack-counter");
+  }
 
   const variable = page.variables?.[item.var];
   if (!variable) {
@@ -790,7 +796,7 @@ function renderCounter(item, page) {
   const numValue = Number(currentValue) || 0;
 
   // Label
-  const label = document.createElement("div");
+  const label = document.createElement(inStack ? "span" : "div");
   label.className = "mh-counter-label";
   
   if (!evaluateAndSetElementText(label, item, page)) {
