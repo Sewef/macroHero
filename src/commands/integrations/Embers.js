@@ -1,5 +1,6 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
+import { getTokenPosition } from "../tokenHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Embers') && console.log(...args);
@@ -15,25 +16,6 @@ const MESSAGE_CHANNEL = `${APP_KEY}/effects`;
  * Handles communication with the Embers extension for spell visual effects
  * Based on: https://github.com/ArmindoFlores/embers
  */
-
-/**
- * Get a token's position by ID
- * @param {string} tokenId - Token ID
- * @returns {Promise<{x: number, y: number}|null>} Token position or null if not found
- */
-async function getTokenPosition(tokenId) {
-  try {
-    const items = await OBR.scene.items.getItems([tokenId]);
-    if (items.length === 0) {
-      debugWarn(`[Embers] Token ${tokenId} not found`);
-      return null;
-    }
-    return items[0].position;
-  } catch (error) {
-    debugError(`[Embers] Failed to get token position:`, error.message);
-    return null;
-  }
-}
 
 /**
  * Get current player ID

@@ -49,6 +49,26 @@ export async function getSelectedTokensIds() {
 }
 
 /**
+ * Get a token's position by ID
+ * @param {string} tokenId - Token ID
+ * @returns {Promise<{x: number, y: number}|null>} Token position or null if not found
+ */
+export async function getTokenPosition(tokenId) {
+  try {
+    const items = await OBR.scene.items.getItems([tokenId]);
+    if (items.length === 0) {
+      debugWarn(`[tokenHelpers] Token ${tokenId} not found`);
+      return null;
+    }
+    debugLog(`[tokenHelpers] Token ${tokenId} position:`, items[0].position);
+    return items[0].position;
+  } catch (error) {
+    debugError(`[tokenHelpers] Failed to get token position:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Get the center position of the user's viewport
  * @returns {Promise<{x: number, y: number}>} Center position in scene coordinates
  */
