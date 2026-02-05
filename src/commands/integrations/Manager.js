@@ -178,6 +178,8 @@ class IntegrationsManager {
       createTokens: this.wrapAsync((tokensParams) => tokenHelpers.createTokens(tokensParams)),
       getSelectedTokenId: this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
       getSelectedTokensIds: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
+      // Scene helpers - exposed directly
+      getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
     };
   }
 }

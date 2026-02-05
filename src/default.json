@@ -480,7 +480,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });"
                             ],
                             "label": "Snow"
@@ -488,7 +488,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });"
                             ],
                             "label": "Rain"
@@ -496,7 +496,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });"
                             ],
                             "label": "Sand"
@@ -509,7 +509,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });"
                             ],
                             "label": "Fire"
@@ -517,7 +517,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });"
                             ],
                             "label": "Cloud"
@@ -525,7 +525,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });"
                             ],
                             "label": "Bloom"
@@ -538,7 +538,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });"
                             ],
                             "label": "Energy Storm"
@@ -546,7 +546,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });"
                             ],
                             "label": "Water"
@@ -554,7 +554,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });"
                             ],
                             "label": "Current"
@@ -567,7 +567,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.updateWeather(mapId, { tint: '#88aaff' });",
                                 "console.log('Blue tint applied');"
                             ],
@@ -576,7 +576,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.updateWeather(mapId, { tint: '#ff8844' });",
                                 "console.log('Orange tint applied');"
                             ],
@@ -585,7 +585,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "mapId = await sceneHelpers.getMapIdFromToken(token);",
+                                "mapId = await getMapIdFromToken(token);",
                                 "await Weather.removeWeather(mapId);",
                                 "console.log('Weather removed');"
                             ],
@@ -948,7 +948,7 @@
                     "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
                 },
                 "mapIdFromToken": {
-                    "eval": "sceneHelpers.getMapIdFromToken(testToken)"
+                    "eval": "getMapIdFromToken(testToken)"
                 },
                 "dropdownOptions": {
                     "value": [
@@ -1109,7 +1109,7 @@
                 {
                     "type": "button",
                     "commands": [
-                        "mapId = await sceneHelpers.getMapIdFromToken(testToken);",
+                        "mapId = await getMapIdFromToken(testToken);",
                         "console.log('Map ID: ' + (mapId || 'Not on a map'));"
                     ],
                     "label": "Get Map ID from Token"
