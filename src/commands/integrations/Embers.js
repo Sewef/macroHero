@@ -34,7 +34,7 @@ async function getPlayerId() {
  * Cast a spell to one or more targets (projectile effect)
  * @param {string|string[]} targets - Single target ID or array of target IDs
  * @param {Object} config - Spell configuration
- * @param {string} config.spellId - The effect ID (e.g., "magic_missile", "fireball")
+ * @param {string} config.id - The effect ID (e.g., "magic_missile", "fireball")
  * @param {number} [config.duration] - Duration in milliseconds
  * @param {number} [config.loops] - Number of loops to play
  * @param {number} [config.delay] - Delay before playing in milliseconds
@@ -42,8 +42,8 @@ async function getPlayerId() {
  * @returns {Promise<void>}
  */
 export async function castSpellToTarget(targets, config) {
-  if (!config?.spellId) {
-    debugError("[Embers] castSpellToTarget requires config.spellId");
+  if (!config?.id) {
+    debugError("[Embers] castSpellToTarget requires config.id");
     return;
   }
 
@@ -66,7 +66,7 @@ export async function castSpellToTarget(targets, config) {
       if (position) {
         const instruction = {
           type: "effect",
-          id: config.spellId,
+          id: config.id,
           effectProperties: {
             source: position,
             size: config.size || 5,
@@ -103,7 +103,7 @@ export async function castSpellToTarget(targets, config) {
     debugLog(`[Embers] Sending message to channel ${MESSAGE_CHANNEL}:`, JSON.stringify(message, null, 2));
     await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { destination: "ALL" });
     
-    debugLog(`[Embers] Cast ${config.spellId} (${instructions.length} instruction(s))`);
+    debugLog(`[Embers] Cast ${config.id} (${instructions.length} instruction(s))`);
   } catch (error) {
     debugError("[Embers] Failed to cast spell to target:", error.message);
   }
@@ -113,7 +113,7 @@ export async function castSpellToTarget(targets, config) {
  * Cast a spell at a token position (AOE/CIRCLE effect)
  * @param {string} tokenId - Token ID for the spell origin
  * @param {Object} config - Spell configuration
- * @param {string} config.spellId - The effect ID (e.g., "cure_wounds", "bless")
+ * @param {string} config.id - The effect ID (e.g., "cure_wounds", "bless")
  * @param {number} config.size - Size of the AOE in grid units
  * @param {number} [config.duration] - Duration in milliseconds
  * @param {number} [config.loops] - Number of loops to play
@@ -123,8 +123,8 @@ export async function castSpellToTarget(targets, config) {
  * @returns {Promise<void>}
  */
 export async function castSpellAtToken(tokenId, config) {
-  if (!config?.spellId) {
-    debugError("[Embers] castSpellAtToken requires config.spellId");
+  if (!config?.id) {
+    debugError("[Embers] castSpellAtToken requires config.id");
     return;
   }
 
@@ -152,7 +152,7 @@ export async function castSpellAtToken(tokenId, config) {
 
     const instruction = {
       type: "effect",
-      id: config.spellId,
+      id: config.id,
       effectProperties
     };
     if (config.delay !== undefined) instruction.delay = config.delay;
@@ -176,7 +176,7 @@ export async function castSpellAtToken(tokenId, config) {
     debugLog(`[Embers] Sending AOE message to channel ${MESSAGE_CHANNEL}:`, JSON.stringify(message, null, 2));
     await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { destination: "ALL" });
     
-    debugLog(`[Embers] Cast ${config.spellId} at token ${tokenId} (size: ${config.size})`);
+    debugLog(`[Embers] Cast ${config.id} at token ${tokenId} (size: ${config.size})`);
   } catch (error) {
     debugError("[Embers] Failed to cast spell at token:", error.message);
   }
@@ -187,7 +187,7 @@ export async function castSpellAtToken(tokenId, config) {
  * @param {string} casterId - Caster token ID (source of projectile)
  * @param {string} targetId - Target token ID (destination of projectile)
  * @param {Object} config - Spell configuration
- * @param {string} config.spellId - The effect ID (e.g., "magic_missile", "fireball")
+ * @param {string} config.id - The effect ID (e.g., "magic_missile", "fireball")
  * @param {number} [config.copies=1] - Number of projectile copies
  * @param {number} [config.duration] - Duration in milliseconds
  * @param {number} [config.loops] - Number of loops to play
@@ -196,8 +196,8 @@ export async function castSpellAtToken(tokenId, config) {
  * @returns {Promise<void>}
  */
 export async function castProjectileSpell(casterId, targetId, config) {
-  if (!config?.spellId) {
-    debugError("[Embers] castProjectileSpell requires config.spellId");
+  if (!config?.id) {
+    debugError("[Embers] castProjectileSpell requires config.id");
     return;
   }
 
@@ -218,7 +218,7 @@ export async function castProjectileSpell(casterId, targetId, config) {
     // Create projectile instruction
     const instruction = {
       type: "effect",
-      id: config.spellId,
+      id: config.id,
       effectProperties: {
         source: casterPosition,
         destination: targetPosition,
@@ -246,7 +246,7 @@ export async function castProjectileSpell(casterId, targetId, config) {
     debugLog(`[Embers] Sending projectile message to channel ${MESSAGE_CHANNEL}:`, JSON.stringify(message, null, 2));
     await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { destination: "ALL" });
     
-    debugLog(`[Embers] Cast projectile ${config.spellId} from ${casterId} to ${targetId}`);
+    debugLog(`[Embers] Cast projectile ${config.id} from ${casterId} to ${targetId}`);
   } catch (error) {
     debugError("[Embers] Failed to cast projectile spell:", error.message);
   }
@@ -257,7 +257,7 @@ export async function castProjectileSpell(casterId, targetId, config) {
  * @param {string} casterId - Caster token ID
  * @param {string} targetId - Target token ID (defines direction)
  * @param {Object} config - Spell configuration
- * @param {string} config.spellId - The effect ID (e.g., "burning_hands", "cone_of_cold")
+ * @param {string} config.id - The effect ID (e.g., "burning_hands", "cone_of_cold")
  * @param {number} config.size - Size/length of the cone
  * @param {number} [config.duration] - Duration in milliseconds
  * @param {number} [config.loops] - Number of loops to play
@@ -266,8 +266,8 @@ export async function castProjectileSpell(casterId, targetId, config) {
  * @returns {Promise<void>}
  */
 export async function castConeSpell(casterId, targetId, config) {
-  if (!config?.spellId) {
-    debugError("[Embers] castConeSpell requires config.spellId");
+  if (!config?.id) {
+    debugError("[Embers] castConeSpell requires config.id");
     return;
   }
 
@@ -299,7 +299,7 @@ export async function castConeSpell(casterId, targetId, config) {
     // Create cone instruction
     const instruction = {
       type: "effect",
-      id: config.spellId,
+      id: config.id,
       effectProperties: {
         source: casterPosition,
         size: config.size,
@@ -327,7 +327,7 @@ export async function castConeSpell(casterId, targetId, config) {
     debugLog(`[Embers] Sending cone message to channel ${MESSAGE_CHANNEL}:`, JSON.stringify(message, null, 2));
     await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { destination: "ALL" });
     
-    debugLog(`[Embers] Cast cone ${config.spellId} from ${casterId} toward ${targetId}`);
+    debugLog(`[Embers] Cast cone ${config.id} from ${casterId} toward ${targetId}`);
   } catch (error) {
     debugError("[Embers] Failed to cast cone spell:", error.message);
   }
