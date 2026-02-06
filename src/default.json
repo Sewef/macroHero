@@ -14,7 +14,7 @@
             "label": "Integrations",
             "variables": {
                 "token": {
-                    "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
+                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
                 },
                 "sheetValue": {
                     "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
@@ -730,14 +730,316 @@
                         {
                             "type": "button",
                             "commands": [
-                                "await Embers.castSpellAtToken(token, {",
-                                "  id: 'healing_word',",
-                                "  size: 8,",
-                                "  loops: 2,",
-                                "  spellName: 'Healing Word'",
+                                "const casterId = token;",
+                                "const casterPosition = await getTokenPosition(casterId);",
+                                "const casterSize = await getTokenSize(casterId);",
+                                "if (!casterPosition) return console.error('Caster token not found');",
+                                "let rotation = 0;",
+                                "const selection = await getSelectedTokensIds();",
+                                "const targetId = selection.find(id => id !== casterId);",
+                                "if (targetId) {",
+                                "  const targetPosition = await getTokenPosition(targetId);",
+                                "  if (targetPosition) {",
+                                "    const dx = targetPosition.x - casterPosition.x;",
+                                "    const dy = targetPosition.y - casterPosition.y;",
+                                "    rotation = Math.atan2(dy, dx) * (180 / Math.PI);",
+                                "  }",
+                                "}",
+                                "await Embers.castSpellAtToken(casterId, {",
+                                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
+                                "  size: (casterSize || 1) * 2,",
+                                "  rotation,",
+                                "  forceVariant: 6,",
+                                "  spellName: 'Melee Weapon Attack (Whirlwind)'",
                                 "});"
                             ],
-                            "label": "Healing Word"
+                            "label": "Melee Whirlwind"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "Embers API",
+            "variables": {
+                "token": {
+                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+                }
+            },
+            "layout": [
+                {
+                    "type": "title",
+                    "text": "Embers API Examples"
+                },
+                {
+                    "type": "text",
+                    "text": "Examples using raw instructions, metadata, and interactions."
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const sourceId = await getSelectedTokenId() || token;",
+                                "const source = await getTokenPosition(sourceId);",
+                                "if (!source) return console.error('No source token');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'fireball.explosion',",
+                                "  effectProperties: { source, size: 8 },",
+                                "  layer: 'PROP',",
+                                "  zIndex: 100,",
+                                "  metadata: { 'embers/demo': 'raw-aoe' }",
+                                "}], { spellName: 'Raw AOE', destination: 'ALL' });"
+                            ],
+                            "label": "Raw AOE (layer/zIndex)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "const casterPos = await getTokenPosition(token);",
+                                "const targetPos = await getTokenPosition(targetId);",
+                                "if (!casterPos || !targetPos) return console.error('Missing positions');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'magic_missile',",
+                                "  effectProperties: {",
+                                "    source: casterPos,",
+                                "    destination: targetPos,",
+                                "    copies: 3,",
+                                "    disableHit: true",
+                                "  },",
+                                "  forceVariant: 0",
+                                "}], { spellName: 'Projectile (no hit)' });"
+                            ],
+                            "label": "Projectile (disableHit)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "await Embers.castConeSpell(token, targetId, {",
+                                "  id: 'burning_hands',",
+                                "  size: 12,",
+                                "  forceVariant: 0,",
+                                "  spellName: 'Cone Demo'",
+                                "});"
+                            ],
+                            "label": "Cone (directional)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "await Embers.sendInstructions([{",
+                                "  type: 'action',",
+                                "  id: 'my_action',",
+                                "  arguments: [token, { x: 0.01, y: 0.01 }]",
+                                "}]);"
+                            ],
+                            "label": "Action (non-visual)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const source = await getTokenPosition(token);",
+                                "if (!source) return console.error('No source token');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'shield.loop',",
+                                "  duration: 2000,",
+                                "  effectProperties: {",
+                                "    source,",
+                                "    size: 3,",
+                                "    attachedTo: token,",
+                                "    disableHit: true",
+                                "  }",
+                                "}], {",
+                                "  interactions: { ids: [token], count: 1 },",
+                                "  spellName: 'Interaction Demo'",
+                                "});"
+                            ],
+                            "label": "Interactions + attachedTo"
+                        }
+                    ]
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const sourceId = await getSelectedTokenId() || token;",
+                                "const source = await getTokenPosition(sourceId);",
+                                "if (!source) return console.error('No source token');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'darkness.black.opaque',",
+                                "  duration: 5000,",
+                                "  disableHit: true,",
+                                "  layer: 'FOG',",
+                                "  effectProperties: { source, size: 6 }",
+                                "}], { spellName: 'Darkness (FOG)' });"
+                            ],
+                            "label": "Darkness (FOG layer)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const source = await getTokenPosition(token);",
+                                "if (!source) return console.error('No source token');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'hunters_mark.loop',",
+                                "  duration: 5000,",
+                                "  disableHit: true,",
+                                "  attachedTo: token,",
+                                "  zIndex: 1,",
+                                "  effectProperties: { source, size: 2 }",
+                                "}], { spellName: 'Hunterss Mark (Loop)' });"
+                            ],
+                            "label": "Attached Loop (Hunters Mark)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "const source = await getTokenPosition(token);",
+                                "const destination = await getTokenPosition(targetId);",
+                                "if (!source || !destination) return console.error('Missing positions');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'wind_wall.opaque',",
+                                "  effectProperties: { source, destination, copies: 1 }",
+                                "}], { spellName: 'Wind Wall (WALL)' });"
+                            ],
+                            "label": "Wall (Wind Wall)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "await Embers.castConeSpell(token, targetId, {",
+                                "  id: 'cone_of_cold',",
+                                "  size: 12,",
+                                "  spellName: 'Cone of Cold'",
+                                "});"
+                            ],
+                            "label": "Cone of Cold"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "await Embers.castSpellSequence([",
+                                "  { type: 'projectile', casterId: token, targets: targetId, config: { id: 'fireball.beam' } },",
+                                "  { type: 'aoe', targets: targetId, config: { id: 'fireball.explosion', delay: 4040, size: 3 } },",
+                                "], { spellName: 'Fireball (Sequence)' });"
+                            ],
+                            "label": "Sequence (Fireball)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "await Embers.castSpellAtToken(targetId, {",
+                                "  id: 'fireball.loop_no_debris',",
+                                "  forceVariant: 800,",
+                                "  loops: -1,",
+                                "  spellName: 'Fireball (Loop No Debris)'",
+                                "});"
+                            ],
+                            "label": "Fireball Loop (No Debris)"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const targetId = await getSelectedTokenId();",
+                                "if (!targetId) return console.error('Select a target');",
+                                "const casterPos = await getTokenPosition(token);",
+                                "const targetPos = await getTokenPosition(targetId);",
+                                "if (!casterPos || !targetPos) return console.error('Missing positions');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'witch_bolt',",
+                                "  duration: 5000,",
+                                "  disableHit: true,",
+                                "  effectProperties: {",
+                                "    source: casterPos,",
+                                "    sourceId: token,",
+                                "    destination: targetPos,",
+                                "    destinationId: targetId,",
+                                "    copies: 1",
+                                "  }",
+                                "}], { spellName: 'Witch Bolt (Tether)' });"
+                            ],
+                            "label": "Witch Bolt (sourceId/destinationId)"
+                        }
+                    ]
+                },
+                {
+                    "type": "row",
+                    "children": [
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const source = await getTokenPosition(token);",
+                                "if (!source) return console.error('No source token');",
+                                "await Embers.sendInstructions([{",
+                                "  type: 'effect',",
+                                "  id: 'whirlwind',",
+                                "  duration: 5000,",
+                                "  effectProperties: { source, size: 3 }",
+                                "}], { spellName: 'Whirlwind' });"
+                            ],
+                            "label": "Whirlwind AOE"
+                        },
+                        {
+                            "type": "button",
+                            "commands": [
+                                "const casterPos = await getTokenPosition(token);",
+                                "if (!casterPos) return console.error('No caster token');",
+                                "await Embers.castSpellAtToken(token, {",
+                                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
+                                "  size: 3,",
+                                "  duration: 3000,",
+                                "  spellName: 'Melee Whirlwind (Forced Variant)'",
+                                "});"
+                            ],
+                            "label": "Melee Whirlwind (forceVariant)"
                         }
                     ]
                 }
@@ -937,7 +1239,7 @@
                     "eval": "Math.floor(spdCS / 2)"
                 },
                 "testToken": {
-                    "value": "57cefc5e-23b0-40f8-ad32-31a1c331c501"
+                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
                 },
                 "mapIdFromToken": {
                     "eval": "getMapIdFromToken(testToken)"

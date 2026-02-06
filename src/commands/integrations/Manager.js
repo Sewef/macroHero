@@ -166,6 +166,8 @@ class IntegrationsManager {
         castSpellAtToken: this.wrapAsync((tokenId, config) => Embers.castSpellAtToken(tokenId, config)),
         castProjectileSpell: this.wrapAsync((casterId, targetId, config) => Embers.castProjectileSpell(casterId, targetId, config)),
         castConeSpell: this.wrapAsync((casterId, targetId, config) => Embers.castConeSpell(casterId, targetId, config)),
+        sendInstructions: this.wrapAsync((instructions, options) => Embers.sendInstructions(instructions, options)),
+        castSpellSequence: this.wrapAsync((steps, options) => Embers.castSpellSequence(steps, options)),
       },
       // Metadata modules
       playerMetadata,
@@ -179,6 +181,7 @@ class IntegrationsManager {
       getSelectedTokenId: this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
       getSelectedTokensIds: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
       getTokenPosition: this.wrapAsync((tokenId) => tokenHelpers.getTokenPosition(tokenId)),
+      getTokenSize: this.wrapAsync((tokenId) => tokenHelpers.getTokenSize(tokenId)),
       // Scene helpers - exposed directly
       getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
     };

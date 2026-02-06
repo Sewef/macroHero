@@ -69,6 +69,27 @@ export async function getTokenPosition(tokenId) {
 }
 
 /**
+ * Get a token's size in grid cells by ID
+ * @param {string} tokenId - Token ID
+ * @returns {Promise<number|null>} Token size (grid units) or null if not found
+ */
+export async function getTokenSize(tokenId) {
+  try {
+    const items = await OBR.scene.items.getItems([tokenId]);
+    if (items.length === 0) {
+      debugWarn(`[tokenHelpers] Token ${tokenId} not found`);
+      return null;
+    }
+    const size = typeof items[0].size === "number" ? items[0].size : null;
+    debugLog(`[tokenHelpers] Token ${tokenId} size:`, size);
+    return size;
+  } catch (error) {
+    debugError(`[tokenHelpers] Failed to get token size:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Get the center position of the user's viewport
  * @returns {Promise<{x: number, y: number}>} Center position in scene coordinates
  */
