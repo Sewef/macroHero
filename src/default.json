@@ -630,12 +630,10 @@
                             "type": "button",
                             "commands": [
                                 "const selection = await getSelectedTokensIds();",
-                                "if (!selection || selection.length === 0) return console.error('No tokens selected');",
-                                "await Embers.castSpellToTarget(selection, {",
-                                "  id: 'bless',",
-                                "  size: 10,",
-                                "  spellName: 'Bless'",
-                                "});"
+                                "if (!selection || selection.length === 0) return;",
+                                "await Embers.cast([",
+                                "  { type: 'aoe', targets: selection, config: { id: 'bless.intro', size: 10 } }",
+                                "], { spellName: 'Bless' });"
                             ],
                             "label": "Bless (selected)"
                         },
@@ -1030,14 +1028,7 @@
                         {
                             "type": "button",
                             "commands": [
-                                "const casterPos = await getTokenPosition(token);",
-                                "if (!casterPos) return console.error('No caster token');",
-                                "await Embers.castSpellAtToken(token, {",
-                                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
-                                "  size: 3,",
-                                "  duration: 3000,",
-                                "  spellName: 'Melee Whirlwind (Forced Variant)'",
-                                "});"
+                                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_whirlwind', size: 3, duration: 2940, spellName: 'Thrash' });"
                             ],
                             "label": "Melee Whirlwind (forceVariant)"
                         }
