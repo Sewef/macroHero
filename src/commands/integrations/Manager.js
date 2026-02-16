@@ -182,6 +182,7 @@ class IntegrationsManager {
       getSelectedTokensIds: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
       getTokenPosition: this.wrapAsync((tokenId) => tokenHelpers.getTokenPosition(tokenId)),
       getTokenSize: this.wrapAsync((tokenId) => tokenHelpers.getTokenSize(tokenId)),
+      getClosestTokenId: this.wrapAsync((tokenId, filter) => tokenHelpers.getClosestTokenId(tokenId, filter)),
       // Scene helpers - exposed directly
       getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
     };

@@ -90,6 +90,72 @@ export async function getTokenSize(tokenId) {
 }
 
 /**
+ * Get the ID of the closest token to a given token
+ * @param {string} tokenId - Reference token ID
+ * @param {string|string[]|null} [filter] - Optional layer filter (e.g., "CHARACTER", "MOUNT", or array like ["CHARACTER", "MOUNT"]) - null or undefined to include all layers
+ * @returns {Promise<string|null>} ID of the closest token, or null if no other tokens found or token not found
+ */
+export async function getClosestTokenId(tokenId, filter = null) {
+  try {
+    // Get the reference token's position
+    const referenceItems = await OBR.scene.items.getItems([tokenId]);
+    if (referenceItems.length === 0) {
+      debugWarn(`[tokenHelpers] Reference token ${tokenId} not found`);
+      return null;
+    }
+    const referencePos = referenceItems[0].position;
+    debugLog(`[tokenHelpers] Reference token ${tokenId} position:`, referencePos);
+
+    // Get all items in the scene
+    const allItems = await OBR.scene.items.getItems();
+    
+    // Normalize filter to array
+    let layerFilter = null;
+    if (filter) {
+      layerFilter = Array.isArray(filter) ? filter : [filter];
+      debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+    }
+
+    // Filter items: exclude reference token and optionally filter by layer
+    const candidateItems = allItems.filter(item => {
+      if (item.id === tokenId) return false; // Exclude reference token
+      if (layerFilter && !layerFilter.includes(item.layer)) return false; // Filter by layer if specified
+      return true;
+    });
+
+    if (candidateItems.length === 0) {
+      debugLog(`[tokenHelpers] No candidate tokens found matching filter`);
+      return null;
+    }
+
+    // Calculate distances and find closest
+    let closestToken = null;
+    let minDistance = Infinity;
+
+    for (const item of candidateItems) {
+      const dx = item.position.x - referencePos.x;
+      const dy = item.position.y - referencePos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestToken = item;
+      }
+    }
+
+    if (closestToken) {
+      debugLog(`[tokenHelpers] Closest token:`, closestToken.id, `at distance ${minDistance.toFixed(2)}`);
+      return closestToken.id;
+    }
+
+    return null;
+  } catch (error) {
+    debugError(`[tokenHelpers] Error finding closest token:`, error.message);
+    throw error;
+  }
+}
+
+/**
  * Get the center position of the user's viewport
  * @returns {Promise<{x: number, y: number}>} Center position in scene coordinates
  */
