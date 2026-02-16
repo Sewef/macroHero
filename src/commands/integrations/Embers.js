@@ -175,11 +175,6 @@ export async function castSpellAtToken(tokenId, config) {
     return;
   }
 
-  if (typeof config.size !== 'number') {
-    debugError("[Embers] castSpellAtToken requires config.size (number)");
-    return;
-  }
-
   try {
     // Get token position
     const position = await getTokenPosition(tokenId);
@@ -193,7 +188,7 @@ export async function castSpellAtToken(tokenId, config) {
     // Create instruction for AOE effect
     const effectProperties = {
       source: position,
-      size: config.size,
+      size: config.size ?? 5,
       ...(config.effectProperties || {}),
     };
     if (config.rotation !== undefined && effectProperties.rotation === undefined) {
@@ -320,11 +315,6 @@ export async function castConeSpell(casterId, targetId, config) {
     return;
   }
 
-  if (typeof config.size !== 'number') {
-    debugError("[Embers] castConeSpell requires config.size (number)");
-    return;
-  }
-
   try {
     // Get both positions
     const [casterPosition, targetPosition] = await Promise.all([
@@ -348,7 +338,7 @@ export async function castConeSpell(casterId, targetId, config) {
     // Create cone instruction
     const effectProperties = {
       source: casterPosition,
-      size: config.size,
+      size: config.size ?? 5,
       rotation,
       ...(config.effectProperties || {}),
     };
@@ -463,11 +453,7 @@ export async function castSpellSequence(steps, options = {}) {
             debugWarn("[Embers] AOE step skipped (missing target)");
             continue;
           }
-          const size = step.config?.size ?? step.config?.effectProperties?.size;
-          if (typeof size !== "number") {
-            debugError("[Embers] AOE step requires config.size");
-            continue;
-          }
+          const size = step.config?.size ?? step.config?.effectProperties?.size ?? 5;
           const effectProperties = {
             source: position,
             size,
@@ -496,11 +482,7 @@ export async function castSpellSequence(steps, options = {}) {
           debugWarn("[Embers] Cone step skipped (missing caster/target)");
           continue;
         }
-        const size = step.config?.size ?? step.config?.effectProperties?.size;
-        if (typeof size !== "number") {
-          debugError("[Embers] Cone step requires config.size");
-          continue;
-        }
+        const size = step.config?.size ?? step.config?.effectProperties?.size ?? 5;
         const dx = targetPosition.x - casterPosition.x;
         const dy = targetPosition.y - casterPosition.y;
         const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
