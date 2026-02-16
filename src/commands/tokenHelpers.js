@@ -604,3 +604,271 @@ export async function createTokens(tokensParams) {
     throw error;
   }
 }
+
+/**
+ * Set the visibility of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {boolean} visible - Visibility state
+ * @returns {Promise<void>}
+ */
+export async function setItemsVisible(itemIds, visible) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) visible to ${visible}`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.visible = visible;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items visibility updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items visible:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the locked state of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {boolean} locked - Locked state
+ * @returns {Promise<void>}
+ */
+export async function setItemsLocked(itemIds, locked) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) locked to ${locked}`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.locked = locked;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items locked state updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items locked:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the image/source of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {string} url - Image URL
+ * @param {string} [mime] - Image MIME type (auto-detected if not provided)
+ * @returns {Promise<void>}
+ */
+export async function setItemsImage(itemIds, url, mime) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) image to ${url}`);
+    
+    // Auto-detect MIME type if not provided
+    const detectedMime = mime || detectMimeType(url);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.image = {
+          url,
+          mime: detectedMime
+        };
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items image updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items image:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the name of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {string} name - Item name
+ * @returns {Promise<void>}
+ */
+export async function setItemsName(itemIds, name) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) name to "${name}"`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.name = name;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items name updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items name:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the text label of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {string} label - Text label
+ * @returns {Promise<void>}
+ */
+export async function setItemsLabel(itemIds, label) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) label to "${label}"`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        if (item.text !== undefined) {
+          item.text.plainText = label;
+        }
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items label updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items label:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the layer of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {string} layer - Layer name (e.g., "CHARACTER", "MOUNT", "PROP", "ATTACHMENT", etc.)
+ * @returns {Promise<void>}
+ */
+export async function setItemsLayer(itemIds, layer) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) layer to "${layer}"`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.layer = layer;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items layer updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items layer:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the position of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {Object} position - Position object {x, y}
+ * @param {boolean} [gridPosition=false] - If true, position is interpreted as grid coordinates instead of scene coordinates
+ * @returns {Promise<void>}
+ */
+export async function setItemsPosition(itemIds, position, gridPosition = false) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) position to`, position);
+    
+    let targetPosition = position;
+    if (gridPosition) {
+      const dpi = await OBR.scene.grid.getDpi();
+      const gridX = position.gridX ?? position.x;
+      const gridY = position.gridY ?? position.y;
+      targetPosition = {
+        x: gridX * dpi + dpi / 2,
+        y: gridY * dpi + dpi / 2
+      };
+      debugLog(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, targetPosition);
+    }
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.position = targetPosition;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items position updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items position:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the scale of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {Object} scale - Scale object {x, y} or single number for uniform scaling
+ * @returns {Promise<void>}
+ */
+export async function setItemsScale(itemIds, scale) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    const scaleObj = typeof scale === 'number' ? { x: scale, y: scale } : scale;
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) scale to`, scaleObj);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.scale = scaleObj;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items scale updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items scale:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the rotation of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {number} rotation - Rotation in degrees
+ * @returns {Promise<void>}
+ */
+export async function setItemsRotation(itemIds, rotation) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) rotation to ${rotation}°`);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        item.rotation = rotation;
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items rotation updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items rotation:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Set the metadata of one or more items
+ * @param {string|string[]} itemIds - Single item ID or array of item IDs
+ * @param {Object} metadata - Metadata object or a function to update existing metadata
+ * @returns {Promise<void>}
+ */
+export async function setItemsMetadata(itemIds, metadata) {
+  try {
+    const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+    const isFunction = typeof metadata === 'function';
+    debugLog(`[tokenHelpers] Setting metadata for ${ids.length} item(s)`, isFunction ? '[function]' : metadata);
+    
+    await OBR.scene.items.updateItems(ids, (draft) => {
+      draft.forEach(item => {
+        if (isFunction) {
+          item.metadata = metadata(item.metadata || {});
+        } else {
+          item.metadata = { ...(item.metadata || {}), ...metadata };
+        }
+      });
+    });
+    
+    debugLog(`[tokenHelpers] Items metadata updated successfully`);
+  } catch (error) {
+    debugError(`[tokenHelpers] Error setting items metadata:`, error.message);
+    throw error;
+  }
+}

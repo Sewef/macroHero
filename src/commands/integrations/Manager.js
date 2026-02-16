@@ -183,6 +183,17 @@ class IntegrationsManager {
       getTokenPosition: this.wrapAsync((tokenId) => tokenHelpers.getTokenPosition(tokenId)),
       getTokenSize: this.wrapAsync((tokenId) => tokenHelpers.getTokenSize(tokenId)),
       getClosestTokenId: this.wrapAsync((tokenId, filter) => tokenHelpers.getClosestTokenId(tokenId, filter)),
+      // Item setter functions
+      setItemsVisible: this.wrapAsync((itemIds, visible) => tokenHelpers.setItemsVisible(itemIds, visible)),
+      setItemsLocked: this.wrapAsync((itemIds, locked) => tokenHelpers.setItemsLocked(itemIds, locked)),
+      setItemsImage: this.wrapAsync((itemIds, url, mime) => tokenHelpers.setItemsImage(itemIds, url, mime)),
+      setItemsName: this.wrapAsync((itemIds, name) => tokenHelpers.setItemsName(itemIds, name)),
+      setItemsLabel: this.wrapAsync((itemIds, label) => tokenHelpers.setItemsLabel(itemIds, label)),
+      setItemsLayer: this.wrapAsync((itemIds, layer) => tokenHelpers.setItemsLayer(itemIds, layer)),
+      setItemsPosition: this.wrapAsync((itemIds, position, gridPosition) => tokenHelpers.setItemsPosition(itemIds, position, gridPosition)),
+      setItemsScale: this.wrapAsync((itemIds, scale) => tokenHelpers.setItemsScale(itemIds, scale)),
+      setItemsRotation: this.wrapAsync((itemIds, rotation) => tokenHelpers.setItemsRotation(itemIds, rotation)),
+      setItemsMetadata: this.wrapAsync((itemIds, metadata) => tokenHelpers.setItemsMetadata(itemIds, metadata)),
       // Scene helpers - exposed directly
       getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
     };
