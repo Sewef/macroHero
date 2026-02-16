@@ -92,34 +92,62 @@ export async function getTokenSize(tokenId) {
 /**
  * Get the ID of the closest token to a given token
  * @param {string} tokenId - Reference token ID
- * @param {string|string[]|null} [filter] - Optional layer filter (e.g., "CHARACTER", "MOUNT", or array like ["CHARACTER", "MOUNT"]) - null or undefined to include all layers
+ * @param {string|string[]|null|Object} [filter] - Optional filter configuration:
+ *   - null/undefined: no filtering by layer
+ *   - string: single layer filter (e.g., "CHARACTER")
+ *   - array: multiple layer filters (e.g., ["CHARACTER", "MOUNT"])
+ *   - object: advanced filtering with:
+ *     - layers: string or string[] of layers to include
+ *     - excludeOverlapping: boolean - if true, excludes tokens at the same position (z-index)
  * @returns {Promise<string|null>} ID of the closest token, or null if no other tokens found or token not found
  */
 export async function getClosestTokenId(tokenId, filter = null) {
   try {
-    // Get the reference token's position
+    // Get the reference token's position and z-index
     const referenceItems = await OBR.scene.items.getItems([tokenId]);
     if (referenceItems.length === 0) {
       debugWarn(`[tokenHelpers] Reference token ${tokenId} not found`);
       return null;
     }
-    const referencePos = referenceItems[0].position;
-    debugLog(`[tokenHelpers] Reference token ${tokenId} position:`, referencePos);
+    const referenceToken = referenceItems[0];
+    const referencePos = referenceToken.position;
+    const referenceZIndex = referenceToken.zIndex;
+    debugLog(`[tokenHelpers] Reference token ${tokenId} position:`, referencePos, `z-index:`, referenceZIndex);
 
     // Get all items in the scene
     const allItems = await OBR.scene.items.getItems();
     
-    // Normalize filter to array
+    // Parse filter configuration
     let layerFilter = null;
+    let excludeOverlapping = false;
+    
     if (filter) {
-      layerFilter = Array.isArray(filter) ? filter : [filter];
-      debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+      if (typeof filter === 'string') {
+        // Simple string filter
+        layerFilter = [filter];
+        debugLog(`[tokenHelpers] Filtering by layer: ${filter}`);
+      } else if (Array.isArray(filter)) {
+        // Array of layers
+        layerFilter = filter;
+        debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+      } else if (typeof filter === 'object') {
+        // Advanced object filter
+        if (filter.layers) {
+          layerFilter = Array.isArray(filter.layers) ? filter.layers : [filter.layers];
+          debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+        }
+        if (filter.excludeOverlapping) {
+          excludeOverlapping = true;
+          debugLog(`[tokenHelpers] Excluding overlapping tokens (same position)`);
+        }
+      }
     }
 
-    // Filter items: exclude reference token and optionally filter by layer
+    // Filter items: exclude reference token and optionally filter by layer and position overlap
     const candidateItems = allItems.filter(item => {
       if (item.id === tokenId) return false; // Exclude reference token
       if (layerFilter && !layerFilter.includes(item.layer)) return false; // Filter by layer if specified
+      if (excludeOverlapping && item.position.x === referencePos.x && item.position.y === referencePos.y) return false; // Exclude tokens at same position if requested
       return true;
     });
 
