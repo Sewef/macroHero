@@ -14,7 +14,6 @@ export function renderStack(item, page, {
 }) {
   const container = document.createElement("div");
   container.className = "mh-layout-stack";
-  container.style.margin = '12px 0';
 
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
