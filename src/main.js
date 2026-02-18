@@ -18,43 +18,17 @@ const debugError = (...args) => console.error(...args);
  */
 function applyTheme(theme) {
   const root = document.documentElement;
+  const isLight = theme.mode === "LIGHT";
   
-  if (theme.mode === "LIGHT") {
-    debugLog("[THEME] Applying LIGHT mode");
-    // Light theme colors - optimized for readability
-    root.style.setProperty('--mh-bg', 'rgba(245, 245, 250, 0.95)');
-    root.style.setProperty('--mh-surface', 'rgba(255, 255, 255, 0.95)');
-    root.style.setProperty('--mh-panel', 'rgba(240, 240, 248, 0.9)');
-    root.style.setProperty('--mh-panel-hover', 'rgba(235, 235, 245, 0.95)');
-    root.style.setProperty('--mh-border', '#d0d0e0');
-    root.style.setProperty('--mh-border-light', '#e0e0f0');
-    root.style.setProperty('--mh-text', '#1a1a2e');
-    root.style.setProperty('--mh-text-secondary', '#505070');
-    root.style.setProperty('--mh-text-label', '#707090');
-    
-    // Use theme primary color for accent in light mode
-    if (theme.primary) {
-      root.style.setProperty('--mh-accent', theme.primary.main || '#3366ff');
-      root.style.setProperty('--mh-accent-hover', theme.primary.light || '#5580ff');
-    }
-  } else {
-    debugLog("[THEME] Applying DARK mode");
-    // Dark theme colors - carefully crafted for the dark UI
-    root.style.setProperty('--mh-bg', 'rgba(10, 10, 15, 0.8)');
-    root.style.setProperty('--mh-surface', 'rgba(20, 20, 30, 0.9)');
-    root.style.setProperty('--mh-panel', 'rgba(30, 30, 45, 0.85)');
-    root.style.setProperty('--mh-panel-hover', 'rgba(40, 40, 60, 0.9)');
-    root.style.setProperty('--mh-border', '#3d4a5f');
-    root.style.setProperty('--mh-border-light', '#4a5570');
-    root.style.setProperty('--mh-text', '#e8e8f0');
-    root.style.setProperty('--mh-text-secondary', '#9a9aaa');
-    root.style.setProperty('--mh-text-label', '#8a8a9a');
-    
-    // Use theme primary color for accent in dark mode
-    if (theme.primary) {
-      root.style.setProperty('--mh-accent', theme.primary.light || '#5a9fff');
-      root.style.setProperty('--mh-accent-hover', theme.primary.main || '#7ab3ff');
-    }
+  debugLog(`[THEME] Applying ${isLight ? "LIGHT" : "DARK"} mode`);
+  
+  // Toggle light mode class (handles all color variables via CSS)
+  root.classList.toggle('light-mode', isLight);
+  
+  // Apply custom theme primary colors if available
+  if (theme.primary) {
+    root.style.setProperty('--mh-accent', isLight ? (theme.primary.main || '#3366ff') : (theme.primary.light || '#5a9fff'));
+    root.style.setProperty('--mh-accent-hover', isLight ? (theme.primary.light || '#5580ff') : (theme.primary.main || '#7ab3ff'));
   }
 }
 
