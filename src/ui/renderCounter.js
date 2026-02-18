@@ -24,6 +24,7 @@ const debugError = (...args) => console.error(...args);
  * @returns {HTMLElement} Container element
  */
 export function renderCounter(item, page, {
+  config,
   saveConfig,
   broadcastConfigUpdated,
   getDependentVariables,
@@ -123,7 +124,8 @@ export function renderCounter(item, page, {
       try {
         debugLog("[Counter] Debounce triggered for:", item.var);
         
-        await saveConfig(page.config ?? {}).catch(err => debugError("[Counter] Error auto-saving config:", err));
+        await saveConfig(config).catch(err => debugError("[Counter] Error auto-saving config:", err));
+        await broadcastConfigUpdated();
         await broadcastConfigUpdated();
         
         // Clear cached values for dependent variables so they get re-evaluated

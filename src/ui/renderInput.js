@@ -9,6 +9,7 @@ const debugError = (...args) => console.error(...args);
  * Render a text input field
  */
 export function renderInput(item, page, {
+  config,
   saveConfig,
   evaluateAndSetElementText,
   renderedValueElements
@@ -46,7 +47,7 @@ export function renderInput(item, page, {
     variable.value = newValue;
     delete variable.eval;
     page._resolved[item.var] = newValue;
-    saveConfig(page.config ?? {}).catch(err => debugError("[Input] Error auto-saving config:", err));
+    saveConfig(config).catch(err => debugError("[Input] Error auto-saving config:", err));
   };
 
   if (inStack) {

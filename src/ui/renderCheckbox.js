@@ -9,6 +9,7 @@ const debugError = (...args) => console.error(...args);
  * Render a checkbox input
  */
 export function renderCheckbox(item, page, {
+  config,
   saveConfig,
   broadcastConfigUpdated,
   getDependentVariables,
@@ -46,7 +47,7 @@ export function renderCheckbox(item, page, {
     page._resolved[item.var] = newValue;
 
     try {
-      await saveConfig(page.config ?? {}).catch(err => debugError("[Checkbox] Error auto-saving config:", err));
+      await saveConfig(config).catch(err => debugError("[Checkbox] Error auto-saving config:", err));
       await broadcastConfigUpdated();
 
       const dependentVars = getDependentVariables(page.variables, [item.var]);

@@ -590,6 +590,7 @@ function renderTextElement(item, page) {
 
 function renderInputElement(item, page, inStack = false) {
   return renderInput(item, page, {
+    config,
     saveConfig,
     evaluateAndSetElementText,
     renderedValueElements
@@ -598,6 +599,7 @@ function renderInputElement(item, page, inStack = false) {
 
 function renderCheckboxElement(item, page) {
   return renderCheckbox(item, page, {
+    config,
     saveConfig,
     broadcastConfigUpdated,
     getDependentVariables,
@@ -617,6 +619,7 @@ function renderDivider() {
 
 function renderCounterElement(item, page, inStack = false) {
   return renderCounter(item, page, {
+    config,
     saveConfig,
     broadcastConfigUpdated,
     getDependentVariables,
