@@ -136,6 +136,13 @@ OBR.onReady(async () => {
 
       updateConfig(newConfig);
     });
+
+    // Listen for debug mode changes from the config modal
+    OBR.broadcast.onMessage("macrohero.debug.modes", async (event) => {
+      debugLog("[MAIN] Debug modes updated via broadcast:", event.data);
+      // localStorage is already updated by the modal, this is just a trigger
+      // to let other modules know the debug modes have changed
+    });
   } catch (error) {
     debugError("Error during initialization:", error);
   }

@@ -1,1672 +1,1750 @@
 {
-    "global": {
-        "title": "Macro Hero",
-        "width": 800,
-        "height": 600,
-        "variables": {
-            "playerName": {
-                "eval": "Local.value('playerName', 'myGlobalVarPlayerName')"
+  "global": {
+    "title": "Macro Hero",
+    "width": 800,
+    "height": 600,
+    "variables": {
+      "playerName": {
+        "eval": "Local.value('playerName', 'myGlobalVarPlayerName')"
+      }
+    }
+  },
+  "pages": [
+    {
+      "label": "Integrations",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "sheetValue": {
+          "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
+        },
+        "inputName": {
+          "value": "Enter name here"
+        },
+        "isBandaged": {
+          "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
+        },
+        "conditionValue": {
+          "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
+        },
+        "trackerHP": {
+          "eval": "OwlTrackers.getValue(token, 'HP')"
+        },
+        "trackerMaxHP": {
+          "eval": "OwlTrackers.getMax(token, 'HP')"
+        },
+        "bubbleHealth": {
+          "eval": "StatBubbles.getValue(token, 'health')"
+        },
+        "bubbleMaxHealth": {
+          "eval": "StatBubbles.getValue(token, 'max health')"
+        },
+        "bubbleAC": {
+          "eval": "StatBubbles.getValue(token, 'armor class')"
+        },
+        "ringColors": {
+          "eval": "ColoredRings.getRings(token)"
+        },
+        "hasBlueRing": {
+          "eval": "ColoredRings.hasRing(token, '#1a6aff')"
+        },
+        "prettyHasInitiative": {
+          "eval": "PrettySordid.hasInitiative(token)"
+        },
+        "prettyInitiativeCount": {
+          "eval": "PrettySordid.getInitiativeCount(token)"
+        },
+        "prettyActive": {
+          "eval": "PrettySordid.isActiveTurn(token)"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "{sheetValue}"
+        },
+        {
+          "type": "text",
+          "text": "{sheetValue}"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "sheetValue",
+              "label": "Cell A1"
             }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Conditions Markers"
+        },
+        {
+          "type": "text",
+          "text": "Check and read condition markers on tokens"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "isBandaged",
+              "label": "Has Bandaged?"
+            },
+            {
+              "type": "value",
+              "var": "conditionValue",
+              "label": "Bandaged Value"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "isBandaged ? await OwlTrackers.addValue(token, 'HP', 10) : await OwlTrackers.addValue(token, 'HP', -5);"
+          ],
+          "label": "Heal if Bandaged"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await ConditionMarkers.toggleCondition(token, 'Bandaged');"
+          ],
+          "label": "Toggle Bandage"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);"
+          ],
+          "label": "Increment Bandage"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Owl Trackers"
+        },
+        {
+          "type": "text",
+          "text": "Get and modify tracker values on tokens"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "trackerHP",
+              "label": "HP"
+            },
+            {
+              "type": "value",
+              "var": "trackerMaxHP",
+              "label": "Max HP"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.addValue(token, 'HP', 10);"
+              ],
+              "label": "Heal 10"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.addValue(token, 'HP', -5);"
+              ],
+              "label": "Damage 5"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);"
+          ],
+          "label": "Heal to Max"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "StatBubbles"
+        },
+        {
+          "type": "text",
+          "text": "Manage health, AC, and temp HP via StatBubbles extension"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "bubbleHealth",
+              "label": "Health"
+            },
+            {
+              "type": "value",
+              "var": "bubbleMaxHealth",
+              "label": "Max"
+            },
+            {
+              "type": "value",
+              "var": "bubbleAC",
+              "label": "AC"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.heal(token, 15);"
+              ],
+              "label": "Heal 15"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.damage(token, 8);"
+              ],
+              "label": "Damage 8"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.setValue(token, 'temporary health', 20);"
+              ],
+              "label": "Set Temp HP 20"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.addValue(token, 'armor class', 2);"
+              ],
+              "label": "AC +2"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Colored Rings"
+        },
+        {
+          "type": "text",
+          "text": "Add and remove colored status rings on tokens"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "hasBlueRing",
+              "label": "Has Blue Ring?"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.addRing(token, '#1a6aff');"
+              ],
+              "label": "Add Blue"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.addRing(token, '#ff7433');"
+              ],
+              "label": "Add Orange"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.addRing(token, '#00ff00');"
+              ],
+              "label": "Add Green"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.removeRing(token, '#1a6aff');"
+              ],
+              "label": "Remove Blue"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.removeRing(token, '#ff7433');"
+              ],
+              "label": "Remove Orange"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.removeRing(token, '#00ff00');"
+              ],
+              "label": "Remove Green"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Pretty Sordid"
+        },
+        {
+          "type": "text",
+          "text": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "prettyHasInitiative",
+              "label": "Has Initiative?"
+            },
+            {
+              "type": "value",
+              "var": "prettyInitiativeCount",
+              "label": "Initiative"
+            },
+            {
+              "type": "value",
+              "var": "prettyActive",
+              "label": "Active?"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) + 1) : await PrettySordid.setInitiativeCount(token, 1);"
+              ],
+              "label": "Increment / Assign 1"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) - 1) : null;"
+              ],
+              "label": "Decrement"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await PrettySordid.setInitiativeCount(token, 0);"
+              ],
+              "label": "Reset to 0"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "JustDices"
+        },
+        {
+          "type": "text",
+          "text": "Roll dice and get results in Owlbear Rodeo"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d20');"
+              ],
+              "label": "Roll d20"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('2d6 + 3');"
+              ],
+              "label": "Roll 2d6+3"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('1d20 + ' + bubbleAC) > 15 ? await StatBubbles.damage(token, 10) : null;"
+          ],
+          "label": "Attack Roll (DC 15)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Local Storage"
+        },
+        {
+          "type": "text",
+          "text": "Store and retrieve values in browser localStorage"
+        },
+        {
+          "type": "input",
+          "var": "inputName",
+          "label": "Enter Name",
+          "placeholder": "Type a name..."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('Global Player Name: ' + playerName);"
+              ],
+              "label": "Show Global Name"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('Input Name: ' + inputName);"
+              ],
+              "label": "Show Input Name"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Local.set('playerName', 'Xalithra');"
+          ],
+          "label": "Save Player Name"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('Player: ' + await Local.value('playerName', 'Unknown'));"
+          ],
+          "label": "Show Player Name"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Weather Tests"
+        },
+        {
+          "type": "text",
+          "text": "Add weather effects to maps"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });"
+              ],
+              "label": "Snow"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });"
+              ],
+              "label": "Rain"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });"
+              ],
+              "label": "Sand"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });"
+              ],
+              "label": "Fire"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });"
+              ],
+              "label": "Cloud"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });"
+              ],
+              "label": "Bloom"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });"
+              ],
+              "label": "Energy Storm"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });"
+              ],
+              "label": "Water"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });"
+              ],
+              "label": "Current"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.updateWeather(mapId, { tint: '#88aaff' });",
+                "console.log('Blue tint applied');"
+              ],
+              "label": "Blue Tint"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.updateWeather(mapId, { tint: '#ff8844' });",
+                "console.log('Orange tint applied');"
+              ],
+              "label": "Orange Tint"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "mapId = await getMapIdFromToken(token);",
+                "await Weather.removeWeather(mapId);",
+                "console.log('Weather removed');"
+              ],
+              "label": "Remove Weather"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Embers - Spell Effects"
+        },
+        {
+          "type": "text",
+          "text": "Cast visual spell effects using the Embers extension"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "console.log('[TEST] Testing Embers.castSpellAtToken with fireball...');",
+                "const targetId = await getSelectedTokenId();",
+                "await Embers.castSpellAtToken(targetId, {",
+                "  id: 'fireball.explosion',",
+                "  size: 20,",
+                "  spellName: 'Fireball'",
+                "});",
+                "console.log('[TEST] Message sent');"
+              ],
+              "label": "Test Embers (Fireball)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const selection = await getSelectedTokensIds();",
+                "if (!selection || selection.length === 0) return;",
+                "await Embers.castSpellSequence([",
+                "  { type: 'aoe', targets: selection, config: { id: 'bless.intro', size: 10 } },",
+                "  { type: 'aoe', targets: selection, config: { id: 'bless.loop', size: 10, delay: 4000, duration: 4000 } },",
+                "], { spellName: 'Bless' });"
+              ],
+              "label": "Bless (selected)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Embers.castSpellAtToken(token, {",
+                "  id: 'cure_wounds',",
+                "  size: 10,",
+                "  spellName: 'Cure Wounds'",
+                "});"
+              ],
+              "label": "Cure Wounds"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Embers.castSpellSequence([{type: 'projectile',casterId: token,targets: await getSelectedTokensIds(),config: { id: 'magic_missile', duration: 1000 }},{type: 'aoe',targets: await getSelectedTokensIds(),config: { id: 'fireball.explosion', size: 10, duration: 800 }}], { spellName: 'Magic Missile' });"
+              ],
+              "label": "Magic Missile"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target for direction');",
+                "await Embers.castConeSpell(token, targetId, {",
+                "  id: 'burning_hands',",
+                "  size: 15,",
+                "  spellName: 'Burning Hands'",
+                "});"
+              ],
+              "label": "Burning Hands"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Embers.castSpellAtToken(token, {",
+                "  id: 'fireball',",
+                "  size: 20,",
+                "  duration: 2000,",
+                "  spellName: 'Fireball'",
+                "});"
+              ],
+              "label": "Fireball (AOE)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const selection = await getSelectedTokensIds();",
+                "if (!selection || selection.length === 0) return console.error('No target selected');",
+                "for (const targetId of selection) {",
+                "  await Embers.castProjectileSpell(token, targetId, {",
+                "    id: 'banishment',",
+                "    spellName: 'Banishment'",
+                "  });",
+                "}"
+              ],
+              "label": "Banishment"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const selection = await getSelectedTokensIds();",
+                "if (!selection || selection.length === 0) return console.error('No target selected');",
+                "for (const targetId of selection) {",
+                "  await Embers.castProjectileSpell(token, targetId, {",
+                "    id: 'eldritch_blast',",
+                "    copies: 2,",
+                "    delay: 200,",
+                "    spellName: 'Eldritch Blast'",
+                "  });",
+                "}"
+              ],
+              "label": "Eldritch Blast"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const casterId = token;",
+                "const casterPosition = await getTokenPosition(casterId);",
+                "const casterSize = await getTokenSize(casterId);",
+                "if (!casterPosition) return console.error('Caster token not found');",
+                "let rotation = 0;",
+                "const selection = await getSelectedTokensIds();",
+                "const targetId = selection.find(id => id !== casterId);",
+                "if (targetId) {",
+                "  const targetPosition = await getTokenPosition(targetId);",
+                "  if (targetPosition) {",
+                "    const dx = targetPosition.x - casterPosition.x;",
+                "    const dy = targetPosition.y - casterPosition.y;",
+                "    rotation = Math.atan2(dy, dx) * (180 / Math.PI);",
+                "  }",
+                "}",
+                "await Embers.castSpellAtToken(casterId, {",
+                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
+                "  size: (casterSize || 1) * 2,",
+                "  rotation,",
+                "  forceVariant: 6,",
+                "  spellName: 'Melee Weapon Attack (Whirlwind)'",
+                "});"
+              ],
+              "label": "Melee Whirlwind"
+            }
+          ]
         }
+      ],
+      "_pageIndex": 0
     },
-    "pages": [
-        {
-            "label": "Integrations",
-            "variables": {
-                "token": {
-                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-                },
-                "sheetValue": {
-                    "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
-                },
-                "inputName": {
-                    "value": "Enter name here"
-                },
-                "isBandaged": {
-                    "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
-                },
-                "conditionValue": {
-                    "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
-                },
-                "trackerHP": {
-                    "eval": "OwlTrackers.getValue(token, 'HP')"
-                },
-                "trackerMaxHP": {
-                    "eval": "OwlTrackers.getMax(token, 'HP')"
-                },
-                "bubbleHealth": {
-                    "eval": "StatBubbles.getValue(token, 'health')"
-                },
-                "bubbleMaxHealth": {
-                    "eval": "StatBubbles.getValue(token, 'max health')"
-                },
-                "bubbleAC": {
-                    "eval": "StatBubbles.getValue(token, 'armor class')"
-                },
-                "ringColors": {
-                    "eval": "ColoredRings.getRings(token)"
-                },
-                "hasBlueRing": {
-                    "eval": "ColoredRings.hasRing(token, '#1a6aff')"
-                },
-                "prettyHasInitiative": {
-                    "eval": "PrettySordid.hasInitiative(token)"
-                },
-                "prettyInitiativeCount": {
-                    "eval": "PrettySordid.getInitiativeCount(token)"
-                },
-                "prettyActive": {
-                    "eval": "PrettySordid.isActiveTurn(token)"
-                }
-            },
-            "layout": [
-                {
-                    "type": "title",
-                    "text": "{sheetValue}"
-                },
-                {
-                    "type": "text",
-                    "text": "{sheetValue}"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "sheetValue",
-                            "label": "Cell A1"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Conditions Markers"
-                },
-                {
-                    "type": "text",
-                    "text": "Check and read condition markers on tokens"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "isBandaged",
-                            "label": "Has Bandaged?"
-                        },
-                        {
-                            "type": "value",
-                            "var": "conditionValue",
-                            "label": "Bandaged Value"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "isBandaged ? await OwlTrackers.addValue(token, 'HP', 10) : await OwlTrackers.addValue(token, 'HP', -5);"
-                    ],
-                    "label": "Heal if Bandaged"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await ConditionMarkers.toggleCondition(token, 'Bandaged');"
-                    ],
-                    "label": "Toggle Bandage"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);"
-                    ],
-                    "label": "Increment Bandage"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Owl Trackers"
-                },
-                {
-                    "type": "text",
-                    "text": "Get and modify tracker values on tokens"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "trackerHP",
-                            "label": "HP"
-                        },
-                        {
-                            "type": "value",
-                            "var": "trackerMaxHP",
-                            "label": "Max HP"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await OwlTrackers.addValue(token, 'HP', 10);"
-                            ],
-                            "label": "Heal 10"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await OwlTrackers.addValue(token, 'HP', -5);"
-                            ],
-                            "label": "Damage 5"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);"
-                    ],
-                    "label": "Heal to Max"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "StatBubbles"
-                },
-                {
-                    "type": "text",
-                    "text": "Manage health, AC, and temp HP via StatBubbles extension"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "bubbleHealth",
-                            "label": "Health"
-                        },
-                        {
-                            "type": "value",
-                            "var": "bubbleMaxHealth",
-                            "label": "Max"
-                        },
-                        {
-                            "type": "value",
-                            "var": "bubbleAC",
-                            "label": "AC"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await StatBubbles.heal(token, 15);"
-                            ],
-                            "label": "Heal 15"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await StatBubbles.damage(token, 8);"
-                            ],
-                            "label": "Damage 8"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await StatBubbles.setValue(token, 'temporary health', 20);"
-                            ],
-                            "label": "Set Temp HP 20"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await StatBubbles.addValue(token, 'armor class', 2);"
-                            ],
-                            "label": "AC +2"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Colored Rings"
-                },
-                {
-                    "type": "text",
-                    "text": "Add and remove colored status rings on tokens"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "hasBlueRing",
-                            "label": "Has Blue Ring?"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.addRing(token, '#1a6aff');"
-                            ],
-                            "label": "Add Blue"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.addRing(token, '#ff7433');"
-                            ],
-                            "label": "Add Orange"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.addRing(token, '#00ff00');"
-                            ],
-                            "label": "Add Green"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.removeRing(token, '#1a6aff');"
-                            ],
-                            "label": "Remove Blue"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.removeRing(token, '#ff7433');"
-                            ],
-                            "label": "Remove Orange"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await ColoredRings.removeRing(token, '#00ff00');"
-                            ],
-                            "label": "Remove Green"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Pretty Sordid"
-                },
-                {
-                    "type": "text",
-                    "text": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "prettyHasInitiative",
-                            "label": "Has Initiative?"
-                        },
-                        {
-                            "type": "value",
-                            "var": "prettyInitiativeCount",
-                            "label": "Initiative"
-                        },
-                        {
-                            "type": "value",
-                            "var": "prettyActive",
-                            "label": "Active?"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) + 1) : await PrettySordid.setInitiativeCount(token, 1);"
-                            ],
-                            "label": "Increment / Assign 1"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) - 1) : null;"
-                            ],
-                            "label": "Decrement"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await PrettySordid.setInitiativeCount(token, 0);"
-                            ],
-                            "label": "Reset to 0"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "JustDices"
-                },
-                {
-                    "type": "text",
-                    "text": "Roll dice and get results in Owlbear Rodeo"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await JustDices.roll('1d20');"
-                            ],
-                            "label": "Roll d20"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await JustDices.roll('2d6 + 3');"
-                            ],
-                            "label": "Roll 2d6+3"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('1d20 + ' + bubbleAC) > 15 ? await StatBubbles.damage(token, 10) : null;"
-                    ],
-                    "label": "Attack Roll (DC 15)"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Local Storage"
-                },
-                {
-                    "type": "text",
-                    "text": "Store and retrieve values in browser localStorage"
-                },
-                {
-                    "type": "input",
-                    "var": "inputName",
-                    "label": "Enter Name",
-                    "placeholder": "Type a name..."
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await JustDices.roll('Global Player Name: ' + playerName);"
-                            ],
-                            "label": "Show Global Name"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await JustDices.roll('Input Name: ' + inputName);"
-                            ],
-                            "label": "Show Input Name"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await Local.set('playerName', 'Xalithra');"
-                    ],
-                    "label": "Save Player Name"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('Player: ' + await Local.value('playerName', 'Unknown'));"
-                    ],
-                    "label": "Show Player Name"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Weather Tests"
-                },
-                {
-                    "type": "text",
-                    "text": "Add weather effects to maps"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });"
-                            ],
-                            "label": "Snow"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });"
-                            ],
-                            "label": "Rain"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });"
-                            ],
-                            "label": "Sand"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });"
-                            ],
-                            "label": "Fire"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });"
-                            ],
-                            "label": "Cloud"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });"
-                            ],
-                            "label": "Bloom"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });"
-                            ],
-                            "label": "Energy Storm"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });"
-                            ],
-                            "label": "Water"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });"
-                            ],
-                            "label": "Current"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.updateWeather(mapId, { tint: '#88aaff' });",
-                                "console.log('Blue tint applied');"
-                            ],
-                            "label": "Blue Tint"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.updateWeather(mapId, { tint: '#ff8844' });",
-                                "console.log('Orange tint applied');"
-                            ],
-                            "label": "Orange Tint"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "mapId = await getMapIdFromToken(token);",
-                                "await Weather.removeWeather(mapId);",
-                                "console.log('Weather removed');"
-                            ],
-                            "label": "Remove Weather"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Embers - Spell Effects"
-                },
-                {
-                    "type": "text",
-                    "text": "Cast visual spell effects using the Embers extension"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "console.log('[TEST] Testing Embers.castSpellAtToken with fireball...');",
-                                "const targetId = await getSelectedTokenId();",
-                                "await Embers.castSpellAtToken(targetId, {",
-                                "  id: 'fireball.explosion',",
-                                "  size: 20,",
-                                "  spellName: 'Fireball'",
-                                "});",
-                                "console.log('[TEST] Message sent');"
-                            ],
-                            "label": "Test Embers (Fireball)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const selection = await getSelectedTokensIds();",
-                                "if (!selection || selection.length === 0) return;",
-                                "await Embers.cast([",
-                                "  { type: 'aoe', targets: selection, config: { id: 'bless.intro', size: 10 } }",
-                                "], { spellName: 'Bless' });"
-                            ],
-                            "label": "Bless (selected)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await Embers.castSpellAtToken(token, {",
-                                "  id: 'cure_wounds',",
-                                "  size: 10,",
-                                "  spellName: 'Cure Wounds'",
-                                "});"
-                            ],
-                            "label": "Cure Wounds"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await Embers.castSpellSequence([{type: 'projectile',casterId: token,targets: await getSelectedTokensIds(),config: { id: 'magic_missile', duration: 1000 }},{type: 'aoe',targets: await getSelectedTokensIds(),config: { id: 'fireball.explosion', size: 10, duration: 800 }}], { spellName: 'Magic Missile' });"
-                            ],
-                            "label": "Magic Missile"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target for direction');",
-                                "await Embers.castConeSpell(token, targetId, {",
-                                "  id: 'burning_hands',",
-                                "  size: 15,",
-                                "  spellName: 'Burning Hands'",
-                                "});"
-                            ],
-                            "label": "Burning Hands"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await Embers.castSpellAtToken(token, {",
-                                "  id: 'fireball',",
-                                "  size: 20,",
-                                "  duration: 2000,",
-                                "  spellName: 'Fireball'",
-                                "});"
-                            ],
-                            "label": "Fireball (AOE)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const selection = await getSelectedTokensIds();",
-                                "if (!selection || selection.length === 0) return console.error('No target selected');",
-                                "for (const targetId of selection) {",
-                                "  await Embers.castProjectileSpell(token, targetId, {",
-                                "    id: 'banishment',",
-                                "    spellName: 'Banishment'",
-                                "  });",
-                                "}"
-                            ],
-                            "label": "Banishment"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const selection = await getSelectedTokensIds();",
-                                "if (!selection || selection.length === 0) return console.error('No target selected');",
-                                "for (const targetId of selection) {",
-                                "  await Embers.castProjectileSpell(token, targetId, {",
-                                "    id: 'eldritch_blast',",
-                                "    copies: 2,",
-                                "    delay: 200,",
-                                "    spellName: 'Eldritch Blast'",
-                                "  });",
-                                "}"
-                            ],
-                            "label": "Eldritch Blast"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const casterId = token;",
-                                "const casterPosition = await getTokenPosition(casterId);",
-                                "const casterSize = await getTokenSize(casterId);",
-                                "if (!casterPosition) return console.error('Caster token not found');",
-                                "let rotation = 0;",
-                                "const selection = await getSelectedTokensIds();",
-                                "const targetId = selection.find(id => id !== casterId);",
-                                "if (targetId) {",
-                                "  const targetPosition = await getTokenPosition(targetId);",
-                                "  if (targetPosition) {",
-                                "    const dx = targetPosition.x - casterPosition.x;",
-                                "    const dy = targetPosition.y - casterPosition.y;",
-                                "    rotation = Math.atan2(dy, dx) * (180 / Math.PI);",
-                                "  }",
-                                "}",
-                                "await Embers.castSpellAtToken(casterId, {",
-                                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
-                                "  size: (casterSize || 1) * 2,",
-                                "  rotation,",
-                                "  forceVariant: 6,",
-                                "  spellName: 'Melee Weapon Attack (Whirlwind)'",
-                                "});"
-                            ],
-                            "label": "Melee Whirlwind"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "label": "Embers API",
-            "variables": {
-                "token": {
-                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-                }
-            },
-            "layout": [
-                {
-                    "type": "title",
-                    "text": "Embers API Examples"
-                },
-                {
-                    "type": "text",
-                    "text": "Examples using raw instructions, metadata, and interactions."
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const sourceId = await getSelectedTokenId() || token;",
-                                "const source = await getTokenPosition(sourceId);",
-                                "if (!source) return console.error('No source token');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'fireball.explosion',",
-                                "  effectProperties: { source, size: 8 },",
-                                "  layer: 'PROP',",
-                                "  zIndex: 100,",
-                                "  metadata: { 'embers/demo': 'raw-aoe' }",
-                                "}], { spellName: 'Raw AOE', destination: 'ALL' });"
-                            ],
-                            "label": "Raw AOE (layer/zIndex)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "const casterPos = await getTokenPosition(token);",
-                                "const targetPos = await getTokenPosition(targetId);",
-                                "if (!casterPos || !targetPos) return console.error('Missing positions');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'magic_missile',",
-                                "  effectProperties: {",
-                                "    source: casterPos,",
-                                "    destination: targetPos,",
-                                "    copies: 3,",
-                                "    disableHit: true",
-                                "  },",
-                                "  forceVariant: 0",
-                                "}], { spellName: 'Projectile (no hit)' });"
-                            ],
-                            "label": "Projectile (disableHit)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "await Embers.castConeSpell(token, targetId, {",
-                                "  id: 'burning_hands',",
-                                "  size: 12,",
-                                "  forceVariant: 0,",
-                                "  spellName: 'Cone Demo'",
-                                "});"
-                            ],
-                            "label": "Cone (directional)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "await Embers.sendInstructions([{",
-                                "  type: 'action',",
-                                "  id: 'my_action',",
-                                "  arguments: [token, { x: 0.01, y: 0.01 }]",
-                                "}]);"
-                            ],
-                            "label": "Action (non-visual)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const source = await getTokenPosition(token);",
-                                "if (!source) return console.error('No source token');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'shield.loop',",
-                                "  duration: 2000,",
-                                "  effectProperties: {",
-                                "    source,",
-                                "    size: 3,",
-                                "    attachedTo: token,",
-                                "    disableHit: true",
-                                "  }",
-                                "}], {",
-                                "  interactions: { ids: [token], count: 1 },",
-                                "  spellName: 'Interaction Demo'",
-                                "});"
-                            ],
-                            "label": "Interactions + attachedTo"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const sourceId = await getSelectedTokenId() || token;",
-                                "const source = await getTokenPosition(sourceId);",
-                                "if (!source) return console.error('No source token');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'darkness.black.opaque',",
-                                "  duration: 5000,",
-                                "  disableHit: true,",
-                                "  layer: 'FOG',",
-                                "  effectProperties: { source, size: 6 }",
-                                "}], { spellName: 'Darkness (FOG)' });"
-                            ],
-                            "label": "Darkness (FOG layer)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const source = await getTokenPosition(token);",
-                                "if (!source) return console.error('No source token');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'hunters_mark.loop',",
-                                "  duration: 5000,",
-                                "  disableHit: true,",
-                                "  attachedTo: token,",
-                                "  zIndex: 1,",
-                                "  effectProperties: { source, size: 2 }",
-                                "}], { spellName: 'Hunterss Mark (Loop)' });"
-                            ],
-                            "label": "Attached Loop (Hunters Mark)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "const source = await getTokenPosition(token);",
-                                "const destination = await getTokenPosition(targetId);",
-                                "if (!source || !destination) return console.error('Missing positions');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'wind_wall.opaque',",
-                                "  effectProperties: { source, destination, copies: 1 }",
-                                "}], { spellName: 'Wind Wall (WALL)' });"
-                            ],
-                            "label": "Wall (Wind Wall)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "await Embers.castConeSpell(token, targetId, {",
-                                "  id: 'cone_of_cold',",
-                                "  size: 12,",
-                                "  spellName: 'Cone of Cold'",
-                                "});"
-                            ],
-                            "label": "Cone of Cold"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "await Embers.castSpellSequence([",
-                                "  { type: 'projectile', casterId: token, targets: targetId, config: { id: 'fireball.beam' } },",
-                                "  { type: 'aoe', targets: targetId, config: { id: 'fireball.explosion', delay: 4040, size: 3 } },",
-                                "], { spellName: 'Fireball (Sequence)' });"
-                            ],
-                            "label": "Sequence (Fireball)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "await Embers.castSpellAtToken(targetId, {",
-                                "  id: 'fireball.loop_no_debris',",
-                                "  forceVariant: 800,",
-                                "  loops: -1,",
-                                "  spellName: 'Fireball (Loop No Debris)'",
-                                "});"
-                            ],
-                            "label": "Fireball Loop (No Debris)"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const targetId = await getSelectedTokenId();",
-                                "if (!targetId) return console.error('Select a target');",
-                                "const casterPos = await getTokenPosition(token);",
-                                "const targetPos = await getTokenPosition(targetId);",
-                                "if (!casterPos || !targetPos) return console.error('Missing positions');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'witch_bolt',",
-                                "  duration: 5000,",
-                                "  disableHit: true,",
-                                "  effectProperties: {",
-                                "    source: casterPos,",
-                                "    sourceId: token,",
-                                "    destination: targetPos,",
-                                "    destinationId: targetId,",
-                                "    copies: 1",
-                                "  }",
-                                "}], { spellName: 'Witch Bolt (Tether)' });"
-                            ],
-                            "label": "Witch Bolt (sourceId/destinationId)"
-                        }
-                    ]
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "button",
-                            "commands": [
-                                "const source = await getTokenPosition(token);",
-                                "if (!source) return console.error('No source token');",
-                                "await Embers.sendInstructions([{",
-                                "  type: 'effect',",
-                                "  id: 'whirlwind',",
-                                "  duration: 5000,",
-                                "  effectProperties: { source, size: 3 }",
-                                "}], { spellName: 'Whirlwind' });"
-                            ],
-                            "label": "Whirlwind AOE"
-                        },
-                        {
-                            "type": "button",
-                            "commands": [
-                                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_whirlwind', size: 3, duration: 2940, spellName: 'Thrash' });"
-                            ],
-                            "label": "Melee Whirlwind (forceVariant)"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "label": "Layout",
-            "variables": {
-                "textVar": {
-                    "value": "Hello World"
-                },
-                "numberVar": {
-                    "value": 42
-                },
-                "counterVar": {
-                    "value": 10
-                },
-                "checkboxVar": {
-                    "value": true
-                },
-                "inputVar": {
-                    "value": "Enter text here"
-                },
-                "dropdownVar": {
-                    "value": "Option 1"
-                },
-                "dropdownModeVar": {
-                    "value": "normal"
-                }
-            },
-            "layout": [
-                {
-                    "type": "title",
-                    "text": "Layout Examples"
-                },
-                {
-                    "type": "text",
-                    "text": "This page demonstrates all available layout types"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Display Types"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "textVar",
-                            "label": "Text Value"
-                        },
-                        {
-                            "type": "value",
-                            "var": "numberVar",
-                            "label": "Number Value"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Input Types"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "counter",
-                            "var": "counterVar",
-                            "label": "Counter",
-                            "step": 5
-                        },
-                        {
-                            "type": "counter",
-                            "var": "numberVar",
-                            "label": "Counter (step 1)"
-                        }
-                    ]
-                },
-                {
-                    "type": "input",
-                    "var": "inputVar",
-                    "label": "Text Input",
-                    "placeholder": "Type something..."
-                },
-                {
-                    "type": "checkbox",
-                    "var": "checkboxVar",
-                    "label": "Checkbox Example"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "dropdown",
-                            "var": "dropdownVar",
-                            "label": "Dropdown Example",
-                            "options": [
-                                "Option 1",
-                                "Option 2",
-                                "Option 3"
-                            ]
-                        },
-                        {
-                            "type": "dropdown",
-                            "var": "dropdownModeVar",
-                            "label": "Game Mode",
-                            "options": [
-                                {
-                                    "label": "Easy",
-                                    "value": "easy"
-                                },
-                                {
-                                    "label": "Normal",
-                                    "value": "normal"
-                                },
-                                {
-                                    "label": "Hard",
-                                    "value": "hard"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Stack Demo"
-                },
-                {
-                    "type": "text",
-                    "text": "Demonstrates the `stack` container."
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "text",
-                            "text": "This is a row containing a stack:"
-                        },
-                        {
-                            "type": "stack",
-                            "children": [
-                                {
-                                    "type": "value",
-                                    "var": "textVar",
-                                    "label": "Base Value"
-                                },
-                                {
-                                    "type": "button",
-                                    "label": "Button",
-                                    "commands": [
-                                        "await JustDices.roll('1d6');"
-                                    ]
-                                },
-                                {
-                                    "type": "button",
-                                    "label": "Button",
-                                    "commands": [
-                                        "await JustDices.roll('1d6');"
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Button"
-                },
-                {
-                    "type": "button",
-                    "label": "Example Button",
-                    "commands": [
-                        "await JustDices.roll('1d20');"
-                    ]
-                }
-            ]
-        },
-        {
-            "label": "Tests",
-            "variables": {
-                "spdCS": {
-                    "value": 15
-                },
-                "floorResult": {
-                    "eval": "Math.floor(spdCS / 2)"
-                },
-                "testToken": {
-                    "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-                },
-                "mapIdFromToken": {
-                    "eval": "getMapIdFromToken(testToken)"
-                },
-                "dropdownOptions": {
-                    "value": [
-                        "Option A",
-                        "Option B",
-                        "Option C",
-                        "Option D"
-                    ]
-                },
-                "selectedOption": {
-                    "value": "Option A"
-                }
-            },
-            "layout": [
-                {
-                    "type": "title",
-                    "text": "Testing Area"
-                },
-                {
-                    "type": "text",
-                    "text": "Use this page for testing new features and commands."
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "spdCS",
-                            "label": "spdCS"
-                        },
-                        {
-                            "type": "value",
-                            "var": "floorResult",
-                            "label": "floor({spdCS}/2)"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('floorResult: ' + floorResult);"
-                    ],
-                    "label": "Show floor result"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('1d10');"
-                    ],
-                    "label": "Test Roll"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('1d10');"
-                    ],
-                    "label": "Test Roll2"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await JustDices.roll('1d10 + ' + spdCS);"
-                    ],
-                    "label": "Test with spdCS"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "result = await JustDices.roll('1d20');",
-                        "message = result > 10 ? 'Effect' : 'No Effect';",
-                        "message += result == 20 ? ' (Critical)' : '';",
-                        "console.log(`Result: ${result} - ${message}`);"
-                    ],
-                    "label": "Test Async"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const healAmount = 15;",
-                        "const currentHP = trackerHP;",
-                        "const maxHP = trackerMaxHP;",
-                        "const newHP = min(currentHP + healAmount, maxHP);",
-                        "await OwlTrackers.setValue(token, 'HP', newHP);",
-                        "console.log(`Healed ${newHP - currentHP} HP`);"
-                    ],
-                    "label": "Multi-line Script Example"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const roll = await JustDices.roll('1d20');",
-                        "if (roll >= 15) {",
-                        "  await addValue('spdCS', 2);",
-                        "  console.log('Success! +2 speed');",
-                        "} else if (roll >= 10) {",
-                        "  await addValue('spdCS', 1);",
-                        "  console.log('Partial success! +1 speed');",
-                        "} else {",
-                        "  console.log('Failure!');",
-                        "}"
-                    ],
-                    "label": "Conditional Logic Example"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "for (let i = 0; i < 3; i++) {",
-                        "  const roll = await JustDices.roll('1d6');",
-                        "  console.log(`Roll ${i + 1}: ${roll}`);",
-                        "}"
-                    ],
-                    "label": "Loop Example"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Dropdown with Array"
-                },
-                {
-                    "type": "dropdown",
-                    "var": "selectedOption",
-                    "label": "Select from Array",
-                    "optionsVar": "dropdownOptions"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "selectedOption",
-                            "label": "Selected Value"
-                        }
-                    ]
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Scene Helpers Tests"
-                },
-                {
-                    "type": "text",
-                    "text": "Test scene helper functions"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "value",
-                            "var": "mapIdFromToken",
-                            "label": "Map ID"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "mapId = await getMapIdFromToken(testToken);",
-                        "console.log('Map ID: ' + (mapId || 'Not on a map'));"
-                    ],
-                    "label": "Get Map ID from Token"
-                }
-            ]
-        },
-        {
-            "label": "Tokens",
-            "variables": {
-                "tokenUrl": {
-                    "value": "https://docs.owlbear.rodeo/img/logo.svg"
-                },
-                "tokenName": {
-                    "value": "New Token"
-                },
-                "tokenX": {
-                    "value": 500
-                },
-                "tokenY": {
-                    "value": 500
-                },
-                "tokenSize": {
-                    "value": 1.0
-                },
-                "gridX": {
-                    "value": 5
-                },
-                "gridY": {
-                    "value": 5
-                },
-                "createdTokenId": {
-                    "value": ""
-                }
-            },
-            "layout": [
-                {
-                    "type": "title",
-                    "text": "Token Creation"
-                },
-                {
-                    "type": "text",
-                    "text": "Create tokens on the scene using tokenHelpers"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Simple Token Creation"
-                },
-                {
-                    "type": "input",
-                    "var": "tokenUrl",
-                    "label": "Token Image URL"
-                },
-                {
-                    "type": "input",
-                    "var": "tokenName",
-                    "label": "Token Name"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "input",
-                            "var": "tokenX",
-                            "label": "Position X"
-                        },
-                        {
-                            "type": "input",
-                            "var": "tokenY",
-                            "label": "Position Y"
-                        }
-                    ]
-                },
-                {
-                    "type": "input",
-                    "var": "tokenSize",
-                    "label": "Token Size (grid cells)"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const tokenId = await createToken({",
-                        "  url: tokenUrl,",
-                        "  position: { x: tokenX, y: tokenY },",
-                        "  size: tokenSize,",
-                        "  label: tokenName",
-                        "});",
-                        "await setValue('createdTokenId', tokenId);"
-                    ],
-                    "label": "Create Token"
-                },
-                {
-                    "type": "value",
-                    "var": "createdTokenId",
-                    "label": "Created Token ID"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Grid-Based Token Creation"
-                },
-                {
-                    "type": "row",
-                    "children": [
-                        {
-                            "type": "input",
-                            "var": "gridX",
-                            "label": "Grid X"
-                        },
-                        {
-                            "type": "input",
-                            "var": "gridY",
-                            "label": "Grid Y"
-                        }
-                    ]
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const tokenId = await createToken({",
-                        "  url: tokenUrl,",
-                        "  position: { x: gridX, y: gridY },",
-                        "  gridPosition: true,",
-                        "  name: tokenName,",
-                        "  size: tokenSize",
-                        "});",
-                        "await setValue('createdTokenId', tokenId);"
-                    ],
-                    "label": "Create Token at Grid Position"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Quick Examples"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "await createToken({",
-                        "  url: 'SELECT',",
-                        "  name: 'Hero',",
-                        "  position: { x: 300, y: 300 },",
-                        "  size: 1.5,",
-                        "  layer: 'MOUNT',",
-                        "});"
-                    ],
-                    "label": "Create Demo Hero (1.5 cells)"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const enemyPositions = [",
-                        "  { x: 600, y: 400 },",
-                        "  { x: 800, y: 400 },",
-                        "  { x: 700, y: 600 }",
-                        "];",
-                        "const tokens = enemyPositions.map((pos, i) => ({",
-                        "  url: 'EMPTY',",
-                        "  size: 1.0,",
-                        "  position: pos,",
-                        "  name: `Enemy ${i + 1}`,",
-                        "  label: `E${i + 1}`",
-                        "}));",
-                        "await createTokens(tokens);"
-                    ],
-                    "label": "Create 3 Enemies (1 cell each)"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const tokenId = await createToken({",
-                        "  url: 'https://sewef.github.io/justDices/JustDices.png',",
-                        "  position: { x: 500, y: 500 },",
-                        "  name: 'Boss',",
-                        "  label: 'BOSS',",
-                        "  size: 3.0",
-                        "});",
-                        "",
-                        "// Add HP tracker (value-max variant)",
-                        "await OwlTrackers.addTracker(tokenId, {",
-                        "  variant: 'value-max',",
-                        "  name: 'HP',",
-                        "  value: 100,",
-                        "  max: 100,",
-                        "  color: 2",
-                        "});",
-                        "",
-                        "console.log('Created boss with ID:', tokenId);"
-                    ],
-                    "label": "Create Boss (3 cells) with HP & Metadata"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "title",
-                    "text": "Tracker Management Examples"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "const tokenId = await createToken({",
-                        "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
-                        "  position: { x: 400, y: 400 },",
-                        "  name: 'Character with Trackers',",
-                        "  size: 1.5",
-                        "});",
-                        "",
-                        "// Add HP tracker (value-max variant)",
-                        "await OwlTrackers.addTracker(tokenId, {",
-                        "  variant: 'value-max',",
-                        "  name: 'HP',",
-                        "  value: 103,",
-                        "  max: 103,",
-                        "  color: 2",
-                        "});",
-                        "",
-                        "// Add Temp HP tracker (value variant)",
-                        "await OwlTrackers.addTracker(tokenId, {",
-                        "  variant: 'value',",
-                        "  name: 'Temp HP',",
-                        "  value: 10,",
-                        "  color: 5",
-                        "});",
-                        "",
-                        "// Add Injuries counter",
-                        "await OwlTrackers.addTracker(tokenId, {",
-                        "  variant: 'counter',",
-                        "  name: 'Injuries',",
-                        "  value: 5,",
-                        "  color: 2,",
-                        "  inlineMath: false",
-                        "});",
-                        "",
-                        "// Add unnamed counter",
-                        "await OwlTrackers.addTracker(tokenId, {",
-                        "  variant: 'counter',",
-                        "  value: 0,",
-                        "  color: 8,",
-                        "  inlineMath: false",
-                        "});",
-                        "",
-                        "await setValue('createdTokenId', tokenId);",
-                        "console.log('Created token with multiple trackers:', tokenId);"
-                    ],
-                    "label": "Create Token with Multiple Trackers"
-                },
-                {
-                    "type": "button",
-                    "commands": [
-                        "if (!createdTokenId) {",
-                        "  console.error('No token ID available. Create a token first.');",
-                        "  return;",
-                        "}",
-                        "",
-                        "// Remove 'Temp HP' tracker",
-                        "const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');",
-                        "if (removed) {",
-                        "  console.log('Removed Temp HP tracker from token');",
-                        "} else {",
-                        "  console.log('Temp HP tracker not found');",
-                        "}"
-                    ],
-                    "label": "Remove 'Temp HP' Tracker"
-                }
-            ]
+    {
+      "label": "Embers API",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
         }
-    ]
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Embers API Examples"
+        },
+        {
+          "type": "text",
+          "text": "Examples using raw instructions, metadata, and interactions."
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const sourceId = await getSelectedTokenId() || token;",
+                "const source = await getTokenPosition(sourceId);",
+                "if (!source) return console.error('No source token');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'fireball.explosion',",
+                "  effectProperties: { source, size: 8 },",
+                "  layer: 'PROP',",
+                "  zIndex: 100,",
+                "  metadata: { 'embers/demo': 'raw-aoe' }",
+                "}], { spellName: 'Raw AOE', destination: 'ALL' });"
+              ],
+              "label": "Raw AOE (layer/zIndex)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "const casterPos = await getTokenPosition(token);",
+                "const targetPos = await getTokenPosition(targetId);",
+                "if (!casterPos || !targetPos) return console.error('Missing positions');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'magic_missile',",
+                "  effectProperties: {",
+                "    source: casterPos,",
+                "    destination: targetPos,",
+                "    copies: 3,",
+                "    disableHit: true",
+                "  },",
+                "  forceVariant: 0",
+                "}], { spellName: 'Projectile (no hit)' });"
+              ],
+              "label": "Projectile (disableHit)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castConeSpell(token, targetId, {",
+                "  id: 'burning_hands',",
+                "  size: 12,",
+                "  forceVariant: 0,",
+                "  spellName: 'Cone Demo'",
+                "});"
+              ],
+              "label": "Cone (directional)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Embers.sendInstructions([{",
+                "  type: 'action',",
+                "  id: 'my_action',",
+                "  arguments: [token, { x: 0.01, y: 0.01 }]",
+                "}]);"
+              ],
+              "label": "Action (non-visual)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const source = await getTokenPosition(token);",
+                "if (!source) return console.error('No source token');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'shield.loop',",
+                "  duration: 2000,",
+                "  effectProperties: {",
+                "    source,",
+                "    size: 3,",
+                "    attachedTo: token,",
+                "    disableHit: true",
+                "  }",
+                "}], {",
+                "  interactions: { ids: [token], count: 1 },",
+                "  spellName: 'Interaction Demo'",
+                "});"
+              ],
+              "label": "Interactions + attachedTo"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const sourceId = await getSelectedTokenId() || token;",
+                "const source = await getTokenPosition(sourceId);",
+                "if (!source) return console.error('No source token');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'darkness.black.opaque',",
+                "  duration: 5000,",
+                "  disableHit: true,",
+                "  layer: 'FOG',",
+                "  effectProperties: { source, size: 6 }",
+                "}], { spellName: 'Darkness (FOG)' });"
+              ],
+              "label": "Darkness (FOG layer)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const source = await getTokenPosition(token);",
+                "if (!source) return console.error('No source token');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'hunters_mark.loop',",
+                "  duration: 5000,",
+                "  disableHit: true,",
+                "  attachedTo: token,",
+                "  zIndex: 1,",
+                "  effectProperties: { source, size: 2 }",
+                "}], { spellName: 'Hunterss Mark (Loop)' });"
+              ],
+              "label": "Attached Loop (Hunters Mark)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "const source = await getTokenPosition(token);",
+                "const destination = await getTokenPosition(targetId);",
+                "if (!source || !destination) return console.error('Missing positions');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'wind_wall.opaque',",
+                "  effectProperties: { source, destination, copies: 1 }",
+                "}], { spellName: 'Wind Wall (WALL)' });"
+              ],
+              "label": "Wall (Wind Wall)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castConeSpell(token, targetId, {",
+                "  id: 'cone_of_cold',",
+                "  size: 12,",
+                "  spellName: 'Cone of Cold'",
+                "});"
+              ],
+              "label": "Cone of Cold"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castSpellSequence([",
+                "  { type: 'projectile', casterId: token, targets: targetId, config: { id: 'fireball.beam' } },",
+                "  { type: 'aoe', targets: targetId, config: { id: 'fireball.explosion', delay: 4040, size: 3 } },",
+                "], { spellName: 'Fireball (Sequence)' });"
+              ],
+              "label": "Sequence (Fireball)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castSpellAtToken(targetId, {",
+                "  id: 'fireball.loop_no_debris',",
+                "  forceVariant: 800,",
+                "  loops: -1,",
+                "  spellName: 'Fireball (Loop No Debris)'",
+                "});"
+              ],
+              "label": "Fireball Loop (No Debris)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "const casterPos = await getTokenPosition(token);",
+                "const targetPos = await getTokenPosition(targetId);",
+                "if (!casterPos || !targetPos) return console.error('Missing positions');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'witch_bolt',",
+                "  duration: 5000,",
+                "  disableHit: true,",
+                "  effectProperties: {",
+                "    source: casterPos,",
+                "    sourceId: token,",
+                "    destination: targetPos,",
+                "    destinationId: targetId,",
+                "    copies: 1",
+                "  }",
+                "}], { spellName: 'Witch Bolt (Tether)' });"
+              ],
+              "label": "Witch Bolt (sourceId/destinationId)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const source = await getTokenPosition(token);",
+                "if (!source) return console.error('No source token');",
+                "await Embers.sendInstructions([{",
+                "  type: 'effect',",
+                "  id: 'whirlwind',",
+                "  duration: 5000,",
+                "  effectProperties: { source, size: 3 }",
+                "}], { spellName: 'Whirlwind' });"
+              ],
+              "label": "Whirlwind AOE"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_whirlwind', size: 3, duration: 2940, spellName: 'Thrash' });"
+              ],
+              "label": "Melee Whirlwind (forceVariant)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_slash', size: 3, duration: 2940, spellName: 'Double-Edge' });"
+              ],
+              "label": "Generic Slash"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const targetId = await getClosestTokenId(token, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });",
+                "if (!targetId) return console.error('No closest token found');",
+                "await Embers.castConeSpell(token, targetId, {",
+                "  id: 'generic.weapon_attacks.melee.single.generic_slash',",
+                "  size: 3,",
+                "  duration: 900,",
+                "  spellName: 'Double-Edge to Closest'",
+                "});"
+              ],
+              "label": "Generic Slash → Closest"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "Embers.castConeSpell(token, await getClosestTokenId(token), {id: 'generic.weapon_attacks.melee.single.laser_sword', size: 3, duration: 2330, spellName: 'Double Lame Laser'});"
+              ],
+              "label": "Double Lame Laser"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "Embers.castConeSpell(token, await getClosestTokenId(token), {id: 'generic.weapon_attacks.melee.single.laser_sword', size: 3, duration: 2330, spellName: 'Double Lame Laser'});"
+              ],
+              "label": "Double Lame Laser"
+            },
+            {
+              "type": "button",
+              "label": "Orange Laser → Fireball",
+              "commands": [
+                "const casterPos = await getTokenPosition(token);",
+                "const targetPos = await getTokenPosition(await getSelectedTokenId());",
+                "if (!casterPos || !targetPos) return console.error('Missing positions');",
+                "await Embers.sendInstructions([",
+                "  {",
+                "    type: 'effect',",
+                "    id: 'generic.weapon_attacks.ranged.laser_shot.orange',",
+                "    effectProperties: {",
+                "      source: casterPos,",
+                "      destination: targetPos",
+                "    }",
+                "  },",
+                "  {",
+                "    type: 'effect',",
+                "    id: 'fireball.explosion',",
+                "    delay: 900,",
+                "    effectProperties: {",
+                "      source: targetPos,",
+                "      size: 3",
+                "    }",
+                "  }",
+                "], { spellName: 'Fusion à Fusion' });"
+              ]
+            }
+          ]
+        }
+      ],
+      "_pageIndex": 1
+    },
+    {
+      "label": "Layout",
+      "variables": {
+        "textVar": {
+          "value": "Hello World"
+        },
+        "numberVar": {
+          "value": 42
+        },
+        "counterVar": {
+          "value": 10
+        },
+        "checkboxVar": {
+          "value": true
+        },
+        "inputVar": {
+          "value": "Enter text here"
+        },
+        "dropdownVar": {
+          "value": "Option 1"
+        },
+        "dropdownModeVar": {
+          "value": "normal"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Layout Examples"
+        },
+        {
+          "type": "text",
+          "text": "This page demonstrates all available layout types"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Display Types"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "textVar",
+              "label": "Text Value"
+            },
+            {
+              "type": "value",
+              "var": "numberVar",
+              "label": "Number Value"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Input Types"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "counterVar",
+              "label": "Counter",
+              "step": 5
+            },
+            {
+              "type": "counter",
+              "var": "numberVar",
+              "label": "Counter (step 1)"
+            }
+          ]
+        },
+        {
+          "type": "input",
+          "var": "inputVar",
+          "label": "Text Input",
+          "placeholder": "Type something..."
+        },
+        {
+          "type": "checkbox",
+          "var": "checkboxVar",
+          "label": "Checkbox Example"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "dropdown",
+              "var": "dropdownVar",
+              "label": "Dropdown Example",
+              "options": [
+                "Option 1",
+                "Option 2",
+                "Option 3"
+              ]
+            },
+            {
+              "type": "dropdown",
+              "var": "dropdownModeVar",
+              "label": "Game Mode",
+              "options": [
+                {
+                  "label": "Easy",
+                  "value": "easy"
+                },
+                {
+                  "label": "Normal",
+                  "value": "normal"
+                },
+                {
+                  "label": "Hard",
+                  "value": "hard"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Stack Demo"
+        },
+        {
+          "type": "text",
+          "text": "Demonstrates the `stack` container."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is a row containing a stack:"
+            },
+            {
+              "type": "stack",
+              "children": [
+                {
+                  "type": "value",
+                  "var": "textVar",
+                  "label": "Base Value"
+                },
+                {
+                  "type": "button",
+                  "label": "Button",
+                  "commands": [
+                    "await JustDices.roll('1d6');"
+                  ]
+                },
+                {
+                  "type": "button",
+                  "label": "Button",
+                  "commands": [
+                    "await JustDices.roll('1d6');"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Button"
+        },
+        {
+          "type": "button",
+          "label": "Example Button",
+          "commands": [
+            "await JustDices.roll('1d20');"
+          ]
+        }
+      ],
+      "_pageIndex": 2
+    },
+    {
+      "label": "Tests",
+      "variables": {
+        "spdCS": {
+          "value": 15,
+          "expression": -3
+        },
+        "floorResult": {
+          "eval": "Math.floor(spdCS / 2)"
+        },
+        "testToken": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "mapIdFromToken": {
+          "eval": "getMapIdFromToken(testToken)"
+        },
+        "dropdownOptions": {
+          "value": [
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
+          ]
+        },
+        "selectedOption": {
+          "value": "Option A"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Testing Area"
+        },
+        {
+          "type": "text",
+          "text": "Use this page for testing new features and commands."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "spdCS",
+              "label": "spdCS"
+            },
+            {
+              "type": "value",
+              "var": "floorResult",
+              "label": "floor({spdCS}/2)"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('floorResult: ' + floorResult);"
+          ],
+          "label": "Show floor result"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('1d10');"
+          ],
+          "label": "Test Roll"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('1d10');"
+          ],
+          "label": "Test Roll2"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await JustDices.roll('1d10 + ' + spdCS);"
+          ],
+          "label": "Test with spdCS"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "result = await JustDices.roll('1d20');",
+            "message = result > 10 ? 'Effect' : 'No Effect';",
+            "message += result == 20 ? ' (Critical)' : '';",
+            "console.log(`Result: ${result} - ${message}`);"
+          ],
+          "label": "Test Async"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const healAmount = 15;",
+            "const currentHP = trackerHP;",
+            "const maxHP = trackerMaxHP;",
+            "const newHP = min(currentHP + healAmount, maxHP);",
+            "await OwlTrackers.setValue(token, 'HP', newHP);",
+            "console.log(`Healed ${newHP - currentHP} HP`);"
+          ],
+          "label": "Multi-line Script Example"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const roll = await JustDices.roll('1d20');",
+            "if (roll >= 15) {",
+            "  await addValue('spdCS', 2);",
+            "  console.log('Success! +2 speed');",
+            "} else if (roll >= 10) {",
+            "  await addValue('spdCS', 1);",
+            "  console.log('Partial success! +1 speed');",
+            "} else {",
+            "  console.log('Failure!');",
+            "}"
+          ],
+          "label": "Conditional Logic Example"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "for (let i = 0; i < 3; i++) {",
+            "  const roll = await JustDices.roll('1d6');",
+            "  console.log(`Roll ${i + 1}: ${roll}`);",
+            "}"
+          ],
+          "label": "Loop Example"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Dropdown with Array"
+        },
+        {
+          "type": "dropdown",
+          "var": "selectedOption",
+          "label": "Select from Array",
+          "optionsVar": "dropdownOptions"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "selectedOption",
+              "label": "Selected Value"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Scene Helpers Tests"
+        },
+        {
+          "type": "text",
+          "text": "Test scene helper functions"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "mapIdFromToken",
+              "label": "Map ID"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "mapId = await getMapIdFromToken(testToken);",
+            "console.log('Map ID: ' + (mapId || 'Not on a map'));"
+          ],
+          "label": "Get Map ID from Token"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "tokenId = await getClosestTokenId(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });",
+            "console.log('Closest Token Id: ' + (tokenId || 'No token found'));"
+          ],
+          "label": "Get Closest Token Id"
+        }
+      ],
+      "_pageIndex": 3
+    },
+    {
+      "label": "Tokens",
+      "variables": {
+        "tokenUrl": {
+          "value": "https://docs.owlbear.rodeo/img/logo.svg"
+        },
+        "tokenName": {
+          "value": "New Token"
+        },
+        "tokenX": {
+          "value": 500
+        },
+        "tokenY": {
+          "value": 500
+        },
+        "tokenSize": {
+          "value": 1
+        },
+        "gridX": {
+          "value": 5
+        },
+        "gridY": {
+          "value": 5
+        },
+        "createdTokenId": {
+          "value": ""
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Token Creation"
+        },
+        {
+          "type": "text",
+          "text": "Create tokens on the scene using tokenHelpers"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Simple Token Creation"
+        },
+        {
+          "type": "input",
+          "var": "tokenUrl",
+          "label": "Token Image URL"
+        },
+        {
+          "type": "input",
+          "var": "tokenName",
+          "label": "Token Name"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "input",
+              "var": "tokenX",
+              "label": "Position X"
+            },
+            {
+              "type": "input",
+              "var": "tokenY",
+              "label": "Position Y"
+            }
+          ]
+        },
+        {
+          "type": "input",
+          "var": "tokenSize",
+          "label": "Token Size (grid cells)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const tokenId = await createToken({",
+            "  url: tokenUrl,",
+            "  position: { x: tokenX, y: tokenY },",
+            "  size: tokenSize,",
+            "  label: tokenName",
+            "});",
+            "await setValue('createdTokenId', tokenId);"
+          ],
+          "label": "Create Token"
+        },
+        {
+          "type": "value",
+          "var": "createdTokenId",
+          "label": "Created Token ID"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Grid-Based Token Creation"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "input",
+              "var": "gridX",
+              "label": "Grid X"
+            },
+            {
+              "type": "input",
+              "var": "gridY",
+              "label": "Grid Y"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const tokenId = await createToken({",
+            "  url: tokenUrl,",
+            "  position: { x: gridX, y: gridY },",
+            "  gridPosition: true,",
+            "  name: tokenName,",
+            "  size: tokenSize",
+            "});",
+            "await setValue('createdTokenId', tokenId);"
+          ],
+          "label": "Create Token at Grid Position"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Quick Examples"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await createToken({",
+            "  url: 'SELECT',",
+            "  name: 'Hero',",
+            "  position: { x: 300, y: 300 },",
+            "  size: 1.5,",
+            "  layer: 'MOUNT',",
+            "});"
+          ],
+          "label": "Create Demo Hero (1.5 cells)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const enemyPositions = [",
+            "  { x: 600, y: 400 },",
+            "  { x: 800, y: 400 },",
+            "  { x: 700, y: 600 }",
+            "];",
+            "const tokens = enemyPositions.map((pos, i) => ({",
+            "  url: 'EMPTY',",
+            "  size: 1.0,",
+            "  position: pos,",
+            "  name: `Enemy ${i + 1}`,",
+            "  label: `E${i + 1}`",
+            "}));",
+            "await createTokens(tokens);"
+          ],
+          "label": "Create 3 Enemies (1 cell each)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const tokenId = await createToken({",
+            "  url: 'https://sewef.github.io/justDices/JustDices.png',",
+            "  position: { x: 500, y: 500 },",
+            "  name: 'Boss',",
+            "  label: 'BOSS',",
+            "  size: 3.0",
+            "});",
+            "",
+            "// Add HP tracker (value-max variant)",
+            "await OwlTrackers.addTracker(tokenId, {",
+            "  variant: 'value-max',",
+            "  name: 'HP',",
+            "  value: 100,",
+            "  max: 100,",
+            "  color: 2",
+            "});",
+            "",
+            "console.log('Created boss with ID:', tokenId);"
+          ],
+          "label": "Create Boss (3 cells) with HP & Metadata"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Tracker Management Examples"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const tokenId = await createToken({",
+            "  url: 'https://sewef.github.io/ptu/img/logo64.png',",
+            "  position: { x: 400, y: 400 },",
+            "  name: 'Character with Trackers',",
+            "  size: 1.5",
+            "});",
+            "",
+            "// Add HP tracker (value-max variant)",
+            "await OwlTrackers.addTracker(tokenId, {",
+            "  variant: 'value-max',",
+            "  name: 'HP',",
+            "  value: 103,",
+            "  max: 103,",
+            "  color: 2",
+            "});",
+            "",
+            "// Add Temp HP tracker (value variant)",
+            "await OwlTrackers.addTracker(tokenId, {",
+            "  variant: 'value',",
+            "  name: 'Temp HP',",
+            "  value: 10,",
+            "  color: 5",
+            "});",
+            "",
+            "// Add Injuries counter",
+            "await OwlTrackers.addTracker(tokenId, {",
+            "  variant: 'counter',",
+            "  name: 'Injuries',",
+            "  value: 5,",
+            "  color: 2,",
+            "  inlineMath: false",
+            "});",
+            "",
+            "// Add unnamed counter",
+            "await OwlTrackers.addTracker(tokenId, {",
+            "  variant: 'counter',",
+            "  value: 0,",
+            "  color: 8,",
+            "  inlineMath: false",
+            "});",
+            "",
+            "await setValue('createdTokenId', tokenId);",
+            "console.log('Created token with multiple trackers:', tokenId);"
+          ],
+          "label": "Create Token with Multiple Trackers"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "if (!createdTokenId) {",
+            "  console.error('No token ID available. Create a token first.');",
+            "  return;",
+            "}",
+            "",
+            "// Remove 'Temp HP' tracker",
+            "const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');",
+            "if (removed) {",
+            "  console.log('Removed Temp HP tracker from token');",
+            "} else {",
+            "  console.log('Temp HP tracker not found');",
+            "}"
+          ],
+          "label": "Remove 'Temp HP' Tracker"
+        }
+      ],
+      "_pageIndex": 4
+    }
+  ]
 }

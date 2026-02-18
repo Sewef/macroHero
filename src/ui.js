@@ -4,6 +4,7 @@
  */
 
 import { isDebugEnabled } from "./debugMode.js";
+import { eventBus as EventBus } from "./events/EventBus.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
@@ -21,6 +22,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
 import { resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
+import { eventBus } from "./events/EventBus.js";
 
 /**
  * Broadcast config update notification to refresh pages across the app
@@ -44,6 +46,12 @@ export function initUI(cfg) {
   selectFirstPage();
   // Once initial UI is rendered, remove the loading overlay
   hideLoadingOverlay();
+  
+  // Listen for variable updates from VariableStore and update UI
+  eventBus.on('store:variableResolved', (varName, value, pageIndex) => {
+    debugLog('[UI] Variable updated via EventBus:', varName, '=', value);
+    updateRenderedValue(varName, value);
+  });
 }
 
 // Show a loading overlay and hide content while config is loading
@@ -149,6 +157,8 @@ function selectFirstPage() {
 export async function reloadCurrentPage() {
   if (currentPage !== null && config?.pages?.[currentPage]) {
     const page = config.pages[currentPage];
+    // Force reset resolved variables so they get re-evaluated on reload
+    page._resolved = {};
     await renderPageContent(page);
   }
 }
@@ -237,7 +247,8 @@ export function updateRenderedValue(varName, value) {
     // Update counter input if this is a counter
     const counterInput = element.querySelector(".mh-counter-input");
     if (counterInput) {
-      counterInput.value = value;
+      // Update the displayed value
+      counterInput.value = value ?? 0;
     }
 
     // Update input field if this is an input
@@ -305,11 +316,16 @@ async function evaluateItemText(item, resolvedVars) {
   if (typeof text === 'string' && text.match(/^\{.+\}$/)) {
     const innerExpr = text.slice(1, -1); // Remove outer braces
     
-        // Check if innerExpr is a simple variable reference (just a word)
-        if (/^\w+$/.test(innerExpr) && innerExpr in resolvedVars) {
-          const value = resolvedVars[innerExpr];
-          return (value === null || value === undefined) ? "" : String(value);
-        }
+    // Check if innerExpr is a simple variable reference (just a word)
+    if (/^\w+$/.test(innerExpr)) {
+      const value = resolvedVars[innerExpr];
+      if (value !== undefined) {
+        return (value === null) ? "" : String(value);
+      }
+      // If variable is not yet resolved, return placeholder instead of trying to evaluate
+      return `{${innerExpr}}`;
+    }
+    
     try {
       const res = await evaluateExpression(innerExpr, resolvedVars);
       return (res === null || res === undefined) ? "" : String(res);
@@ -800,9 +816,9 @@ function renderCounter(item, page, inStack = false) {
     return container;
   }
 
-  // Get current value from resolved variables or variable.value
-  const currentValue = page._resolved?.[item.var] ?? variable.value ?? item.min ?? 0;
-  const numValue = Number(currentValue) || 0;
+  // Get initial value
+  const initialValue = page._resolved?.[item.var] ?? variable.value ?? item.min ?? 0;
+  const numValue = Number(initialValue) || 0;
 
   // Label
   const label = document.createElement(inStack ? "span" : "div");
@@ -824,62 +840,96 @@ function renderCounter(item, page, inStack = false) {
   if (variable.min !== undefined) input.min = variable.min;
   if (variable.max !== undefined) input.max = variable.max;
 
-  input.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const currentVal = Number(input.value) || 0;
-    const step = item.step ?? 1;
-    updateValue(currentVal + (e.deltaY < 0 ? step : -step));
-  }, { passive: false });
+  // Helper to apply constraints
+  const applyConstraints = (value) => {
+    let constrained = Number(value) || 0;
+    if (item.min !== undefined && constrained < item.min) constrained = item.min;
+    if (item.max !== undefined && constrained > item.max) constrained = item.max;
+    if (variable.min !== undefined && constrained < variable.min) constrained = variable.min;
+    if (variable.max !== undefined && constrained > variable.max) constrained = variable.max;
+    return constrained;
+  };
 
-  let updateTimer = null;
+  let saveTimer = null;
+  let isUpdatingCounter = false; // Flag to prevent re-rendering during update
 
-  const updateValue = async (newValue) => {
-    const oldValue = Number(input.value) || 0;
+  // Unified counter update with debounced persistence
+  const updateCounterValue = (newValue) => {
+    const constrained = applyConstraints(newValue);
     
-    if (item.min !== undefined && newValue < item.min) newValue = item.min;
-    if (item.max !== undefined && newValue > item.max) newValue = item.max;
-    if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
-    if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
-    if (oldValue === newValue) return;
+    // Only update if value actually changed
+    if (Number(input.value) === constrained) {
+      return;
+    }
     
-    input.value = newValue;
-    // Update the variable definition with the new value
-    variable.value = newValue;
-    delete variable.eval; // Remove eval if it exists, we're storing a static value
-    page._resolved[item.var] = newValue;
+    // Update DOM immediately
+    input.value = constrained;
     
-    // Clear any pending timer to restart the debounce
-    clearTimeout(updateTimer);
+    // Update resolved value IMMEDIATELY - this is the single source of truth
+    page._resolved[item.var] = constrained;
+    variable.value = constrained;
+    delete variable.eval;
     
-    // Schedule evaluation and saving after 300ms of inactivity
-    updateTimer = setTimeout(async () => {
+    isUpdatingCounter = true; // Set flag to prevent re-rendering
+    
+    // Clear any pending save
+    clearTimeout(saveTimer);
+    
+    // Debounce the actual persistence to avoid too many file writes
+    saveTimer = setTimeout(async () => {
       try {
+        // Just save the config, don't re-resolve - we already have the right value
         await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
         await broadcastConfigUpdated();
         
+        // Now resolve DEPENDENT variables only (not this one)
         const dependentVars = getDependentVariables(page.variables, [item.var]);
         if (dependentVars.size > 1) {
           const onVariableResolved = (varName, value) => {
-            page._resolved[varName] = value;
-            updateRenderedValue(varName, value);
+            // Skip updating the counter itself during dependent resolution
+            if (varName !== item.var) {
+              page._resolved[varName] = value;
+              updateRenderedValue(varName, value);
+            }
           };
           await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
         }
       } catch (err) {
-        debugError("[UI] Error in counter update:", err);
+        debugError("[UI] Error saving counter:", err);
+      } finally {
+        isUpdatingCounter = false; // Clear flag when done
       }
-    }, 300);
+    }, 150);
   };
 
+  // Input change/input events - save on any keystroke
+  input.addEventListener('input', (e) => {
+    updateCounterValue(e.target.value);
+  });
+
+  input.addEventListener('change', (e) => {
+    updateCounterValue(e.target.value);
+  });
+
+  // Wheel event - with debounce
+  input.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const step = item.step ?? 1;
+    const newValue = Number(input.value) + (e.deltaY < 0 ? step : -step);
+    updateCounterValue(newValue);
+  }, { passive: false });
+
+  // Increment button - save immediately
   const incrementBtn = document.createElement("button");
   incrementBtn.className = "mh-counter-btn";
   incrementBtn.textContent = "+";
-  incrementBtn.onclick = () => updateValue(Number(input.value) + (item.step ?? 1));
+  incrementBtn.onclick = () => updateCounterValue(Number(input.value) + (item.step ?? 1));
 
+  // Decrement button - save immediately
   const decrementBtn = document.createElement("button");
   decrementBtn.className = "mh-counter-btn";
   decrementBtn.textContent = "-";
-  decrementBtn.onclick = () => updateValue(Number(input.value) - (item.step ?? 1));
+  decrementBtn.onclick = () => updateCounterValue(Number(input.value) - (item.step ?? 1));
 
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "mh-counter-buttons";

@@ -1899,6 +1899,14 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'config',
     'configModal'
   ],
+  'Engine Modules': [
+    'VariableEngine',
+    'ExecutionSandbox',
+    'VariableStore'
+  ],
+  'Event System': [
+    'EventBus'
+  ],
   'Command Modules': [
     'playerMetadata',
     'sceneMetadata',

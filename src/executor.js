@@ -1,12 +1,17 @@
 /**
- * Command Executor - Pure JavaScript Edition
+ * Command Executor - REFACTORED to use VariableEngine and ExecutionSandbox
  * 
- * Commands are pure JavaScript executed with all variables and integrations in scope.
- * No special syntax, no parsing - just evaluate and run.
+ * Simplified execution flow:
+ * 1. Resolve variables used in commands
+ * 2. Execute commands in sandbox
+ * 3. Re-resolve affected variables
+ * 4. Done
  */
 
-import * as math from "mathjs";
-import { resolveVariables, getAffectedVariables, getVariablesUsedInCommands, getDependentVariables } from "./expressionEvaluator.js";
+import { variableEngine } from "./engines/VariableEngine.js";
+import { executionSandbox } from "./engines/ExecutionSandbox.js";
+import { eventBus } from "./events/EventBus.js";
+import { variableStore } from "./stores/VariableStore.js";
 import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable } from "./storage.js";
 import { getExpressionContext } from "./expressionHelpers.js";
@@ -17,89 +22,157 @@ const debugWarn = (...args) => console.warn(...args);
 const debugError = (...args) => console.error(...args);
 
 /**
- * Create execution context with all variables, integrations, and helpers
+ * Handle button click - simplified flow with new architecture
  */
-function createExecutionContext(page) {
-  if (!page) {
-    debugWarn("[EXECUTOR] No page provided");
-    page = { variables: {} };
+export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null) {
+  if (!Array.isArray(commands) || commands.length === 0) {
+    debugWarn("[EXECUTOR] No commands");
+    return;
   }
 
-  const integrations = getExpressionContext();
-  
-  if (!page._modifiedVars) {
+  try {
+    debugLog("[EXECUTOR] Button clicked, executing", commands.length, "command(s)");
+
+    const pageIndex = page?._pageIndex ?? 0;
+    if (!page._modifiedVars) page._modifiedVars = new Set();
+
+    // Step 1: Find variables USED in commands
+    const usedVars = variableEngine.getVariablesUsedInCommands(commands);
+    debugLog("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
+
+    // Step 2: Resolve ONLY variables that are used and not yet resolved
+    const varsToResolveBeforeCmd = new Set();
+    for (const varName of usedVars) {
+      if (varName in (page.variables || {}) && !(varName in (page._resolved || {}))) {
+        varsToResolveBeforeCmd.add(varName);
+      }
+    }
+
+    if (varsToResolveBeforeCmd.size > 0) {
+      debugLog('[EXECUTOR] Pre-resolving', varsToResolveBeforeCmd.size, 'variables');
+      const preResolved = await variableEngine.resolveVariables(
+        page.variables,
+        page._resolved || {},
+        varsToResolveBeforeCmd
+      );
+      page._resolved = { ...page._resolved, ...preResolved };
+    }
+
+    // Step 3: Build execution context with helpers
+    const executionContext = {
+      integrations: getExpressionContext(),
+      variables: page._resolved,
+      helpers: createHelperFunctions(page, pageIndex),
+    };
+
+    // Step 4: Execute commands
+    const script = Array.isArray(commands) ? commands.join('\n') : commands;
+    debugLog('[EXECUTOR] Executing script');
+
+    await executionSandbox.executeCommand(script, executionContext);
+
+    // Step 5: Find variables AFFECTED by commands
+    const affectedVars = variableEngine.getAffectedVariables(commands, page.variables);
+    
+    if (page._modifiedVars.size > 0) {
+      for (const modVar of page._modifiedVars) {
+        affectedVars.add(modVar);
+      }
+    }
+
+    debugLog('[EXECUTOR] Affected variables:', Array.from(affectedVars));
+
+    // Step 6: Re-resolve affected variables and their dependents
+    if (affectedVars.size > 0) {
+      const allAffected = variableEngine.getDependentVariables(page.variables, affectedVars);
+      debugLog('[EXECUTOR] Re-resolving', allAffected.size, 'variables (including dependents)');
+
+      const postResolved = await variableEngine.resolveVariables(
+        page.variables,
+        page._resolved,
+        allAffected
+      );
+
+      // Update store and UI for each resolved variable
+      for (const [varName, value] of Object.entries(postResolved)) {
+        if (allAffected.has(varName)) {
+          page._resolved[varName] = value;
+          updateRenderedValue(varName, value);
+
+          if (onVariableResolved) {
+            onVariableResolved(varName, value);
+          }
+        }
+      }
+    }
+
     page._modifiedVars = new Set();
+    eventBus.emit('executor:commandsCompleted', { commands, page, affected: affectedVars });
+    debugLog('[EXECUTOR] Complete');
+  } catch (error) {
+    debugError('[EXECUTOR] Button action failed:', error);
+    eventBus.emit('executor:commandsFailed', { error });
+    throw error;
   }
+}
 
-  const pageIndex = page?._pageIndex ?? 0;
-  const resolvedVars = page?._resolved ?? {};
-
+/**
+ * Create helper functions available in command context
+ * Uses VariableStore and EventBus for centralized state management
+ */
+function createHelperFunctions(page, pageIndex) {
   return {
-    // Integrations
-    ...integrations,
-    
-    // Math functions
-    ...math,
-    
-    // All resolved variables directly in scope
-    ...resolvedVars,
-    
-    // Helper functions
     setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
         throw new Error(`Variable "${varName}" not found`);
       }
-      
+
       const variable = page.variables[varName];
       let newValue = value;
-      
+
       // Apply constraints
       if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
       if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
-      
-      // Update variable definition - always use value for user-modified values
+
+      // Update variable definition directly in page
       variable.value = newValue;
-      delete variable.eval; // Remove eval if present
-      
-      page._resolved[varName] = newValue;
-      page._modifiedVars.add(varName);
-      
+      delete variable.eval;
+
+      // Update resolved value and emit event (ui.js listeners will handle UI updates)
+      variableStore.setVariableResolved(varName, newValue, pageIndex);
+      variableStore.markVariableModified(varName);
+
+      // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
-      
-      if (typeof updateRenderedValue === 'function') {
-        updateRenderedValue(varName, newValue);
-      }
-      
+
       debugLog('[setValue]', varName, '=', newValue);
       return newValue;
     },
-    
+
     addValue: async (varName, delta) => {
       if (!page.variables || !(varName in page.variables)) {
         throw new Error(`Variable "${varName}" not found`);
       }
-      
+
       const variable = page.variables[varName];
-      const currentValue = Number(page._resolved[varName]) || 0;
+      const currentValue = Number(variableStore.getVariableResolved(varName, pageIndex) ?? page._resolved[varName]) || 0;
       let newValue = currentValue + Number(delta);
-      
+
       // Apply constraints
       if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
       if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
-      
-      // Update variable definition - always use value for user-modified values
+
+      // Update variable definition directly in page
       variable.value = newValue;
-      delete variable.eval; // Remove eval if present
-      
-      page._resolved[varName] = newValue;
-      page._modifiedVars.add(varName);
-      
+      delete variable.eval;
+
+      // Update resolved value and emit event (ui.js listeners will handle UI updates)
+      variableStore.setVariableResolved(varName, newValue, pageIndex);
+      variableStore.markVariableModified(varName);
+
+      // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
-      
-      if (typeof updateRenderedValue === 'function') {
-        updateRenderedValue(varName, newValue);
-      }
-      
+
       debugLog('[addValue]', varName, '+=', delta, '=>', newValue);
       return newValue;
     },
@@ -107,131 +180,27 @@ function createExecutionContext(page) {
 }
 
 /**
- * Execute a command as pure JavaScript
- * Commands can be:
- * - A single string (one line of code)
- * - An array of strings (multiline script, joined with \n)
+ * Legacy wrapper for backwards compatibility
  */
 export async function executeCommand(command, page) {
-  try {
-    // Convert array of lines to single script
-    const script = Array.isArray(command) ? command.join('\n') : command;
-    
-    debugLog('[EXECUTOR] Executing:', script);
-    
-    if (!page) {
-      throw new Error("No page provided");
-    }
-
-    // Create execution context
-    const context = createExecutionContext(page);
-    
-    // Execute as async function with proper context binding
-    const contextKeys = Object.keys(context);
-    const func = new Function('context', `
-      const { ${contextKeys.join(', ')} } = context;
-      return (async () => { ${script} })();
-    `);
-    const result = await func(context);
-    
-    debugLog('[EXECUTOR] Result:', result);
-    return result;
-  } catch (error) {
-    debugError('[EXECUTOR] Error:', error);
-    throw error;
-  }
+  const script = Array.isArray(command) ? command.join('\n') : command;
+  const context = {
+    variables: page?._resolved || {},
+    helpers: createHelperFunctions(page, page?._pageIndex ?? 0),
+  };
+  return executionSandbox.executeCommand(script, context);
 }
 
 /**
- * Execute multiple commands
- * If commands is an array, it's treated as a single multiline script
+ * Legacy wrapper for backwards compatibility
  */
 export async function executeCommands(commands, page) {
-  // Treat the entire commands array as a single script
   try {
-    const result = await executeCommand(commands, page);
-    return [{ ok: true, result }];
+    await executeCommand(commands, page);
+    return [{ ok: true }];
   } catch (error) {
     debugError('[EXECUTOR] Command failed:', error);
     return [{ ok: false, error: error.message }];
-  }
-}
-
-/**
- * Handle button click
- */
-export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null) {
-  if (!Array.isArray(commands) || commands.length === 0) {
-    debugWarn("[EXECUTOR] No commands");
-    return;
-  }
-  
-  try {
-    debugLog("[EXECUTOR] Button clicked");
-    
-    page._modifiedVars = new Set();
-    const oldResolved = { ...page._resolved };
-    
-    // OPTIMIZATION: Only resolve variables that are USED in the commands
-    // This is much faster than resolving ALL variables
-    const usedVars = getVariablesUsedInCommands(commands);
-    
-    // Filter to only variables that exist in the page config
-    const varsToResolveBeforeCmd = new Set();
-    for (const varName of usedVars) {
-      if (varName in page.variables && !(varName in page._resolved)) {
-        varsToResolveBeforeCmd.add(varName);
-      }
-    }
-    
-    // Resolve only the needed variables before command execution
-    if (varsToResolveBeforeCmd.size > 0) {
-      debugLog('[EXECUTOR] Pre-resolving', varsToResolveBeforeCmd.size, 'variables used in commands');
-      const preResolved = await resolveVariables(page.variables, page._resolved, (varName, value) => {
-        page._resolved[varName] = value;
-        if (onVariableResolved) {
-          onVariableResolved(varName, value);
-        }
-      }, varsToResolveBeforeCmd);
-      page._resolved = { ...page._resolved, ...preResolved };
-    }
-    
-    // Execute commands
-    await executeCommands(commands, page);
-    
-    // Re-resolve ONLY affected variables (those that might have changed due to commands)
-    const affectedVars = getAffectedVariables(commands, page.variables);
-    const directlyModified = new Set();
-    
-    if (page._modifiedVars?.size > 0) {
-      for (const modifiedVar of page._modifiedVars) {
-        directlyModified.add(modifiedVar);
-        affectedVars.add(modifiedVar);
-      }
-    }
-    
-    const allAffected = getDependentVariables(page.variables, affectedVars);
-    
-    if (allAffected.size > 0) {
-      debugLog('[EXECUTOR] Post-resolving', allAffected.size, 'affected variables');
-      const currentResolved = { ...page._resolved };
-      const updatedResolved = await resolveVariables(page.variables, currentResolved, (varName, value) => {
-        const oldValue = currentResolved[varName];
-        if (directlyModified.has(varName) || (oldValue !== value && onVariableResolved)) {
-          if (onVariableResolved) {
-            onVariableResolved(varName, value);
-          }
-        }
-      }, allAffected);
-      
-      page._resolved = updatedResolved;
-    }
-    
-    page._modifiedVars = new Set();
-    debugLog('[EXECUTOR] Complete');
-  } catch (error) {
-    debugError('[EXECUTOR] Button action failed:', error);
-    throw error;
   }
 }
 
