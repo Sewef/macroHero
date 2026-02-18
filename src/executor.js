@@ -172,13 +172,34 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     page._modifiedVars = new Set();
     const oldResolved = { ...page._resolved };
     
-    // OPTIMIZATION: Skip re-resolving ALL variables before command execution
-    // We only need to re-resolve AFTER commands execute to catch side effects
+    // OPTIMIZATION: Only resolve variables that are USED in the commands
+    // This is much faster than resolving ALL variables
+    const usedVars = getVariablesUsedInCommands(commands);
+    
+    // Filter to only variables that exist in the page config
+    const varsToResolveBeforeCmd = new Set();
+    for (const varName of usedVars) {
+      if (varName in page.variables && !(varName in page._resolved)) {
+        varsToResolveBeforeCmd.add(varName);
+      }
+    }
+    
+    // Resolve only the needed variables before command execution
+    if (varsToResolveBeforeCmd.size > 0) {
+      debugLog('[EXECUTOR] Pre-resolving', varsToResolveBeforeCmd.size, 'variables used in commands');
+      const preResolved = await resolveVariables(page.variables, page._resolved, (varName, value) => {
+        page._resolved[varName] = value;
+        if (onVariableResolved) {
+          onVariableResolved(varName, value);
+        }
+      }, varsToResolveBeforeCmd);
+      page._resolved = { ...page._resolved, ...preResolved };
+    }
     
     // Execute commands
     await executeCommands(commands, page);
     
-    // Re-resolve ONLY affected variables
+    // Re-resolve ONLY affected variables (those that might have changed due to commands)
     const affectedVars = getAffectedVariables(commands, page.variables);
     const directlyModified = new Set();
     
@@ -192,7 +213,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     const allAffected = getDependentVariables(page.variables, affectedVars);
     
     if (allAffected.size > 0) {
-      debugLog('[EXECUTOR] Re-resolving', allAffected.size, 'affected variables');
+      debugLog('[EXECUTOR] Post-resolving', allAffected.size, 'affected variables');
       const currentResolved = { ...page._resolved };
       const updatedResolved = await resolveVariables(page.variables, currentResolved, (varName, value) => {
         const oldValue = currentResolved[varName];
