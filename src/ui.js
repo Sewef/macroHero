@@ -6,6 +6,14 @@
 import { isDebugEnabled } from "./debugMode.js";
 import { eventBus as EventBus } from "./events/EventBus.js";
 import { variableStore } from "./stores/VariableStore.js";
+import { renderCounter } from "./ui/renderCounter.js";
+import { renderInput } from "./ui/renderInput.js";
+import { renderCheckbox } from "./ui/renderCheckbox.js";
+import { renderButton } from "./ui/renderButton.js";
+import { renderText } from "./ui/renderText.js";
+import { renderTitle } from "./ui/renderTitle.js";
+import { renderRow } from "./ui/renderRow.js";
+import { renderStack } from "./ui/renderStack.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
@@ -426,34 +434,34 @@ function renderLayout(container, layoutItems, page) {
 function renderLayoutElement(layoutItem, page) {
   switch (layoutItem.type) {
     case "title":
-      return renderTitle(layoutItem, page);
+      return renderTitleElement(layoutItem, page);
     
     case "row":
-      return renderRow(layoutItem, page);
+      return renderRowElement(layoutItem, page);
 
     case "stack":
-      return renderStack(layoutItem, page);
+      return renderStackElement(layoutItem, page);
     
     case "button":
-      return renderButton(layoutItem, page);
+      return renderButtonElement(layoutItem, page);
     
     case "value":
       return renderValue(layoutItem, page);
     
     case "input":
-      return renderInput(layoutItem, page);
+      return renderInputElement(layoutItem, page);
     
     case "checkbox":
-      return renderCheckbox(layoutItem, page);
+      return renderCheckboxElement(layoutItem, page);
     
     case "counter":
-      return renderCounter(layoutItem, page);
+      return renderCounterElement(layoutItem, page);
     
     case "dropdown":
       return renderDropdown(layoutItem, page);
     
     case "text":
-      return renderText(layoutItem, page);
+      return renderTextElement(layoutItem, page);
     
     case "divider":
       return renderDivider();
@@ -468,141 +476,40 @@ function renderLayoutElement(layoutItem, page) {
 // RENDER HELPERS - Layout Elements
 // ============================================
 
-function renderTitle(item, page) {
-  const title = document.createElement("h3");
-  title.className = "mh-layout-title";
-
-  // Title uses item.text; evaluate immediately if dynamic
-  if (!evaluateAndSetElementText(title, item, page)) {
-    title.textContent = item.text ?? "";
-  }
-
-  return title;
+function renderTitleElement(item, page) {
+  return renderTitle(item, page, {
+    evaluateAndSetElementText
+  });
 }
 
-function renderRow(item, page) {
-  const row = document.createElement("div");
-  row.className = "mh-layout-row";
-
-  if (item.children && Array.isArray(item.children)) {
-    // Use a fragment to batch DOM updates for row children
-    const frag = document.createDocumentFragment();
-    item.children.forEach(child => {
-      const element = renderLayoutElement(child, page);
-      if (element) {
-        frag.appendChild(element);
-      }
-    });
-    row.appendChild(frag);
-  }
-
-  return row;
+function renderRowElement(item, page) {
+  return renderRow(item, page, {
+    renderLayoutElement
+  });
 }
 
-function renderStack(item, page) {
-  const container = document.createElement("div");
-  container.className = "mh-layout-stack";
-  container.style.margin = '12px 0';
-
-  // Arrange children vertically (one per row). Use a fixed gap between items.
-  container.style.display = 'flex';
-  container.style.flexDirection = 'column';
-  container.style.gap = '8px';
-
-  // Make the stack act like a normal row child: allow it to flex but prevent overflow
-  container.style.flex = item.flex || '1 1 0';
-  container.style.minWidth = '0';
-  // Stretch children to fill the stack width by default
-  container.style.alignItems = 'stretch';
-
-  if (item.children && Array.isArray(item.children)) {
-    item.children.forEach((child) => {
-        let element;
-        // If child is a value, call renderValue with inStack=true so it renders horizontally
-        if (child.type === 'value') {
-          element = renderValue(child, page, true);
-        } else if (child.type === 'input') {
-          // Render input with inStack=true so it becomes inline (label + input)
-          element = renderInput(child, page, true);
-        } else if (child.type === 'counter') {
-          // Render counter compactly inside stacks
-          element = renderCounter(child, page, true);
-        } else {
-          element = renderLayoutElement(child, page);
-        }
-      if (element) {
-        // Ensure child occupies full width of the stack column
-        element.style.width = '100%';
-        element.style.boxSizing = 'border-box';
-        element.classList.add('mh-stack-compact');
-        // If this is a value item, add horizontal class for styling
-        if (child.type === 'value') {
-          element.classList.add('mh-stack-horizontal-value');
-        }
-        container.appendChild(element);
-      }
-    });
-  }
-
-  return container;
+function renderStackElement(item, page) {
+  return renderStack(item, page, {
+    renderValue,
+    renderInputElement,
+    renderCounterElement,
+    renderLayoutElement
+  });
 }
 
-function renderButton(item, page) {
-  const btn = document.createElement("button");
-  btn.className = "mh-layout-button";
-
-  // Button uses label with {variable} placeholders
-  if (item.label && item.label.includes('{')) {
-    btn.textContent = "";
-    renderedExpressionElements.push({ element: btn, item, page });
-    const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
-    evaluateItemText(item, resolvedVars)
-      .then(res => { btn.textContent = res; })
-      .catch(err => { debugError('[UI] Error evaluating button:', err); });
-  } else {
-    btn.textContent = item.label ?? "Button";
-  }
-
-  // Handle commands array
-  if (item.commands && Array.isArray(item.commands) && item.commands.length > 0) {
-    btn.onclick = async () => {
-      btn.disabled = true;
-      try {
-        const pageObj = (currentPage !== null && currentPage !== undefined) ? findPageByIndex(currentPage) : page;
-        
-        // Store old resolved values to detect changes
-        const oldResolved = { ...pageObj._resolved };
-        
-        // Create callback to update UI as variables resolve
-        const onVariableResolved = (varName, value) => {
-          const oldValue = oldResolved[varName];
-          // Only update if value actually changed
-          if (oldValue !== value) {
-            pageObj._resolved[varName] = value;
-            updateRenderedValue(varName, value);
-          }
-        };
-        
-        await handleButtonClick(item.commands, pageObj, globalVariables, onVariableResolved);
-        
-        // Auto-save config after commands that may have modified variables
-        await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config after button:", err));
-        await broadcastConfigUpdated();
-        
-        // No need to re-render the entire page - individual values were updated via callback
-      } catch (error) {
-        debugError("Button action error:", error);
-      } finally {
-        btn.disabled = false;
-      }
-    };
-    btn.title = `${item.commands.length} command(s)`;
-  } else {
-    btn.disabled = true;
-    btn.title = "No commands defined";
-  }
-
-  return btn;
+function renderButtonElement(item, page) {
+  return renderButton(item, page, {
+    saveConfig,
+    broadcastConfigUpdated,
+    handleButtonClick,
+    findPageByIndex,
+    updateRenderedValue,
+    evaluateItemText,
+    globalVariables,
+    renderedExpressionElements,
+    currentPage,
+    config
+  });
 }
 
 /**
@@ -675,127 +582,31 @@ function renderValue(item, page, inStack = false) {
   return valueDiv;
 }
 
-function renderText(item, page) {
-  const text = document.createElement("div");
-  text.className = "mh-layout-text";
-
-  // Text uses item.content/text; evaluate immediately if dynamic
-  if (!evaluateAndSetElementText(text, item, page)) {
-    text.textContent = item.content ?? item.text ?? "";
-  }
-
-  return text;
+function renderTextElement(item, page) {
+  return renderText(item, page, {
+    evaluateAndSetElementText
+  });
 }
 
-function renderInput(item, page, inStack = false) {
-  const container = document.createElement("div");
-  container.className = "mh-layout-input";
-
-  const variable = page.variables?.[item.var];
-  if (!variable) {
-    container.innerHTML = `<div class=\"mh-value-error\">Variable not found: ${item.var}</div>`;
-    return container;
-  }
-
-  const label = document.createElement(inStack ? "span" : "label");
-  label.className = "mh-input-label";
-  
-  if (!evaluateAndSetElementText(label, item, page)) {
-    label.textContent = inStack ? `${item.label ?? item.var}:` : (item.label ?? item.var);
-  }
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "mh-input-field";
-  input.placeholder = item.placeholder ?? "Enter value";
-  // Get current value from resolved or variable.value/eval
-  const currentValue = (page._resolved && page._resolved[item.var] !== undefined)
-    ? page._resolved[item.var]
-    : (variable.value ?? variable.eval ?? "");
-  input.value = currentValue;
-
-  renderedValueElements[item.var] = container;
-
-  input.onblur = () => {
-    const newValue = input.value;
-    // Store as value (not eval since it's user input)
-    variable.value = newValue;
-    delete variable.eval; // Remove eval if it exists
-    page._resolved[item.var] = newValue;
-    saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
-  };
-
-  if (inStack) {
-    container.style.display = 'flex';
-    container.style.flexDirection = 'row';
-    container.style.alignItems = 'center';
-    container.style.gap = '8px';
-    container.appendChild(label);
-    container.appendChild(input);
-  } else {
-    container.appendChild(label);
-    container.appendChild(input);
-  }
-  
-  return container;
+function renderInputElement(item, page, inStack = false) {
+  return renderInput(item, page, {
+    saveConfig,
+    evaluateAndSetElementText,
+    renderedValueElements
+  }, inStack);
 }
 
-function renderCheckbox(item, page) {
-  const container = document.createElement("div");
-  container.className = "mh-layout-checkbox";
-
-  const variable = page.variables?.[item.var];
-  if (!variable) {
-    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
-    return container;
-  }
-
-  const label = document.createElement("label");
-  label.className = "mh-checkbox-label";
-
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.className = "mh-checkbox-field";
-  
-  renderedCheckboxElements[item.var] = checkbox;
-  
-  // Get current value from resolved variables or variable.value
-  const currentValue = page._resolved?.[item.var] ?? variable.value ?? false;
-  checkbox.checked = Boolean(currentValue);
-  
-  checkbox.onchange = async () => {
-    const newValue = checkbox.checked;
-    // Update the variable definition with the new value
-    variable.value = newValue;
-    delete variable.eval; // Remove eval if it exists, we're storing a static value
-    page._resolved[item.var] = newValue;
-
-    try {
-      await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
-      await broadcastConfigUpdated();
-
-      const dependentVars = getDependentVariables(page.variables, [item.var]);
-      if (dependentVars.size > 0) {
-        const onVariableResolved = (varName, value) => {
-          page._resolved[varName] = value;
-          updateRenderedValue(varName, value);
-        };
-        await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
-      }
-    } catch (err) {
-      debugError('[UI] Error handling checkbox change:', err);
-    }
-  };
-
-  const text = document.createElement("span");
-  if (!evaluateAndSetElementText(text, item, page)) {
-    text.textContent = item.label ?? item.var;
-  }
-
-  label.appendChild(checkbox);
-  label.appendChild(text);
-  container.appendChild(label);
-  return container;
+function renderCheckboxElement(item, page) {
+  return renderCheckbox(item, page, {
+    saveConfig,
+    broadcastConfigUpdated,
+    getDependentVariables,
+    resolveVariables,
+    updateRenderedValue,
+    globalVariables,
+    evaluateAndSetElementText,
+    renderedCheckboxElements
+  });
 }
 
 function renderDivider() {
@@ -804,180 +615,17 @@ function renderDivider() {
   return divider;
 }
 
-function renderCounter(item, page, inStack = false) {
-  const container = document.createElement("div");
-  container.className = "mh-layout-counter";
-  if (inStack) {
-    container.classList.add("mh-stack-counter");
-  }
-
-  const variable = page.variables?.[item.var];
-  if (!variable) {
-    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
-    return container;
-  }
-
-  // Get initial value
-  const initialValue = page._resolved?.[item.var] ?? variable.value ?? item.min ?? 0;
-  const numValue = Number(initialValue) || 0;
-
-  // Label
-  const label = document.createElement(inStack ? "span" : "div");
-  label.className = "mh-counter-label";
-  
-  if (!evaluateAndSetElementText(label, item, page)) {
-    label.textContent = item.label ?? item.var;
-  }
-
-  // Counter controls
-  const controls = document.createElement("div");
-  controls.className = "mh-counter-controls";
-
-  const input = document.createElement("input");
-  input.type = "number";
-  input.className = "mh-counter-input";
-  input.value = numValue;
-  
-  if (variable.min !== undefined) input.min = variable.min;
-  if (variable.max !== undefined) input.max = variable.max;
-
-  // Helper to apply constraints
-  const applyConstraints = (value) => {
-    let constrained = Number(value) || 0;
-    if (item.min !== undefined && constrained < item.min) constrained = item.min;
-    if (item.max !== undefined && constrained > item.max) constrained = item.max;
-    if (variable.min !== undefined && constrained < variable.min) constrained = variable.min;
-    if (variable.max !== undefined && constrained > variable.max) constrained = variable.max;
-    return constrained;
-  };
-
-  let saveTimer = null;
-  let isUpdatingCounter = false; // Flag to prevent re-rendering during update
-  let lastSavedValue = numValue; // Track last saved value to detect actual changes
-
-  // Unified counter update with debounced persistence
-  const updateCounterValue = (newValue) => {
-    const constrained = applyConstraints(newValue);
-    
-    // Only update if value actually changed from what we last saved
-    if (constrained === lastSavedValue) {
-      return;
-    }
-    
-    debugLog("[Counter] Value changed:", item.var, "=>", constrained);
-    
-    // Update DOM immediately
-    input.value = constrained;
-    lastSavedValue = constrained; // Update tracking
-    
-    // Update resolved value IMMEDIATELY - this is the single source of truth
-    page._resolved[item.var] = constrained;
-    variable.value = constrained;
-    delete variable.eval;
-    
-    // Notify VariableStore so integrations know about the change
-    if (page._pageIndex !== undefined) {
-      variableStore.setVariableResolved(item.var, constrained, page._pageIndex);
-      variableStore.markVariableModified(item.var);
-      debugLog("[Counter] VariableStore notified for:", item.var);
-    }
-    
-    // Notify EventBus locally
-    EventBus.emit('store:variableResolved', item.var, constrained, page._pageIndex);
-    
-    isUpdatingCounter = true; // Set flag to prevent re-rendering
-    
-    // Clear any pending save
-    clearTimeout(saveTimer);
-    
-    // Debounce the actual persistence to avoid too many file writes
-    saveTimer = setTimeout(async () => {
-      try {
-        debugLog("[Counter] Debounce triggered for:", item.var);
-        
-        // Just save the config, don't re-resolve - we already have the right value
-        await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
-        await broadcastConfigUpdated();
-        
-        // Clear cached values for dependent variables so they get re-evaluated
-        const dependentVars = getDependentVariables(page.variables, [item.var]);
-        debugLog("[Counter] Dependent variables:", Array.from(dependentVars));
-        
-        for (const depVar of dependentVars) {
-          if (depVar !== item.var) {
-            delete page._resolved[depVar];
-          }
-        }
-        
-        // Re-resolve all dependent variables
-        if (dependentVars.size > 1) {
-          debugLog("[Counter] Resolving", dependentVars.size, "dependent variables...");
-          const onVariableResolved = (varName, value) => {
-            debugLog("[Counter] Resolved dependent:", varName, "=>", value);
-            page._resolved[varName] = value;
-            updateRenderedValue(varName, value);
-          };
-          await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
-        }
-      } catch (err) {
-        debugError("[UI] Error saving counter:", err);
-      } finally {
-        isUpdatingCounter = false; // Clear flag when done
-      }
-    }, 150);
-  };
-
-  // Input change/input events - save on any keystroke
-  input.addEventListener('input', (e) => {
-    debugLog("[Counter DEBUG] Input event fired on", item.var, "new value:", e.target.value);
-    updateCounterValue(e.target.value);
-  });
-
-  input.addEventListener('change', (e) => {
-    debugLog("[Counter DEBUG] Change event fired on", item.var, "new value:", e.target.value);
-    updateCounterValue(e.target.value);
-  });
-
-  // Wheel event - with debounce
-  input.addEventListener('wheel', (e) => {
-    debugLog("[Counter DEBUG] Wheel event fired on", item.var);
-    e.preventDefault();
-    const step = item.step ?? 1;
-    const newValue = Number(input.value) + (e.deltaY < 0 ? step : -step);
-    updateCounterValue(newValue);
-  }, { passive: false });
-
-  // Increment button - save immediately
-  const incrementBtn = document.createElement("button");
-  incrementBtn.className = "mh-counter-btn";
-  incrementBtn.textContent = "+";
-  incrementBtn.onclick = () => {
-    debugLog("[Counter DEBUG] Increment button clicked on", item.var);
-    updateCounterValue(Number(input.value) + (item.step ?? 1));
-  };
-
-  // Decrement button - save immediately
-  const decrementBtn = document.createElement("button");
-  decrementBtn.className = "mh-counter-btn";
-  decrementBtn.textContent = "-";
-  decrementBtn.onclick = () => {
-    debugLog("[Counter DEBUG] Decrement button clicked on", item.var);
-    updateCounterValue(Number(input.value) - (item.step ?? 1));
-  };
-
-  const buttonContainer = document.createElement("div");
-  buttonContainer.className = "mh-counter-buttons";
-  buttonContainer.appendChild(incrementBtn);
-  buttonContainer.appendChild(decrementBtn);
-
-  controls.appendChild(input);
-  controls.appendChild(buttonContainer);
-
-  container.appendChild(label);
-  container.appendChild(controls);
-
-  renderedValueElements[item.var] = container;
-  return container;
+function renderCounterElement(item, page, inStack = false) {
+  return renderCounter(item, page, {
+    saveConfig,
+    broadcastConfigUpdated,
+    getDependentVariables,
+    resolveVariables,
+    updateRenderedValue,
+    globalVariables,
+    evaluateAndSetElementText,
+    renderedValueElements
+  }, inStack);
 }
 
 function renderDropdown(item, page) {
