@@ -5,6 +5,7 @@
 
 import { isDebugEnabled } from "./debugMode.js";
 import { eventBus as EventBus } from "./events/EventBus.js";
+import { variableStore } from "./stores/VariableStore.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
@@ -852,23 +853,37 @@ function renderCounter(item, page, inStack = false) {
 
   let saveTimer = null;
   let isUpdatingCounter = false; // Flag to prevent re-rendering during update
+  let lastSavedValue = numValue; // Track last saved value to detect actual changes
 
   // Unified counter update with debounced persistence
   const updateCounterValue = (newValue) => {
     const constrained = applyConstraints(newValue);
     
-    // Only update if value actually changed
-    if (Number(input.value) === constrained) {
+    // Only update if value actually changed from what we last saved
+    if (constrained === lastSavedValue) {
       return;
     }
     
+    debugLog("[Counter] Value changed:", item.var, "=>", constrained);
+    
     // Update DOM immediately
     input.value = constrained;
+    lastSavedValue = constrained; // Update tracking
     
     // Update resolved value IMMEDIATELY - this is the single source of truth
     page._resolved[item.var] = constrained;
     variable.value = constrained;
     delete variable.eval;
+    
+    // Notify VariableStore so integrations know about the change
+    if (page._pageIndex !== undefined) {
+      variableStore.setVariableResolved(item.var, constrained, page._pageIndex);
+      variableStore.markVariableModified(item.var);
+      debugLog("[Counter] VariableStore notified for:", item.var);
+    }
+    
+    // Notify EventBus locally
+    EventBus.emit('store:variableResolved', item.var, constrained, page._pageIndex);
     
     isUpdatingCounter = true; // Set flag to prevent re-rendering
     
@@ -878,19 +893,29 @@ function renderCounter(item, page, inStack = false) {
     // Debounce the actual persistence to avoid too many file writes
     saveTimer = setTimeout(async () => {
       try {
+        debugLog("[Counter] Debounce triggered for:", item.var);
+        
         // Just save the config, don't re-resolve - we already have the right value
         await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
         await broadcastConfigUpdated();
         
-        // Now resolve DEPENDENT variables only (not this one)
+        // Clear cached values for dependent variables so they get re-evaluated
         const dependentVars = getDependentVariables(page.variables, [item.var]);
+        debugLog("[Counter] Dependent variables:", Array.from(dependentVars));
+        
+        for (const depVar of dependentVars) {
+          if (depVar !== item.var) {
+            delete page._resolved[depVar];
+          }
+        }
+        
+        // Re-resolve all dependent variables
         if (dependentVars.size > 1) {
+          debugLog("[Counter] Resolving", dependentVars.size, "dependent variables...");
           const onVariableResolved = (varName, value) => {
-            // Skip updating the counter itself during dependent resolution
-            if (varName !== item.var) {
-              page._resolved[varName] = value;
-              updateRenderedValue(varName, value);
-            }
+            debugLog("[Counter] Resolved dependent:", varName, "=>", value);
+            page._resolved[varName] = value;
+            updateRenderedValue(varName, value);
           };
           await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
         }
@@ -904,15 +929,18 @@ function renderCounter(item, page, inStack = false) {
 
   // Input change/input events - save on any keystroke
   input.addEventListener('input', (e) => {
+    debugLog("[Counter DEBUG] Input event fired on", item.var, "new value:", e.target.value);
     updateCounterValue(e.target.value);
   });
 
   input.addEventListener('change', (e) => {
+    debugLog("[Counter DEBUG] Change event fired on", item.var, "new value:", e.target.value);
     updateCounterValue(e.target.value);
   });
 
   // Wheel event - with debounce
   input.addEventListener('wheel', (e) => {
+    debugLog("[Counter DEBUG] Wheel event fired on", item.var);
     e.preventDefault();
     const step = item.step ?? 1;
     const newValue = Number(input.value) + (e.deltaY < 0 ? step : -step);
@@ -923,13 +951,19 @@ function renderCounter(item, page, inStack = false) {
   const incrementBtn = document.createElement("button");
   incrementBtn.className = "mh-counter-btn";
   incrementBtn.textContent = "+";
-  incrementBtn.onclick = () => updateCounterValue(Number(input.value) + (item.step ?? 1));
+  incrementBtn.onclick = () => {
+    debugLog("[Counter DEBUG] Increment button clicked on", item.var);
+    updateCounterValue(Number(input.value) + (item.step ?? 1));
+  };
 
   // Decrement button - save immediately
   const decrementBtn = document.createElement("button");
   decrementBtn.className = "mh-counter-btn";
   decrementBtn.textContent = "-";
-  decrementBtn.onclick = () => updateCounterValue(Number(input.value) - (item.step ?? 1));
+  decrementBtn.onclick = () => {
+    debugLog("[Counter DEBUG] Decrement button clicked on", item.var);
+    updateCounterValue(Number(input.value) - (item.step ?? 1));
+  };
 
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "mh-counter-buttons";
