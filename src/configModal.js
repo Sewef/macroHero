@@ -594,7 +594,7 @@ function renderEditor(config) {
             ${page.layout ? page.layout.length : 0} layout items
           </div>
           <div style="margin-bottom: 16px;">
-            <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Variables</h4>
+            <h4 style="margin: 8px 0; font-size: 0.95em; color: #c8adff;">Variables</h4>
             <div class="variables-list" data-page-index="${index}">
               ${page.variables ? Object.entries(page.variables).map(([key, value]) => {
                 // Only show definition fields
@@ -623,7 +623,7 @@ function renderEditor(config) {
             </div>
             <button type="button" class="btn-small" onclick="event.stopPropagation(); addVariable(${index})" style="margin-top: 8px;">+ Variable</button>
           </div>
-          <h4 style="margin: 8px 0; font-size: 0.95em; color: #4ea1ff;">Layout</h4>
+          <h4 style="margin: 8px 0; font-size: 0.95em; color: #c8adff;">Layout</h4>
           ${layoutItemsHtml ? `<div class="layout-items" data-page-index="${index}">${layoutItemsHtml}</div>` : ''}
           <button type="button" class="btn-small add-element-btn" onclick="event.stopPropagation(); addElement(${index})" style="margin-top: 12px;">+ Element</button>
         </div>
@@ -1351,10 +1351,10 @@ window.updateElementFields = function(existingElement = null) {
       html = `<p style="color: #888;">Dividers have no properties.</p>`;
       break;
     case 'row':
-      html = `<p style="color: #4ea1ff;">Row is a container. Use the "+ Item" button to add elements to the row.</p>`;
+      html = `<p style="color: #c8adff;">Row is a container. Use the "+ Item" button to add elements to the row.</p>`;
       break;
     case 'stack':
-      html = `<p style="color: #4ea1ff;">Stack is a vertical container. Use the "+ Item" button to add elements to the stack.</p>`;
+      html = `<p style="color: #c8adff;">Stack is a vertical container. Use the "+ Item" button to add elements to the stack.</p>`;
       break;
   }
   
@@ -1653,7 +1653,7 @@ function renderTokenHelperList(items) {
     header.style.marginBottom = '8px';
 
     const title = document.createElement('div');
-    title.innerHTML = `<strong style="color:#4ea1ff">${layer}</strong> — ${groups[layer].length} items`;
+    title.innerHTML = `<strong style="color:#c8adff">${layer}</strong> — ${groups[layer].length} items`;
     header.appendChild(title);
 
     const expandAllBtn = document.createElement('div');
