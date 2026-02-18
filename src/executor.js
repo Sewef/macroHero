@@ -172,20 +172,13 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     page._modifiedVars = new Set();
     const oldResolved = { ...page._resolved };
     
-    // Resolve all variables
-    const freshResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
-      const oldValue = oldResolved[varName];
-      if (oldValue !== value && onVariableResolved) {
-        onVariableResolved(varName, value);
-      }
-    });
-    
-    page._resolved = { ...page._resolved, ...freshResolved };
+    // OPTIMIZATION: Skip re-resolving ALL variables before command execution
+    // We only need to re-resolve AFTER commands execute to catch side effects
     
     // Execute commands
     await executeCommands(commands, page);
     
-    // Re-resolve affected variables
+    // Re-resolve ONLY affected variables
     const affectedVars = getAffectedVariables(commands, page.variables);
     const directlyModified = new Set();
     
@@ -199,9 +192,9 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     const allAffected = getDependentVariables(page.variables, affectedVars);
     
     if (allAffected.size > 0) {
-      debugLog('[EXECUTOR] Re-resolving', allAffected.size, 'variables');
+      debugLog('[EXECUTOR] Re-resolving', allAffected.size, 'affected variables');
       const currentResolved = { ...page._resolved };
-      const updatedResolved = await resolveVariables(page.variables, globalVariables, (varName, value) => {
+      const updatedResolved = await resolveVariables(page.variables, currentResolved, (varName, value) => {
         const oldValue = currentResolved[varName];
         if (directlyModified.has(varName) || (oldValue !== value && onVariableResolved)) {
           if (onVariableResolved) {

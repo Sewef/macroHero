@@ -169,7 +169,27 @@ async function renderPageContent(page) {
     page._resolved = { ...globalVariables, ...page._resolved };
   }
 
-  // Resolve variables BEFORE rendering to avoid undefined variable errors
+  // IMMEDIATE RENDER: Build and display content right away with default/loading values
+  // This allows the page to be visible instantly, even if variables are still resolving
+  const tempContainer = document.createElement('div');
+  
+  if (page.layout && Array.isArray(page.layout)) {
+    renderLayout(tempContainer, page.layout, page);
+  } else {
+    const emptyMsg = document.createElement("i");
+    emptyMsg.textContent = "No layout defined for this page";
+    tempContainer.appendChild(emptyMsg);
+  }
+  
+  // Replace content in one atomic operation to minimize visual disruption
+  container.innerHTML = "";
+  // Transfer all children from temp to container
+  while (tempContainer.firstChild) {
+    container.appendChild(tempContainer.firstChild);
+  }
+
+  // BACKGROUND RESOLUTION: Resolve variables asynchronously after page is rendered
+  // This allows the UI to be immediately visible while variables are being computed
   if (page.variables && Object.keys(page.variables).length > 0) {
     // Find which variables need resolution (not already in _resolved)
     const varsToResolve = new Set();
@@ -187,28 +207,17 @@ async function renderPageContent(page) {
         updateRenderedValue(varName, value);
       };
       
-      // Resolve only the needed variables, passing existing _resolved as base
-      const allResolved = await resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve);
-      page._resolved = allResolved;
+      // Resolve the needed variables in the background, not blocking the initial render
+      // Pass existing _resolved as base to avoid re-evaluating already-resolved vars
+      resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve)
+        .then(allResolved => {
+          page._resolved = allResolved;
+          debugLog('[UI] Background variable resolution complete for page');
+        })
+        .catch(err => {
+          debugError('[UI] Error during background variable resolution:', err);
+        });
     }
-  }
-
-  // Build new content in a temporary container (off-DOM for smoother rendering)
-  const tempContainer = document.createElement('div');
-  
-  if (page.layout && Array.isArray(page.layout)) {
-    renderLayout(tempContainer, page.layout, page);
-  } else {
-    const emptyMsg = document.createElement("i");
-    emptyMsg.textContent = "No layout defined for this page";
-    tempContainer.appendChild(emptyMsg);
-  }
-  
-  // Replace content in one atomic operation to minimize visual disruption
-  container.innerHTML = "";
-  // Transfer all children from temp to container
-  while (tempContainer.firstChild) {
-    container.appendChild(tempContainer.firstChild);
   }
 }
 

@@ -16,6 +16,9 @@ import { isDebugEnabled } from "./debugMode.js";
 const debugLog = (...args) => isDebugEnabled('expressionEvaluator') && console.log(...args);
 const debugError = (...args) => console.error(...args);
 
+// Cache for dependency graphs per variablesConfig (using WeakMap to avoid memory leaks)
+const dependencyCache = new WeakMap();
+
 /**
  * Evaluate a single variable expression
  * @param {string|number|boolean} expression - The expression to evaluate
@@ -76,17 +79,16 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
 }
 
 /**
- * Resolve all variables in dependency order
+ * Build and cache dependency graph for variables
  * @param {Object} variablesConfig - Variable definitions
- * @param {Object} globalVars - Global variables
- * @param {Function} onVariableResolved - Callback when a variable is resolved
- * @param {Set} onlyVars - Only resolve these variables (optional)
- * @returns {Promise<Object>} Resolved variables
+ * @returns {Map} Dependency map
  */
-export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null) {
-  if (!variablesConfig) return globalVars;
+function buildDependencyGraph(variablesConfig) {
+  // Check cache first
+  if (dependencyCache.has(variablesConfig)) {
+    return dependencyCache.get(variablesConfig);
+  }
 
-  const resolved = { ...globalVars };
   const dependencies = new Map();
 
   // Build dependency graph
@@ -118,6 +120,27 @@ export async function resolveVariables(variablesConfig, globalVars = {}, onVaria
     
     dependencies.set(varName, deps);
   }
+
+  // Cache the result
+  dependencyCache.set(variablesConfig, dependencies);
+  return dependencies;
+}
+
+/**
+ * Resolve all variables in dependency order
+ * @param {Object} variablesConfig - Variable definitions
+ * @param {Object} globalVars - Global variables
+ * @param {Function} onVariableResolved - Callback when a variable is resolved
+ * @param {Set} onlyVars - Only resolve these variables (optional)
+ * @returns {Promise<Object>} Resolved variables
+ */
+export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null) {
+  if (!variablesConfig) return globalVars;
+
+  const resolved = { ...globalVars };
+  
+  // Get cached dependency graph
+  const dependencies = buildDependencyGraph(variablesConfig);
 
   // Filter if needed
   let varsToResolve = onlyVars;
@@ -240,33 +263,22 @@ export function getAffectedVariables(commands, variablesConfig) {
 
 /**
  * Get dependent variables (variables that depend on the changed ones)
+ * Uses cached dependency graph to avoid recomputation
  */
 export function getDependentVariables(variablesConfig, changedVars) {
   if (!variablesConfig) return new Set();
 
   const changedSet = changedVars instanceof Set ? changedVars : new Set(Array.isArray(changedVars) ? changedVars : [changedVars]);
+  
+  // Get cached dependency graph
+  const dependencies = buildDependencyGraph(variablesConfig);
+  
+  // Build reverse dependency map (from forward deps)
   const reverseDeps = new Map();
-
-  // Build reverse dependency map
-  for (const [varName, varConfig] of Object.entries(variablesConfig)) {
-    const expr = String(varConfig.eval || '');
-    
-    // Find dependencies
-    const thisRefs = expr.match(/\bthis\.(\w+)/g) || [];
-    for (const ref of thisRefs) {
-      const depVar = ref.replace('this.', '');
-      if (depVar in variablesConfig && depVar !== varName) {
-        if (!reverseDeps.has(depVar)) reverseDeps.set(depVar, new Set());
-        reverseDeps.get(depVar).add(varName);
-      }
-    }
-    
-    // Also check direct references
-    for (const otherVar of Object.keys(variablesConfig)) {
-      if (otherVar !== varName && new RegExp(`\\b${otherVar}\\b`).test(expr)) {
-        if (!reverseDeps.has(otherVar)) reverseDeps.set(otherVar, new Set());
-        reverseDeps.get(otherVar).add(varName);
-      }
+  for (const [varName, deps] of dependencies.entries()) {
+    for (const dep of deps) {
+      if (!reverseDeps.has(dep)) reverseDeps.set(dep, new Set());
+      reverseDeps.get(dep).add(varName);
     }
   }
 
