@@ -137,6 +137,9 @@ function createHelperFunctions(page, pageIndex) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      
+      // Update page._resolved immediately - this is the source of truth for UI
+      page._resolved[varName] = newValue;
 
       // Update resolved value and emit event (ui.js listeners will handle UI updates)
       variableStore.setVariableResolved(varName, newValue, pageIndex);
@@ -165,6 +168,9 @@ function createHelperFunctions(page, pageIndex) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      
+      // Update page._resolved immediately - this is the source of truth for UI
+      page._resolved[varName] = newValue;
 
       // Update resolved value and emit event (ui.js listeners will handle UI updates)
       variableStore.setVariableResolved(varName, newValue, pageIndex);

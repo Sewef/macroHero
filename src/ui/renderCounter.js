@@ -206,5 +206,29 @@ export function renderCounter(item, page, {
   container.appendChild(controls);
 
   renderedValueElements[item.var] = container;
+  
+  // Listen for external changes to this variable (from setValue, addValue, etc)
+  // and update the counter to reflect the new value
+  const unsubscribe = EventBus.on('store:variableResolved', (varName, value) => {
+    // Only update if this change is NOT from the counter itself
+    if (varName === item.var && !isUpdatingCounter) {
+      debugLog("[Counter] External change detected for:", item.var, "=>", value);
+      const constrained = applyConstraints(value);
+      input.value = constrained;
+      lastSavedValue = constrained; // Update internal tracking so next change is detected
+      page._resolved[item.var] = constrained;
+      variable.value = constrained;
+    }
+  });
+  
+  // Clean up listener when element is removed from DOM
+  const observer = new MutationObserver(() => {
+    if (!document.contains(container)) {
+      unsubscribe();
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  
   return container;
 }
