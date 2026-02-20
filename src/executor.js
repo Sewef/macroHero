@@ -16,6 +16,7 @@ import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable } from "./storage.js";
 import { getExpressionContext } from "./expressionHelpers.js";
 import { isDebugEnabled } from "./debugMode.js";
+import { resolveVariables } from "./expressionEvaluator.js";
 
 const debugLog = (...args) => isDebugEnabled('executor') && console.log(...args);
 const debugWarn = (...args) => console.warn(...args);
@@ -149,6 +150,22 @@ function createHelperFunctions(page, pageIndex) {
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
       debugLog('[setValue]', varName, '=', newValue);
+      
+      // Re-resolve dependent variables
+      const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
+      if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
+        debugLog('[setValue] Re-resolving', dependentVars.size - 1, 'dependent variables');
+        const onVariableResolved = (depVarName, depValue) => {
+          if (depVarName !== varName) {
+            page._resolved[depVarName] = depValue;
+            updateRenderedValue(depVarName, depValue);
+            variableStore.setVariableResolved(depVarName, depValue, pageIndex);
+            debugLog('[setValue] Updated dependent:', depVarName, '=', depValue);
+          }
+        };
+        await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
+      }
+      
       return newValue;
     },
 
@@ -180,6 +197,22 @@ function createHelperFunctions(page, pageIndex) {
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
       debugLog('[addValue]', varName, '+=', delta, '=>', newValue);
+      
+      // Re-resolve dependent variables
+      const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
+      if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
+        debugLog('[addValue] Re-resolving', dependentVars.size - 1, 'dependent variables');
+        const onVariableResolved = (depVarName, depValue) => {
+          if (depVarName !== varName) {
+            page._resolved[depVarName] = depValue;
+            updateRenderedValue(depVarName, depValue);
+            variableStore.setVariableResolved(depVarName, depValue, pageIndex);
+            debugLog('[addValue] Updated dependent:', depVarName, '=', depValue);
+          }
+        };
+        await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
+      }
+      
       return newValue;
     },
   };
