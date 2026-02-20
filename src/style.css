@@ -157,27 +157,14 @@ body {
 /* PAGE TABS */
 .mh-pagebar {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: var(--spacing-sm) var(--spacing-xl) 0;
   border-bottom: 1px solid var(--mh-border);
   background: var(--mh-surface);
-  overflow-x: auto;
   align-items: flex-end;
-  scrollbar-width: thin;
 }
 
-.mh-pagebar::-webkit-scrollbar {
-  height: 6px;
-}
-
-.mh-pagebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.mh-pagebar::-webkit-scrollbar-thumb {
-  background: var(--mh-border);
-  border-radius: 3px;
-}
 
 .mh-pagebar button {
   background: transparent;
