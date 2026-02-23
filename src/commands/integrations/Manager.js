@@ -18,6 +18,7 @@ import * as sceneHelpers from "../sceneHelpers.js";
 import * as tokenHelpers from "../tokenHelpers.js";
 import * as GoogleSheets from "./GoogleSheets.js";
 import * as Weather from "./Weather.js";
+import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
@@ -159,6 +160,15 @@ class IntegrationsManager {
         getWeather: this.wrapAsync((mapId) => Weather.getWeather(mapId)),
         hasWeather: this.wrapAsync((mapId) => Weather.hasWeather(mapId)),
         updateWeather: this.wrapAsync((mapId, updates) => Weather.updateWeather(mapId, updates)),
+      },
+      // Aurora integration (time-of-day lighting - all async)
+      Aurora: {
+        setAurora: this.wrapAsync((mapId, config) => Aurora.setAurora(mapId, config)),
+        removeAurora: this.wrapAsync((mapId) => Aurora.removeAurora(mapId)),
+        getAurora: this.wrapAsync((mapId) => Aurora.getAurora(mapId)),
+        hasAurora: this.wrapAsync((mapId) => Aurora.hasAurora(mapId)),
+        updateAurora: this.wrapAsync((mapId, updates) => Aurora.updateAurora(mapId, updates)),
+        getPresets: () => Aurora.getPresets(),
       },
       // Embers integration (spell visual effects - all async)
       Embers: {

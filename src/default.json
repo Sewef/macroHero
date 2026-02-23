@@ -1745,6 +1745,462 @@
         }
       ],
       "_pageIndex": 4
+    },
+    {
+      "label": "Aurora",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "mapId": {
+          "eval": "getMapIdFromToken(token)"
+        },
+        "auroraConfig": {
+          "eval": "Aurora.getAurora(mapId)"
+        },
+        "hasAurora": {
+          "eval": "Aurora.hasAurora(mapId)"
+        },
+        "saturation": {
+          "value": 100
+        },
+        "lightness": {
+          "value": 100
+        },
+        "hue": {
+          "value": 0
+        },
+        "opacity": {
+          "value": 40
+        },
+        "blendMode": {
+          "value": 3
+        },
+        "feather": {
+          "value": 0
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Aurora Integration"
+        },
+        {
+          "type": "text",
+          "text": "Control time-of-day lighting effects on maps"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Current Status"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "hasAurora",
+              "label": "Aurora Active?"
+            },
+            {
+              "type": "value",
+              "var": "mapId",
+              "label": "Map ID"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Current Config: {auroraConfig}"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Presets"
+        },
+        {
+          "type": "text",
+          "text": "Apply predefined lighting presets"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, 'MIDNIGHT');"
+              ],
+              "label": "Midnight"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, 'GOLDEN_HOUR');"
+              ],
+              "label": "Golden Hour"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, 'PRE_DAWN');"
+              ],
+              "label": "Pre-Dawn"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, 'BLOOD_MOON');"
+              ],
+              "label": "Blood Moon"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Quick Presets"
+        },
+        {
+          "type": "text",
+          "text": "Common lighting scenarios"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 100,",
+                "  lightness: 100,",
+                "  hue: 0,",
+                "  opacity: 0,",
+                "  enabled: true,",
+                "  name: 'Normal Light'",
+                "});"
+              ],
+              "label": "Normal Light"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 60,",
+                "  lightness: 60,",
+                "  hue: 180,",
+                "  opacity: 30,",
+                "  enabled: true,",
+                "  blendMode: 3,",
+                "  name: 'Night Time'",
+                "});"
+              ],
+              "label": "Night Time"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 130,",
+                "  lightness: 110,",
+                "  hue: 25,",
+                "  opacity: 25,",
+                "  enabled: true,",
+                "  blendMode: 2,",
+                "  name: 'Sunset'",
+                "});"
+              ],
+              "label": "Sunset"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 40,",
+                "  lightness: 40,",
+                "  hue: 0,",
+                "  opacity: 50,",
+                "  enabled: true,",
+                "  blendMode: 0,",
+                "  name: 'Dark Cave'",
+                "});"
+              ],
+              "label": "Dark Cave"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 150,",
+                "  lightness: 120,",
+                "  hue: -30,",
+                "  opacity: 20,",
+                "  enabled: true,",
+                "  blendMode: 2,",
+                "  name: 'Desert Heat'",
+                "});"
+              ],
+              "label": "Desert Heat"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.setAurora(mapId, {",
+                "  saturation: 70,",
+                "  lightness: 90,",
+                "  hue: 120,",
+                "  opacity: 25,",
+                "  enabled: true,",
+                "  blendMode: 3,",
+                "  name: 'Mystic Forest'",
+                "});"
+              ],
+              "label": "Mystic Forest"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Custom Configuration"
+        },
+        {
+          "type": "text",
+          "text": "Adjust individual properties"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "saturation",
+              "label": "Saturation (0-200)",
+              "step": 10
+            },
+            {
+              "type": "counter",
+              "var": "lightness",
+              "label": "Lightness (0-200)",
+              "step": 10
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "hue",
+              "label": "Hue (-180 to 180)",
+              "step": 15
+            },
+            {
+              "type": "counter",
+              "var": "opacity",
+              "label": "Opacity (0-100)",
+              "step": 5
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "blendMode",
+              "label": "Blend Mode (0-3)",
+              "step": 1
+            },
+            {
+              "type": "counter",
+              "var": "feather",
+              "label": "Feather (0-100)",
+              "step": 10
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Aurora.setAurora(mapId, {",
+            "  saturation: saturation,",
+            "  lightness: lightness,",
+            "  hue: hue,",
+            "  opacity: opacity,",
+            "  enabled: true,",
+            "  blendMode: blendMode,",
+            "  feather: feather,",
+            "  name: 'Custom'",
+            "});"
+          ],
+          "label": "Apply Custom Settings"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Update Properties"
+        },
+        {
+          "type": "text",
+          "text": "Modify existing Aurora configuration"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.updateAurora(mapId, { opacity: opacity });"
+              ],
+              "label": "Update Opacity"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.updateAurora(mapId, { hue: hue });"
+              ],
+              "label": "Update Hue"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.updateAurora(mapId, { enabled: true });"
+              ],
+              "label": "Enable"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.updateAurora(mapId, { enabled: false });"
+              ],
+              "label": "Disable"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const current = await Aurora.getAurora(mapId);",
+                "if (current) {",
+                "  await Aurora.updateAurora(mapId, {",
+                "    saturation: current.saturation + 20,",
+                "    lightness: current.lightness - 10",
+                "  });",
+                "}"
+              ],
+              "label": "Brighten (+20 sat, -10 light)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const current = await Aurora.getAurora(mapId);",
+                "if (current) {",
+                "  await Aurora.updateAurora(mapId, {",
+                "    saturation: current.saturation - 20,",
+                "    lightness: current.lightness + 10",
+                "  });",
+                "}"
+              ],
+              "label": "Darken (-20 sat, +10 light)"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Controls"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const currentConfig = await Aurora.getAurora(mapId);",
+                "console.log('Aurora Config:', currcurrentConfigentConfig);"
+              ],
+              "label": "Show Config"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const presets = Aurora.getPresets();",
+                "console.log('Available Presets:', presets);"
+              ],
+              "label": "List Presets"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Aurora.removeAurora(mapId);"
+              ],
+              "label": "Remove Aurora"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Time of Day Cycle"
+        },
+        {
+          "type": "text",
+          "text": "Simulate a day/night cycle"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const cycle = [",
+            "  { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },",
+            "  { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },",
+            "  { config: { saturation: 100, lightness: 100, hue: 0, opacity: 0, enabled: true }, delay: 4000, name: 'Day' },",
+            "  { preset: 'GOLDEN_HOUR', delay: 6000, name: 'Sunset' },",
+            "  { preset: 'MIDNIGHT', delay: 8000, name: 'Night' }",
+            "];",
+            "",
+            "for (const phase of cycle) {",
+            "  setTimeout(async () => {",
+            "    console.log('Time of Day:', phase.name);",
+            "    if (phase.preset) {",
+            "      await Aurora.setAurora(mapId, phase.preset);",
+            "    } else {",
+            "      await Aurora.setAurora(mapId, phase.config);",
+            "    }",
+            "  }, phase.delay);",
+            "}",
+            "",
+            "console.log('Day/Night cycle started (10 seconds)');"
+          ],
+          "label": "Start Day/Night Cycle"
+        }
+      ],
+      "_pageIndex": 5
     }
   ]
 }

@@ -1916,17 +1916,18 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'tokenHelpers'
   ],
   'Integration Modules': [
-    'GoogleSheets',
     'Local',
-    'ConditionMarkers',
-    'OwlTrackers',
-    'StatBubbles',
+    'Manager',
+    'Aurora',
     'ColoredRings',
-    'JustDices',
-    'PrettySordid',
-    'Weather',
+    'ConditionMarkers',
     'Embers',
-    'Manager'
+    'GoogleSheets',
+    'JustDices',
+    'OwlTrackers',
+    'PrettySordid',
+    'StatBubbles',
+    'Weather'
   ]
 };
 
