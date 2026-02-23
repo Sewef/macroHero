@@ -51,6 +51,7 @@ async function broadcastConfigUpdated() {
  */
 export function initUI(cfg) {
   config = cfg;
+  updateHeaderTitle();
   renderPageButtons();
   selectFirstPage();
   // Once initial UI is rendered, remove the loading overlay
@@ -71,6 +72,16 @@ function showLoadingOverlay() {
     if (loader) loader.classList.remove('hidden');
     if (content) content.classList.add('hidden');
   } catch (e) { debugWarn('[UI] Failed to show loading overlay', e); }
+}
+
+// Update the header title from config.global.title
+function updateHeaderTitle() {
+  try {
+    const headerTitle = document.querySelector('.mh-title');
+    if (headerTitle) {
+      headerTitle.textContent = config?.global?.title || 'Macro Hero';
+    }
+  } catch (e) { debugWarn('[UI] Failed to update header title', e); }
 }
 
 // Hide the loading overlay and show the main content
@@ -773,6 +784,7 @@ export async function updateConfig(newConfig) {
   debugLog("[UI] Config updated, refreshing UI");
   // Don't show loading overlay - let the UI update progressively
   config = newConfig;
+  updateHeaderTitle();
   
   // Re-resolve variables when config updates
   try {
