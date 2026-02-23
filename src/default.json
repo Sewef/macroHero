@@ -11,55 +11,24 @@
   },
   "pages": [
     {
-      "label": "Integrations",
+      "label": "Google Sheets",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "sheetValue": {
           "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
-        },
-        "inputName": {
-          "value": "Enter name here"
-        },
-        "isBandaged": {
-          "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
-        },
-        "conditionValue": {
-          "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
-        },
-        "trackerHP": {
-          "eval": "OwlTrackers.getValue(token, 'HP')"
-        },
-        "trackerMaxHP": {
-          "eval": "OwlTrackers.getMax(token, 'HP')"
-        },
-        "bubbleHealth": {
-          "eval": "StatBubbles.getValue(token, 'health')"
-        },
-        "bubbleMaxHealth": {
-          "eval": "StatBubbles.getValue(token, 'max health')"
-        },
-        "bubbleAC": {
-          "eval": "StatBubbles.getValue(token, 'armor class')"
-        },
-        "ringColors": {
-          "eval": "ColoredRings.getRings(token)"
-        },
-        "hasBlueRing": {
-          "eval": "ColoredRings.hasRing(token, '#1a6aff')"
-        },
-        "prettyHasInitiative": {
-          "eval": "PrettySordid.hasInitiative(token)"
-        },
-        "prettyInitiativeCount": {
-          "eval": "PrettySordid.getInitiativeCount(token)"
-        },
-        "prettyActive": {
-          "eval": "PrettySordid.isActiveTurn(token)"
         }
       },
       "layout": [
+        {
+          "type": "title",
+          "text": "Google Sheets Integration"
+        },
+        {
+          "type": "text",
+          "text": "Read data from Google Sheets (read-only)"
+        },
+        {
+          "type": "divider"
+        },
         {
           "type": "title",
           "text": "{sheetValue}"
@@ -74,20 +43,36 @@
             {
               "type": "value",
               "var": "sheetValue",
-              "label": "Cell A1"
+              "label": "Cell Value"
             }
           ]
+        }
+      ]
+    },
+    {
+      "label": "Conditions",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
         },
-        {
-          "type": "divider"
+        "isBandaged": {
+          "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
         },
+        "conditionValue": {
+          "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
+        }
+      },
+      "layout": [
         {
           "type": "title",
-          "text": "Conditions Markers"
+          "text": "Condition Markers"
         },
         {
           "type": "text",
           "text": "Check and read condition markers on tokens"
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "row",
@@ -107,9 +92,16 @@
         {
           "type": "button",
           "commands": [
-            "isBandaged ? await OwlTrackers.addValue(token, 'HP', 10) : await OwlTrackers.addValue(token, 'HP', -5);"
+            "isBandaged ? console.log('Has Bandaged condition') : console.log('No Bandaged condition');"
           ],
-          "label": "Heal if Bandaged"
+          "label": "Check Condition"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Manage Conditions"
         },
         {
           "type": "button",
@@ -126,8 +118,94 @@
           "label": "Increment Bandage"
         },
         {
+          "type": "button",
+          "commands": [
+            "await ConditionMarkers.removeCondition(token, 'Bandaged');"
+          ],
+          "label": "Remove Bandage"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await ConditionMarkers.clearAllConditions(token);"
+          ],
+          "label": "Clear All Conditions"
+        },
+        {
           "type": "divider"
         },
+        {
+          "type": "title",
+          "text": "Common Conditions"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Poisoned');"
+              ],
+              "label": "Poisoned"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Stunned');"
+              ],
+              "label": "Stunned"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Prone');"
+              ],
+              "label": "Prone"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Paralyzed');"
+              ],
+              "label": "Paralyzed"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Blessed');"
+              ],
+              "label": "Blessed"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ConditionMarkers.addCondition(token, 'Concentrating');"
+              ],
+              "label": "Concentrating"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Trackers",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "trackerHP": {
+          "eval": "OwlTrackers.getValue(token, 'HP')"
+        },
+        "trackerMaxHP": {
+          "eval": "OwlTrackers.getMax(token, 'HP')"
+        }
+      },
+      "layout": [
         {
           "type": "title",
           "text": "Owl Trackers"
@@ -135,6 +213,9 @@
         {
           "type": "text",
           "text": "Get and modify tracker values on tokens"
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "row",
@@ -152,6 +233,13 @@
           ]
         },
         {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "HP Management"
+        },
+        {
           "type": "row",
           "children": [
             {
@@ -164,22 +252,103 @@
             {
               "type": "button",
               "commands": [
-                "await OwlTrackers.addValue(token, 'HP', -5);"
+                "await OwlTrackers.addValue(token, 'HP', 5);"
               ],
-              "label": "Damage 5"
+              "label": "Heal 5"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);"
+              ],
+              "label": "Full Heal"
             }
           ]
         },
         {
-          "type": "button",
-          "commands": [
-            "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);"
-          ],
-          "label": "Heal to Max"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.addValue(token, 'HP', -5);"
+              ],
+              "label": "Damage 5"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.addValue(token, 'HP', -10);"
+              ],
+              "label": "Damage 10"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await OwlTrackers.setValue(token, 'HP', 0);"
+              ],
+              "label": "Down to 0"
+            }
+          ]
         },
         {
           "type": "divider"
         },
+        {
+          "type": "title",
+          "text": "Add Tracker"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await OwlTrackers.addTracker(token, {",
+            "  variant: 'value-max',",
+            "  name: 'HP',",
+            "  value: 50,",
+            "  max: 50,",
+            "  color: 2",
+            "});"
+          ],
+          "label": "Add HP Tracker (50/50)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await OwlTrackers.addTracker(token, {",
+            "  variant: 'value',",
+            "  name: 'Temp HP',",
+            "  value: 10,",
+            "  color: 5",
+            "});"
+          ],
+          "label": "Add Temp HP (10)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await OwlTrackers.removeTracker(token, 'HP');"
+          ],
+          "label": "Remove HP Tracker"
+        }
+      ]
+    },
+    {
+      "label": "StatBubbles",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "bubbleHealth": {
+          "eval": "StatBubbles.getValue(token, 'health')"
+        },
+        "bubbleMaxHealth": {
+          "eval": "StatBubbles.getValue(token, 'max health')"
+        },
+        "bubbleAC": {
+          "eval": "StatBubbles.getValue(token, 'armor class')"
+        }
+      },
+      "layout": [
         {
           "type": "title",
           "text": "StatBubbles"
@@ -187,6 +356,9 @@
         {
           "type": "text",
           "text": "Manage health, AC, and temp HP via StatBubbles extension"
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "row",
@@ -209,6 +381,13 @@
           ]
         },
         {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Health Management"
+        },
+        {
           "type": "row",
           "children": [
             {
@@ -221,11 +400,51 @@
             {
               "type": "button",
               "commands": [
+                "await StatBubbles.heal(token, 5);"
+              ],
+              "label": "Heal 5"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.setValue(token, 'health', bubbleMaxHealth);"
+              ],
+              "label": "Full Heal"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
                 "await StatBubbles.damage(token, 8);"
               ],
               "label": "Damage 8"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.damage(token, 15);"
+              ],
+              "label": "Damage 15"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.setValue(token, 'health', 0);"
+              ],
+              "label": "Down to 0"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Other Stats"
         },
         {
           "type": "row",
@@ -240,9 +459,36 @@
             {
               "type": "button",
               "commands": [
+                "await StatBubbles.setValue(token, 'temporary health', 0);"
+              ],
+              "label": "Remove Temp HP"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
                 "await StatBubbles.addValue(token, 'armor class', 2);"
               ],
               "label": "AC +2"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await StatBubbles.addValue(token, 'armor class', -2);"
+              ],
+              "label": "AC -2"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const percentage = await StatBubbles.getHealthPercentage(token);",
+                "console.log('Health: ' + percentage + '%');"
+              ],
+              "label": "Show Health %"
             }
           ]
         },
@@ -251,11 +497,47 @@
         },
         {
           "type": "title",
+          "text": "Combat Example"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const roll = await JustDices.rollSilent('1d20 + ' + bubbleAC);",
+            "if (roll > 15) {",
+            "  await StatBubbles.damage(token, 10);",
+            "  console.log('Attack hit for 10 damage!');",
+            "} else {",
+            "  console.log('Attack missed!');",
+            "}"
+          ],
+          "label": "Attack Roll (DC 15, 10 dmg)"
+        }
+      ]
+    },
+    {
+      "label": "Rings",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "ringColors": {
+          "eval": "ColoredRings.getRings(token)"
+        },
+        "hasBlueRing": {
+          "eval": "ColoredRings.hasRing(token, '#1a6aff')"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
           "text": "Colored Rings"
         },
         {
           "type": "text",
           "text": "Add and remove colored status rings on tokens"
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "row",
@@ -266,6 +548,13 @@
               "label": "Has Blue Ring?"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Add Rings"
         },
         {
           "type": "row",
@@ -299,6 +588,39 @@
             {
               "type": "button",
               "commands": [
+                "await ColoredRings.addRing(token, '#ff0000');"
+              ],
+              "label": "Add Red"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.addRing(token, '#ffff00');"
+              ],
+              "label": "Add Yellow"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await ColoredRings.addRing(token, '#ff00ff');"
+              ],
+              "label": "Add Purple"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Remove Rings"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
                 "await ColoredRings.removeRing(token, '#1a6aff');"
               ],
               "label": "Remove Blue"
@@ -320,15 +642,42 @@
           ]
         },
         {
-          "type": "divider"
+          "type": "button",
+          "commands": [
+            "const rings = await ColoredRings.getRings(token);",
+            "console.log('Current rings:', rings);"
+          ],
+          "label": "Show All Rings"
+        }
+      ]
+    },
+    {
+      "label": "Initiative",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
         },
+        "prettyHasInitiative": {
+          "eval": "PrettySordid.hasInitiative(token)"
+        },
+        "prettyInitiativeCount": {
+          "eval": "PrettySordid.getInitiativeCount(token)"
+        },
+        "prettyActive": {
+          "eval": "PrettySordid.isActiveTurn(token)"
+        }
+      },
+      "layout": [
         {
           "type": "title",
-          "text": "Pretty Sordid"
+          "text": "Pretty Sordid Initiative"
         },
         {
           "type": "text",
-          "text": "Example compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+          "text": "Compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata."
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "row",
@@ -349,6 +698,13 @@
               "label": "Active?"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Manage Initiative"
         },
         {
           "type": "row",
@@ -381,11 +737,60 @@
         },
         {
           "type": "title",
+          "text": "Quick Set"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const roll = await JustDices.rollSilent('1d20 + 3');",
+                "await PrettySordid.setInitiativeCount(token, roll);",
+                "console.log('Initiative set to:', roll);"
+              ],
+              "label": "Roll Initiative (+3)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await PrettySordid.setInitiativeCount(token, 20);"
+              ],
+              "label": "Set to 20"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await PrettySordid.setInitiativeCount(token, 10);"
+              ],
+              "label": "Set to 10"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Dice",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
           "text": "JustDices"
         },
         {
           "type": "text",
           "text": "Roll dice and get results in Owlbear Rodeo"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Basic Rolls"
         },
         {
           "type": "row",
@@ -400,22 +805,148 @@
             {
               "type": "button",
               "commands": [
-                "await JustDices.roll('2d6 + 3');"
+                "await JustDices.roll('1d12');"
               ],
-              "label": "Roll 2d6+3"
+              "label": "Roll d12"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d10');"
+              ],
+              "label": "Roll d10"
             }
           ]
         },
         {
-          "type": "button",
-          "commands": [
-            "await JustDices.roll('1d20 + ' + bubbleAC) > 15 ? await StatBubbles.damage(token, 10) : null;"
-          ],
-          "label": "Attack Roll (DC 15)"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d8');"
+              ],
+              "label": "Roll d8"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d6');"
+              ],
+              "label": "Roll d6"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d4');"
+              ],
+              "label": "Roll d4"
+            }
+          ]
         },
         {
           "type": "divider"
         },
+        {
+          "type": "title",
+          "text": "With Modifiers"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d20 + 5');"
+              ],
+              "label": "d20 + 5"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('2d6 + 3');"
+              ],
+              "label": "2d6 + 3"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('3d6');"
+              ],
+              "label": "3d6"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Damage Rolls"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('2d6 + 4');"
+              ],
+              "label": "Greatsword (2d6+4)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('1d8 + 3');"
+              ],
+              "label": "Longsword (1d8+3)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await JustDices.roll('8d6');"
+              ],
+              "label": "Fireball (8d6)"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Silent Rolls (for logic)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const roll = await JustDices.rollSilent('1d20');",
+            "if (roll >= 15) {",
+            "  console.log('Success! (' + roll + ')');",
+            "} else {",
+            "  console.log('Failure! (' + roll + ')');",
+            "}"
+          ],
+          "label": "Silent Roll + Logic"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const rollObj = await JustDices.getRollObjectSilent('1d20 + 5');",
+            "console.log('Roll object:', rollObj);"
+          ],
+          "label": "Get Roll Object"
+        }
+      ]
+    },
+    {
+      "label": "Local",
+      "variables": {
+        "inputName": {
+          "value": "Enter name here"
+        }
+      },
+      "layout": [
         {
           "type": "title",
           "text": "Local Storage"
@@ -423,6 +954,9 @@
         {
           "type": "text",
           "text": "Store and retrieve values in browser localStorage"
+        },
+        {
+          "type": "divider"
         },
         {
           "type": "input",
@@ -450,29 +984,90 @@
           ]
         },
         {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Save & Retrieve"
+        },
+        {
           "type": "button",
           "commands": [
-            "await Local.set('playerName', 'Xalithra');"
+            "await Local.set('playerName', inputName);"
           ],
-          "label": "Save Player Name"
+          "label": "Save Input as Player Name"
         },
         {
           "type": "button",
           "commands": [
             "await JustDices.roll('Player: ' + await Local.value('playerName', 'Unknown'));"
           ],
-          "label": "Show Player Name"
+          "label": "Show Saved Player Name"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const keys = await Local.keys();",
+            "console.log('Stored keys:', keys);"
+          ],
+          "label": "List All Keys"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Local.clear();",
+            "console.log('Local storage cleared');"
+          ],
+          "label": "Clear All Storage"
         },
         {
           "type": "divider"
         },
         {
           "type": "title",
-          "text": "Weather Tests"
+          "text": "Examples"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Local.set('counter', (await Local.value('counter', 0)) + 1);",
+            "const count = await Local.value('counter', 0);",
+            "console.log('Counter:', count);"
+          ],
+          "label": "Increment Counter"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Local.set('lastRoll', await JustDices.rollSilent('1d20'));",
+            "console.log('Saved last roll:', await Local.value('lastRoll', 0));"
+          ],
+          "label": "Save Last Roll"
+        }
+      ]
+    },
+    {
+      "label": "Weather",
+      "variables": {
+        "token": {
+          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Weather Effects"
         },
         {
           "type": "text",
           "text": "Add weather effects to maps"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Weather Types"
         },
         {
           "type": "row",
@@ -480,7 +1075,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });"
               ],
               "label": "Snow"
@@ -488,7 +1083,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });"
               ],
               "label": "Rain"
@@ -496,7 +1091,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });"
               ],
               "label": "Sand"
@@ -509,7 +1104,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });"
               ],
               "label": "Fire"
@@ -517,7 +1112,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });"
               ],
               "label": "Cloud"
@@ -525,7 +1120,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });"
               ],
               "label": "Bloom"
@@ -538,7 +1133,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });"
               ],
               "label": "Energy Storm"
@@ -546,7 +1141,7 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });"
               ],
               "label": "Water"
@@ -554,42 +1149,10 @@
             {
               "type": "button",
               "commands": [
-                "mapId = await getMapIdFromToken(token);",
+                "const mapId = await getMapIdFromToken(token);",
                 "await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });"
               ],
               "label": "Current"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "mapId = await getMapIdFromToken(token);",
-                "await Weather.updateWeather(mapId, { tint: '#88aaff' });",
-                "console.log('Blue tint applied');"
-              ],
-              "label": "Blue Tint"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "mapId = await getMapIdFromToken(token);",
-                "await Weather.updateWeather(mapId, { tint: '#ff8844' });",
-                "console.log('Orange tint applied');"
-              ],
-              "label": "Orange Tint"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "mapId = await getMapIdFromToken(token);",
-                "await Weather.removeWeather(mapId);",
-                "console.log('Weather removed');"
-              ],
-              "label": "Remove Weather"
             }
           ]
         },
@@ -598,11 +1161,7 @@
         },
         {
           "type": "title",
-          "text": "Embers - Spell Effects"
-        },
-        {
-          "type": "text",
-          "text": "Cast visual spell effects using the Embers extension"
+          "text": "Weather Tints"
         },
         {
           "type": "row",
@@ -610,46 +1169,35 @@
             {
               "type": "button",
               "commands": [
-                "console.log('[TEST] Testing Embers.castSpellAtToken with fireball...');",
-                "const targetId = await getSelectedTokenId();",
-                "await Embers.castSpellAtToken(targetId, {",
-                "  id: 'fireball.explosion',",
-                "  size: 20,",
-                "  spellName: 'Fireball'",
-                "});",
-                "console.log('[TEST] Message sent');"
+                "const mapId = await getMapIdFromToken(token);",
+                "await Weather.updateWeather(mapId, { tint: '#88aaff' });"
               ],
-              "label": "Test Embers (Fireball)"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const selection = await getSelectedTokensIds();",
-                "if (!selection || selection.length === 0) return;",
-                "await Embers.castSpellSequence([",
-                "  { type: 'aoe', targets: selection, config: { id: 'bless.intro', size: 10 } },",
-                "  { type: 'aoe', targets: selection, config: { id: 'bless.loop', size: 10, delay: 4000, duration: 4000 } },",
-                "], { spellName: 'Bless' });"
-              ],
-              "label": "Bless (selected)"
+              "label": "Blue Tint"
             },
             {
               "type": "button",
               "commands": [
-                "await Embers.castSpellAtToken(token, {",
-                "  id: 'cure_wounds',",
-                "  size: 10,",
-                "  spellName: 'Cure Wounds'",
-                "});"
+                "const mapId = await getMapIdFromToken(token);",
+                "await Weather.updateWeather(mapId, { tint: '#ff8844' });"
               ],
-              "label": "Cure Wounds"
+              "label": "Orange Tint"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const mapId = await getMapIdFromToken(token);",
+                "await Weather.updateWeather(mapId, { tint: '#88ff88' });"
+              ],
+              "label": "Green Tint"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Controls"
         },
         {
           "type": "row",
@@ -657,110 +1205,35 @@
             {
               "type": "button",
               "commands": [
-                "await Embers.castSpellSequence([{type: 'projectile',casterId: token,targets: await getSelectedTokensIds(),config: { id: 'magic_missile', duration: 1000 }},{type: 'aoe',targets: await getSelectedTokensIds(),config: { id: 'fireball.explosion', size: 10, duration: 800 }}], { spellName: 'Magic Missile' });"
+                "const mapId = await getMapIdFromToken(token);",
+                "const config = await Weather.getWeather(mapId);",
+                "console.log('Weather config:', config);"
               ],
-              "label": "Magic Missile"
+              "label": "Show Config"
             },
             {
               "type": "button",
               "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target for direction');",
-                "await Embers.castConeSpell(token, targetId, {",
-                "  id: 'burning_hands',",
-                "  size: 15,",
-                "  spellName: 'Burning Hands'",
-                "});"
+                "const mapId = await getMapIdFromToken(token);",
+                "const has = await Weather.hasWeather(mapId);",
+                "console.log('Has weather:', has);"
               ],
-              "label": "Burning Hands"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "await Embers.castSpellAtToken(token, {",
-                "  id: 'fireball',",
-                "  size: 20,",
-                "  duration: 2000,",
-                "  spellName: 'Fireball'",
-                "});"
-              ],
-              "label": "Fireball (AOE)"
+              "label": "Check Weather"
             },
             {
               "type": "button",
               "commands": [
-                "const selection = await getSelectedTokensIds();",
-                "if (!selection || selection.length === 0) return console.error('No target selected');",
-                "for (const targetId of selection) {",
-                "  await Embers.castProjectileSpell(token, targetId, {",
-                "    id: 'banishment',",
-                "    spellName: 'Banishment'",
-                "  });",
-                "}"
+                "const mapId = await getMapIdFromToken(token);",
+                "await Weather.removeWeather(mapId);"
               ],
-              "label": "Banishment"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const selection = await getSelectedTokensIds();",
-                "if (!selection || selection.length === 0) return console.error('No target selected');",
-                "for (const targetId of selection) {",
-                "  await Embers.castProjectileSpell(token, targetId, {",
-                "    id: 'eldritch_blast',",
-                "    copies: 2,",
-                "    delay: 200,",
-                "    spellName: 'Eldritch Blast'",
-                "  });",
-                "}"
-              ],
-              "label": "Eldritch Blast"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const casterId = token;",
-                "const casterPosition = await getTokenPosition(casterId);",
-                "const casterSize = await getTokenSize(casterId);",
-                "if (!casterPosition) return console.error('Caster token not found');",
-                "let rotation = 0;",
-                "const selection = await getSelectedTokensIds();",
-                "const targetId = selection.find(id => id !== casterId);",
-                "if (targetId) {",
-                "  const targetPosition = await getTokenPosition(targetId);",
-                "  if (targetPosition) {",
-                "    const dx = targetPosition.x - casterPosition.x;",
-                "    const dy = targetPosition.y - casterPosition.y;",
-                "    rotation = Math.atan2(dy, dx) * (180 / Math.PI);",
-                "  }",
-                "}",
-                "await Embers.castSpellAtToken(casterId, {",
-                "  id: 'generic.weapon_attacks.melee.single.generic_whirlwind',",
-                "  size: (casterSize || 1) * 2,",
-                "  rotation,",
-                "  forceVariant: 6,",
-                "  spellName: 'Melee Weapon Attack (Whirlwind)'",
-                "});"
-              ],
-              "label": "Melee Whirlwind"
+              "label": "Remove Weather"
             }
           ]
         }
-      ],
-      "_pageIndex": 0
+      ]
     },
     {
-      "label": "Embers API",
+      "label": "Embers",
       "variables": {
         "token": {
           "value": "996ed434-a22c-4510-aa82-9df34820c0be"
@@ -769,56 +1242,46 @@
       "layout": [
         {
           "type": "title",
-          "text": "Embers API Examples"
+          "text": "Embers - Spell Effects"
         },
         {
           "type": "text",
-          "text": "Examples using raw instructions, metadata, and interactions."
+          "text": "Visual spell effects  using Embers extension"
         },
         {
           "type": "divider"
         },
         {
+          "type": "title",
+          "text": "Quick Spells"
+        },
+        {
           "type": "row",
           "children": [
             {
               "type": "button",
               "commands": [
-                "const sourceId = await getSelectedTokenId() || token;",
-                "const source = await getTokenPosition(sourceId);",
-                "if (!source) return console.error('No source token');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'fireball.explosion',",
-                "  effectProperties: { source, size: 8 },",
-                "  layer: 'PROP',",
-                "  zIndex: 100,",
-                "  metadata: { 'embers/demo': 'raw-aoe' }",
-                "}], { spellName: 'Raw AOE', destination: 'ALL' });"
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castProjectileFromTo(token, targetId, { id: 'magic_missile', copies: 3 });"
               ],
-              "label": "Raw AOE (layer/zIndex)"
+              "label": "Magic Missile"
             },
             {
               "type": "button",
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "const casterPos = await getTokenPosition(token);",
-                "const targetPos = await getTokenPosition(targetId);",
-                "if (!casterPos || !targetPos) return console.error('Missing positions');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'magic_missile',",
-                "  effectProperties: {",
-                "    source: casterPos,",
-                "    destination: targetPos,",
-                "    copies: 3,",
-                "    disableHit: true",
-                "  },",
-                "  forceVariant: 0",
-                "}], { spellName: 'Projectile (no hit)' });"
+                "await Embers.castSpellAtToken(targetId, { id: 'cure_wounds', size: 2 });"
               ],
-              "label": "Projectile (disableHit)"
+              "label": "Cure Wounds"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Embers.castSpellAtToken(token, { id: 'shield.hit', size: 2 });"
+              ],
+              "label": "Shield"
             }
           ]
         },
@@ -830,52 +1293,26 @@
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "await Embers.castConeSpell(token, targetId, {",
-                "  id: 'burning_hands',",
-                "  size: 12,",
-                "  forceVariant: 0,",
-                "  spellName: 'Cone Demo'",
-                "});"
+                "await Embers.castProjectileFromTo(token, targetId, { id: 'fireball.beam' });",
+                "await Embers.castSpellAtToken(targetId, { id: 'fireball.explosion', size: 4, delay: 1000 });"
               ],
-              "label": "Cone (directional)"
+              "label": "Fireball"
             },
             {
               "type": "button",
               "commands": [
-                "await Embers.sendInstructions([{",
-                "  type: 'action',",
-                "  id: 'my_action',",
-                "  arguments: [token, { x: 0.01, y: 0.01 }]",
-                "}]);"
+                "const targetId = await getSelectedTokenId();",
+                "if (!targetId) return console.error('Select a target');",
+                "await Embers.castConeSpell(token, targetId, { id: 'burning_hands', size: 6 });"
               ],
-              "label": "Action (non-visual)"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
+              "label": "Burning Hands"
+            },
             {
               "type": "button",
               "commands": [
-                "const source = await getTokenPosition(token);",
-                "if (!source) return console.error('No source token');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'shield.loop',",
-                "  duration: 2000,",
-                "  effectProperties: {",
-                "    source,",
-                "    size: 3,",
-                "    attachedTo: token,",
-                "    disableHit: true",
-                "  }",
-                "}], {",
-                "  interactions: { ids: [token], count: 1 },",
-                "  spellName: 'Interaction Demo'",
-                "});"
+                "await Embers.castSpellAtToken(token, { id: 'bless', size: 6 });"
               ],
-              "label": "Interactions + attachedTo"
+              "label": "Bless"
             }
           ]
         },
@@ -883,43 +1320,8 @@
           "type": "divider"
         },
         {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const sourceId = await getSelectedTokenId() || token;",
-                "const source = await getTokenPosition(sourceId);",
-                "if (!source) return console.error('No source token');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'darkness.black.opaque',",
-                "  duration: 5000,",
-                "  disableHit: true,",
-                "  layer: 'FOG',",
-                "  effectProperties: { source, size: 6 }",
-                "}], { spellName: 'Darkness (FOG)' });"
-              ],
-              "label": "Darkness (FOG layer)"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const source = await getTokenPosition(token);",
-                "if (!source) return console.error('No source token');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'hunters_mark.loop',",
-                "  duration: 5000,",
-                "  disableHit: true,",
-                "  attachedTo: token,",
-                "  zIndex: 1,",
-                "  effectProperties: { source, size: 2 }",
-                "}], { spellName: 'Hunterss Mark (Loop)' });"
-              ],
-              "label": "Attached Loop (Hunters Mark)"
-            }
-          ]
+          "type": "title",
+          "text": "AOE Spells"
         },
         {
           "type": "row",
@@ -929,178 +1331,31 @@
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "const source = await getTokenPosition(token);",
-                "const destination = await getTokenPosition(targetId);",
-                "if (!source || !destination) return console.error('Missing positions');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'wind_wall.opaque',",
-                "  effectProperties: { source, destination, copies: 1 }",
-                "}], { spellName: 'Wind Wall (WALL)' });"
+                "await Embers.castSpellAtToken(targetId, { id: 'thunderwave', size: 4 });"
               ],
-              "label": "Wall (Wind Wall)"
+              "label": "Thunderwave"
             },
             {
               "type": "button",
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "await Embers.castConeSpell(token, targetId, {",
-                "  id: 'cone_of_cold',",
-                "  size: 12,",
-                "  spellName: 'Cone of Cold'",
-                "});"
+                "await Embers.castSpellAtToken(targetId, { id: 'ice_storm', size: 8 });"
               ],
-              "label": "Cone of Cold"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellSequence([",
-                "  { type: 'projectile', casterId: token, targets: targetId, config: { id: 'fireball.beam' } },",
-                "  { type: 'aoe', targets: targetId, config: { id: 'fireball.explosion', delay: 4040, size: 3 } },",
-                "], { spellName: 'Fireball (Sequence)' });"
-              ],
-              "label": "Sequence (Fireball)"
+              "label": "Ice Storm"
             },
             {
               "type": "button",
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellAtToken(targetId, {",
-                "  id: 'fireball.loop_no_debris',",
-                "  forceVariant: 800,",
-                "  loops: -1,",
-                "  spellName: 'Fireball (Loop No Debris)'",
-                "});"
+                "await Embers.castSpellAtToken(targetId, { id: 'spirit_guardians.loop', loops: 5, size: 6 });"
               ],
-              "label": "Fireball Loop (No Debris)"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "const casterPos = await getTokenPosition(token);",
-                "const targetPos = await getTokenPosition(targetId);",
-                "if (!casterPos || !targetPos) return console.error('Missing positions');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'witch_bolt',",
-                "  duration: 5000,",
-                "  disableHit: true,",
-                "  effectProperties: {",
-                "    source: casterPos,",
-                "    sourceId: token,",
-                "    destination: targetPos,",
-                "    destinationId: targetId,",
-                "    copies: 1",
-                "  }",
-                "}], { spellName: 'Witch Bolt (Tether)' });"
-              ],
-              "label": "Witch Bolt (sourceId/destinationId)"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const source = await getTokenPosition(token);",
-                "if (!source) return console.error('No source token');",
-                "await Embers.sendInstructions([{",
-                "  type: 'effect',",
-                "  id: 'whirlwind',",
-                "  duration: 5000,",
-                "  effectProperties: { source, size: 3 }",
-                "}], { spellName: 'Whirlwind' });"
-              ],
-              "label": "Whirlwind AOE"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_whirlwind', size: 3, duration: 2940, spellName: 'Thrash' });"
-              ],
-              "label": "Melee Whirlwind (forceVariant)"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "Embers.castSpellAtToken(token, { id: 'generic.weapon_attacks.melee.single.generic_slash', size: 3, duration: 2940, spellName: 'Double-Edge' });"
-              ],
-              "label": "Generic Slash"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getClosestTokenId(token, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });",
-                "if (!targetId) return console.error('No closest token found');",
-                "await Embers.castConeSpell(token, targetId, {",
-                "  id: 'generic.weapon_attacks.melee.single.generic_slash',",
-                "  size: 3,",
-                "  duration: 900,",
-                "  spellName: 'Double-Edge to Closest'",
-                "});"
-              ],
-              "label": "Generic Slash → Closest"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "Embers.castConeSpell(token, await getClosestTokenId(token), {id: 'generic.weapon_attacks.melee.single.laser_sword', size: 3, duration: 2330, spellName: 'Double Lame Laser'});"
-              ],
-              "label": "Double Lame Laser"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "Embers.castConeSpell(token, await getClosestTokenId(token), {id: 'generic.weapon_attacks.melee.single.laser_sword', size: 3, duration: 2330, spellName: 'Double Lame Laser'});"
-              ],
-              "label": "Double Lame Laser"
-            },
-            {
-              "type": "button",
-              "label": "Orange Laser → Fireball",
-              "commands": [
-                "const casterPos = await getTokenPosition(token);",
-                "const targetPos = await getTokenPosition(await getSelectedTokenId());",
-                "if (!casterPos || !targetPos) return console.error('Missing positions');",
-                "await Embers.sendInstructions([",
-                "  {",
-                "    type: 'effect',",
-                "    id: 'generic.weapon_attacks.ranged.laser_shot.orange',",
-                "    effectProperties: {",
-                "      source: casterPos,",
-                "      destination: targetPos",
-                "    }",
-                "  },",
-                "  {",
-                "    type: 'effect',",
-                "    id: 'fireball.explosion',",
-                "    delay: 900,",
-                "    effectProperties: {",
-                "      source: targetPos,",
-                "      size: 3",
-                "    }",
-                "  }",
-                "], { spellName: 'Fusion à Fusion' });"
-              ]
+              "label": "Spirit Guardians"
             }
           ]
         }
-      ],
-      "_pageIndex": 1
+      ]
     },
     {
       "label": "Layout",
@@ -1284,8 +1539,7 @@
             "await JustDices.roll('1d20');"
           ]
         }
-      ],
-      "_pageIndex": 2
+      ]
     },
     {
       "label": "Tests",
@@ -1475,8 +1729,7 @@
           ],
           "label": "Get Closest Token Id"
         }
-      ],
-      "_pageIndex": 3
+      ]
     },
     {
       "label": "Tokens",
@@ -1698,7 +1951,7 @@
             "// Add Temp HP tracker (value variant)",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'value',",
-            "  name: 'Temp HP',",
+            "  name: 'Add HP',",
             "  value: 10,",
             "  color: 5",
             "});",
@@ -1743,8 +1996,7 @@
           ],
           "label": "Remove 'Temp HP' Tracker"
         }
-      ],
-      "_pageIndex": 4
+      ]
     },
     {
       "label": "Aurora",
@@ -1812,8 +2064,21 @@
           ]
         },
         {
-          "type": "text",
-          "text": "Current Config: {auroraConfig}"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const myConfig = await Aurora.getAurora(mapId);",
+                "if (myConfig) {",
+                "  console.log('Aurora Config:', JSON.stringify(myConfig, null, 2));",
+                "} else {",
+                "  console.log('No Aurora configuration active');",
+                "}"
+              ],
+              "label": "Show Full Config"
+            }
+          ]
         },
         {
           "type": "divider"
@@ -2039,6 +2304,7 @@
         {
           "type": "button",
           "commands": [
+            "const mapId = await getMapIdFromToken(token);",
             "await Aurora.setAurora(mapId, {",
             "  saturation: saturation,",
             "  lightness: lightness,",
@@ -2141,7 +2407,7 @@
               "type": "button",
               "commands": [
                 "const currentConfig = await Aurora.getAurora(mapId);",
-                "console.log('Aurora Config:', currcurrentConfigentConfig);"
+                "console.log('Aurora Config:', currentConfig);"
               ],
               "label": "Show Config"
             },
@@ -2176,6 +2442,7 @@
         {
           "type": "button",
           "commands": [
+            "const mapId = await getMapIdFromToken(token);",
             "const cycle = [",
             "  { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },",
             "  { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },",
@@ -2199,8 +2466,7 @@
           ],
           "label": "Start Day/Night Cycle"
         }
-      ],
-      "_pageIndex": 5
+      ]
     }
   ]
 }
