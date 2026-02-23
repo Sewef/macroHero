@@ -1,6 +1,6 @@
 {
   "global": {
-    "title": "Macro Hero",
+    "title": "Default Config for MacroHero",
     "width": 800,
     "height": 600,
     "variables": {
@@ -2465,6 +2465,160 @@
             "console.log('Day/Night cycle started (10 seconds)');"
           ],
           "label": "Start Day/Night Cycle"
+        }
+      ]
+    },
+    {
+      "label": "Announcement",
+      "variables": {
+        "announcementData": {
+          "eval": "Announcement.getAnnouncement()"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Announcement System"
+        },
+        {
+          "type": "text",
+          "text": "Room-level announcements with Markdown support (dev.sharkbrain.announcement)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Current Status"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const announcement = await Announcement.getAnnouncement();",
+            "if (announcement) {",
+            "  console.log('Announcement Status:', announcement);",
+            "  console.log('Active:', announcement.active);",
+            "  console.log('Content:', announcement.content);",
+            "} else {",
+            "  console.log('No announcement configured');",
+            "}"
+          ],
+          "label": "Show Full Status"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Custom Announcement"
+        },
+        {
+          "type": "text",
+          "text": "Create custom announcement with Markdown"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const content = '# Test Announcement\\n\\nThis is a **bold** test with *italic* text.\\n\\n- Item 1\\n- Item 2\\n- Item 3';",
+            "await Announcement.setAnnouncement(content, true);"
+          ],
+          "label": "Create Test Announcement"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const content = '## Important Notice\\n\\nPlease check your inventory before the next encounter.\\n\\n### Items to Bring:\\n1. Healing potions\\n2. Rope\\n3. Torches';",
+            "await Announcement.setAnnouncement(content, true);"
+          ],
+          "label": "Create Inventory Notice"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Visibility Controls"
+        },
+        {
+          "type": "text",
+          "text": "Show/hide announcements"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Announcement.showAnnouncement();"
+              ],
+              "label": "Show"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Announcement.hideAnnouncement();"
+              ],
+              "label": "Hide"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const newState = await Announcement.toggleAnnouncement();",
+                "console.log('Announcement now:', newState ? 'visible' : 'hidden');"
+              ],
+              "label": "Toggle"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Update Operations"
+        },
+        {
+          "type": "text",
+          "text": "Modify existing announcement"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Announcement.updateContent('# Updated Content\\n\\nThis announcement has been updated!');"
+          ],
+          "label": "Update Content Only"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Announcement.updateAnnouncement({ active: false });"
+          ],
+          "label": "Update Active Only"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Announcement.updateAnnouncement({",
+            "  content: '## Updated via Object\\n\\nBoth content and state updated.',",
+            "  active: true",
+            "});"
+          ],
+          "label": "Update Both"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Management"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Announcement.removeAnnouncementMetadata();",
+            "console.log('Announcement removed');"
+          ],
+          "label": "Remove Announcement Metadata"
         }
       ]
     }

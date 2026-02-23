@@ -20,6 +20,7 @@ import * as GoogleSheets from "./GoogleSheets.js";
 import * as Weather from "./Weather.js";
 import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
+import * as Announcement from "./Announcement.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -178,6 +179,17 @@ class IntegrationsManager {
         castConeSpell: this.wrapAsync((casterId, targetId, config) => Embers.castConeSpell(casterId, targetId, config)),
         sendInstructions: this.wrapAsync((instructions, options) => Embers.sendInstructions(instructions, options)),
         castSpellSequence: this.wrapAsync((steps, options) => Embers.castSpellSequence(steps, options)),
+      },
+      // Announcement integration (room-level announcements - all async)
+      Announcement: {
+        setAnnouncement: this.wrapAsync((content, active) => Announcement.setAnnouncement(content, active)),
+        getAnnouncement: this.wrapAsync(() => Announcement.getAnnouncement()),
+        removeAnnouncementMetadata: this.wrapAsync(() => Announcement.removeAnnouncementMetadata()),
+        updateAnnouncement: this.wrapAsync((updates) => Announcement.updateAnnouncement(updates)),
+        toggleAnnouncement: this.wrapAsync(() => Announcement.toggleAnnouncement()),
+        showAnnouncement: this.wrapAsync(() => Announcement.showAnnouncement()),
+        hideAnnouncement: this.wrapAsync(() => Announcement.hideAnnouncement()),
+        updateContent: this.wrapAsync((content) => Announcement.updateContent(content)),
       },
       // Metadata modules
       playerMetadata,

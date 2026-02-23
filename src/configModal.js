@@ -1918,6 +1918,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
   'Integration Modules': [
     'Local',
     'Manager',
+    'Announcement',
     'Aurora',
     'ColoredRings',
     'ConditionMarkers',
