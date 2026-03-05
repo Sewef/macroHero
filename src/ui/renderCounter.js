@@ -168,13 +168,14 @@ export function renderCounter(item, page, {
   });
 
   // Wheel event - with debounce
-  input.addEventListener('wheel', (e) => {
-    debugLog("[Counter DEBUG] Wheel event fired on", item.var);
-    e.preventDefault();
-    const step = item.step ?? 1;
-    const newValue = Number(input.value) + (e.deltaY < 0 ? step : -step);
-    updateCounterValue(newValue);
-  }, { passive: false });
+  // Shitty feature, removed
+  // input.addEventListener('wheel', (e) => {
+  //   debugLog("[Counter DEBUG] Wheel event fired on", item.var);
+  //   e.preventDefault();
+  //   const step = item.step ?? 1;
+  //   const newValue = Number(input.value) + (e.deltaY < 0 ? step : -step);
+  //   updateCounterValue(newValue);
+  // }, { passive: false });
 
   // Increment button
   const incrementBtn = document.createElement("button");
