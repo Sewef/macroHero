@@ -1235,8 +1235,11 @@
     {
       "label": "Embers",
       "variables": {
-        "token": {
+        "caster": {
           "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        },
+        "target": {
+          "value": "target-token-id"
         }
       },
       "layout": [
@@ -1246,14 +1249,18 @@
         },
         {
           "type": "text",
-          "text": "Visual spell effects  using Embers extension"
+          "text": "Visual spell effects using Embers extension with fluent API"
         },
         {
           "type": "divider"
         },
         {
           "type": "title",
-          "text": "Quick Spells"
+          "text": "Quick Single Effects"
+        },
+        {
+          "type": "text",
+          "text": "Simple one-off spell effects"
         },
         {
           "type": "row",
@@ -1261,58 +1268,29 @@
             {
               "type": "button",
               "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castProjectileSpell(token, targetId, { id: 'magic_missile', copies: 3 });"
+                "await new EmbersSequence()",
+                "  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 })",
+                "  .cast({ spellName: 'Magic Missile' });"
               ],
               "label": "Magic Missile"
             },
             {
               "type": "button",
               "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellAtToken(targetId, { id: 'cure_wounds', size: 2 });"
+                "await new EmbersSequence()",
+                "  .aoe('cure_wounds', await getSelectedTokenId(), { size: 2 })",
+                "  .cast({ spellName: 'Cure Wounds' });"
               ],
-              "label": "Cure Wounds"
+              "label": "Cure Wounds (AOE)"
             },
             {
               "type": "button",
               "commands": [
-                "await Embers.castSpellAtToken(token, { id: 'shield.hit', size: 2 });"
+                "await new EmbersSequence()",
+                "  .aoe('shield.hit', caster, { size: 2 })",
+                "  .cast({ spellName: 'Shield' });"
               ],
               "label": "Shield"
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castProjectileSpell(token, targetId, { id: 'fireball.beam' });",
-                "await Embers.castSpellAtToken(targetId, { id: 'fireball.explosion', size: 4, delay: 1000 });"
-              ],
-              "label": "Fireball"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castConeSpell(token, targetId, { id: 'burning_hands', size: 6 });"
-              ],
-              "label": "Burning Hands"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "await Embers.castSpellAtToken(token, { id: 'bless', size: 6 });"
-              ],
-              "label": "Bless"
             }
           ]
         },
@@ -1321,7 +1299,11 @@
         },
         {
           "type": "title",
-          "text": "AOE Spells"
+          "text": "Simultaneous Effects"
+        },
+        {
+          "type": "text",
+          "text": "Multiple effects playing at the same time (without .then())"
         },
         {
           "type": "row",
@@ -1329,31 +1311,236 @@
             {
               "type": "button",
               "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellAtToken(targetId, { id: 'thunderwave', size: 4 });"
+                "await new EmbersSequence()",
+                "  .projectile('magic_missile', caster, [await getSelectedTokenId()])",
+                "  .projectile('fire_bolt', caster, await getSelectedTokenId())",
+                "  .cast({ spellName: 'Double Attack' });"
               ],
-              "label": "Thunderwave"
+              "label": "2 Projectiles (Simultaneous)"
             },
             {
               "type": "button",
               "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellAtToken(targetId, { id: 'ice_storm', size: 8 });"
+                "await new EmbersSequence()",
+                "  .aoe('shield.complete', caster, { size: 6 })",
+                "  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 4 })",
+                "  .cast({ spellName: 'Blessings' });"
               ],
-              "label": "Ice Storm"
-            },
-            {
-              "type": "button",
-              "commands": [
-                "const targetId = await getSelectedTokenId();",
-                "if (!targetId) return console.error('Select a target');",
-                "await Embers.castSpellAtToken(targetId, { id: 'spirit_guardians.loop', loops: 5, size: 6 });"
-              ],
-              "label": "Spirit Guardians"
+              "label": "2 AOEs (Simultaneous)"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Sequential Effects (with .then())"
+        },
+        {
+          "type": "text",
+          "text": "Effects queue up - next waits for previous to finish"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await new EmbersSequence()",
+            "  .projectile('magic_missile', caster, await getSelectedTokenId())",
+            "  .then()",
+            "  .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 4 })",
+            "  .cast({ spellName: 'Missile Impact' });"
+          ],
+          "label": "Projectile → Impact"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await new EmbersSequence()",
+            "  .projectile('fireball.beam', caster, await getSelectedTokenId())",
+            "  .then()",
+            "  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 6 })",
+            "  .then()",
+            "  .action('slide', [await getSelectedTokenId(), { x: await getSelectedTokenId().x + 100, y: await getSelectedTokenId().y }, 500])",
+            "  .cast({ spellName: 'Fireball Chain' });"
+          ],
+          "label": "Fireball → Explosion → Knockback"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Cone Effects"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await new EmbersSequence()",
+                "  .cone('burning_hands', caster, await getSelectedTokenId(), { size: 6 })",
+                "  .cast({ spellName: 'Burning Hands' });"
+              ],
+              "label": "Burning Hands"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await new EmbersSequence()",
+                "  .cone('cone_of_cold', caster, await getSelectedTokenId(), { size: 8 })",
+                "  .cast({ spellName: 'Cone of Cold' });"
+              ],
+              "label": "Cone of Cold"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Delays"
+        },
+        {
+          "type": "text",
+          "text": "Add timing delays between effects"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await new EmbersSequence()",
+            "  .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await getSelectedTokenId())",
+            "  .delay(300)",
+            "  .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 3 })",
+            "  .cast({ spellName: 'Delayed Impact' });"
+          ],
+          "label": "Arrow (then 300ms delay) → Impact"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await new EmbersSequence()",
+            "  .aoe('moonbeam.intro', caster, { size: 2 })",
+            "  .delay(500)",
+            "  .projectile('magic_missile', caster, await getSelectedTokenId())",
+            "  .delay(200)",
+            "  .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 5 })",
+            "  .cast({ spellName: 'Energy Casting' });"
+          ],
+          "label": "Cast → Projectile → Hit (with delays)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Complex Sequences"
+        },
+        {
+          "type": "text",
+          "text": "Showcase fluent API chains"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await new EmbersSequence()",
+            "  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 2 })",
+            "  .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await getSelectedTokenId())",
+            "  .then()",
+            "  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 5 })",
+            "  .then()",
+            "  .aoe('generic.smoke.fumes.grey.1.complete', await getSelectedTokenId(), { size: 6 })",
+            "  .cast({ ",
+            "    spellName: 'Barrage',",
+            "    destination: 'ALL'",
+            "  });"
+          ],
+          "label": "Multi-Projectile Barrage"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Helper Functions"
+        },
+        {
+          "type": "text",
+          "text": "Quick one-liners for simple effects"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await castProjectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 });"
+              ],
+              "label": "castProjectile()"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await castAOE('bless', [caster, await getSelectedTokenId()], { size: 4 });"
+              ],
+              "label": "castAOE()"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await castCone('burning_hands', caster, await getSelectedTokenId(), { size: 6 });"
+              ],
+              "label": "castCone()"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "API Reference"
+        },
+        {
+          "type": "text",
+          "text": "new EmbersSequence() Methods:"
+        },
+        {
+          "type": "text",
+          "text": "• .projectile(id, casterId, targetIds, config?) - Projectile effect"
+        },
+        {
+          "type": "text",
+          "text": "• .aoe(id, tokenIds, config?) - Area of effect"
+        },
+        {
+          "type": "text",
+          "text": "• .cone(id, casterId, targetId, config?) - Cone effect"
+        },
+        {
+          "type": "text",
+          "text": "• .action(id, args?, config?) - Gameplay action"
+        },
+        {
+          "type": "text",
+          "text": "• .delay(ms) - Delay before next effect"
+        },
+        {
+          "type": "text",
+          "text": "• .then() - Sequential execution (wait for previous)"
+        },
+        {
+          "type": "text",
+          "text": "• .named(name) - Set spell name"
+        },
+        {
+          "type": "text",
+          "text": "• .broadcast(dest) - Set broadcast destination"
+        },
+        {
+          "type": "text",
+          "text": "• .cast(options?) - Send to Embers"
         }
       ]
     },

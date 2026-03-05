@@ -171,15 +171,12 @@ class IntegrationsManager {
         updateAurora: this.wrapAsync((mapId, updates) => Aurora.updateAurora(mapId, updates)),
         getPresets: () => Aurora.getPresets(),
       },
-      // Embers integration (spell visual effects - all async)
-      Embers: {
-        castSpellToTarget: this.wrapAsync((targets, config) => Embers.castSpellToTarget(targets, config)),
-        castSpellAtToken: this.wrapAsync((tokenId, config) => Embers.castSpellAtToken(tokenId, config)),
-        castProjectileSpell: this.wrapAsync((casterId, targetId, config) => Embers.castProjectileSpell(casterId, targetId, config)),
-        castConeSpell: this.wrapAsync((casterId, targetId, config) => Embers.castConeSpell(casterId, targetId, config)),
-        sendInstructions: this.wrapAsync((instructions, options) => Embers.sendInstructions(instructions, options)),
-        castSpellSequence: this.wrapAsync((steps, options) => Embers.castSpellSequence(steps, options)),
-      },
+      // Embers integration (spell visual effects - fluent API)
+      EmbersSequence: Embers.EmbersSequence,
+      castProjectile: this.wrapAsync((effectId, casterId, targetIds, config) => Embers.castProjectile(effectId, casterId, targetIds, config)),
+      castAOE: this.wrapAsync((effectId, tokenIds, config) => Embers.castAOE(effectId, tokenIds, config)),
+      castCone: this.wrapAsync((effectId, casterId, targetId, config) => Embers.castCone(effectId, casterId, targetId, config)),
+      sendInstructions: this.wrapAsync((instructions, options) => Embers.sendInstructions(instructions, options)),
       // Announcement integration (room-level announcements - all async)
       Announcement: {
         setAnnouncement: this.wrapAsync((content, active) => Announcement.setAnnouncement(content, active)),
