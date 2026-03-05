@@ -1263,7 +1263,7 @@
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "await Embers.castProjectileFromTo(token, targetId, { id: 'magic_missile', copies: 3 });"
+                "await Embers.castProjectileSpell(token, targetId, { id: 'magic_missile', copies: 3 });"
               ],
               "label": "Magic Missile"
             },
@@ -1293,7 +1293,7 @@
               "commands": [
                 "const targetId = await getSelectedTokenId();",
                 "if (!targetId) return console.error('Select a target');",
-                "await Embers.castProjectileFromTo(token, targetId, { id: 'fireball.beam' });",
+                "await Embers.castProjectileSpell(token, targetId, { id: 'fireball.beam' });",
                 "await Embers.castSpellAtToken(targetId, { id: 'fireball.explosion', size: 4, delay: 1000 });"
               ],
               "label": "Fireball"
