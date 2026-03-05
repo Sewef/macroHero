@@ -1268,7 +1268,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 })",
                 "  .cast({ spellName: 'Magic Missile' });"
               ],
@@ -1277,7 +1277,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .aoe('cure_wounds', await getSelectedTokenId(), { size: 2 })",
                 "  .cast({ spellName: 'Cure Wounds' });"
               ],
@@ -1286,7 +1286,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .aoe('shield.hit', caster, { size: 2 })",
                 "  .cast({ spellName: 'Shield' });"
               ],
@@ -1311,7 +1311,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .projectile('magic_missile', caster, [await getSelectedTokenId()])",
                 "  .projectile('fire_bolt', caster, await getSelectedTokenId())",
                 "  .cast({ spellName: 'Double Attack' });"
@@ -1321,7 +1321,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .aoe('shield.complete', caster, { size: 6 })",
                 "  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 4 })",
                 "  .cast({ spellName: 'Blessings' });"
@@ -1344,7 +1344,7 @@
         {
           "type": "button",
           "commands": [
-            "await new EmbersSequence()",
+            "await Embers.sequence()",
             "  .projectile('magic_missile', caster, await getSelectedTokenId())",
             "  .then()",
             "  .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 4 })",
@@ -1355,7 +1355,7 @@
         {
           "type": "button",
           "commands": [
-            "await new EmbersSequence()",
+            "await Embers.sequence()",
             "  .projectile('fireball.beam', caster, await getSelectedTokenId())",
             "  .then()",
             "  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 6 })",
@@ -1378,7 +1378,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .cone('burning_hands', caster, await getSelectedTokenId(), { size: 6 })",
                 "  .cast({ spellName: 'Burning Hands' });"
               ],
@@ -1387,7 +1387,7 @@
             {
               "type": "button",
               "commands": [
-                "await new EmbersSequence()",
+                "await Embers.sequence()",
                 "  .cone('cone_of_cold', caster, await getSelectedTokenId(), { size: 8 })",
                 "  .cast({ spellName: 'Cone of Cold' });"
               ],
@@ -1409,7 +1409,7 @@
         {
           "type": "button",
           "commands": [
-            "await new EmbersSequence()",
+            "await Embers.sequence()",
             "  .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await getSelectedTokenId())",
             "  .delay(300)",
             "  .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 3 })",
@@ -1420,7 +1420,7 @@
         {
           "type": "button",
           "commands": [
-            "await new EmbersSequence()",
+            "await Embers.sequence()",
             "  .aoe('moonbeam.intro', caster, { size: 2 })",
             "  .delay(500)",
             "  .projectile('magic_missile', caster, await getSelectedTokenId())",
@@ -1444,7 +1444,7 @@
         {
           "type": "button",
           "commands": [
-            "await new EmbersSequence()",
+            "await Embers.sequence()",
             "  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 2 })",
             "  .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await getSelectedTokenId())",
             "  .then()",
@@ -1504,7 +1504,7 @@
         },
         {
           "type": "text",
-          "text": "new EmbersSequence() Methods:"
+          "text": "Embers.sequence() Methods:"
         },
         {
           "type": "text",

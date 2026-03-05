@@ -320,6 +320,10 @@ export async function sendInstructions(instructions, options = {}) {
 
 export { EmbersSequence };
 
+export function sequence() {
+  return new EmbersSequence();
+}
+
 export async function castProjectile(effectId, casterId, targetIds, config) {
   await new EmbersSequence()
     .projectile(effectId, casterId, targetIds, config)
