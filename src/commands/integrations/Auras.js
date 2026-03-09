@@ -6,6 +6,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
+import * as ImageHelper from "../imageHelper.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Auras') && console.log(...args);
@@ -76,67 +77,108 @@ export async function getAuras(itemId) {
  * @param {string|Array} itemId - Item ID or array of item IDs
  * @param {Object} config - Aura configuration object
  *   
- *   For color-based auras (Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom):
- *   - style: string (Glow|Bubble|Range|Solid|Simple|Distort|Spirits|Custom)
- *   - color: string (hex color like #FF0000)
- *   - size: number (radius in cells)
- *   - opacity: number (optional, 0-1)
- *   - blendMode: string (optional)
- *   - sksl: string (optional, only for Custom style)
+ *   Required:
+ *   - size: number — Aura radius in grid units
  *
- *   For image auras via broadcast:
- *   NOT DIRECTLY SUPPORTED - Use addAuraPreset() instead, or set image auras
- *   through the Emanation extension UI.
- *   Image auras created via broadcast API require ImageContent and ImageGrid
- *   objects that are not easily created in JavaScript.
- * 
+ *   Optional (omitted = uses player defaults):
+ *   - style: string — Glow|Bubble|Range|Solid|Simple|Distort|Spirits|Image|Custom
+ *   - color: string — Hex color code (#FF0000, etc.). Required if style is not Image/Custom
+ *   - opacity: number — 0-1, opacity value
+ *   - blendMode: string — Blend mode (PLUS, DIFFERENCE, SATURATION, etc.)
+ *   - layer: string — DRAWING, POST_PROCESS, etc.
+ *   - visibleTo: string | null — Player ID for visibility (null = invisible to all)
+ *   - sksl: string — Shader code for Custom style auras (required if style is Custom)
+ *   
+ *   For Image style auras, EITHER:
+ *   - imageUrl: string — Image URL (automatically detects dimensions and MIME type)
+ *   - imageBuildParams: object — Full {image: ImageContent, grid: ImageGrid} (overrides imageUrl)
+ *
  * @returns {Promise<void>}
  */
 export async function addAura(itemId, config) {
   try {
-    if (!config || !config.style || typeof config.size !== 'number') {
-      throw new Error("[Auras.addAura] Invalid aura config: must have style and size");
+    if (!config || typeof config.size !== 'number') {
+      throw new Error("[Auras.addAura] Invalid aura config: must have size (number)");
     }
 
-    if (config.style === 'Image' || config.style === 'image') {
-      throw new Error(
-        "[Auras.addAura] Image auras are not directly supported via broadcast API. " +
-        "Use addAuraPreset() instead, or create image auras through the Emanation extension UI."
-      );
-    }
-
-    // Validate color is provided for non-Image styles
-    if (!config.color) {
-      throw new Error("[Auras.addAura] Non-image auras require 'color' (hex like #FF0000)");
-    }
-
-    const sources = Array.isArray(itemId) ? itemId : [itemId];
-    debugLog(`[Auras.addAura] Adding ${config.style} aura to ${sources.length} item(s)`, config);
-
+    // Build the message with only provided parameters (let extension use player defaults for the rest)
     const message = {
       type: "CREATE_AURAS",
-      sources: sources,
+      sources: Array.isArray(itemId) ? itemId : [itemId],
       size: config.size,
-      style: config.style,
-      color: config.color,
     };
 
     // Add optional parameters if provided
+    if (config.style !== undefined) {
+      // Validate that if style is provided, required params are also provided
+      if (config.style === 'Image' || config.style === 'image') {
+        // For Image auras: either imageBuildParams (explicit) or imageUrl (auto-detect)
+        if (config.imageBuildParams) {
+          // Use explicit imageBuildParams if provided
+          if (!ImageHelper.validateImageBuildParams(config.imageBuildParams)) {
+            throw new Error(
+              "[Auras.addAura] Invalid imageBuildParams: must have {image: ImageContent, grid: ImageGrid}"
+            );
+          }
+          message.style = config.style;
+          message.imageBuildParams = config.imageBuildParams;
+        } else if (config.imageUrl) {
+          // Auto-detect dimensions and MIME type from URL
+          debugLog(`[Auras.addAura] Auto-detecting parameters for image: ${config.imageUrl}`);
+          const imageBuildParams = await ImageHelper.buildImageBuildParams(config.imageUrl, {
+            width: config.imageWidth,
+            height: config.imageHeight,
+            mime: config.imageMime,
+            offset: config.imageOffset,
+            dpi: config.imageDpi,
+          });
+          
+          message.style = config.style;
+          message.imageBuildParams = imageBuildParams;
+          debugLog(`[Auras.addAura] ✓ Auto-detected image parameters:`, imageBuildParams);
+        } else {
+          throw new Error(
+            "[Auras.addAura] Image style requires either 'imageUrl' (auto-detect) or 'imageBuildParams' (explicit)"
+          );
+        }
+      } else if (config.style === 'Custom' || config.style === 'custom') {
+        if (!config.sksl) {
+          throw new Error("[Auras.addAura] Custom style requires 'sksl' (shader code)");
+        }
+        message.style = config.style;
+        message.sksl = config.sksl;
+      } else {
+        // Non-custom, non-image style provided - color is optional but recommended
+        message.style = config.style;
+        if (config.color !== undefined) {
+          message.color = config.color;
+        }
+      }
+    } else if (config.color !== undefined) {
+      // Color provided without style - this is allowed, extension will use its default style
+      message.color = config.color;
+    }
+
+    // Optional appearance parameters
     if (config.opacity !== undefined) {
+      if (typeof config.opacity !== 'number' || config.opacity < 0 || config.opacity > 1) {
+        throw new Error("[Auras.addAura] opacity must be a number between 0 and 1");
+      }
       message.opacity = config.opacity;
     }
     if (config.blendMode !== undefined) {
       message.blendMode = config.blendMode;
     }
+
+    // Optional advanced parameters
     if (config.visibleTo !== undefined) {
       message.visibleTo = config.visibleTo;
     }
     if (config.layer !== undefined) {
       message.layer = config.layer;
     }
-    if (config.style === 'Custom' && config.sksl) {
-      message.sksl = config.sksl;
-    }
+
+    debugLog(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
 
     await OBR.broadcast.sendMessage(
       AURAS_CHANNEL,

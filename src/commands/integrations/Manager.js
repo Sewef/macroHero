@@ -22,6 +22,7 @@ import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
 import * as Announcement from "./Announcement.js";
 import * as Auras from "./Auras.js";
+import * as ImageHelper from "../imageHelper.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -197,6 +198,15 @@ class IntegrationsManager {
         getAuras: this.wrapAsync((itemId) => Auras.getAuras(itemId)),
         addAura: this.wrapAsync((itemId, config) => Auras.addAura(itemId, config)),
         removeAura: this.wrapAsync((itemId) => Auras.removeAura(itemId)),
+      },
+      // Image Helper utilities (for building image aura parameters)
+      ImageHelper: {
+        buildImageBuildParams: this.wrapAsync((url, options) => ImageHelper.buildImageBuildParams(url, options)),
+        buildImageContent: this.wrapAsync((url, options) => ImageHelper.buildImageContent(url, options)),
+        buildImageGrid: (options) => ImageHelper.buildImageGrid(options),
+        getImageDimensions: this.wrapAsync((url) => ImageHelper.getImageDimensions(url)),
+        detectMimeType: (url) => ImageHelper.detectMimeType(url),
+        validateImageBuildParams: (params) => ImageHelper.validateImageBuildParams(params),
       },
       // Metadata modules
       playerMetadata,

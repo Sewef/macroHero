@@ -2894,6 +2894,35 @@
           "label": "Add Blue Range Aura"
         },
         {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "await Auras.addAura(item, {",
+            "  style: 'Image',",
+            "  size: 5,",
+            "  imageUrl: 'https://sewef.github.io/macrohero/logo.png'",
+            "});",
+            "console.log('✓ Image Aura added (auto-detected dimensions)');"
+          ],
+          "label": "Add Image Aura (Simple)"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "const imageBuildParams = await ImageHelper.buildImageBuildParams('https://sewef.github.io/macrohero/logo.png', { dpi: 72 });",
+            "await Auras.addAura(item, {",
+            "  style: 'Image',",
+            "  size: 5,",
+            "  imageBuildParams: imageBuildParams",
+            "});",
+            "console.log('✓ Image Aura added (custom parameters)');"
+          ],
+          "label": "Add Image Aura (Advanced)"
+        },
+        {
           "type": "divider"
         },
         {
@@ -2922,7 +2951,7 @@
         },
         {
           "type": "text",
-          "text": "Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom. Image auras are only supported via the extension UI or by direct metadata manipulation."
+          "text": "Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control."
         }
       ]
     }
