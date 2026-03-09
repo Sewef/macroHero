@@ -2808,6 +2808,123 @@
           "label": "Remove Announcement Metadata"
         }
       ]
+    },
+    {
+      "label": "Auras",
+      "layout": [
+        {
+          "type": "title",
+          "text": "Auras Auras"
+        },
+        {
+          "type": "text",
+          "text": "Manage auras on tokens and items (select a token first)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Status"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "const hasAuras = await Auras.hasAura(item);",
+            "const auras = await Auras.getAuras(item);",
+            "console.log('Selected Item:', item);",
+            "console.log('Has Auras:', hasAuras);",
+            "console.log('Aura Count:', auras.length);"
+          ],
+          "label": "Check Status"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Add Aura"
+        },
+        {
+          "type": "text",
+          "text": "Create a new aura on the selected item"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "await Auras.addAura(item, {",
+            "  style: 'Glow',",
+            "  color: '#FF0000',",
+            "  size: 5",
+            "});",
+            "console.log('✓ Red Glow Aura added');"
+          ],
+          "label": "Add Red Glow Aura"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "await Auras.addAura(item, {",
+            "  style: 'Bubble',",
+            "  color: '#00FF00',",
+            "  size: 3",
+            "});",
+            "console.log('✓ Green Bubble Aura added');"
+          ],
+          "label": "Add Green Bubble Aura"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "await Auras.addAura(item, {",
+            "  style: 'Range',",
+            "  color: '#0000FF',",
+            "  size: 8",
+            "});",
+            "console.log('✓ Blue Range Aura added');"
+          ],
+          "label": "Add Blue Range Aura"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Remove Aura"
+        },
+        {
+          "type": "text",
+          "text": "Remove all auras from the selected item"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const item = await getSelectedTokenId();",
+            "if (!item) return console.warn('No item selected');",
+            "const hasBefore = await Auras.hasAura(item);",
+            "if (!hasBefore) return console.warn('No auras to remove');",
+            "await Auras.removeAura(item);",
+            "console.log('✓ All auras removed');"
+          ],
+          "label": "Remove All Auras"
+        },
+        {
+          "type": "title",
+          "text": "Notes"
+        },
+        {
+          "type": "text",
+          "text": "Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom. Image auras are only supported via the extension UI or by direct metadata manipulation."
+        }
+      ]
     }
   ]
 }

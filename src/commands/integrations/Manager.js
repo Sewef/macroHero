@@ -21,6 +21,7 @@ import * as Weather from "./Weather.js";
 import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
 import * as Announcement from "./Announcement.js";
+import * as Auras from "./Auras.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -189,6 +190,13 @@ class IntegrationsManager {
         showAnnouncement: this.wrapAsync(() => Announcement.showAnnouncement()),
         hideAnnouncement: this.wrapAsync(() => Announcement.hideAnnouncement()),
         updateContent: this.wrapAsync((content) => Announcement.updateContent(content)),
+      },
+      // Auras integration (aura management - all async)
+      Auras: {
+        hasAura: this.wrapAsync((itemId) => Auras.hasAura(itemId)),
+        getAuras: this.wrapAsync((itemId) => Auras.getAuras(itemId)),
+        addAura: this.wrapAsync((itemId, config) => Auras.addAura(itemId, config)),
+        removeAura: this.wrapAsync((itemId) => Auras.removeAura(itemId)),
       },
       // Metadata modules
       playerMetadata,

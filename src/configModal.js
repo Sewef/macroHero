@@ -1919,6 +1919,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'Local',
     'Manager',
     'Announcement',
+    'Auras',
     'Aurora',
     'ColoredRings',
     'ConditionMarkers',
