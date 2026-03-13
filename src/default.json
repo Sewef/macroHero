@@ -1725,6 +1725,14 @@
           "commands": [
             "await JustDices.roll('1d20');"
           ]
+        },
+        {
+          "type": "button",
+          "label": "Button with tooltip",
+          "tooltip": "This is a button with a tooltip",
+          "commands": [
+            "await JustDices.roll('1d20');"
+          ]
         }
       ]
     },

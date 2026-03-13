@@ -60,10 +60,10 @@ export function renderButton(item, page, {
         btn.disabled = false;
       }
     };
-    btn.title = `${item.commands.length} command(s)`;
+    btn.title = item.tooltip || item.label || "Button";
   } else {
     btn.disabled = true;
-    btn.title = "No commands defined";
+    btn.title = item.tooltip || item.label || "No commands defined";
   }
 
   return btn;

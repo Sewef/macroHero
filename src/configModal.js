@@ -1242,6 +1242,10 @@ window.updateElementFields = function(existingElement = null) {
           <input type="text" id="elem_label" value="${existingElement?.label || ''}" placeholder="Button Text" />
         </div>
         <div class="input-group">
+          <label>Tooltip</label>
+          <input type="text" id="elem_tooltip" value="${existingElement?.tooltip || ''}" placeholder="Displayed on hover (leave empty to use label)" />
+        </div>
+        <div class="input-group">
           <label>Commands (one per line)</label>
           <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">${existingElement?.commands?.join('\n') || ''}</textarea>
         </div>
@@ -1369,6 +1373,8 @@ window.saveElement = function() {
   switch(type) {
     case 'button':
       element.label = document.getElementById("elem_label")?.value || '';
+      const tooltip = document.getElementById("elem_tooltip")?.value;
+      if (tooltip) element.tooltip = tooltip;
       const commands = document.getElementById("elem_commands")?.value || '';
       element.commands = commands.split('\n').filter(c => c.trim());
       break;
