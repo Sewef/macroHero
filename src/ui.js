@@ -6,14 +6,7 @@
 import { isDebugEnabled } from "./debugMode.js";
 import { eventBus as EventBus } from "./events/EventBus.js";
 import { variableStore } from "./stores/VariableStore.js";
-import { renderCounter } from "./ui/renderCounter.js";
-import { renderInput } from "./ui/renderInput.js";
-import { renderCheckbox } from "./ui/renderCheckbox.js";
-import { renderButton } from "./ui/renderButton.js";
-import { renderText } from "./ui/renderText.js";
-import { renderTitle } from "./ui/renderTitle.js";
-import { renderRow } from "./ui/renderRow.js";
-import { renderStack } from "./ui/renderStack.js";
+import { ComponentRegistry } from "./ui/ComponentRegistry.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
@@ -430,6 +423,49 @@ function createDynamicLabel(item, page, inStack = false, suffix = "") {
 // RENDER HELPERS - Layout Renderer
 // ============================================
 
+/**
+ * Find a page by index in the config
+ * @param {number} pageIndex - Page index
+ * @returns {Object|null} Page object or null
+ */
+function findPageByIndex(pageIndex) {
+  return config.pages?.[pageIndex] || null;
+}
+
+/**
+ * Render an element with optional inStack parameter
+ * @param {string} type - Component type
+ * @param {Object} item - Layout item
+ * @param {Object} page - Current page
+ * @param {boolean} inStack - Whether to render in stack mode
+ * @returns {HTMLElement} Rendered element
+ */
+function renderElement(type, item, page, inStack = false) {
+  // Build complete services object
+  const services = {
+    config,
+    saveConfig,
+    broadcastConfigUpdated,
+    handleButtonClick,
+    findPageByIndex,
+    updateRenderedValue,
+    evaluateItemText,
+    evaluateAndSetElementText,
+    globalVariables,
+    renderedExpressionElements,
+    renderedValueElements,
+    renderedCheckboxElements,
+    currentPage,
+    getDependentVariables,
+    resolveVariables,
+    renderLayoutElement,
+    renderElement  // Allow recursive calls with inStack
+  };
+
+  // Use ComponentRegistry
+  return ComponentRegistry.render(type, item, page, services, inStack);
+}
+
 function renderLayout(container, layoutItems, page) {
   // Batch all layout elements before single append to container
   const frag = document.createDocumentFragment();
@@ -443,301 +479,21 @@ function renderLayout(container, layoutItems, page) {
 }
 
 function renderLayoutElement(layoutItem, page) {
-  switch (layoutItem.type) {
-    case "title":
-      return renderTitleElement(layoutItem, page);
-    
-    case "row":
-      return renderRowElement(layoutItem, page);
-
-    case "stack":
-      return renderStackElement(layoutItem, page);
-    
-    case "button":
-      return renderButtonElement(layoutItem, page);
-    
-    case "value":
-      return renderValue(layoutItem, page);
-    
-    case "input":
-      return renderInputElement(layoutItem, page);
-    
-    case "checkbox":
-      return renderCheckboxElement(layoutItem, page);
-    
-    case "counter":
-      return renderCounterElement(layoutItem, page);
-    
-    case "dropdown":
-      return renderDropdown(layoutItem, page);
-    
-    case "text":
-      return renderTextElement(layoutItem, page);
-    
-    case "divider":
-      return renderDivider();
-    
-    default:
-      debugWarn("Unknown layout type:", layoutItem.type);
-      return null;
-  }
-}
-
-// ============================================
-// RENDER HELPERS - Layout Elements
-// ============================================
-
-function renderTitleElement(item, page) {
-  return renderTitle(item, page, {
-    evaluateAndSetElementText
-  });
-}
-
-function renderRowElement(item, page) {
-  return renderRow(item, page, {
-    renderLayoutElement
-  });
-}
-
-function renderStackElement(item, page) {
-  return renderStack(item, page, {
-    renderValue,
-    renderInputElement,
-    renderCounterElement,
-    renderLayoutElement
-  });
-}
-
-function renderButtonElement(item, page) {
-  return renderButton(item, page, {
-    saveConfig,
-    broadcastConfigUpdated,
-    handleButtonClick,
-    findPageByIndex,
-    updateRenderedValue,
-    evaluateItemText,
-    globalVariables,
-    renderedExpressionElements,
-    currentPage,
-    config
-  });
-}
-
-/**
- * Find a page by index in the config
- * @param {number} pageIndex - Page index
- * @returns {Object|null} Page object or null
- */
-function findPageByIndex(pageIndex) {
-  return config.pages?.[pageIndex] || null;
-}
-
-function renderValue(item, page, inStack = false) {
-  const valueDiv = document.createElement("div");
-  valueDiv.className = "mh-layout-value";
-  
-  const variable = page.variables?.[item.var];
-  if (!variable) {
-    valueDiv.innerHTML = `<div class="mh-value-label">${item.label ?? item.var}</div><div class="mh-value-error">Variable not found: ${item.var}</div>`;
-    return valueDiv;
+  // Special case for divider
+  if (layoutItem.type === "divider") {
+    const divider = document.createElement("div");
+    divider.className = "mh-layout-divider";
+    return divider;
   }
 
-  // Get resolved value and apply min/max constraints
-  let resolvedValue = page._resolved?.[item.var];
-  if (typeof resolvedValue === 'number') {
-    if (variable.min !== undefined && resolvedValue < variable.min) {
-      resolvedValue = variable.min;
-      page._resolved[item.var] = resolvedValue;
-    }
-    if (variable.max !== undefined && resolvedValue > variable.max) {
-      resolvedValue = variable.max;
-      page._resolved[item.var] = resolvedValue;
-    }
+  // Render other elements
+  const element = renderElement(layoutItem.type, layoutItem, page);
+  if (element) {
+    return element;
   }
 
-  // Create label
-  const isLoading = !(item.var in (page._resolved || {}));
-  const displayValue = isLoading ? '' : (resolvedValue ?? 'N/A');
-
-  const labelEl = document.createElement(inStack ? "span" : "div");
-  labelEl.className = "mh-value-label";
-  
-  if (!evaluateAndSetElementText(labelEl, item, page)) {
-    labelEl.textContent = (item.label ?? item.var) + (inStack ? ":" : "");
-  } else if (inStack) {
-    // For stack mode, we need to add the colon after the dynamic content
-    const originalPush = renderedExpressionElements[renderedExpressionElements.length - 1];
-    const originalElement = originalPush.element;
-    const originalSetText = originalElement.textContent;
-  }
-
-  // Create content element
-  const contentEl = document.createElement("span");
-  contentEl.className = `mh-value-content ${isLoading ? 'mh-loading' : ''}`;
-  contentEl.textContent = displayValue;
-
-  // Assemble based on stack mode
-  if (inStack) {
-    valueDiv.appendChild(labelEl);
-    const spacer = document.createElement("span");
-    spacer.textContent = " ";
-    valueDiv.appendChild(spacer);
-    valueDiv.appendChild(contentEl);
-    valueDiv.classList.add('mh-stack-horizontal-value');
-  } else {
-    valueDiv.appendChild(labelEl);
-    valueDiv.appendChild(contentEl);
-  }
-
-  renderedValueElements[item.var] = valueDiv;
-  return valueDiv;
-}
-
-function renderTextElement(item, page) {
-  return renderText(item, page, {
-    evaluateAndSetElementText
-  });
-}
-
-function renderInputElement(item, page, inStack = false) {
-  return renderInput(item, page, {
-    config,
-    saveConfig,
-    evaluateAndSetElementText,
-    renderedValueElements
-  }, inStack);
-}
-
-function renderCheckboxElement(item, page) {
-  return renderCheckbox(item, page, {
-    config,
-    saveConfig,
-    broadcastConfigUpdated,
-    getDependentVariables,
-    resolveVariables,
-    updateRenderedValue,
-    globalVariables,
-    evaluateAndSetElementText,
-    renderedCheckboxElements
-  });
-}
-
-function renderDivider() {
-  const divider = document.createElement("div");
-  divider.className = "mh-layout-divider";
-  return divider;
-}
-
-function renderCounterElement(item, page, inStack = false) {
-  return renderCounter(item, page, {
-    config,
-    saveConfig,
-    broadcastConfigUpdated,
-    getDependentVariables,
-    resolveVariables,
-    updateRenderedValue,
-    globalVariables,
-    evaluateAndSetElementText,
-    renderedValueElements
-  }, inStack);
-}
-
-function renderDropdown(item, page) {
-  const container = document.createElement("div");
-  container.className = "mh-layout-dropdown";
-
-  const variable = page.variables?.[item.var];
-  if (!variable) {
-    container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;
-    return container;
-  }
-
-  // Label
-  const label = document.createElement("label");
-  label.className = "mh-dropdown-label";
-  
-  if (!evaluateAndSetElementText(label, item, page)) {
-    label.textContent = item.label ?? item.var;
-  }
-
-  // Select element
-  const select = document.createElement("select");
-  select.className = "mh-dropdown-select";
-
-  // Get options from item.options array or from a variable
-  let options = item.options ?? [];
-  
-  // If optionsVar is specified, use variable containing array
-  if (item.optionsVar) {
-    const optionsVariable = page.variables?.[item.optionsVar];
-    if (optionsVariable) {
-      const optionsValue = page._resolved?.[item.optionsVar] ?? optionsVariable.value;
-      if (Array.isArray(optionsValue)) {
-        options = optionsValue;
-      } else {
-        debugWarn(`[UI] optionsVar "${item.optionsVar}" for dropdown "${item.var}" is not an array`);
-        options = [];
-      }
-    } else {
-      debugWarn(`[UI] optionsVar "${item.optionsVar}" not found for dropdown "${item.var}"`);
-      options = [];
-    }
-  }
-  
-  if (options.length === 0) {
-    const defaultOption = document.createElement("option");
-    defaultOption.textContent = "No options available";
-    defaultOption.disabled = true;
-    select.appendChild(defaultOption);
-  } else {
-    options.forEach(opt => {
-      const option = document.createElement("option");
-      // Options can be strings or {label, value} objects
-      if (typeof opt === 'string') {
-        option.value = opt;
-        option.textContent = opt;
-      } else {
-        option.value = opt.value ?? opt.label ?? '';
-        option.textContent = opt.label ?? opt.value ?? '';
-      }
-      select.appendChild(option);
-    });
-  }
-
-  // Get current value from resolved variables or variable.value
-  const currentValue = page._resolved?.[item.var] ?? variable.value ?? '';
-  select.value = currentValue;
-
-  renderedValueElements[item.var] = container;
-
-  select.onchange = async () => {
-    const newValue = select.value;
-    // Update the variable definition with the new value
-    variable.value = newValue;
-    delete variable.eval; // Remove eval if it exists, we're storing a static value
-    page._resolved[item.var] = newValue;
-
-    try {
-      await saveConfig(config).catch(err => debugError("[UI] Error auto-saving config:", err));
-      await broadcastConfigUpdated();
-
-      // Re-evaluate dependent variables
-      const dependentVars = getDependentVariables(page.variables, [item.var]);
-      if (dependentVars.size > 0) {
-        const onVariableResolved = (varName, value) => {
-          page._resolved[varName] = value;
-          updateRenderedValue(varName, value);
-        };
-        await resolveVariables(page.variables, globalVariables, onVariableResolved, dependentVars);
-      }
-    } catch (err) {
-      debugError('[UI] Error handling dropdown change:', err);
-    }
-  };
-
-  container.appendChild(label);
-  container.appendChild(select);
-  return container;
+  debugWarn("Unknown layout type:", layoutItem.type);
+  return null;
 }
 
 // ============================================
