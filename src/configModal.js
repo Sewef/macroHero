@@ -1250,12 +1250,12 @@ window.updateElementFields = function(existingElement = null) {
             <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
             Custom Color
           </label>
-          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
         <div class="input-group">
           <label>Commands (one per line)</label>
-          <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">${existingElement?.commands?.join('\n') || ''}</textarea>
+          <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">        ${existingElement?.commands?.join('\n') || ''}</textarea>
         </div>
       `;
       // Add event listener for checkbox to toggle color input
@@ -1316,7 +1316,7 @@ window.updateElementFields = function(existingElement = null) {
             <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
             Custom Color
           </label>
-          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
       `;
@@ -1346,7 +1346,7 @@ window.updateElementFields = function(existingElement = null) {
             <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
             Custom Color
           </label>
-          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
       `;
@@ -1400,7 +1400,7 @@ window.updateElementFields = function(existingElement = null) {
             <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
             Custom Color
           </label>
-          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
       `;
@@ -1442,7 +1442,7 @@ window.updateElementFields = function(existingElement = null) {
             <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
             Custom Color
           </label>
-          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
         <p style="color: #c8adff; margin-top: 12px;">Use the "+ Item" button to add elements to the stack.</p>

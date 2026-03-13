@@ -27,8 +27,8 @@ function applyTheme(theme) {
   
   // Apply custom theme primary colors if available
   if (theme.primary) {
-    root.style.setProperty('--mh-accent', isLight ? (theme.primary.main || '#3366ff') : (theme.primary.light || '#5a9fff'));
-    root.style.setProperty('--mh-accent-hover', isLight ? (theme.primary.light || '#5580ff') : (theme.primary.main || '#7ab3ff'));
+    root.style.setProperty('--mh-accent', isLight ? (theme.primary.main || '#9966ff') : (theme.primary.light || '#c8adff'));
+    root.style.setProperty('--mh-accent-hover', isLight ? (theme.primary.light || '#bb99ff') : (theme.primary.main || '#bb99ff'));
   }
 }
 
