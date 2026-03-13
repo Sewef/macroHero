@@ -5,6 +5,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
+import * as BroadcastHelpers from "../broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('ConditionMarkers') && console.log(...args);
@@ -60,40 +61,23 @@ export async function addCondition(itemId, conditionName, value = null) {
     const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
 
     const requesterId = await OBR.player.getId();
-    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const payload = { callId, requesterId, action: 'add', tokenId: itemId, condition: conditionName, value };
+    const payload = { requesterId, action: 'add', tokenId: itemId, condition: conditionName, value };
 
-    debugLog(`[ConditionMarkers] Native API missing, sending API request ${API_REQUEST_CHANNEL} for token ${itemId}, condition '${conditionName},' value ${value}`, );
+    debugLog(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
 
-    const res = await new Promise((resolve, reject) => {
-      let timeoutId = null;
-      const handler = (evt) => {
-        const data = evt.data;
-        if (!data) return;
-        if (data.callId !== callId || data.requesterId !== requesterId) return;
-        if (timeoutId) clearTimeout(timeoutId);
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
-        resolve(data);
-      };
+    const requestResult = await BroadcastHelpers.broadcastRequest(
+      API_REQUEST_CHANNEL,
+      API_RESPONSE_CHANNEL,
+      payload,
+      { destination: "LOCAL", timeoutMs: 5000 }
+    );
 
-      // Listen for response
-      OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
-
-      // Send request
-      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "LOCAL" }).catch(err => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
-        reject(err);
-      });
-
-      // Timeout
-      timeoutId = setTimeout(() => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
-        reject(new Error('ConditionMarkers API timeout'));
-      }, 5000);
-    });
-
-    debugLog(`[ConditionMarkers] API response for add '${conditionName}':`, res);
-    return res;
+    if (requestResult.success) {
+      debugLog(`[ConditionMarkers] API response for add '${conditionName}':`, requestResult.data);
+      return requestResult.data;
+    } else {
+      throw new Error(requestResult.error);
+    }
   } catch (error) {
     debugError("Failed to add condition:", error);
     throw error;

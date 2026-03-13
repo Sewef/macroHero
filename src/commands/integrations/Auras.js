@@ -7,6 +7,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
 import * as ImageHelper from "../imageHelper.js";
+import * as BroadcastHelpers from "../broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Auras') && console.log(...args);
@@ -180,13 +181,13 @@ export async function addAura(itemId, config) {
 
     debugLog(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
 
-    await OBR.broadcast.sendMessage(
-      AURAS_CHANNEL,
-      message,
-      { destination: "LOCAL" }
-    );
-
-    debugLog(`[Auras.addAura] ✓ Aura creation message sent`);
+    const result = await BroadcastHelpers.broadcastLocal(AURAS_CHANNEL, message);
+    
+    if (result.success) {
+      debugLog(`[Auras.addAura] ✓ Aura creation message sent`);
+    } else {
+      debugError(`[Auras.addAura] Failed to broadcast: ${result.error}`);
+    }
   } catch (error) {
     debugError(`[Auras.addAura] Error adding aura:`, error);
     throw error;
@@ -203,16 +204,19 @@ export async function removeAura(itemId) {
     const sources = Array.isArray(itemId) ? itemId : [itemId];
     debugLog(`[Auras.removeAura] Removing all auras from ${sources.length} item(s)`);
 
-    await OBR.broadcast.sendMessage(
+    const result = await BroadcastHelpers.broadcastLocal(
       AURAS_CHANNEL,
       {
         type: "REMOVE_AURAS",
         sources: sources,
-      },
-      { destination: "LOCAL" }
+      }
     );
 
-    debugLog(`[Auras.removeAura] ✓ Aura removal message sent`);
+    if (result.success) {
+      debugLog(`[Auras.removeAura] ✓ Aura removal message sent`);
+    } else {
+      debugError(`[Auras.removeAura] Failed to broadcast: ${result.error}`);
+    }
   } catch (error) {
     debugError(`[Auras.removeAura] Error removing auras:`, error);
     throw error;

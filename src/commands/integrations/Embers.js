@@ -1,6 +1,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
 import { getTokenPosition } from "../tokenHelpers.js";
+import * as BroadcastHelpers from "../broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Embers') && console.log(...args);
@@ -285,11 +286,17 @@ class EmbersSequence {
       debugLog(`[Embers] Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
         JSON.stringify(message, null, 2));
 
-      await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { 
-        destination: finalOptions.destination ?? 'ALL' 
-      });
+      const result = await BroadcastHelpers.broadcastMessage(
+        MESSAGE_CHANNEL, 
+        message, 
+        { destination: finalOptions.destination ?? BroadcastHelpers.BROADCAST_DESTINATIONS.ALL }
+      );
       
-      debugLog(`[Embers] ✓ Message sent (${this.instructions.length} instruction(s))`);
+      if (result.success) {
+        debugLog(`[Embers] ✓ Message sent (${this.instructions.length} instruction(s))`);
+      } else {
+        debugError(`[Embers] Failed to broadcast: ${result.error}`);
+      }
     } catch (error) {
       debugError('[Embers] Failed to cast:', error.message);
     }
@@ -308,11 +315,17 @@ export async function sendInstructions(instructions, options = {}) {
     debugLog(`[Embers] Broadcasting ${instructions.length} raw instruction(s):`, 
       JSON.stringify(message, null, 2));
     
-    await OBR.broadcast.sendMessage(MESSAGE_CHANNEL, message, { 
-      destination: options.destination ?? 'ALL' 
-    });
+    const result = await BroadcastHelpers.broadcastMessage(
+      MESSAGE_CHANNEL, 
+      message, 
+      { destination: options.destination ?? BroadcastHelpers.BROADCAST_DESTINATIONS.ALL }
+    );
     
-    debugLog(`[Embers] ✓ Message sent`);
+    if (result.success) {
+      debugLog(`[Embers] ✓ Message sent`);
+    } else {
+      debugError(`[Embers] Failed to broadcast: ${result.error}`);
+    }
   } catch (error) {
     debugError('[Embers] Failed to send instructions:', error.message);
   }

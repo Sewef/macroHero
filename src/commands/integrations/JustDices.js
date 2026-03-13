@@ -5,6 +5,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
+import * as BroadcastHelpers from "../broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('JustDices') && console.log(...args);
@@ -22,6 +23,14 @@ async function getSelfId() {
     SELF_ID_PROMISE = OBR.player.getId();
   }
   return SELF_ID_PROMISE;
+}
+
+/**
+ * Generate a unique call ID for API requests
+ * @returns {string} Unique call ID
+ */
+function generateCallId() {
+  return `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
@@ -52,48 +61,22 @@ export async function roll(expression, hiddenOrOptions = {}) {
     finalExpression = `/${expression}`;
   }
 
-  let timeoutId;
-  let unsubscribe;
-  
-  const waitResponse = new Promise((resolve, reject) => {
-    const handler = (evt) => {
-      const res = evt.data;
-      if (!res) return;
-      
-      // Check if this response matches our request
-      if (res.callId !== callId || res.requesterId !== requesterId) {
-        return;
-      }
-
-      clearTimeout(timeoutId);
-      if (unsubscribe) unsubscribe();
-      
-      if (res.ok) {
-        resolve(res);
-      } else {
-        reject(new Error(res.error || "Unknown JustDices error"));
-      }
-    };
-
-    unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
-    
-    // Setup timeout
-    timeoutId = setTimeout(() => {
-      if (unsubscribe) unsubscribe();
-      reject(new Error(`JustDices API timeout (${timeoutMs}ms) for expression: ${finalExpression}`));
-    }, timeoutMs);
-  });
-
   try {
-    // Send request
-    await OBR.broadcast.sendMessage(
+    const payload = { callId, expression: finalExpression, showInLogs, requesterId };
+    
+    const result = await BroadcastHelpers.broadcastRequest(
       "justdices.api.request",
-      { callId, expression: finalExpression, showInLogs, requesterId },
-      { destination: "LOCAL" }
+      "justdices.api.response",
+      payload,
+      { destination: "LOCAL", timeoutMs }
     );
 
-    const response = await waitResponse;
-    return response.data?.total;
+    if (result.success && result.data?.ok) {
+      return result.data.data?.total;
+    } else {
+      const error = result.data?.error || result.error || "Unknown JustDices error";
+      throw new Error(error);
+    }
   } catch (error) {
     debugError("[JustDices] Roll failed:", error.message);
     throw error;
@@ -125,47 +108,22 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
     finalExpression = `/${expression}`;
   }
 
-  let timeoutId;
-  let unsubscribe;
-  
-  const waitResponse = new Promise((resolve, reject) => {
-    const handler = (evt) => {
-      const res = evt.data;
-      if (!res) return;
-      
-      // Check if this response matches our request
-      if (res.callId !== callId || res.requesterId !== requesterId) {
-        return;
-      }
-
-      clearTimeout(timeoutId);
-      if (unsubscribe) unsubscribe();
-      
-      if (res.ok) {
-        resolve(res);
-      } else {
-        reject(new Error(res.error || "Unknown JustDices error"));
-      }
-    };
-
-    unsubscribe = OBR.broadcast.onMessage("justdices.api.response", handler);
-    
-    // Setup timeout
-    timeoutId = setTimeout(() => {
-      if (unsubscribe) unsubscribe();
-      reject(new Error(`JustDices API timeout (${timeoutMs}ms) for expression: ${finalExpression}`));
-    }, timeoutMs);
-  });
-
   try {
-    // Send request
-    await OBR.broadcast.sendMessage(
+    const payload = { callId, expression: finalExpression, showInLogs, requesterId };
+    
+    const result = await BroadcastHelpers.broadcastRequest(
       "justdices.api.request",
-      { callId, expression: finalExpression, showInLogs, requesterId },
-      { destination: "LOCAL" }
+      "justdices.api.response",
+      payload,
+      { destination: "LOCAL", timeoutMs }
     );
 
-    return await waitResponse;
+    if (result.success && result.data?.ok) {
+      return result.data;
+    } else {
+      const error = result.data?.error || result.error || "Unknown JustDices error";
+      throw new Error(error);
+    }
   } catch (error) {
     debugError("[JustDices] getRollObject failed:", error.message);
     throw error;
@@ -190,14 +148,6 @@ export async function rollSilent(expression, hidden = false) {
  */
 export async function getRollObjectSilent(expression, hidden = false) {
   return getRollObject(expression, { hidden, showInLogs: false });
-}
-
-/**
- * Generate a unique call ID for API requests
- * @returns {string} Unique call ID
- */
-function generateCallId() {
-  return `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 export default {
