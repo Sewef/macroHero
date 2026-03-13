@@ -23,6 +23,10 @@ export function renderButton(item, page, {
   const btn = document.createElement("button");
   btn.className = "mh-layout-button";
 
+  if (item.color) {
+    btn.style.setProperty('--mh-accent', item.color);
+  }
+
   if (item.label && item.label.includes('{')) {
     btn.textContent = "";
     renderedExpressionElements.push({ element: btn, item, page });

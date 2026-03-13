@@ -22,6 +22,10 @@ export function renderCheckbox(item, page, {
   const container = document.createElement("div");
   container.className = "mh-layout-checkbox";
 
+  if (item.color) {
+    container.style.setProperty('--mh-accent', item.color);
+  }
+
   const variable = page.variables?.[item.var];
   if (!variable) {
     container.innerHTML = `<div class="mh-value-error">Variable not found: ${item.var}</div>`;

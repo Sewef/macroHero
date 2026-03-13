@@ -711,8 +711,7 @@ body {
 
 .mh-layout-button:hover:not(:disabled) {
   background: rgba(90, 159, 255, 0.35);
-  border-color: var(--mh-accent-hover);
-  color: var(--mh-accent-hover);
+  filter: brightness(1.2);
 }
 
 .mh-layout-button:active:not(:disabled) {

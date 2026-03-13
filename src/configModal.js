@@ -1246,10 +1246,28 @@ window.updateElementFields = function(existingElement = null) {
           <input type="text" id="elem_tooltip" value="${existingElement?.tooltip || ''}" placeholder="Displayed on hover (leave empty to use label)" />
         </div>
         <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
+        <div class="input-group">
           <label>Commands (one per line)</label>
           <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">${existingElement?.commands?.join('\n') || ''}</textarea>
         </div>
       `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          checkbox.addEventListener('change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
       break;
     case 'value':
       html = `
@@ -1293,7 +1311,25 @@ window.updateElementFields = function(existingElement = null) {
           <label>Step (optional)</label>
           <input type="number" id="elem_step" value="${existingElement?.step || ''}" placeholder="1" />
         </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
       `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          checkbox.addEventListener('change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
       break;
     case 'checkbox':
       html = `
@@ -1305,7 +1341,25 @@ window.updateElementFields = function(existingElement = null) {
           <label>Label</label>
           <input type="text" id="elem_label" value="${existingElement?.label || ''}" placeholder="Checkbox Label" />
         </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
       `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          checkbox.addEventListener('change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
       break;
     case 'dropdown':
       // Format options for editing: support both string and {label, value} formats
@@ -1341,7 +1395,25 @@ window.updateElementFields = function(existingElement = null) {
           <label>Text</label>
           <input type="text" id="elem_text" value="${existingElement?.text || ''}" placeholder="Title text (e.g. '{sheetValue}')" />
         </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
       `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          checkbox.addEventListener('change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
       break;
     case 'text':
       html = `
@@ -1358,7 +1430,33 @@ window.updateElementFields = function(existingElement = null) {
       html = `<p style="color: #c8adff;">Row is a container. Use the "+ Item" button to add elements to the row.</p>`;
       break;
     case 'stack':
-      html = `<p style="color: #c8adff;">Stack is a vertical container. Use the "+ Item" button to add elements to the stack.</p>`;
+      html = `
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_border" ${existingElement?.border ? 'checked' : ''} />
+            Add Border
+          </label>
+        </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#5a9fff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
+        <p style="color: #c8adff; margin-top: 12px;">Use the "+ Item" button to add elements to the stack.</p>
+      `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          checkbox.addEventListener('change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
       break;
   }
   
@@ -1375,13 +1473,22 @@ window.saveElement = function() {
       element.label = document.getElementById("elem_label")?.value || '';
       const tooltip = document.getElementById("elem_tooltip")?.value;
       if (tooltip) element.tooltip = tooltip;
+      const hasCustomColor = document.getElementById("elem_customColor")?.checked;
+      const color = document.getElementById("elem_color")?.value;
+      if (hasCustomColor && color) element.color = color;
       const commands = document.getElementById("elem_commands")?.value || '';
       element.commands = commands.split('\n').filter(c => c.trim());
       break;
     case 'value':
+      element.var = document.getElementById("elem_var")?.value || '';
+      element.label = document.getElementById("elem_label")?.value || '';
+      break;
     case 'checkbox':
       element.var = document.getElementById("elem_var")?.value || '';
       element.label = document.getElementById("elem_label")?.value || '';
+      const hasCustomColorCheckbox = document.getElementById("elem_customColor")?.checked;
+      const colorCheckbox = document.getElementById("elem_color")?.value;
+      if (hasCustomColorCheckbox && colorCheckbox) element.color = colorCheckbox;
       break;
     case 'dropdown':
       element.var = document.getElementById("elem_var")?.value || '';
@@ -1410,9 +1517,15 @@ window.saveElement = function() {
       element.label = document.getElementById("elem_label")?.value || '';
       const step = document.getElementById("elem_step")?.value;
       if (step) element.step = parseInt(step);
+      const hasCustomColorCounter = document.getElementById("elem_customColor")?.checked;
+      const colorCounter = document.getElementById("elem_color")?.value;
+      if (hasCustomColorCounter && colorCounter) element.color = colorCounter;
       break;
     case 'title':
       element.text = document.getElementById("elem_text")?.value || '';
+      const hasCustomColorTitle = document.getElementById("elem_customColor")?.checked;
+      const colorTitle = document.getElementById("elem_color")?.value;
+      if (hasCustomColorTitle && colorTitle) element.color = colorTitle;
       break;
     case 'text':
       element.text = document.getElementById("elem_text")?.value || '';
@@ -1436,6 +1549,11 @@ window.saveElement = function() {
         const existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
         element.children = existing.children || [];
       }
+      const hasBorder = document.getElementById("elem_border")?.checked;
+      if (hasBorder) element.border = true;
+      const hasCustomColorStack = document.getElementById("elem_customColor")?.checked;
+      const colorStack = document.getElementById("elem_color")?.value;
+      if (hasCustomColorStack && colorStack) element.color = colorStack;
       break;
   }
   

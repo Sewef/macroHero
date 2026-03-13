@@ -23,6 +23,16 @@ export function renderStack(item, page, {
   container.style.minWidth = '0';
   container.style.alignItems = 'stretch';
 
+  if (item.border) {
+    container.style.border = '1px solid var(--mh-accent)';
+    container.style.borderRadius = '4px';
+    container.style.padding = '8px';
+  }
+
+  if (item.color) {
+    container.style.setProperty('--mh-accent', item.color);
+  }
+
   if (item.children && Array.isArray(item.children)) {
     item.children.forEach((child) => {
         let element;

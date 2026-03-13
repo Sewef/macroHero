@@ -12,6 +12,10 @@ export function renderTitle(item, page, {
   const title = document.createElement("h3");
   title.className = "mh-layout-title";
 
+  if (item.color) {
+    title.style.setProperty('--mh-accent', item.color);
+  }
+
   if (!evaluateAndSetElementText(title, item, page)) {
     title.textContent = item.text ?? "";
   }

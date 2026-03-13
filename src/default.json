@@ -1713,6 +1713,40 @@
           ]
         },
         {
+          "type": "row",
+          "children": [
+            {
+              "type": "text",
+              "text": "This is a row containing a stack with a border:"
+            },
+            {
+              "type": "stack",
+              "border": true,
+              "children": [
+                {
+                  "type": "value",
+                  "var": "textVar",
+                  "label": "Base Value"
+                },
+                {
+                  "type": "button",
+                  "label": "Button",
+                  "commands": [
+                    "await JustDices.roll('1d6');"
+                  ]
+                },
+                {
+                  "type": "button",
+                  "label": "Button",
+                  "commands": [
+                    "await JustDices.roll('1d6');"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
           "type": "divider"
         },
         {
@@ -1732,6 +1766,125 @@
           "tooltip": "This is a button with a tooltip",
           "commands": [
             "await JustDices.roll('1d20');"
+          ]
+        },
+        {
+          "type": "button",
+          "label": "Button with color",
+          "color": "#ff4e4e",
+          "commands": [
+            "await JustDices.roll('1d20');"
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Title, Checkbox & Counter with Custom Colors"
+        },
+        {
+          "type": "title",
+          "text": "Red Title (custom color)",
+          "color": "#ff4e4e"
+        },
+        {
+          "type": "text",
+          "text": "Titles, checkboxes, and counters can now have custom colors"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "checkbox",
+              "var": "checkboxVar",
+              "label": "Checkbox (default)",
+              "color": "#5a9fff"
+            },
+            {
+              "type": "checkbox",
+              "var": "checkboxVar",
+              "label": "Checkbox (green)",
+              "color": "#2ecc71"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "counterVar",
+              "label": "Counter (gold)",
+              "color": "#f39c12"
+            },
+            {
+              "type": "counter",
+              "var": "counterVar",
+              "label": "Counter (purple)",
+              "color": "#9b59b6"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Stack with Border and Color"
+        },
+        {
+          "type": "text",
+          "text": "Stacks can have borders and custom accent colors"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "stack",
+              "border": true,
+              "color": "#3498db",
+              "children": [
+                {
+                  "type": "title",
+                  "text": "Blue Stack Border"
+                },
+                {
+                  "type": "checkbox",
+                  "var": "checkboxVar",
+                  "label": "Element in stack"
+                },
+                {
+                  "type": "counter",
+                  "var": "counterVar",
+                  "label": "Counter in stack"
+                }
+              ]
+            },
+            {
+              "type": "stack",
+              "border": true,
+              "color": "#e74c3c",
+              "children": [
+                {
+                  "type": "title",
+                  "text": "Red Stack Border"
+                },
+                {
+                  "type": "checkbox",
+                  "var": "checkboxVar",
+                  "label": "Another element"
+                },
+                {
+                  "type": "button",
+                  "label": "Button in stack",
+                  "color": "#e74c3c",
+                  "commands": [
+                    "await JustDices.roll('1d20');"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
@@ -2822,7 +2975,7 @@
       "layout": [
         {
           "type": "title",
-          "text": "Auras Auras"
+          "text": "Auras and Emanations"
         },
         {
           "type": "text",
