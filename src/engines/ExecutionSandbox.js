@@ -103,7 +103,8 @@ class ExecutionSandbox {
       let processed = expression;
       const integrationNames = [
         'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles', 
-        'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather'
+        'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather',
+        'Aurora', 'Announcement', 'Auras', 'ImageHelper', 'Owlbear'
       ];
       
       for (const integration of integrationNames) {

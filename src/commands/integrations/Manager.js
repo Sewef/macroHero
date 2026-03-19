@@ -23,6 +23,7 @@ import * as Embers from "./Embers.js";
 import * as Announcement from "./Announcement.js";
 import * as Auras from "./Auras.js";
 import * as ImageHelper from "../shared/imageHelper.js";
+import { Owlbear, NOTIFICATION_VARIANT } from "../shared/sdkHelpers.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
@@ -235,6 +236,9 @@ class IntegrationsManager {
       setItemsMetadata: this.wrapAsync((itemIds, metadata) => tokenHelpers.setItemsMetadata(itemIds, metadata)),
       // Scene helpers - exposed directly
       getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
+      // SDK wrapper (centralized Owlbear proxy maintaining OBR syntax)
+      Owlbear,
+      NOTIFICATION_VARIANT,
     };
   }
 }

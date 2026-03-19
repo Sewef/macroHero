@@ -3115,6 +3115,215 @@
           "text": "Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control."
         }
       ]
+    },
+    {
+      "label": "SDK Helpers",
+      "variables": {
+        "message": {
+          "value": "Task completed successfully!"
+        },
+        "variant": {
+          "value": "DEFAULT"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "SDK Helpers & Notifications"
+        },
+        {
+          "type": "text",
+          "text": "Use centralized SDK wrapper for OBR notifications with consistent syntax"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Quick Notification"
+        },
+        {
+          "type": "text",
+          "text": "Owlbear.notification.show(message, variant)"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "input",
+              "var": "message",
+              "label": "Message",
+              "placeholder": "Enter notification message"
+            },
+            {
+              "type": "dropdown",
+              "var": "variant",
+              "label": "Variant",
+              "options": ["DEFAULT", "INFO", "SUCCESS", "WARNING", "ERROR"]
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const id = await Owlbear.notification.show(message, variant);",
+            "console.log('Notification ID:', id);"
+          ],
+          "label": "Send Notification"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Variant Examples"
+        },
+        {
+          "type": "text",
+          "text": "Pre-configured notification types"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "await Owlbear.notification.success('Operation completed successfully!');"
+              ],
+              "label": "Success"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Owlbear.notification.warning('This is a warning!');"
+              ],
+              "label": "Warning"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "await Owlbear.notification.error('An error occurred!');"
+              ],
+              "label": "Error"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Practical Examples"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const roll = await JustDices.rollSilent('1d20');",
+            "if (roll >= 15) {",
+            "  await Owlbear.notification.success(`Critical Success! (${roll})`);",
+            "} else if (roll >= 10) {",
+            "  await Owlbear.notification.show(`Success! (${roll})`);",
+            "} else {",
+            "  await Owlbear.notification.warning(`Failed! (${roll})`);",
+            "}"
+          ],
+          "label": "Roll-Based Notification"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const token = await getSelectedTokenId();",
+            "if (!token) {",
+            "  await Owlbear.notification.error('No token selected!');",
+            "} else {",
+            "  await Owlbear.notification.success('Token selected and ready!');",
+            "}"
+          ],
+          "label": "Token Selection Check"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await Owlbear.notification.show('Starting operation...');",
+            "await new Promise(r => setTimeout(r, 1000));",
+            "await Owlbear.notification.success('Operation complete!');"
+          ],
+          "label": "Sequential Notifications"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "How to Use in Your Code"
+        },
+        {
+          "type": "text",
+          "text": "Import sdkHelpers at the top of your integration file:"
+        },
+        {
+          "type": "text",
+          "text": "import { Owlbear, NOTIFICATION_VARIANT } from '../shared/sdkHelpers.js';"
+        },
+        {
+          "type": "text",
+          "text": "Then use notifications in your commands:"
+        },
+        {
+          "type": "text",
+          "text": "await Owlbear.notification.success('Your message here');"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Available Methods"
+        },
+        {
+          "type": "text",
+          "text": "• Owlbear.notification.show(msg, variant?) → returns notification ID"
+        },
+        {
+          "type": "text",
+          "text": "• Owlbear.notification.success(msg) → variant: SUCCESS"
+        },
+        {
+          "type": "text",
+          "text": "• Owlbear.notification.warning(msg) → variant: WARNING"
+        },
+        {
+          "type": "text",
+          "text": "• Owlbear.notification.error(msg) → variant: ERROR"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Notification Variants"
+        },
+        {
+          "type": "text",
+          "text": "DEFAULT - Standard notification (gray)"
+        },
+        {
+          "type": "text",
+          "text": "INFO - Informational (blue)"
+        },
+        {
+          "type": "text",
+          "text": "SUCCESS - Success state (green)"
+        },
+        {
+          "type": "text",
+          "text": "WARNING - Warning state (orange)"
+        },
+        {
+          "type": "text",
+          "text": "ERROR - Error state (red)"
+        }
+      ]
     }
   ]
 }

@@ -2031,6 +2031,11 @@ const DEBUG_MODULES_BY_CATEGORY = {
   'Event System': [
     'EventBus'
   ],
+  'Shared Utilities': [
+    'broadcastHelpers',
+    'imageHelper',
+    'sdkHelpers'
+  ],
   'Command Modules': [
     'playerMetadata',
     'sceneMetadata',
