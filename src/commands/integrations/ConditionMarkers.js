@@ -60,8 +60,11 @@ export async function addCondition(itemId, conditionName, value = null) {
     const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
     const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
 
-    const requesterId = await OBR.player.getId();
-    const payload = { requesterId, action: 'add', tokenId: itemId, condition: conditionName, value };
+    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const payload = { callId, action: 'add', tokenId: itemId, condition: conditionName };
+    if (value !== null && value !== undefined) {
+      payload.value = value;
+    }
 
     debugLog(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
 
@@ -101,16 +104,15 @@ export async function removeCondition(itemId, conditionName) {
     const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
     const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
 
-    const requesterId = await OBR.player.getId();
     const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const payload = { callId, requesterId, action: 'remove', tokenId: itemId, condition: conditionName };
+    const payload = { callId, action: 'remove', tokenId: itemId, condition: conditionName };
 
     const res = await new Promise((resolve, reject) => {
       let timeoutId = null;
       const handler = (evt) => {
         const data = evt.data;
         if (!data) return;
-        if (data.callId !== callId || data.requesterId !== requesterId) return;
+        if (data.callId !== callId) return;
         if (timeoutId) clearTimeout(timeoutId);
         try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
         resolve(data);
