@@ -5,7 +5,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
-import * as BroadcastHelpers from "../broadcastHelpers.js";
+import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('JustDices') && console.log(...args);

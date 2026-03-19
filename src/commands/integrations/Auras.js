@@ -6,8 +6,8 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { isDebugEnabled } from "../../debugMode.js";
-import * as ImageHelper from "../imageHelper.js";
-import * as BroadcastHelpers from "../broadcastHelpers.js";
+import * as ImageHelper from "../shared/imageHelper.js";
+import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('Auras') && console.log(...args);

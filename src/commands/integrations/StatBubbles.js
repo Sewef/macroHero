@@ -2,7 +2,7 @@ import {
   getFlatValue,
   setFlatValue,
   getFlatMetadata
-} from "../tokenMetadata.js";
+} from "../token/tokenMetadata.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants

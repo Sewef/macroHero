@@ -10,19 +10,19 @@ import * as StatBubbles from "./StatBubbles.js";
 import * as ColoredRings from "./ColoredRings.js";
 import * as JustDices from "./JustDices.js";
 import * as PrettySordid from "./PrettySordid.js";
-import * as playerMetadata from "../playerMetadata.js";
-import * as sceneMetadata from "../sceneMetadata.js";
-import * as tokenMetadata from "../tokenMetadata.js";
-import * as tokenAttachments from "../tokenAttachments.js";
-import * as sceneHelpers from "../sceneHelpers.js";
-import * as tokenHelpers from "../tokenHelpers.js";
+import * as playerMetadata from "../player/playerMetadata.js";
+import * as sceneMetadata from "../scene/sceneMetadata.js";
+import * as tokenMetadata from "../token/tokenMetadata.js";
+import * as tokenAttachments from "../token/tokenAttachments.js";
+import * as sceneHelpers from "../scene/sceneHelpers.js";
+import * as tokenHelpers from "../token/tokenHelpers.js";
 import * as GoogleSheets from "./GoogleSheets.js";
 import * as Weather from "./Weather.js";
 import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
 import * as Announcement from "./Announcement.js";
 import * as Auras from "./Auras.js";
-import * as ImageHelper from "../imageHelper.js";
+import * as ImageHelper from "../shared/imageHelper.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants

@@ -4,7 +4,7 @@
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../debugMode.js";
+import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
 const debugLog = (...args) => isDebugEnabled('tokenAttachments') && console.log(...args);

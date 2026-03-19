@@ -1,5 +1,5 @@
 import OBR, { buildShape } from "@owlbear-rodeo/sdk";
-import { getAttachmentsWithMetadata } from "../tokenAttachments.js";
+import { getAttachmentsWithMetadata } from "../token/tokenAttachments.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants

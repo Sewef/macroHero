@@ -4,7 +4,7 @@ import {
   addValue as addMetadataValue,
   getTokenMetadataValue,
   setTokenMetadata
-} from "../tokenMetadata.js";
+} from "../token/tokenMetadata.js";
 import { isDebugEnabled } from "../../debugMode.js";
 
 // Debug mode constants
