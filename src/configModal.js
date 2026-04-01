@@ -1532,20 +1532,42 @@ window.saveElement = function() {
       break;
     case 'row':
       // Initialize with empty children array if creating new row
-      if (editingElementIndex === null || editingChildIndex !== null) {
+      if (editingElementIndex === null || editingChildIndex === -1) {
         element.children = [];
+      } else if (editingChildIndex !== null) {
+        // Editing an existing child - preserve its children
+        let existing;
+        if (editingChildParentIndex === null) {
+          // Direct child of row
+          existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex].children[editingChildIndex];
+        } else {
+          // Nested child (child of a stack in a row)
+          existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex].children[editingChildParentIndex].children[editingChildIndex];
+        }
+        element.children = existing?.children || [];
       } else {
-        // Preserve existing children when editing
+        // Preserve existing children when editing top-level row
         const existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
         element.children = existing.children || [];
       }
       break;
     case 'stack':
       // Initialize with empty children array if creating new stack
-      if (editingElementIndex === null || editingChildIndex !== null) {
+      if (editingElementIndex === null || editingChildIndex === -1) {
         element.children = [];
+      } else if (editingChildIndex !== null) {
+        // Editing an existing child - preserve its children
+        let existing;
+        if (editingChildParentIndex === null) {
+          // Direct child of row
+          existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex].children[editingChildIndex];
+        } else {
+          // Nested child (child of a stack in a row)
+          existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex].children[editingChildParentIndex].children[editingChildIndex];
+        }
+        element.children = existing?.children || [];
       } else {
-        // Preserve existing children when editing
+        // Preserve existing children when editing top-level stack
         const existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
         element.children = existing.children || [];
       }
