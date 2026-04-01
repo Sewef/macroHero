@@ -6,6 +6,9 @@
     "variables": {
       "playerName": {
         "eval": "Local.value('playerName', 'myGlobalVarPlayerName')"
+      },
+      "token": {
+        "value": "996ed434-a22c-4510-aa82-9df34820c0be"
       }
     }
   },
@@ -52,9 +55,6 @@
     {
       "label": "Conditions",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "isBandaged": {
           "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
         },
@@ -195,9 +195,6 @@
     {
       "label": "Trackers",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "trackerHP": {
           "eval": "OwlTrackers.getValue(token, 'HP')"
         },
@@ -335,9 +332,6 @@
     {
       "label": "StatBubbles",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "bubbleHealth": {
           "eval": "StatBubbles.getValue(token, 'health')"
         },
@@ -517,9 +511,6 @@
     {
       "label": "Rings",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "ringColors": {
           "eval": "ColoredRings.getRings(token)"
         },
@@ -654,9 +645,6 @@
     {
       "label": "PrettySordid",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "prettyHasInitiative": {
           "eval": "PrettySordid.hasInitiative(token)"
         },
@@ -785,7 +773,7 @@
       ]
     },
     {
-      "label": "Dice",
+      "label": "JustDices",
       "variables": {
         "token": {
           "value": "996ed434-a22c-4510-aa82-9df34820c0be"
@@ -2364,9 +2352,6 @@
     {
       "label": "Aurora",
       "variables": {
-        "token": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
-        },
         "mapId": {
           "eval": "getMapIdFromToken(token)"
         },
@@ -3132,6 +3117,279 @@
       ]
     },
     {
+      "label": "DicePlus",
+      "variables": {
+        "diceNotation": {
+          "value": "2d20kh1+5"
+        },
+        "lastRollResult": {
+          "value": "Roll a dice to see result"
+        },
+        "diceReady": {
+          "eval": "DicePlus.isReady()"
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "DicePlus Integration"
+        },
+        {
+          "type": "text",
+          "text": "Advanced dice rolling with DicePlus extension (Owlbear Rodeo)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Status"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "diceReady",
+              "label": "DicePlus Ready?"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Last Roll: {lastRollResult}"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Basic Rolls"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('1d20');",
+                "await setValue('lastRollResult', 'D20: ' + result);"
+              ],
+              "label": "Roll d20"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('2d6+3');",
+                "await setValue('lastRollResult', '2d6+3: ' + result);"
+              ],
+              "label": "2d6+3"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('3d6');",
+                "await setValue('lastRollResult', '3d6: ' + result);"
+              ],
+              "label": "3d6"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Advantage / Disadvantage"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('2d20kh1+5');",
+                "await setValue('lastRollResult', 'Advantage (+5): ' + result);"
+              ],
+              "label": "Advantage (+5)"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('2d20kl1-2');",
+                "await setValue('lastRollResult', 'Disadvantage (-2): ' + result);"
+              ],
+              "label": "Disadvantage (-2)"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('4d6dl1');",
+                "await setValue('lastRollResult', '4d6 drop lowest: ' + result);"
+              ],
+              "label": "4d6 Drop Lowest"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Damage Rolls"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('2d6 + 4');",
+                "await setValue('lastRollResult', 'Greatsword (2d6+4): ' + result);"
+              ],
+              "label": "Greatsword"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('1d8 + 3');",
+                "await setValue('lastRollResult', 'Longsword (1d8+3): ' + result);"
+              ],
+              "label": "Longsword"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('2d8 + 5');",
+                "await setValue('lastRollResult', 'Scimitar (2d8+5): ' + result);"
+              ],
+              "label": "Scimitar"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('8d6');",
+                "await setValue('lastRollResult', 'Fireball (8d6): ' + result);"
+              ],
+              "label": "Fireball"
+            },
+            {
+              "type": "button",
+              "commands": [
+                "const result = await DicePlus.rollTotal('10d6');",
+                "await setValue('lastRollResult', 'Meteor Storm (10d6): ' + result);"
+              ],
+              "label": "Meteor Storm"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Custom Notation"
+        },
+        {
+          "type": "input",
+          "var": "diceNotation",
+          "label": "Dice Notation",
+          "placeholder": "e.g., 2d20kh1+5, 4d6dl1, 3d6!e"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "try {",
+            "  const result = await DicePlus.getRollObject(diceNotation);",
+            "  const total = result.totalValue;",
+            "  await setValue('lastRollResult', diceNotation + ' = ' + total);",
+            "  console.log('Full result:', result);",
+            "} catch (error) {",
+            "  await setValue('lastRollResult', 'Error: ' + error.message);",
+            "}"
+          ],
+          "label": "Roll Custom"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Roll Results"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const result = await DicePlus.getRollObject('3d6{Red} # Fire + 2d6{White} # Ice');",
+            "console.log('Full roll object:', result);",
+            "if (result.groups) {",
+            "  result.groups.forEach(group => {",
+            "    console.log(`${group.description}: ${group.total}`);",
+            "  });",
+            "}"
+          ],
+          "label": "Roll with Description"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const result = await DicePlus.getRollObject('4d6');",
+            "console.log('Roll result:', result);",
+            "console.log('Total:', result.totalValue);",
+            "console.log('Dice count:', result.groups?.[0]?.dice?.length || 0);"
+          ],
+          "label": "Show Roll Details"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Advanced Examples"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const roll = await DicePlus.rollTotal('1d20 + 5');",
+            "if (roll >= 15) {",
+            "  await Owlbear.notification.success(`Critical Success! (${roll})`);",
+            "} else if (roll >= 10) {",
+            "  await Owlbear.notification.show(`Success! (${roll})`);",
+            "} else {",
+            "  await Owlbear.notification.warning(`Failed! (${roll})`);",
+            "}"
+          ],
+          "label": "Roll with Notification"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "const atkRoll = await DicePlus.rollTotal('1d20 + 7');",
+            "const dmgRoll = await DicePlus.rollTotal('2d8 + 5');",
+            "console.log(`Attack: ${atkRoll} vs DC 14`);",
+            "if (atkRoll >= 14) {",
+            "  console.log(`HIT! Damage: ${dmgRoll}`);",
+            "  await setValue('lastRollResult', `Hit! Attack: ${atkRoll}, Damage: ${dmgRoll}`);",
+            "} else {",
+            "  console.log('MISS!');",
+            "  await setValue('lastRollResult', `Miss! Attack: ${atkRoll}`);",
+            "}"
+          ],
+          "label": "Attack Roll Sequence"
+        }
+      ]
+    },
+    {
       "label": "SDK Helpers",
       "variables": {
         "message": {
@@ -3174,7 +3432,13 @@
               "type": "dropdown",
               "var": "variant",
               "label": "Variant",
-              "options": ["DEFAULT", "INFO", "SUCCESS", "WARNING", "ERROR"]
+              "options": [
+                "DEFAULT",
+                "INFO",
+                "SUCCESS",
+                "WARNING",
+                "ERROR"
+              ]
             }
           ]
         },

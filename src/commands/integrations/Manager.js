@@ -9,6 +9,7 @@ import * as OwlTrackers from "./OwlTrackers.js";
 import * as StatBubbles from "./StatBubbles.js";
 import * as ColoredRings from "./ColoredRings.js";
 import * as JustDices from "./JustDices.js";
+import * as DicePlus from "./DicePlus.js";
 import * as PrettySordid from "./PrettySordid.js";
 import * as playerMetadata from "../player/playerMetadata.js";
 import * as sceneMetadata from "../scene/sceneMetadata.js";
@@ -149,6 +150,20 @@ class IntegrationsManager {
         getRollObject: this.wrapAsync((expression, hiddenOrOptions) => JustDices.getRollObject(expression, hiddenOrOptions)),
         rollSilent: this.wrapAsync((expression, hidden) => JustDices.rollSilent(expression, hidden)),
         getRollObjectSilent: this.wrapAsync((expression, hidden) => JustDices.getRollObjectSilent(expression, hidden)),
+      },
+      // DicePlus integration (all async - advanced dice notation)
+      DicePlus: {
+        isReady: this.wrapAsync((timeoutMs) => DicePlus.isReady(timeoutMs)),
+        roll: this.wrapAsync((diceNotation, options) => DicePlus.roll(diceNotation, options)),
+        rollTotal: this.wrapAsync((diceNotation, options) => DicePlus.rollTotal(diceNotation, options)),
+        rollSecret: this.wrapAsync((diceNotation, visibility, options) => DicePlus.rollSecret(diceNotation, visibility, options)),
+        getRollObject: this.wrapAsync((diceNotation, options) => DicePlus.getRollObject(diceNotation, options)),
+        getGroupByDescription: (rollResult, searchTerm) => DicePlus.getGroupByDescription(rollResult, searchTerm),
+        getDiceValues: (group) => DicePlus.getDiceValues(group),
+        getKeptDiceValues: (group) => DicePlus.getKeptDiceValues(group),
+        formatResult: (rollResult) => DicePlus.formatResult(rollResult),
+        onRollResult: (callback) => DicePlus.onRollResult(callback),
+        onRollError: (callback) => DicePlus.onRollError(callback),
       },
       // PrettySordid (initiative helper)
       PrettySordid: {

@@ -1947,6 +1947,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'Aurora',
     'ColoredRings',
     'ConditionMarkers',
+    'DicePlus',
     'Embers',
     'GoogleSheets',
     'JustDices',
