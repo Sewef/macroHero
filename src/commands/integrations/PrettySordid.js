@@ -28,10 +28,10 @@ async function _ensureItem(itemOrId) {
   return itemOrId;
 }
 
-export function hasInitiative(itemOrId) {
-  const item = (typeof itemOrId === 'string') ? null : itemOrId;
+export async function hasInitiative(itemOrId) {
+  const item = (await _ensureItem(itemOrId));
   try {
-    if (!item) return false; // for a sync check we need the object
+    if (!item) return false;
     return item.metadata && item.metadata[METADATA_KEY] !== undefined;
   } catch (err) {
     debugWarn('[PrettySordid] hasInitiative error', err);
@@ -39,7 +39,7 @@ export function hasInitiative(itemOrId) {
   }
 }
 
-export async function getInitiativeCount(itemOrId) {
+export async function getInitiative(itemOrId) {
   const item = (await _ensureItem(itemOrId));
   if (!item) return 0;
   const meta = item.metadata?.[METADATA_KEY];
@@ -55,14 +55,14 @@ export async function isActiveTurn(itemOrId) {
   return !!meta?.active;
 }
 
-export async function setInitiativeCount(itemOrId, count) {
+export async function setInitiative(itemOrId, count) {
   // Accept item object or token ID. Use updateItems to mutate safely.
   let tokenId = null;
   if (typeof itemOrId === 'string') tokenId = itemOrId;
   else if (itemOrId && itemOrId.id) tokenId = itemOrId.id;
 
   if (!tokenId) {
-    throw new Error('[PrettySordid] setInitiativeCount expects a token id or item object');
+    throw new Error('[PrettySordid] setInitiative expects a token id or item object');
   }
 
   await OBR.scene.items.updateItems([tokenId], (items) => {
@@ -78,9 +78,28 @@ export async function setInitiativeCount(itemOrId, count) {
   });
 }
 
+export async function removeInitiative(itemOrId) {
+  // Accept item object or token ID. Use updateItems to mutate safely.
+  let tokenId = null;
+  if (typeof itemOrId === 'string') tokenId = itemOrId;
+  else if (itemOrId && itemOrId.id) tokenId = itemOrId.id;
+
+  if (!tokenId) {
+    throw new Error('[PrettySordid] removeInitiative expects a token id or item object');
+  }
+
+  await OBR.scene.items.updateItems([tokenId], (items) => {
+    const item = items.find(i => i.id === tokenId);
+    if (!item) return;
+
+    delete item.metadata[METADATA_KEY];
+  });
+}
+
 export default {
   hasInitiative,
-  getInitiativeCount,
+  getInitiativeCount: getInitiative,
   isActiveTurn,
-  setInitiativeCount,
+  setInitiativeCount: setInitiative,
+  removeInitiative,
 };

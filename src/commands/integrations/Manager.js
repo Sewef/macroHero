@@ -153,9 +153,10 @@ class IntegrationsManager {
       // PrettySordid (initiative helper)
       PrettySordid: {
         hasInitiative: this.wrapAsync((itemOrId) => PrettySordid.hasInitiative(itemOrId)),
-        getInitiativeCount: this.wrapAsync((itemOrId) => PrettySordid.getInitiativeCount(itemOrId)),
+        getInitiative: this.wrapAsync((itemOrId) => PrettySordid.getInitiative(itemOrId)),
         isActiveTurn: this.wrapAsync((itemOrId) => PrettySordid.isActiveTurn(itemOrId)),
-        setInitiativeCount: this.wrapAsync((itemOrId, count) => PrettySordid.setInitiativeCount(itemOrId, count)),
+        setInitiative: this.wrapAsync((itemOrId, count) => PrettySordid.setInitiative(itemOrId, count)),
+        removeInitiative: this.wrapAsync((itemOrId) => PrettySordid.removeInitiative(itemOrId)),
       },
       // Weather integration (all async)
       Weather: {

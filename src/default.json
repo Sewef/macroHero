@@ -652,7 +652,7 @@
       ]
     },
     {
-      "label": "Initiative",
+      "label": "PrettySordid",
       "variables": {
         "token": {
           "value": "996ed434-a22c-4510-aa82-9df34820c0be"
@@ -661,7 +661,7 @@
           "eval": "PrettySordid.hasInitiative(token)"
         },
         "prettyInitiativeCount": {
-          "eval": "PrettySordid.getInitiativeCount(token)"
+          "eval": "PrettySordid.getInitiative(token)"
         },
         "prettyActive": {
           "eval": "PrettySordid.isActiveTurn(token)"
@@ -712,21 +712,21 @@
             {
               "type": "button",
               "commands": [
-                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) + 1) : await PrettySordid.setInitiativeCount(token, 1);"
+                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) + 1) : await PrettySordid.setInitiative(token, 1);"
               ],
               "label": "Increment / Assign 1"
             },
             {
               "type": "button",
               "commands": [
-                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiativeCount(token, await PrettySordid.getInitiativeCount(token) - 1) : null;"
+                "await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) - 1) : null;"
               ],
               "label": "Decrement"
             },
             {
               "type": "button",
               "commands": [
-                "await PrettySordid.setInitiativeCount(token, 0);"
+                "await PrettySordid.setInitiative(token, 0);"
               ],
               "label": "Reset to 0"
             }
@@ -746,7 +746,7 @@
               "type": "button",
               "commands": [
                 "const roll = await JustDices.rollSilent('1d20 + 3');",
-                "await PrettySordid.setInitiativeCount(token, roll);",
+                "await PrettySordid.setInitiative(token, roll);",
                 "console.log('Initiative set to:', roll);"
               ],
               "label": "Roll Initiative (+3)"
@@ -754,18 +754,33 @@
             {
               "type": "button",
               "commands": [
-                "await PrettySordid.setInitiativeCount(token, 20);"
+                "await PrettySordid.setInitiative(token, 20);"
               ],
               "label": "Set to 20"
             },
             {
               "type": "button",
               "commands": [
-                "await PrettySordid.setInitiativeCount(token, 10);"
+                "await PrettySordid.setInitiative(token, 10);"
               ],
               "label": "Set to 10"
             }
           ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Remove Initiative"
+        },
+        {
+          "type": "button",
+          "commands": [
+            "await PrettySordid.removeInitiative(token);",
+            "console.log('Initiative metadata removed');"
+          ],
+          "label": "Remove All Initiative Data"
         }
       ]
     },
