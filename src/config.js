@@ -312,7 +312,7 @@ export async function openConfigModal() {
     await OBR.modal.open({
         id: "macrohero.config",
         url: "/configModal.html",
-        width: 900,
-        height: 700
+        width: 1000,
+        height: 800
     });
 }

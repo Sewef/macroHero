@@ -13,9 +13,44 @@ let currentTab = 'editor';
 let editingPageIndex = null;
 let editingElementIndex = null;
 let expandedPages = new Set();
+let currentSelectedPageIndex = null;  // Track which page is selected in sidebar
 // Variable modal state (inlined from variableModal.js)
 let editingVariablePageIndex = null;
 let editingVariableKey = null;
+
+// Collapsible sections state
+let globalSettingsCollapsed = true;
+let globalVariablesCollapsed = true;
+
+// Toggle Global Settings section
+window.toggleGlobalSettings = function() {
+  globalSettingsCollapsed = !globalSettingsCollapsed;
+  const content = document.getElementById('globalSettingsContent');
+  const icon = document.getElementById('settingsIcon');
+  
+  if (globalSettingsCollapsed) {
+    content.classList.add('collapsed');
+    icon.classList.add('collapsed');
+  } else {
+    content.classList.remove('collapsed');
+    icon.classList.remove('collapsed');
+  }
+};
+
+// Toggle Global Variables section
+window.toggleGlobalVariables = function() {
+  globalVariablesCollapsed = !globalVariablesCollapsed;
+  const content = document.getElementById('globalVariablesContent');
+  const icon = document.getElementById('variablesIcon');
+  
+  if (globalVariablesCollapsed) {
+    content.classList.add('collapsed');
+    icon.classList.add('collapsed');
+  } else {
+    content.classList.remove('collapsed');
+    icon.classList.remove('collapsed');
+  }
+};
 
 function showVariableError(msg) {
   const err = document.getElementById('variableError');
@@ -360,25 +395,27 @@ function buildConfigFromEditor() {
       height: parseInt(document.getElementById("globalHeight").value) || 600,
       variables: currentConfig?.global?.variables || {}
     },
-    pages: []
+    pages: currentConfig?.pages ? JSON.parse(JSON.stringify(currentConfig.pages)) : []
   };
   
-  // Get pages from DOM
-  const pageItems = document.querySelectorAll('.page-item');
+  // Update page labels from sidebar inputs
+  const pageItems = document.querySelectorAll('.page-item-sidebar');
   pageItems.forEach((item, index) => {
-    const labelInput = item.querySelector('.page-label-input');
-    if (labelInput && currentConfig?.pages?.[index]) {
-      const page = JSON.parse(JSON.stringify(currentConfig.pages[index]));
-      page.label = labelInput.value || page.label;
-      config.pages.push(page);
+    if (config.pages[index]) {
+      const label = item.querySelector('.page-item-sidebar-name')?.textContent || '';
+      config.pages[index].label = label;
     }
   });
   
   return config;
 }
 
-// Render visual editor
-function renderEditor(config) {
+// ============================================
+// TWO-PANEL EDITOR FUNCTIONS
+// ============================================
+
+// Render the global settings and pages list in the sidebar
+function renderEditorSidebar(config) {
   currentConfig = config;
   
   // Set global fields
@@ -386,22 +423,21 @@ function renderEditor(config) {
   document.getElementById("globalWidth").value = config.global?.width || 600;
   document.getElementById("globalHeight").value = config.global?.height || 600;
   
-  // Render global variables (definitions only)
+  // Render global variables
   const globalVarsContainer = document.getElementById('globalVariablesList');
   if (globalVarsContainer) {
     const globals = config.global?.variables || {};
     const keys = Object.keys(globals || {});
     if (keys.length === 0) {
-      globalVarsContainer.innerHTML = '<div style="color: #666; font-size: 0.85em;">No global variables</div>';
+      globalVarsContainer.innerHTML = '<div style="color: #666; font-size: 0.85em;">No variables</div>';
     } else {
       globalVarsContainer.innerHTML = keys.map(k => {
         const v = globals[k];
-        // Only show definition fields
         let def = '';
         if (typeof v === 'object' && v !== null) {
           def = [
-            v.value !== undefined ? `value: <code>${typeof v.value === 'string' ? v.value : JSON.stringify(v.value)}</code>` : '',
-            v.eval !== undefined ? `eval: <code>${v.eval}</code>` : '',
+            v.value !== undefined ? `value` : '',
+            v.eval !== undefined ? `eval` : '',
             v.min !== undefined ? `min: ${v.min}` : '',
             v.max !== undefined ? `max: ${v.max}` : ''
           ].filter(Boolean).join(', ');
@@ -411,9 +447,9 @@ function renderEditor(config) {
         return `
         <div class="variable-item" data-var-key="${k}">
           <span class="variable-key">${k}</span>
-          <span class="variable-value">${def}</span>
+          <span class="variable-value" title="${def}">${def.substring(0, 30)}${def.length > 30 ? '...' : ''}</span>
           <div class="variable-actions">
-            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">Edit</button>
+            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">✎</button>
             <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">×</button>
           </div>
         </div>
@@ -426,330 +462,167 @@ function renderEditor(config) {
     }
   }
   
-  // Render pages
-  const container = document.getElementById("pagesContainer");
-  container.innerHTML = "";
+  // Render pages list in sidebar
+  renderPageList(config);
+}
+
+// Render the pages list in the sidebar with selection
+function renderPageList(config) {
+  const container = document.getElementById("pagesListSidebar");
+  if (!container) return;
   
-  if (config.pages && Array.isArray(config.pages)) {
-    config.pages.forEach((page, index) => {
-      const pageDiv = document.createElement("div");
-      pageDiv.className = "page-item";
-      pageDiv.draggable = true;
-      pageDiv.dataset.pageIndex = index;
-      
-      // Check if this page should be expanded
-      const isExpanded = expandedPages.has(index);
-      
-      const layoutItemsHtml = page.layout ? page.layout.map((item, itemIndex) => {
-        const typeLabel = item.type || 'unknown';
-        const label = item.label || item.text || item.var || '';
-        
-        // Handle row items (treat as container even if children is missing)
-        if (item.type === 'row') {
-          const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
-          const childrenHtml = childrenArr.map((child, childIndex) => {
-            // If the child is itself a stack, render it as a nested container with its own children
-            if (child.type === 'stack') {
-              const nested = (child.children && Array.isArray(child.children)) ? child.children : [];
-              const nestedHtml = nested.map((nChild, nestedIndex) => {
-                const nLabel = nChild.label || nChild.text || nChild.var || '';
-                const nContent = nChild.type === 'text' && nChild.text ? nChild.text.substring(0, 50) + (nChild.text.length > 50 ? '...' : '') : nLabel;
-                return `
-                  <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-nested-index="${nestedIndex}" data-page-index="${index}">
-                    <div class="layout-item-info">
-                      <span class="layout-item-type">${nChild.type || 'unknown'}</span>
-                      <span>${nContent}</span>
-                    </div>
-                    <div class="layout-item-actions">
-                      <span class="drag-handle">⋮⋮</span>
-                      <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex}, ${nestedIndex})">Edit</button>
-                      <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex}, ${nestedIndex})">×</button>
-                    </div>
-                  </div>
-                `;
-              }).join('');
-
-              return `
-                <div class="layout-item stack-container" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
-                  <div class="layout-item-info">
-                    <span class="layout-item-type">${child.type || 'stack'}</span>
-                    <span>Stack (${nested.length} items)</span>
-                  </div>
-                  <div class="layout-item-actions">
-                    <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex}, ${childIndex})">+ Item</button>
-                    <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex})">Edit</button>
-                    <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex})">×</button>
-                  </div>
-                </div>
-                <div class="stack-children" data-parent-element-index="${itemIndex}" data-parent-child-index="${childIndex}" data-page-index="${index}">
-                  ${nestedHtml}
-                  ${nested.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-parent-child-index="${childIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
-                </div>
-              `;
-            }
-
-            const childLabel = child.label || child.text || child.var || '';
-            const childContent = child.type === 'text' && child.text ? child.text.substring(0, 50) + (child.text.length > 50 ? '...' : '') : childLabel;
-            return `
-              <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
-                <div class="layout-item-info">
-                  <span class="layout-item-type">${child.type || 'unknown'}</span>
-                  <span>${childContent}</span>
-                </div>
-                <div class="layout-item-actions">
-                  <span class="drag-handle">⋮⋮</span>
-                  <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex})">Edit</button>
-                  <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex})">×</button>
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          return `
-            <div class="layout-item row-container" data-element-index="${itemIndex}" data-page-index="${index}">
-              <div class="layout-item-info">
-                <span class="layout-item-type">${typeLabel}</span>
-                <span>Row (${childrenArr.length} items)</span>
-              </div>
-              <div class="layout-item-actions">
-                <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex})">+ Item</button>
-                <button type="button" class="btn-small" onclick="event.stopPropagation(); editElement(${index}, ${itemIndex})">Edit</button>
-                <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteElement(${index}, ${itemIndex})">×</button>
-              </div>
-            </div>
-            <div class="row-children" data-row-index="${itemIndex}" data-page-index="${index}">
-              ${childrenHtml}
-              ${childrenArr.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
-            </div>
-          `;
-        }
-        // Handle stack items (vertical container) even if children missing
-        if (item.type === 'stack') {
-          const childrenArr = (item.children && Array.isArray(item.children)) ? item.children : [];
-          const childrenHtml = childrenArr.map((child, childIndex) => {
-            const childLabel = child.label || child.text || child.var || '';
-            const childContent = child.type === 'text' && child.text ? child.text.substring(0, 50) + (child.text.length > 50 ? '...' : '') : childLabel;
-            return `
-              <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-child-index="${childIndex}" data-page-index="${index}">
-                <div class="layout-item-info">
-                  <span class="layout-item-type">${child.type || 'unknown'}</span>
-                  <span>${childContent}</span>
-                </div>
-                <div class="layout-item-actions">
-                  <span class="drag-handle">⋮⋮</span>
-                  <button type="button" class="btn-small" onclick="event.stopPropagation(); editChildElement(${index}, ${itemIndex}, ${childIndex})">Edit</button>
-                  <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteChildElement(${index}, ${itemIndex}, ${childIndex})">×</button>
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          return `
-            <div class="layout-item stack-container" data-element-index="${itemIndex}" data-page-index="${index}">
-              <div class="layout-item-info">
-                <span class="layout-item-type">${typeLabel}</span>
-                <span>Stack (${childrenArr.length} items)</span>
-              </div>
-              <div class="layout-item-actions">
-                <button type="button" class="btn-small" onclick="event.stopPropagation(); addChildElement(${index}, ${itemIndex})">+ Item</button>
-                <button type="button" class="btn-small" onclick="event.stopPropagation(); editElement(${index}, ${itemIndex})">Edit</button>
-                <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteElement(${index}, ${itemIndex})">×</button>
-              </div>
-            </div>
-            <div class="stack-children" data-stack-index="${itemIndex}" data-page-index="${index}">
-              ${childrenHtml}
-              ${childrenArr.length === 0 ? `<div class="row-drop-zone" data-element-index="${itemIndex}" data-page-index="${index}" data-is-empty-row="true">Drop items here</div>` : ''}
-            </div>
-          `;
-        }
-        
-        const content = item.type === 'text' && item.text ? item.text.substring(0, 50) + (item.text.length > 50 ? '...' : '') : label;
-        
-        return `
-          <div class="layout-item" draggable="true" data-element-index="${itemIndex}" data-page-index="${index}">
-            <div class="layout-item-info">
-              <span class="layout-item-type">${typeLabel}</span>
-              <span>${content}</span>
-            </div>
-            <div class="layout-item-actions">
-              <span class="drag-handle">⋮⋮</span>
-              <button type="button" class="btn-small" onclick="event.stopPropagation(); editElement(${index}, ${itemIndex})">Edit</button>
-              <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteElement(${index}, ${itemIndex})">×</button>
-            </div>
-          </div>
-        `;
-      }).join('') : '';
-      
-      pageDiv.innerHTML = `
-        <div class="page-header">
-          <button type="button" class="collapse-btn ${isExpanded ? '' : 'collapsed'}">▼</button>
-          <input type="text" class="page-label-input" value="${page.label || ''}" placeholder="Page Label" style="flex: 1; margin-right: 12px;" onclick="event.stopPropagation();" />
-          <div class="page-actions">
-            <button type="button" class="btn-small btn-danger">Delete</button>
-          </div>
+  if (!config.pages || config.pages.length === 0) {
+    container.innerHTML = '<div style="color: #666; font-size: 0.85em; text-align: center; padding: 12px;">No pages</div>';
+    return;
+  }
+  
+  container.innerHTML = config.pages.map((page, index) => {
+    const isSelected = currentSelectedPageIndex === index;
+    const label = page.label || `Page ${index + 1}`;
+    return `
+      <div class="page-item-sidebar ${isSelected ? 'active' : ''}" data-page-index="${index}" onclick="selectPage(${index})">
+        <span class="page-item-sidebar-name">${label}</span>
+        <div class="page-item-sidebar-actions" onclick="event.stopPropagation()">
+          <button type="button" class="btn-small" onclick="deletePage(${index}); event.stopPropagation();">×</button>
         </div>
-        <div class="page-content ${isExpanded ? '' : 'collapsed'}" id="page-content-${index}">
-          <div style="font-size: 0.85em; color: #888; margin-bottom: 8px;">
-            ${page.variables ? Object.keys(page.variables).length : 0} variables, 
-            ${page.layout ? page.layout.length : 0} layout items
-          </div>
-          <div style="margin-bottom: 16px;">
-            <h4 style="margin: 8px 0; font-size: 0.95em; color: #c8adff;">Variables</h4>
-            <div class="variables-list" data-page-index="${index}">
-              ${page.variables ? Object.entries(page.variables).map(([key, value]) => {
-                // Only show definition fields
-                let def = '';
-                if (typeof value === 'object' && value !== null) {
-                  def = [
-                    value.value !== undefined ? `value: <code>${typeof value.value === 'string' ? value.value : JSON.stringify(value.value)}</code>` : '',
-                    value.eval !== undefined ? `eval: <code>${value.eval}</code>` : '',
-                    value.min !== undefined ? `min: ${value.min}` : '',
-                    value.max !== undefined ? `max: ${value.max}` : ''
-                  ].filter(Boolean).join(', ');
-                } else {
-                  def = String(value);
-                }
-                return `
-                  <div class="variable-item" data-var-key="${key}">
-                    <span class="variable-key">${key}</span>
-                    <span class="variable-value">${def}</span>
-                    <div class="variable-actions">
-                      <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${index}, '${key}')">Edit</button>
-                      <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${index}, '${key}')">×</button>
-                    </div>
-                  </div>
-                `;
-              }).join('') : '<div style="color: #666; font-size: 0.85em;">No variables</div>'}
-            </div>
-            <button type="button" class="btn-small" onclick="event.stopPropagation(); addVariable(${index})" style="margin-top: 8px;">+ Variable</button>
-          </div>
-          <h4 style="margin: 8px 0; font-size: 0.95em; color: #c8adff;">Layout</h4>
-          ${layoutItemsHtml ? `<div class="layout-items" data-page-index="${index}">${layoutItemsHtml}</div>` : ''}
-          <button type="button" class="btn-small add-element-btn" onclick="event.stopPropagation(); addElement(${index})" style="margin-top: 12px;">+ Element</button>
-        </div>
-      `;
-      container.appendChild(pageDiv);
-      
-      // Add event listeners after appending to DOM
-      const collapseBtn = pageDiv.querySelector('.collapse-btn');
-      const addBtn = pageDiv.querySelector('.add-element-btn');
-      const deleteBtn = pageDiv.querySelector('.btn-small.btn-danger');
-      
-      collapseBtn.addEventListener('click', (e) => {
+      </div>
+    `;
+  }).join('');
+  
+  // Attach delete button listeners with stopPropagation
+  container.querySelectorAll('.page-item-sidebar').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('.page-item-sidebar-actions')) {
         e.stopPropagation();
-        e.preventDefault();
-        
-        const content = document.getElementById(`page-content-${index}`);
-        content.classList.toggle('collapsed');
-        collapseBtn.classList.toggle('collapsed');
-        
-        // Remember expanded state
-        if (content.classList.contains('collapsed')) {
-          expandedPages.delete(index);
-        } else {
-          expandedPages.add(index);
-        }
-      });
-      
-      if (addBtn) {
-        addBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          addElement(index);
-        });
       }
-      
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        deletePage(index);
-      });
-      
-      // Make only the page header draggable for page reordering
-      const pageHeader = pageDiv.querySelector('.page-header');
-      const pageCollapseBtn = pageHeader.querySelector('.collapse-btn');
-      const pageInput = pageHeader.querySelector('.page-label-input');
-      
-      // Prevent page drag when clicking on input
-      pageInput.addEventListener('mousedown', (e) => {
-        pageHeader.draggable = false;
-      });
-      pageInput.addEventListener('mouseup', (e) => {
-        setTimeout(() => pageHeader.draggable = true, 10);
-      });
-      
-      pageHeader.draggable = true;
-      pageHeader.addEventListener('dragstart', (e) => {
-        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
-          e.preventDefault();
-          return;
-        }
-        handlePageDragStart.call(pageDiv, e);
-      });
-      pageDiv.addEventListener('dragover', handlePageDragOver);
-      pageDiv.addEventListener('drop', handlePageDrop);
-      pageDiv.addEventListener('dragend', (e) => handlePageDragEnd.call(pageDiv, e));
-      
-      // Add drag and drop listeners for elements (both top-level and row children)
-      const layoutItems = pageDiv.querySelectorAll('.layout-item');
-      layoutItems.forEach(item => {
-        item.addEventListener('dragstart', handleElementDragStart);
-        item.addEventListener('dragover', handleElementDragOver);
-        item.addEventListener('drop', handleElementDrop);
-        item.addEventListener('dragend', handleElementDragEnd);
-        item.addEventListener('dragleave', handleElementDragLeave);
-      });
-      
-      // Add listeners to empty row drop zones
-      const dropZones = pageDiv.querySelectorAll('.row-drop-zone');
-      dropZones.forEach(zone => {
-        zone.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          zone.classList.add('drag-over');
-          lastDropTarget = zone;
-        });
-        zone.addEventListener('dragleave', (e) => {
-          zone.classList.remove('drag-over');
-        });
-        zone.addEventListener('drop', handleEmptyRowDrop);
-      });
-      
-      // Also add drop listener to the layout container
-      const layoutContainer = pageDiv.querySelector('.layout-items');
-      if (layoutContainer) {
-        layoutContainer.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        });
-        layoutContainer.addEventListener('drop', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          // Trigger drop on last hovered element
-          if (lastDropTarget) {
-            handleElementDrop.call(lastDropTarget, e);
-          }
-        });
-      }
-      
-      // Add drop listeners to row and stack children containers
-      const childContainers = pageDiv.querySelectorAll('.row-children, .stack-children');
-      childContainers.forEach(container => {
-        container.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        });
-        container.addEventListener('drop', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (lastDropTarget) {
-            handleElementDrop.call(lastDropTarget, e);
-          }
-        });
-      });
     });
+  });
+}
+
+// Select a page and render its content
+window.selectPage = function(pageIndex) {
+  currentSelectedPageIndex = pageIndex;
+  renderPageList(currentConfig);
+  renderPageContent(pageIndex);
+};
+
+// Render the content of a specific page in the main editor panel
+function renderPageContent(pageIndex) {
+  if (!currentConfig || !currentConfig.pages || !currentConfig.pages[pageIndex]) {
+    const container = document.getElementById("pageEditorContainer");
+    if (container) {
+      container.innerHTML = '<div style="text-align: center; color: #888; padding: 40px;">Invalid page</div>';
+    }
+    return;
+  }
+  
+  const page = currentConfig.pages[pageIndex];
+  const container = document.getElementById("pageEditorContainer");
+  if (!container) return;
+  
+  // Build page content HTML
+  let html = `<div class="page-editor-header">
+    <h3>Page: ${page.label || `Page ${pageIndex + 1}`}</h3>
+    <input type="text" class="page-label-input" value="${page.label || ''}" placeholder="Page Label" style="width: 100%; padding: 6px; box-sizing: border-box;" data-page-index="${pageIndex}" onchange="updatePageLabel(${pageIndex}, this.value)" />
+  </div>`;
+  
+  // Page variables
+  if (page.variables && Object.keys(page.variables).length > 0) {
+    html += `<div class="page-variables-container">
+      <h4>Variables</h4>
+      <div style="font-size: 0.85em;">`;
+    
+    Object.entries(page.variables).forEach(([key, value]) => {
+      let def = '';
+      if (typeof value === 'object' && value !== null) {
+        def = [
+          value.value !== undefined ? `value` : '',
+          value.eval !== undefined ? `eval` : '',
+          value.min !== undefined ? `min: ${value.min}` : '',
+          value.max !== undefined ? `max: ${value.max}` : ''
+        ].filter(Boolean).join(', ');
+      } else {
+        def = String(value);
+      }
+      html += `
+      <div class="variable-item" data-var-key="${key}">
+        <span class="variable-key">${key}</span>
+        <span class="variable-value" title="${def}">${def.substring(0, 20)}${def.length > 20 ? '...' : ''}</span>
+        <div class="variable-actions">
+          <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${pageIndex}, '${key}')">✎</button>
+          <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${pageIndex}, '${key}')">×</button>
+        </div>
+      </div>
+      `;
+    });
+    
+    html += `</div>
+    <button type="button" class="btn-small" style="width: 100%; margin-top: 8px;" onclick="addVariable(${pageIndex})">+ Variable</button>
+    </div>`;
+  } else {
+    html += `<div style="color: #888; font-size: 0.85em; padding: 12px 0;">(No variables)</div>`;
+  }
+  
+  // Layout items
+  const layoutItems = page.layout || [];
+  if (layoutItems.length > 0) {
+    html += `<div class="page-elements-container">
+      <h4>Layout Elements</h4>
+      <div class="page-elements-list">`;
+    
+    layoutItems.forEach((item, itemIndex) => {
+      const typeLabel = item.type || 'unknown';
+      const label = item.label || item.text || item.var || '';
+      const content = item.type === 'text' && item.text ? item.text.substring(0, 40) + (item.text.length > 40 ? '...' : '') : label;
+      
+      html += `
+      <div class="layout-item" data-element-index="${itemIndex}">
+        <div class="layout-item-info">
+          <span class="layout-item-type">${typeLabel}</span>
+          <span>${content}</span>
+        </div>
+        <div class="layout-item-actions">
+          <button type="button" class="btn-small" onclick="editElement(${pageIndex}, ${itemIndex})">✎</button>
+          <button type="button" class="btn-small btn-danger" onclick="deleteElement(${pageIndex}, ${itemIndex})">×</button>
+        </div>
+      </div>
+      `;
+    });
+    
+    html += `</div>
+    <button type="button" class="btn-small" style="width: 100%; margin-top: 8px;" onclick="addElement(${pageIndex})">+ Element</button>
+    </div>`;
+  } else {
+    html += `<div style="color: #888; font-size: 0.85em; padding: 12px 0; text-align: center;">(No layout elements)</div>`;
+  }
+  
+  html += `<div class="page-actions-footer">
+    <button type="button" class="btn-add" onclick="addElement(${pageIndex})">+ Add Element</button>
+  </div>`;
+  
+  container.innerHTML = html;
+}
+
+// Update page label
+window.updatePageLabel = function(pageIndex, label) {
+  if (currentConfig && currentConfig.pages && currentConfig.pages[pageIndex]) {
+    currentConfig.pages[pageIndex].label = label;
+    renderPageList(currentConfig);
+  }
+};
+
+// Render visual editor (LEGACY - calls new functions)
+function renderEditor(config) {
+  renderEditorSidebar(config);
+  
+  // Select first page by default if none selected
+  if (currentSelectedPageIndex === null && config.pages && config.pages.length > 0) {
+    selectPage(0);
+  } else if (currentSelectedPageIndex !== null) {
+    renderPageContent(currentSelectedPageIndex);
   }
 }
+
 
 // Page collapse toggle
 window.togglePageCollapse = function(index, e) {

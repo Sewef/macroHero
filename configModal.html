@@ -176,7 +176,7 @@
       flex-direction: column;
       flex: 1 1 auto;
       min-height: 0;
-      overflow-y: auto;
+      overflow: hidden;
       padding: 16px;
       box-sizing: border-box;
     }
@@ -185,7 +185,16 @@
     .editor-container { display: block; width: 100%; overflow: visible; padding-right: 8px; }
 
     .tab-content.active {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* Editor tab has special layout, no scrolling */
+    #editor-tab.active {
+      overflow: hidden;
     }
 
     .input-group {
@@ -339,6 +348,55 @@
       gap: 8px;
     }
 
+    /* Collapsible sections */
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .collapsible-header:hover {
+      background: #333;
+      border-color: #555;
+    }
+
+    .collapsible-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      transition: transform 0.2s ease;
+      color: #c8adff;
+      flex-shrink: 0;
+    }
+
+    .collapsible-icon.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-content {
+      max-height: 1000px;
+      overflow: hidden;
+      /* transition: max-height 0.3s ease, opacity 0.2s ease; */
+      opacity: 1;
+      margin-bottom: 16px;
+    }
+
+    .collapsible-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+    }
+
     .collapse-btn {
       background: none;
       border: none;
@@ -346,7 +404,7 @@
       font-size: 1.2em;
       cursor: pointer;
       padding: 0 8px;
-      transition: transform 0.2s;
+      /* transition: transform 0.2s; */
     }
 
     .collapse-btn.collapsed {
@@ -658,6 +716,162 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+
+    /* ============================================
+       TWO-PANEL EDITOR LAYOUT
+       ============================================ */
+    .editor-layout {
+      display: flex;
+      gap: 16px;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .editor-sidebar {
+      flex: 0 0 300px;
+      background: #1f1f1f;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-section {
+      border-bottom: 1px solid #333;
+      padding-bottom: 12px;
+    }
+
+    .sidebar-section:last-child {
+      border-bottom: none;
+    }
+
+    .pages-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .page-item-sidebar {
+      padding: 10px 12px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      font-size: 0.9em;
+      color: #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-item-sidebar:hover {
+      background: #333;
+      border-color: #555;
+    }
+
+    .page-item-sidebar.active {
+      background: #c8adff;
+      color: #000;
+      border-color: #c8adff;
+      font-weight: 600;
+    }
+
+    .page-item-sidebar-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .page-item-sidebar-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .page-item-sidebar:hover .page-item-sidebar-actions {
+      opacity: 1;
+    }
+
+    .page-item-sidebar-actions button {
+      padding: 2px 6px;
+      font-size: 0.75em;
+      height: auto;
+      margin: 0;
+    }
+
+    .editor-main {
+      flex: 1;
+      background: #1f1f1f;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-editor-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+    }
+
+    .page-editor-header h3 {
+      margin: 0 0 8px 0;
+      color: #c8adff;
+    }
+
+    .page-variables-container {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .page-elements-container {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .page-elements-container h4 {
+      margin: 0 0 8px 0;
+      color: #c8adff;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .page-elements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .page-actions-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #333;
+    }
+
+    .page-actions-footer button {
+      flex: 1;
+    }
   </style>
   <script src="/src/configModal.js" type="module"></script>
 </head>
@@ -683,33 +897,71 @@
   <form id="configForm">
     <!-- Visual Editor Tab -->
     <div id="editor-tab" class="tab-content active">
-      <div class="input-group">
-        <label for="globalTitle">Global Title</label>
-        <input type="text" id="globalTitle" placeholder="Macro Hero" />
-      </div>
-      
-      <div class="row">
-        <div class="input-group">
-          <label for="globalWidth">Width</label>
-          <input type="number" id="globalWidth" placeholder="600" />
-        </div>
-        <div class="input-group">
-          <label for="globalHeight">Height</label>
-          <input type="number" id="globalHeight" placeholder="600" />
-        </div>
-      </div>
+      <div class="editor-layout">
+        <!-- Left Sidebar: Global Settings & Page List -->
+        <div class="editor-sidebar">
+          <div class="sidebar-section">
+            <div class="collapsible-header" onclick="window.toggleGlobalSettings()">
+              <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">
+                <span class="collapsible-icon collapsed" id="settingsIcon">▼</span>Global Settings
+              </h4>
+            </div>
+            
+            <div class="collapsible-content collapsed" id="globalSettingsContent">
+              <div class="input-group">
+                <label for="globalTitle">Title</label>
+                <input type="text" id="globalTitle" placeholder="Macro Hero" />
+              </div>
+              
+              <div style="display: flex; gap: 8px;">
+                <div class="input-group" style="flex: 1;">
+                  <label for="globalWidth">Width</label>
+                  <input type="number" id="globalWidth" placeholder="600" />
+                </div>
+                <div class="input-group" style="flex: 1;">
+                  <label for="globalHeight">Height</label>
+                  <input type="number" id="globalHeight" placeholder="600" />
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div style="margin-bottom: 16px;">
-        <h4 style="margin: 8px 0; font-size: 0.95em; color: #c8adff;">Global Variables</h4>
-        <div id="globalVariablesList">
-          <div style="color: #666; font-size: 0.85em;">No global variables</div>
-        </div>
-        <button type="button" class="btn-small" id="addGlobalVariableBtn" style="margin-top: 8px;">+ Global Variable</button>
-      </div>
+          <div class="sidebar-section">
+            <div class="collapsible-header" onclick="window.toggleGlobalVariables()">
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">
+                  <span class="collapsible-icon collapsed" id="variablesIcon">▼</span>Global Variables
+                </h4>
+                <button type="button" class="btn-small" id="addGlobalVariableBtn" style="padding: 2px 8px; font-size: 0.8em;">+</button>
+              </div>
+            </div>
+            <div class="collapsible-content collapsed" id="globalVariablesContent">
+              <div id="globalVariablesList">
+                <div style="color: #666; font-size: 0.85em;">No variables</div>
+              </div>
+            </div>
+          </div>
 
-      <h3>Pages</h3>
-      <div class="editor-container" id="pagesContainer"></div>
-      <button type="button" class="btn-add" id="addPageBtn">+ Add Page</button>
+          <div class="sidebar-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">Pages</h4>
+              <button type="button" class="btn-small" id="addPageBtn" style="padding: 2px 8px; font-size: 0.8em;">+</button>
+            </div>
+            <div id="pagesListSidebar" class="pages-list">
+              <div style="color: #666; font-size: 0.85em; text-align: center; padding: 12px;">No pages</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Page Editor -->
+        <div class="editor-main">
+          <div id="pageEditorContainer" class="page-editor">
+            <div style="text-align: center; color: #888; padding: 40px;">
+              <p>Select or create a page to edit</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- JSON Editor Tab -->
