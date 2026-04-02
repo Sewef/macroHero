@@ -112,19 +112,19 @@ export async function removeCondition(itemId, conditionName) {
         if (!data) return;
         if (data.callId !== callId) return;
         if (timeoutId) clearTimeout(timeoutId);
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler:', e); }
         resolve(data);
       };
 
       OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
 
       OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "LOCAL" }).catch(err => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler on error:', e); }
         reject(err);
       });
 
       timeoutId = setTimeout(() => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) {}
+        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler on timeout:', e); }
         reject(new Error('ConditionMarkers API timeout'));
       }, 5000);
     });

@@ -150,25 +150,6 @@
             },
             {
               "type": "button",
-              "label": "Stunned",
-              "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Stunned');"
-              ]
-            },
-            {
-              "type": "button",
-              "label": "Prone",
-              "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Prone');"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
               "label": "Paralyzed",
               "onclick": [
                 "await ConditionMarkers.addCondition(token, 'Paralyzed');"
@@ -176,16 +157,9 @@
             },
             {
               "type": "button",
-              "label": "Blessed",
+              "label": "Fainted",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Blessed');"
-              ]
-            },
-            {
-              "type": "button",
-              "label": "Concentrating",
-              "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Concentrating');"
+                "await ConditionMarkers.addCondition(token, 'Fainted');"
               ]
             }
           ]

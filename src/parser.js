@@ -6,7 +6,6 @@
  */
 
 import { createDebugLogger } from "./debugMode.js";
-import { createDebugLogger } from "./debugMode.js";
 
 const logger = createDebugLogger('parser');
 

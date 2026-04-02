@@ -3,8 +3,39 @@ import YAML from "js-yaml";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { createDebugLogger } from "./debugMode.js";
+import { deepClone } from "./utils.js";
 
 const logger = createDebugLogger('configModal');
+
+// Event listener tracking for cleanup
+let activeListeners = [];
+
+/**
+ * Add event listener and track it for cleanup
+ * @param {Element} element - DOM element
+ * @param {string} event - Event name
+ * @param {Function} handler - Event handler
+ */
+function addTrackedListener(element, event, handler) {
+  if (!element) return;
+  element.addEventListener(event, handler);
+  activeListeners.push({ element, event, handler });
+}
+
+/**
+ * Clean up all tracked event listeners
+ */
+function cleanupAllListeners() {
+  activeListeners.forEach(({ element, event, handler }) => {
+    try {
+      element.removeEventListener(event, handler);
+    } catch (e) {
+      // Silently fail if element is already removed
+    }
+  });
+  activeListeners = [];
+  logger.log('[ConfigModal] Cleaned up ' + activeListeners.length + ' event listeners');
+}
 
 let currentConfig = null;
 let currentTab = 'editor';
@@ -116,11 +147,11 @@ function ensureVariableModalInDom() {
         const evalInput = document.getElementById('variableEval');
         
         if (valueRadio && evalRadio && valueInput && evalInput) {
-          valueRadio.addEventListener('change', () => {
+          addTrackedListener(valueRadio, 'change', () => {
             valueInput.disabled = false;
             evalInput.disabled = true;
           });
-          evalRadio.addEventListener('change', () => {
+          addTrackedListener(evalRadio, 'change', () => {
             valueInput.disabled = true;
             evalInput.disabled = false;
           });
@@ -278,6 +309,9 @@ function saveVariableFromModal(currentConfigParam) {
 
 async function closeModal(data) {
   try {
+    // Clean up all event listeners before closing
+    cleanupAllListeners();
+    
     if (data) {
       // Try primary send first
       let sent = false;
@@ -347,7 +381,7 @@ function switchTab(tabName) {
     // Ensure we have a current user cached (non-blocking)
     getCurrentUserId().then(id => {
       _tokenHelperMeId = id;
-    }).catch(() => {});
+    }).catch(err => { logger.warn('[ConfigModal] Failed to close modal:', err); });
     // Refresh token data
     refreshTokenHelper();
   }
@@ -542,7 +576,7 @@ function buildConfigFromEditor() {
       height: parseInt(document.getElementById("globalHeight").value) || 600,
       variables: currentConfig?.global?.variables || {}
     },
-    pages: currentConfig?.pages ? JSON.parse(JSON.stringify(currentConfig.pages)) : []
+    pages: currentConfig?.pages ? deepClone(currentConfig.pages) : []
   };
   
   // Update page labels from sidebar inputs
@@ -638,7 +672,7 @@ function renderPageList(config) {
   
   // Attach delete button listeners with stopPropagation
   container.querySelectorAll('.page-item-sidebar').forEach((item) => {
-    item.addEventListener('click', (e) => {
+    addTrackedListener(item, 'click', (e) => {
       if (e.target.closest('.page-item-sidebar-actions')) {
         e.stopPropagation();
       }
@@ -819,35 +853,35 @@ function renderPageContent(pageIndex) {
   // Attach drag and drop listeners to layout items
   const layoutItemElements = container.querySelectorAll('.layout-item');
   layoutItemElements.forEach(item => {
-    item.addEventListener('dragstart', handleElementDragStart);
-    item.addEventListener('dragover', handleElementDragOver);
-    item.addEventListener('dragleave', handleElementDragLeave);
-    item.addEventListener('drop', handleElementDrop);
-    item.addEventListener('dragend', handleElementDragEnd);
+    addTrackedListener(item, 'dragstart', handleElementDragStart);
+    addTrackedListener(item, 'dragover', handleElementDragOver);
+    addTrackedListener(item, 'dragleave', handleElementDragLeave);
+    addTrackedListener(item, 'drop', handleElementDrop);
+    addTrackedListener(item, 'dragend', handleElementDragEnd);
   });
   
   // Also attach drop handlers to the container itself for better UX
   // This allows dropping anywhere in the list, not just on individual items
   const layoutItemsContainer = container.querySelector('.layout-items');
   if (layoutItemsContainer) {
-    layoutItemsContainer.addEventListener('dragover', (e) => {
+    addTrackedListener(layoutItemsContainer, 'dragover', (e) => {
       if (draggedElement) {
         e.preventDefault();
         e.stopPropagation();
       }
     });
-    layoutItemsContainer.addEventListener('drop', handleElementDrop);
+    addTrackedListener(layoutItemsContainer, 'drop', handleElementDrop);
     
     // Add dragover/drop handler to drop-indicator when it exists
     const observer = new MutationObserver(() => {
       const dropIndicator = container.querySelector('.drop-indicator');
       if (dropIndicator && !dropIndicator._dragHandlersAttached) {
         dropIndicator._dragHandlersAttached = true;
-        dropIndicator.addEventListener('dragover', (e) => {
+        addTrackedListener(dropIndicator, 'dragover', (e) => {
           e.preventDefault();
           e.stopPropagation();
         });
-        dropIndicator.addEventListener('drop', handleElementDrop);
+        addTrackedListener(dropIndicator, 'drop', handleElementDrop);
       }
     });
     observer.observe(layoutItemsContainer, { childList: true, subtree: true });
@@ -1422,7 +1456,7 @@ window.updateElementFields = function(existingElement = null) {
         const checkbox = document.getElementById('elem_customColor');
         const colorInput = document.getElementById('elem_color');
         if (checkbox && colorInput) {
-          checkbox.addEventListener('change', (e) => {
+          addTrackedListener(checkbox, 'change', (e) => {
             colorInput.disabled = !e.target.checked;
           });
         }
@@ -1488,13 +1522,12 @@ window.updateElementFields = function(existingElement = null) {
           <textarea id="elem_onupdate" placeholder="console.log('Counter value:', ${existingElement?.var || 'variableName'});">${dedentCommandList(existingElement?.onupdate || []).join('\n')}</textarea>
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Debounced 150ms during updates</small>
         </div>
-      `;
-      // Add event listener for checkbox to toggle color input
+      `;      // Add event listener for checkbox to toggle color input
       setTimeout(() => {
         const checkbox = document.getElementById('elem_customColor');
         const colorInput = document.getElementById('elem_color');
         if (checkbox && colorInput) {
-          checkbox.addEventListener('change', (e) => {
+          addTrackedListener(checkbox, 'change', (e) => {
             colorInput.disabled = !e.target.checked;
           });
         }
@@ -1529,7 +1562,7 @@ window.updateElementFields = function(existingElement = null) {
         const checkbox = document.getElementById('elem_customColor');
         const colorInput = document.getElementById('elem_color');
         if (checkbox && colorInput) {
-          checkbox.addEventListener('change', (e) => {
+          addTrackedListener(checkbox, 'change', (e) => {
             colorInput.disabled = !e.target.checked;
           });
         }
@@ -1588,7 +1621,7 @@ window.updateElementFields = function(existingElement = null) {
         const checkbox = document.getElementById('elem_customColor');
         const colorInput = document.getElementById('elem_color');
         if (checkbox && colorInput) {
-          checkbox.addEventListener('change', (e) => {
+          addTrackedListener(checkbox, 'change', (e) => {
             colorInput.disabled = !e.target.checked;
           });
         }
@@ -1631,7 +1664,7 @@ window.updateElementFields = function(existingElement = null) {
         const checkbox = document.getElementById('elem_customColor');
         const colorInput = document.getElementById('elem_color');
         if (checkbox && colorInput) {
-          checkbox.addEventListener('change', (e) => {
+          addTrackedListener(checkbox, 'change', (e) => {
             colorInput.disabled = !e.target.checked;
           });
         }
@@ -2364,7 +2397,7 @@ function initializeDebugModeUI() {
     categoryHeader.appendChild(categoryLabel);
 
     // Category header click handler (for label/entire header except checkbox)
-    categoryHeader.addEventListener('click', async (e) => {
+    addTrackedListener(categoryHeader, 'click', async (e) => {
       if (e.target === categoryCheckbox) return; // Let checkbox handle itself
       // Toggle checkbox and call change event
       categoryCheckbox.checked = !categoryCheckbox.checked;
@@ -2374,7 +2407,7 @@ function initializeDebugModeUI() {
     });
 
     // Category checkbox change handler
-    categoryCheckbox.addEventListener('change', async (e) => {
+    addTrackedListener(categoryCheckbox, 'change', async (e) => {
       await updateCategoryModules(categoryName, modules, categoryCheckbox.checked);
     });
 
@@ -2403,7 +2436,7 @@ function initializeDebugModeUI() {
       modulesContainer.appendChild(item);
 
       // Make entire item clickable for checkbox
-      item.addEventListener('click', async (e) => {
+      addTrackedListener(item, 'click', async (e) => {
         const checkbox = item.querySelector('input[type="checkbox"]');
         if (e.target === checkbox) return; // Let checkbox handle itself
         checkbox.checked = !checkbox.checked;
@@ -2412,7 +2445,7 @@ function initializeDebugModeUI() {
 
       // Add event listener for checkbox changes
       const checkbox = item.querySelector('input[type="checkbox"]');
-      checkbox.addEventListener('change', async (e) => {
+      addTrackedListener(checkbox, 'change', async (e) => {
         await handleModuleToggle(moduleName, e.target.checked, categoryName, categoryCheckbox, modules);
       });
     });
@@ -2540,7 +2573,7 @@ document.getElementById("syncFromJson").onclick = syncFromJson;
 // Format switching radio buttons
 const formatRadios = document.querySelectorAll('input[name="cfgFormat"]');
 formatRadios.forEach(radio => {
-  radio.addEventListener('change', switchConfigFormat);
+  addTrackedListener(radio, 'change', switchConfigFormat);
 });
 
 // Cancel
@@ -2607,7 +2640,7 @@ document.getElementById("saveBtn").onclick = async () => {
         gsErrEl.style.display = 'block';
       }
       // Switch user to GS tab so they can correct credentials
-      try { switchTab('gsheets'); } catch (e) {}
+      try { switchTab('gsheets'); } catch (e) { logger.warn('[ConfigModal] Failed to switch to gsheets tab:', e); }
       throw new Error(errMsg);
     }
 
@@ -2676,7 +2709,7 @@ OBR.onReady(() => {
     document.getElementById("cfgArea").value = JSON.stringify(cfg, null, 2);
     // Attach tab handlers now that DOM is ready
     document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', (e) => {
+      addTrackedListener(tab, 'click', (e) => {
         e.preventDefault();
         switchTab(tab.dataset.tab);
       });
@@ -2687,9 +2720,9 @@ OBR.onReady(() => {
     _tokensSearchEl = document.getElementById('tokensSearch');
     _tokensFilterEl = document.getElementById('tokensFilter');
     _tokensRefreshBtn = document.getElementById('tokensRefresh');
-    if (_tokensSearchEl) _tokensSearchEl.addEventListener('input', debounce(() => applyTokensFiltersAndRender(), 220));
-    if (_tokensFilterEl) _tokensFilterEl.addEventListener('change', () => applyTokensFiltersAndRender());
-    if (_tokensRefreshBtn) _tokensRefreshBtn.addEventListener('click', () => refreshTokenHelper());
+    if (_tokensSearchEl) addTrackedListener(_tokensSearchEl, 'input', debounce(() => applyTokensFiltersAndRender(), 220));
+    if (_tokensFilterEl) addTrackedListener(_tokensFilterEl, 'change', () => applyTokensFiltersAndRender());
+    if (_tokensRefreshBtn) addTrackedListener(_tokensRefreshBtn, 'click', () => refreshTokenHelper());
     
     // Initialize Debug Mode UI
     initializeDebugModeUI();

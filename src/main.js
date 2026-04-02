@@ -10,6 +10,9 @@ import { createDebugLogger } from "./debugMode.js";
 // Debug logger
 const logger = createDebugLogger('main');
 
+// Track broadcast subscriptions for cleanup
+const broadcastUnsubs = [];
+
 /**
  * Apply OBR theme to the extension UI
  * Respects the user's theme preference and updates colors dynamically
@@ -34,6 +37,8 @@ document.getElementById("reloadBtn").onclick = reloadCurrentPage;
 // Ensure pending localStorage changes are saved before page unloads
 window.addEventListener('beforeunload', async () => {
   await flushPendingChanges();
+  // Also clean up broadcast subscriptions
+  broadcastUnsubs.forEach(unsub => { try { unsub?.(); } catch (e) { /* ignore */ } });
 });
 
 // Chargement initial
@@ -116,7 +121,7 @@ OBR.onReady(async () => {
     })();
 
     // Listen for config changes from the modal
-    OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
+    const configUpdatedUnsub = OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
       logger.log("[MAIN] Config updated via broadcast");
 
       // If this is just an UI update (button click, counter change, etc.), skip re-resolution
@@ -166,16 +171,24 @@ OBR.onReady(async () => {
 
       updateConfig(newConfig);
     });
+    if (configUpdatedUnsub) broadcastUnsubs.push(configUpdatedUnsub);
 
     // Listen for debug mode changes from the config modal
-    OBR.broadcast.onMessage("macrohero.debug.modes", async (event) => {
+    const debugModesUnsub = OBR.broadcast.onMessage("macrohero.debug.modes", async (event) => {
       logger.log("[MAIN] Debug modes updated via broadcast:", event.data);
       // localStorage is already updated by the modal, this is just a trigger
       // to let other modules know the debug modes have changed
     });
+    if (debugModesUnsub) broadcastUnsubs.push(debugModesUnsub);
   } catch (error) {
     logger.error("Error during initialization:", error);
   }
+});
+
+// Clean up broadcast subscriptions on page unload
+window.addEventListener('beforeunload', () => {
+  broadcastUnsubs.forEach(unsub => { try { unsub?.(); } catch (e) { /* ignore */ } });
+  logger.log('[MAIN] Cleaned up broadcast subscriptions');
 });
 
 async function logOBRImageItems() {

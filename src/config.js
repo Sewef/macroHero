@@ -3,6 +3,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";
 import { loadConfigFile } from "./yamlLoader.js";
+import { deepClone } from "./utils.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
@@ -10,6 +11,27 @@ export const MODAL_LABEL = "macrohero.config";
 
 // Debug logger
 const logger = createDebugLogger('config');
+
+// Track broadcast subscriptions for cleanup
+let broadcastSubscriptions = [];
+
+/**
+ * Register a broadcast subscription for cleanup
+ */
+function registerBroadcastSub(unsubscribeFunc) {
+  broadcastSubscriptions.push(unsubscribeFunc);
+}
+
+/**
+ * Clean up all broadcast subscriptions
+ */
+function cleanupBroadcastSubscriptions() {
+  broadcastSubscriptions.forEach(unsub => {
+    try { unsub?.(); } catch (e) { /* ignore */ }
+  });
+  broadcastSubscriptions = [];
+  logger.log('[CONFIG] Cleaned up broadcast subscriptions');
+}
 
 let isOBRReady = false;
 let currentPlayerId = null;
@@ -75,7 +97,7 @@ async function getRoomScopedLocalStorageKey() {
 export function cleanConfigForSave(cfg) {
     if (!cfg) return cfg;
     try {
-        const clone = JSON.parse(JSON.stringify(cfg));
+        const clone = deepClone(cfg);
         if (clone._resolvedGlobal) delete clone._resolvedGlobal;
         if (clone._modifiedVars) delete clone._modifiedVars;
         if (Array.isArray(clone.pages)) {
@@ -174,7 +196,7 @@ export async function loadConfig() {
         const localStorageConfig = await loadConfigFromLocalStorage();
         let config;
         if (localStorageConfig) {
-            config = JSON.parse(JSON.stringify(localStorageConfig));
+            config = deepClone(localStorageConfig);
         } else {
             // Try to load packaged config files - first YAML (modern format), then JSON (legacy)
             const tryPaths = [
@@ -196,7 +218,7 @@ export async function loadConfig() {
             }
 
             if (packaged) {
-                config = JSON.parse(JSON.stringify(packaged));
+                config = deepClone(packaged);
                 try {
                     await saveConfigToLocalStorage(config);
                     logger.log('[CONFIG] Packaged default persisted to room-scoped localStorage');
@@ -205,7 +227,7 @@ export async function loadConfig() {
                 }
             } else {
                 logger.warn('[CONFIG] Could not load packaged default config, using in-code defaultConfig');
-                config = JSON.parse(JSON.stringify(defaultConfig));
+                config = deepClone(defaultConfig);
             }
         }
         
@@ -312,6 +334,9 @@ export async function openConfigModal() {
             unsubscribe();
         }
     });
+    
+    // Register for cleanup
+    registerBroadcastSub(unsubscribe);
 
     logger.log("[MODAL] Opening modal window...");
     await OBR.modal.open({
