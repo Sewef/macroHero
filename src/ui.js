@@ -133,7 +133,6 @@ function renderPageButtons() {
       btn.textContent = p.title ?? p.label ?? `Page ${index + 1}`;
       btn.addEventListener('click', async () => {
         currentPage = index;
-        if (!p._pageIndex) p._pageIndex = index;
         renderPageButtons();
         await renderPageContent(p);
       });

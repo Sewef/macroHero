@@ -150,7 +150,8 @@ export class UIComponent {
         commands,
         pageObj,
         this.services.globalVariables,
-        onVariableResolved
+        onVariableResolved,
+        this.services.currentPage ?? 0
       );
 
       await this.services.saveConfig(this.services.config)

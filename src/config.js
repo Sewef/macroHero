@@ -84,6 +84,7 @@ export function cleanConfigForSave(cfg) {
             clone.pages.forEach(p => {
                 if (p && p._resolved) delete p._resolved;
                 if (p && p._modifiedVars) delete p._modifiedVars;
+                if (p && p._pageIndex) delete p._pageIndex;
             });
         }
         return clone;
@@ -97,6 +98,7 @@ export function cleanConfigForSave(cfg) {
                 const cp = Object.assign({}, p);
                 delete cp._resolved;
                 delete cp._modifiedVars;
+                delete cp._pageIndex;
                 return cp;
             });
         }

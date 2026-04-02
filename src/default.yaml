@@ -27,7 +27,6 @@ pages:
           - type: value
             var: sheetValue
             label: Cell Value
-    _pageIndex: 0
   - label: Conditions
     variables:
       isBandaged:
@@ -102,7 +101,6 @@ pages:
             label: Concentrating
             onclick:
               - await ConditionMarkers.addCondition(token, 'Concentrating');
-    _pageIndex: 1
   - label: Trackers
     variables:
       trackerHP:
@@ -182,7 +180,6 @@ pages:
         label: Remove HP Tracker
         onclick:
           - await OwlTrackers.removeTracker(token, 'HP');
-    _pageIndex: 2
   - label: StatBubbles
     variables:
       bubbleHealth:
@@ -282,7 +279,6 @@ pages:
             } else {
               console.log('Attack missed!');
             }
-    _pageIndex: 3
   - label: Rings
     variables:
       ringColors:
@@ -354,7 +350,6 @@ pages:
           - |-
             const rings = await ColoredRings.getRings(token);
             console.log('Current rings:', rings);
-    _pageIndex: 4
   - label: PrettySordid
     variables:
       prettyHasInitiative:
@@ -426,7 +421,6 @@ pages:
           - |-
             await PrettySordid.removeInitiative(token);
             console.log('Initiative metadata removed');
-    _pageIndex: 5
   - label: JustDices
     variables:
       token:
@@ -520,7 +514,6 @@ pages:
           - |-
             const rollObj = await JustDices.getRollObjectSilent('1d20 + 5');
             console.log('Roll object:', rollObj);
-    _pageIndex: 6
   - label: Local
     variables:
       inputName:
@@ -584,7 +577,6 @@ pages:
           - |-
             await Local.set('lastRoll', await JustDices.rollSilent('1d20'));
             console.log('Saved last roll:', await Local.value('lastRoll', 0));
-    _pageIndex: 7
   - label: Weather
     variables:
       token:
@@ -705,7 +697,6 @@ pages:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.removeWeather(mapId);
-    _pageIndex: 8
   - label: Embers
     variables:
       caster:
@@ -899,7 +890,6 @@ pages:
         text: • .broadcast(dest) - Set broadcast destination
       - type: text
         text: • .cast(options?) - Send to Embers
-    _pageIndex: 9
   - label: Layout
     variables:
       textVar:
@@ -1158,7 +1148,6 @@ pages:
                 color: '#e74c3c'
                 onclick:
                   - await JustDices.roll('1d20');
-    _pageIndex: 10
   - label: Tests
     variables:
       spdCS:
@@ -1281,7 +1270,6 @@ pages:
           - |-
             tokenId = await getClosestTokenId(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
             console.log('Closest Token Id: ' + (tokenId || 'No token found'));
-    _pageIndex: 11
   - label: Tokens
     variables:
       tokenUrl:
@@ -1481,7 +1469,6 @@ pages:
             } else {
               console.log('Temp HP tracker not found');
             }
-    _pageIndex: 12
   - label: Aurora
     variables:
       mapId:
@@ -1789,7 +1776,6 @@ pages:
             }
 
             console.log('Day/Night cycle started (10 seconds)');
-    _pageIndex: 13
   - label: Announcement
     variables:
       announcementData:
@@ -1882,7 +1868,6 @@ pages:
           - |-
             await Announcement.removeAnnouncementMetadata();
             console.log('Announcement removed');
-    _pageIndex: 14
   - label: Auras
     layout:
       - type: title
@@ -1988,7 +1973,6 @@ pages:
         text: Notes
       - type: text
         text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control.'
-    _pageIndex: 15
   - label: DicePlus
     variables:
       diceNotation:
@@ -2168,7 +2152,6 @@ pages:
               console.log('MISS!');
               await setValue('lastRollResult', `Miss! Attack: ${atkRoll}`);
             }
-    _pageIndex: 16
   - label: SDK Helpers
     variables:
       message:
@@ -2292,4 +2275,3 @@ pages:
         text: WARNING - Warning state (orange)
       - type: text
         text: ERROR - Error state (red)
-    _pageIndex: 17

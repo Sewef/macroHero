@@ -25,7 +25,7 @@ const debugError = (...args) => console.error(...args);
 /**
  * Handle button click - simplified flow with new architecture
  */
-export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null) {
+export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null, pageIndex = 0) {
   if (!Array.isArray(commands) || commands.length === 0) {
     debugWarn("[EXECUTOR] No commands");
     return;
@@ -34,7 +34,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
   try {
     debugLog("[EXECUTOR] Button clicked, executing", commands.length, "command(s)");
 
-    const pageIndex = page?._pageIndex ?? 0;
+    if (pageIndex === undefined || pageIndex === null) pageIndex = 0;
     if (!page._modifiedVars) page._modifiedVars = new Set();
 
     // Step 1: Find variables USED in commands
@@ -121,7 +121,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
  * Create helper functions available in command context
  * Uses VariableStore and EventBus for centralized state management
  */
-function createHelperFunctions(page, pageIndex) {
+function createHelperFunctions(page, pageIndex = 0) {
   return {
     setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
