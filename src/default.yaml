@@ -1,0 +1,2206 @@
+global:
+  title: Default Config for MacroHero
+  width: 800
+  height: 600
+  variables:
+    playerName:
+      eval: Local.value('playerName', 'myGlobalVarPlayerName')
+    token:
+      value: 996ed434-a22c-4510-aa82-9df34820c0be
+pages:
+  - label: Google Sheets
+    variables:
+      sheetValue:
+        eval: GoogleSheets.getValue('Xalithra Général', 'G26:I26')
+    layout:
+      - type: title
+        text: Google Sheets Integration
+      - type: text
+        text: Read data from Google Sheets (read-only)
+      - type: divider
+      - type: title
+        text: '{sheetValue}'
+      - type: text
+        text: '{sheetValue}'
+      - type: row
+        children:
+          - type: value
+            var: sheetValue
+            label: Cell Value
+  - label: Conditions
+    variables:
+      isBandaged:
+        eval: ConditionMarkers.hasCondition(token, 'Bandaged')
+      conditionValue:
+        eval: ConditionMarkers.getValue(token, 'Bandaged')
+    layout:
+      - type: title
+        text: Condition Markers
+      - type: text
+        text: Check and read condition markers on tokens
+      - type: divider
+      - type: row
+        children:
+          - type: value
+            var: isBandaged
+            label: Has Bandaged?
+          - type: value
+            var: conditionValue
+            label: Bandaged Value
+      - type: button
+        commands:
+          - 'isBandaged ? console.log(''Has Bandaged condition'') : console.log(''No Bandaged condition'');'
+        label: Check Condition
+      - type: divider
+      - type: title
+        text: Manage Conditions
+      - type: button
+        commands:
+          - await ConditionMarkers.toggleCondition(token, 'Bandaged');
+        label: Toggle Bandage
+      - type: button
+        commands:
+          - await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);
+        label: Increment Bandage
+      - type: button
+        commands:
+          - await ConditionMarkers.removeCondition(token, 'Bandaged');
+        label: Remove Bandage
+      - type: button
+        commands:
+          - await ConditionMarkers.clearAllConditions(token);
+        label: Clear All Conditions
+      - type: divider
+      - type: title
+        text: Common Conditions
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Poisoned');
+            label: Poisoned
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Stunned');
+            label: Stunned
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Prone');
+            label: Prone
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Paralyzed');
+            label: Paralyzed
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Blessed');
+            label: Blessed
+          - type: button
+            commands:
+              - await ConditionMarkers.addCondition(token, 'Concentrating');
+            label: Concentrating
+  - label: Trackers
+    variables:
+      trackerHP:
+        eval: OwlTrackers.getValue(token, 'HP')
+      trackerMaxHP:
+        eval: OwlTrackers.getMax(token, 'HP')
+    layout:
+      - type: title
+        text: Owl Trackers
+      - type: text
+        text: Get and modify tracker values on tokens
+      - type: divider
+      - type: row
+        children:
+          - type: value
+            var: trackerHP
+            label: HP
+          - type: value
+            var: trackerMaxHP
+            label: Max HP
+      - type: divider
+      - type: title
+        text: HP Management
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await OwlTrackers.addValue(token, 'HP', 10);
+            label: Heal 10
+          - type: button
+            commands:
+              - await OwlTrackers.addValue(token, 'HP', 5);
+            label: Heal 5
+          - type: button
+            commands:
+              - await OwlTrackers.setValue(token, 'HP', trackerMaxHP);
+            label: Full Heal
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await OwlTrackers.addValue(token, 'HP', -5);
+            label: Damage 5
+          - type: button
+            commands:
+              - await OwlTrackers.addValue(token, 'HP', -10);
+            label: Damage 10
+          - type: button
+            commands:
+              - await OwlTrackers.setValue(token, 'HP', 0);
+            label: Down to 0
+      - type: divider
+      - type: title
+        text: Add Tracker
+      - type: button
+        commands:
+          - |-
+            await OwlTrackers.addTracker(token, {
+              variant: 'value-max',
+              name: 'HP',
+              value: 50,
+              max: 50,
+              color: 2
+            });
+        label: Add HP Tracker (50/50)
+      - type: button
+        commands:
+          - |-
+            await OwlTrackers.addTracker(token, {
+              variant: 'value',
+              name: 'Temp HP',
+              value: 10,
+              color: 5
+            });
+        label: Add Temp HP (10)
+      - type: button
+        commands:
+          - await OwlTrackers.removeTracker(token, 'HP');
+        label: Remove HP Tracker
+  - label: StatBubbles
+    variables:
+      bubbleHealth:
+        eval: StatBubbles.getValue(token, 'health')
+      bubbleMaxHealth:
+        eval: StatBubbles.getValue(token, 'max health')
+      bubbleAC:
+        eval: StatBubbles.getValue(token, 'armor class')
+    layout:
+      - type: title
+        text: StatBubbles
+      - type: text
+        text: Manage health, AC, and temp HP via StatBubbles extension
+      - type: divider
+      - type: row
+        children:
+          - type: value
+            var: bubbleHealth
+            label: Health
+          - type: value
+            var: bubbleMaxHealth
+            label: Max
+          - type: value
+            var: bubbleAC
+            label: AC
+      - type: divider
+      - type: title
+        text: Health Management
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await StatBubbles.heal(token, 15);
+            label: Heal 15
+          - type: button
+            commands:
+              - await StatBubbles.heal(token, 5);
+            label: Heal 5
+          - type: button
+            commands:
+              - await StatBubbles.setValue(token, 'health', bubbleMaxHealth);
+            label: Full Heal
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await StatBubbles.damage(token, 8);
+            label: Damage 8
+          - type: button
+            commands:
+              - await StatBubbles.damage(token, 15);
+            label: Damage 15
+          - type: button
+            commands:
+              - await StatBubbles.setValue(token, 'health', 0);
+            label: Down to 0
+      - type: divider
+      - type: title
+        text: Other Stats
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await StatBubbles.setValue(token, 'temporary health', 20);
+            label: Set Temp HP 20
+          - type: button
+            commands:
+              - await StatBubbles.setValue(token, 'temporary health', 0);
+            label: Remove Temp HP
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await StatBubbles.addValue(token, 'armor class', 2);
+            label: AC +2
+          - type: button
+            commands:
+              - await StatBubbles.addValue(token, 'armor class', -2);
+            label: AC -2
+          - type: button
+            commands:
+              - |-
+                const percentage = await StatBubbles.getHealthPercentage(token);
+                console.log('Health: ' + percentage + '%');
+            label: Show Health %
+      - type: divider
+      - type: title
+        text: Combat Example
+      - type: button
+        commands:
+          - |-
+            const roll = await JustDices.rollSilent('1d20 + ' + bubbleAC);
+            if (roll > 15) {
+              await StatBubbles.damage(token, 10);
+              console.log('Attack hit for 10 damage!');
+            } else {
+              console.log('Attack missed!');
+            }
+        label: Attack Roll (DC 15, 10 dmg)
+  - label: Rings
+    variables:
+      ringColors:
+        eval: ColoredRings.getRings(token)
+      hasBlueRing:
+        eval: ColoredRings.hasRing(token, '#1a6aff')
+    layout:
+      - type: title
+        text: Colored Rings
+      - type: text
+        text: Add and remove colored status rings on tokens
+      - type: divider
+      - type: row
+        children:
+          - type: value
+            var: hasBlueRing
+            label: Has Blue Ring?
+      - type: divider
+      - type: title
+        text: Add Rings
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#1a6aff');
+            label: Add Blue
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#ff7433');
+            label: Add Orange
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#00ff00');
+            label: Add Green
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#ff0000');
+            label: Add Red
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#ffff00');
+            label: Add Yellow
+          - type: button
+            commands:
+              - await ColoredRings.addRing(token, '#ff00ff');
+            label: Add Purple
+      - type: divider
+      - type: title
+        text: Remove Rings
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await ColoredRings.removeRing(token, '#1a6aff');
+            label: Remove Blue
+          - type: button
+            commands:
+              - await ColoredRings.removeRing(token, '#ff7433');
+            label: Remove Orange
+          - type: button
+            commands:
+              - await ColoredRings.removeRing(token, '#00ff00');
+            label: Remove Green
+      - type: button
+        commands:
+          - |-
+            const rings = await ColoredRings.getRings(token);
+            console.log('Current rings:', rings);
+        label: Show All Rings
+  - label: PrettySordid
+    variables:
+      prettyHasInitiative:
+        eval: PrettySordid.hasInitiative(token)
+      prettyInitiativeCount:
+        eval: PrettySordid.getInitiative(token)
+      prettyActive:
+        eval: PrettySordid.isActiveTurn(token)
+    layout:
+      - type: title
+        text: Pretty Sordid Initiative
+      - type: text
+        text: Compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata.
+      - type: divider
+      - type: row
+        children:
+          - type: value
+            var: prettyHasInitiative
+            label: Has Initiative?
+          - type: value
+            var: prettyInitiativeCount
+            label: Initiative
+          - type: value
+            var: prettyActive
+            label: Active?
+      - type: divider
+      - type: title
+        text: Manage Initiative
+      - type: row
+        children:
+          - type: button
+            commands:
+              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) + 1) : await PrettySordid.setInitiative(token, 1);'
+            label: Increment / Assign 1
+          - type: button
+            commands:
+              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) - 1) : null;'
+            label: Decrement
+          - type: button
+            commands:
+              - await PrettySordid.setInitiative(token, 0);
+            label: Reset to 0
+      - type: divider
+      - type: title
+        text: Quick Set
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const roll = await JustDices.rollSilent('1d20 + 3');
+                await PrettySordid.setInitiative(token, roll);
+                console.log('Initiative set to:', roll);
+            label: Roll Initiative (+3)
+          - type: button
+            commands:
+              - await PrettySordid.setInitiative(token, 20);
+            label: Set to 20
+          - type: button
+            commands:
+              - await PrettySordid.setInitiative(token, 10);
+            label: Set to 10
+      - type: divider
+      - type: title
+        text: Remove Initiative
+      - type: button
+        commands:
+          - |-
+            await PrettySordid.removeInitiative(token);
+            console.log('Initiative metadata removed');
+        label: Remove All Initiative Data
+  - label: JustDices
+    variables:
+      token:
+        value: 996ed434-a22c-4510-aa82-9df34820c0be
+    layout:
+      - type: title
+        text: JustDices
+      - type: text
+        text: Roll dice and get results in Owlbear Rodeo
+      - type: divider
+      - type: title
+        text: Basic Rolls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await JustDices.roll('1d20');
+            label: Roll d20
+          - type: button
+            commands:
+              - await JustDices.roll('1d12');
+            label: Roll d12
+          - type: button
+            commands:
+              - await JustDices.roll('1d10');
+            label: Roll d10
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await JustDices.roll('1d8');
+            label: Roll d8
+          - type: button
+            commands:
+              - await JustDices.roll('1d6');
+            label: Roll d6
+          - type: button
+            commands:
+              - await JustDices.roll('1d4');
+            label: Roll d4
+      - type: divider
+      - type: title
+        text: With Modifiers
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await JustDices.roll('1d20 + 5');
+            label: d20 + 5
+          - type: button
+            commands:
+              - await JustDices.roll('2d6 + 3');
+            label: 2d6 + 3
+          - type: button
+            commands:
+              - await JustDices.roll('3d6');
+            label: 3d6
+      - type: divider
+      - type: title
+        text: Damage Rolls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await JustDices.roll('2d6 + 4');
+            label: Greatsword (2d6+4)
+          - type: button
+            commands:
+              - await JustDices.roll('1d8 + 3');
+            label: Longsword (1d8+3)
+          - type: button
+            commands:
+              - await JustDices.roll('8d6');
+            label: Fireball (8d6)
+      - type: divider
+      - type: title
+        text: Silent Rolls (for logic)
+      - type: button
+        commands:
+          - |-
+            const roll = await JustDices.rollSilent('1d20');
+            if (roll >= 15) {
+              console.log('Success! (' + roll + ')');
+            } else {
+              console.log('Failure! (' + roll + ')');
+            }
+        label: Silent Roll + Logic
+      - type: button
+        commands:
+          - |-
+            const rollObj = await JustDices.getRollObjectSilent('1d20 + 5');
+            console.log('Roll object:', rollObj);
+        label: Get Roll Object
+  - label: Local
+    variables:
+      inputName:
+        value: Enter name here
+    layout:
+      - type: title
+        text: Local Storage
+      - type: text
+        text: Store and retrieve values in browser localStorage
+      - type: divider
+      - type: input
+        var: inputName
+        label: Enter Name
+        placeholder: Type a name...
+      - type: row
+        children:
+          - type: button
+            commands:
+              - 'await JustDices.roll(''Global Player Name: '' + playerName);'
+            label: Show Global Name
+          - type: button
+            commands:
+              - 'await JustDices.roll(''Input Name: '' + inputName);'
+            label: Show Input Name
+      - type: divider
+      - type: title
+        text: Save & Retrieve
+      - type: button
+        commands:
+          - await Local.set('playerName', inputName);
+        label: Save Input as Player Name
+      - type: button
+        commands:
+          - 'await JustDices.roll(''Player: '' + await Local.value(''playerName'', ''Unknown''));'
+        label: Show Saved Player Name
+      - type: button
+        commands:
+          - |-
+            const keys = await Local.keys();
+            console.log('Stored keys:', keys);
+        label: List All Keys
+      - type: button
+        commands:
+          - |-
+            await Local.clear();
+            console.log('Local storage cleared');
+        label: Clear All Storage
+      - type: divider
+      - type: title
+        text: Examples
+      - type: button
+        commands:
+          - |-
+            await Local.set('counter', (await Local.value('counter', 0)) + 1);
+            const count = await Local.value('counter', 0);
+            console.log('Counter:', count);
+        label: Increment Counter
+      - type: button
+        commands:
+          - |-
+            await Local.set('lastRoll', await JustDices.rollSilent('1d20'));
+            console.log('Saved last roll:', await Local.value('lastRoll', 0));
+        label: Save Last Roll
+  - label: Weather
+    variables:
+      token:
+        value: 996ed434-a22c-4510-aa82-9df34820c0be
+    layout:
+      - type: title
+        text: Weather Effects
+      - type: text
+        text: Add weather effects to maps
+      - type: divider
+      - type: title
+        text: Weather Types
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });
+            label: Snow
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });
+            label: Rain
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });
+            label: Sand
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });
+            label: Fire
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });
+            label: Cloud
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });
+            label: Bloom
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });
+            label: Energy Storm
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });
+            label: Water
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });
+            label: Current
+      - type: divider
+      - type: title
+        text: Weather Tints
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.updateWeather(mapId, { tint: '#88aaff' });
+            label: Blue Tint
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.updateWeather(mapId, { tint: '#ff8844' });
+            label: Orange Tint
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.updateWeather(mapId, { tint: '#88ff88' });
+            label: Green Tint
+      - type: divider
+      - type: title
+        text: Controls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                const config = await Weather.getWeather(mapId);
+                console.log('Weather config:', config);
+            label: Show Config
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                const has = await Weather.hasWeather(mapId);
+                console.log('Has weather:', has);
+            label: Check Weather
+          - type: button
+            commands:
+              - |-
+                const mapId = await getMapIdFromToken(token);
+                await Weather.removeWeather(mapId);
+            label: Remove Weather
+  - label: Embers
+    variables:
+      caster:
+        value: 996ed434-a22c-4510-aa82-9df34820c0be
+      target:
+        value: target-token-id
+    layout:
+      - type: title
+        text: Embers - Spell Effects
+      - type: text
+        text: Visual spell effects using Embers extension with fluent API
+      - type: divider
+      - type: title
+        text: Quick Single Effects
+      - type: text
+        text: Simple one-off spell effects
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 })
+                  .cast({ spellName: 'Magic Missile' });
+            label: Magic Missile
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .aoe('cure_wounds', await getSelectedTokenId(), { size: 2 })
+                  .cast({ spellName: 'Cure Wounds' });
+            label: Cure Wounds (AOE)
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .aoe('shield.hit', caster, { size: 2 })
+                  .cast({ spellName: 'Shield' });
+            label: Shield
+      - type: divider
+      - type: title
+        text: Simultaneous Effects
+      - type: text
+        text: Multiple effects playing at the same time (without .then())
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .projectile('magic_missile', caster, [await getSelectedTokenId()])
+                  .projectile('fire_bolt', caster, await getSelectedTokenId())
+                  .cast({ spellName: 'Double Attack' });
+            label: 2 Projectiles (Simultaneous)
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .aoe('shield.complete', caster, { size: 6 })
+                  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 4 })
+                  .cast({ spellName: 'Blessings' });
+            label: 2 AOEs (Simultaneous)
+      - type: divider
+      - type: title
+        text: Sequential Effects (with .then())
+      - type: text
+        text: Effects queue up - next waits for previous to finish
+      - type: button
+        commands:
+          - |-
+            await Embers.sequence()
+              .projectile('magic_missile', caster, await getSelectedTokenId())
+              .then()
+              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 4 })
+              .cast({ spellName: 'Missile Impact' });
+        label: Projectile → Impact
+      - type: button
+        commands:
+          - |-
+            await Embers.sequence()
+              .projectile('fireball.beam', caster, await getSelectedTokenId())
+              .then()
+              .aoe('fireball.explosion', await getSelectedTokenId(), { size: 6 })
+              .then()
+              .action('slide', [await getSelectedTokenId(), { x: await getSelectedTokenId().x + 100, y: await getSelectedTokenId().y }, 500])
+              .cast({ spellName: 'Fireball Chain' });
+        label: Fireball → Explosion → Knockback
+      - type: divider
+      - type: title
+        text: Cone Effects
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .cone('burning_hands', caster, await getSelectedTokenId(), { size: 6 })
+                  .cast({ spellName: 'Burning Hands' });
+            label: Burning Hands
+          - type: button
+            commands:
+              - |-
+                await Embers.sequence()
+                  .cone('cone_of_cold', caster, await getSelectedTokenId(), { size: 8 })
+                  .cast({ spellName: 'Cone of Cold' });
+            label: Cone of Cold
+      - type: divider
+      - type: title
+        text: Delays
+      - type: text
+        text: Add timing delays between effects
+      - type: button
+        commands:
+          - |-
+            await Embers.sequence()
+              .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await getSelectedTokenId())
+              .delay(300)
+              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 3 })
+              .cast({ spellName: 'Delayed Impact' });
+        label: Arrow (then 300ms delay) → Impact
+      - type: button
+        commands:
+          - |-
+            await Embers.sequence()
+              .aoe('moonbeam.intro', caster, { size: 2 })
+              .delay(500)
+              .projectile('magic_missile', caster, await getSelectedTokenId())
+              .delay(200)
+              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 5 })
+              .cast({ spellName: 'Energy Casting' });
+        label: Cast → Projectile → Hit (with delays)
+      - type: divider
+      - type: title
+        text: Complex Sequences
+      - type: text
+        text: Showcase fluent API chains
+      - type: button
+        commands:
+          - |-
+            await Embers.sequence()
+              .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 2 })
+              .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await getSelectedTokenId())
+              .then()
+              .aoe('fireball.explosion', await getSelectedTokenId(), { size: 5 })
+              .then()
+              .aoe('generic.smoke.fumes.grey.1.complete', await getSelectedTokenId(), { size: 6 })
+              .cast({ 
+                spellName: 'Barrage',
+                destination: 'ALL'
+              });
+        label: Multi-Projectile Barrage
+      - type: divider
+      - type: title
+        text: Helper Functions
+      - type: text
+        text: Quick one-liners for simple effects
+      - type: row
+        children:
+          - type: button
+            commands:
+              - 'await castProjectile(''magic_missile'', caster, await getSelectedTokenId(), { copies: 3 });'
+            label: castProjectile()
+          - type: button
+            commands:
+              - 'await castAOE(''bless'', [caster, await getSelectedTokenId()], { size: 4 });'
+            label: castAOE()
+          - type: button
+            commands:
+              - 'await castCone(''burning_hands'', caster, await getSelectedTokenId(), { size: 6 });'
+            label: castCone()
+      - type: divider
+      - type: title
+        text: API Reference
+      - type: text
+        text: 'Embers.sequence() Methods:'
+      - type: text
+        text: • .projectile(id, casterId, targetIds, config?) - Projectile effect
+      - type: text
+        text: • .aoe(id, tokenIds, config?) - Area of effect
+      - type: text
+        text: • .cone(id, casterId, targetId, config?) - Cone effect
+      - type: text
+        text: • .action(id, args?, config?) - Gameplay action
+      - type: text
+        text: • .delay(ms) - Delay before next effect
+      - type: text
+        text: • .then() - Sequential execution (wait for previous)
+      - type: text
+        text: • .named(name) - Set spell name
+      - type: text
+        text: • .broadcast(dest) - Set broadcast destination
+      - type: text
+        text: • .cast(options?) - Send to Embers
+  - label: Layout
+    variables:
+      textVar:
+        value: Hello World
+      numberVar:
+        value: 42
+      counterVar:
+        value: 10
+      checkboxVar:
+        value: true
+      inputVar:
+        value: Enter text here
+      dropdownVar:
+        value: Option 1
+      dropdownModeVar:
+        value: normal
+    layout:
+      - type: title
+        text: Layout Examples
+      - type: text
+        text: This page demonstrates all available layout types
+      - type: divider
+      - type: title
+        text: Display Types
+      - type: row
+        children:
+          - type: value
+            var: textVar
+            label: Text Value
+          - type: value
+            var: numberVar
+            label: Number Value
+      - type: divider
+      - type: title
+        text: Input Types
+      - type: row
+        children:
+          - type: counter
+            var: counterVar
+            label: Counter
+            step: 5
+          - type: counter
+            var: numberVar
+            label: Counter (step 1)
+      - type: input
+        var: inputVar
+        label: Text Input
+        placeholder: Type something...
+      - type: checkbox
+        var: checkboxVar
+        label: Checkbox Example
+      - type: row
+        children:
+          - type: dropdown
+            var: dropdownVar
+            label: Dropdown Example
+            options:
+              - Option 1
+              - Option 2
+              - Option 3
+          - type: dropdown
+            var: dropdownModeVar
+            label: Game Mode
+            options:
+              - label: Easy
+                value: easy
+              - label: Normal
+                value: normal
+              - label: Hard
+                value: hard
+      - type: divider
+      - type: title
+        text: Stack Demo
+      - type: text
+        text: Demonstrates the `stack` container.
+      - type: row
+        children:
+          - type: text
+            text: 'This is a row containing a stack:'
+          - type: stack
+            children:
+              - type: value
+                var: textVar
+                label: Base Value
+              - type: button
+                label: Button
+                commands:
+                  - await JustDices.roll('1d6');
+              - type: button
+                label: Button
+                commands:
+                  - await JustDices.roll('1d6');
+      - type: row
+        children:
+          - type: text
+            text: 'This is a row containing a stack with a border:'
+          - type: stack
+            border: true
+            children:
+              - type: value
+                var: textVar
+                label: Base Value
+              - type: button
+                label: Button
+                commands:
+                  - await JustDices.roll('1d6');
+              - type: button
+                label: Button
+                commands:
+                  - await JustDices.roll('1d6');
+      - type: divider
+      - type: title
+        text: Button
+      - type: button
+        label: Example Button
+        commands:
+          - await JustDices.roll('1d20');
+      - type: button
+        label: Button with tooltip
+        tooltip: This is a button with a tooltip
+        commands:
+          - await JustDices.roll('1d20');
+      - type: button
+        label: Button with color
+        color: '#ff4e4e'
+        commands:
+          - await JustDices.roll('1d20');
+      - type: divider
+      - type: title
+        text: Title, Checkbox & Counter with Custom Colors
+      - type: title
+        text: Red Title (custom color)
+        color: '#ff4e4e'
+      - type: text
+        text: Titles, checkboxes, and counters can now have custom colors
+      - type: row
+        children:
+          - type: checkbox
+            var: checkboxVar
+            label: Checkbox (default)
+            color: '#5a9fff'
+          - type: checkbox
+            var: checkboxVar
+            label: Checkbox (green)
+            color: '#2ecc71'
+      - type: row
+        children:
+          - type: counter
+            var: counterVar
+            label: Counter (gold)
+            color: '#f39c12'
+          - type: counter
+            var: counterVar
+            label: Counter (purple)
+            color: '#9b59b6'
+      - type: divider
+      - type: title
+        text: Stack with Border and Color
+      - type: text
+        text: Stacks can have borders and custom accent colors
+      - type: row
+        children:
+          - type: stack
+            border: true
+            color: '#3498db'
+            children:
+              - type: title
+                text: Blue Stack Border
+              - type: checkbox
+                var: checkboxVar
+                label: Element in stack
+              - type: counter
+                var: counterVar
+                label: Counter in stack
+          - type: stack
+            border: true
+            color: '#e74c3c'
+            children:
+              - type: title
+                text: Red Stack Border
+              - type: checkbox
+                var: checkboxVar
+                label: Another element
+              - type: button
+                label: Button in stack
+                color: '#e74c3c'
+                commands:
+                  - await JustDices.roll('1d20');
+  - label: Tests
+    variables:
+      spdCS:
+        value: 15
+        expression: -3
+      floorResult:
+        eval: Math.floor(spdCS / 2)
+      testToken:
+        value: 996ed434-a22c-4510-aa82-9df34820c0be
+      mapIdFromToken:
+        eval: getMapIdFromToken(testToken)
+      dropdownOptions:
+        value:
+          - Option A
+          - Option B
+          - Option C
+          - Option D
+      selectedOption:
+        value: Option A
+    layout:
+      - type: title
+        text: Testing Area
+      - type: text
+        text: Use this page for testing new features and commands.
+      - type: row
+        children:
+          - type: value
+            var: spdCS
+            label: spdCS
+          - type: value
+            var: floorResult
+            label: floor({spdCS}/2)
+      - type: button
+        commands:
+          - 'await JustDices.roll(''floorResult: '' + floorResult);'
+        label: Show floor result
+      - type: button
+        commands:
+          - await JustDices.roll('1d10');
+        label: Test Roll
+      - type: button
+        commands:
+          - await JustDices.roll('1d10');
+        label: Test Roll2
+      - type: button
+        commands:
+          - await JustDices.roll('1d10 + ' + spdCS);
+        label: Test with spdCS
+      - type: button
+        commands:
+          - |-
+            result = await JustDices.roll('1d20');
+            message = result > 10 ? 'Effect' : 'No Effect';
+            message += result == 20 ? ' (Critical)' : '';
+            console.log(`Result: ${result} - ${message}`);
+        label: Test Async
+      - type: button
+        commands:
+          - |-
+            const healAmount = 15;
+            const currentHP = trackerHP;
+            const maxHP = trackerMaxHP;
+            const newHP = min(currentHP + healAmount, maxHP);
+            await OwlTrackers.setValue(token, 'HP', newHP);
+            console.log(`Healed ${newHP - currentHP} HP`);
+        label: Multi-line Script Example
+      - type: button
+        commands:
+          - |-
+            const roll = await JustDices.roll('1d20');
+            if (roll >= 15) {
+              await addValue('spdCS', 2);
+              console.log('Success! +2 speed');
+            } else if (roll >= 10) {
+              await addValue('spdCS', 1);
+              console.log('Partial success! +1 speed');
+            } else {
+              console.log('Failure!');
+            }
+        label: Conditional Logic Example
+      - type: button
+        commands:
+          - |-
+            for (let i = 0; i < 3; i++) {
+              const roll = await JustDices.roll('1d6');
+              console.log(`Roll ${i + 1}: ${roll}`);
+            }
+        label: Loop Example
+      - type: divider
+      - type: title
+        text: Dropdown with Array
+      - type: dropdown
+        var: selectedOption
+        label: Select from Array
+        optionsVar: dropdownOptions
+      - type: row
+        children:
+          - type: value
+            var: selectedOption
+            label: Selected Value
+      - type: divider
+      - type: title
+        text: Scene Helpers Tests
+      - type: text
+        text: Test scene helper functions
+      - type: row
+        children:
+          - type: value
+            var: mapIdFromToken
+            label: Map ID
+      - type: button
+        commands:
+          - |-
+            mapId = await getMapIdFromToken(testToken);
+            console.log('Map ID: ' + (mapId || 'Not on a map'));
+        label: Get Map ID from Token
+      - type: button
+        commands:
+          - |-
+            tokenId = await getClosestTokenId(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
+            console.log('Closest Token Id: ' + (tokenId || 'No token found'));
+        label: Get Closest Token Id
+  - label: Tokens
+    variables:
+      tokenUrl:
+        value: https://docs.owlbear.rodeo/img/logo.svg
+      tokenName:
+        value: New Token
+      tokenX:
+        value: 500
+      tokenY:
+        value: 500
+      tokenSize:
+        value: 1
+      gridX:
+        value: 5
+      gridY:
+        value: 5
+      createdTokenId:
+        value: ''
+    layout:
+      - type: title
+        text: Token Creation
+      - type: text
+        text: Create tokens on the scene using tokenHelpers
+      - type: divider
+      - type: title
+        text: Simple Token Creation
+      - type: input
+        var: tokenUrl
+        label: Token Image URL
+      - type: input
+        var: tokenName
+        label: Token Name
+      - type: row
+        children:
+          - type: input
+            var: tokenX
+            label: Position X
+          - type: input
+            var: tokenY
+            label: Position Y
+      - type: input
+        var: tokenSize
+        label: Token Size (grid cells)
+      - type: button
+        commands:
+          - |-
+            const tokenId = await createToken({
+              url: tokenUrl,
+              position: { x: tokenX, y: tokenY },
+              size: tokenSize,
+              label: tokenName
+            });
+            await setValue('createdTokenId', tokenId);
+        label: Create Token
+      - type: value
+        var: createdTokenId
+        label: Created Token ID
+      - type: divider
+      - type: title
+        text: Grid-Based Token Creation
+      - type: row
+        children:
+          - type: input
+            var: gridX
+            label: Grid X
+          - type: input
+            var: gridY
+            label: Grid Y
+      - type: button
+        commands:
+          - |-
+            const tokenId = await createToken({
+              url: tokenUrl,
+              position: { x: gridX, y: gridY },
+              gridPosition: true,
+              name: tokenName,
+              size: tokenSize
+            });
+            await setValue('createdTokenId', tokenId);
+        label: Create Token at Grid Position
+      - type: divider
+      - type: title
+        text: Quick Examples
+      - type: button
+        commands:
+          - |-
+            await createToken({
+              url: 'SELECT',
+              name: 'Hero',
+              position: { x: 300, y: 300 },
+              size: 1.5,
+              layer: 'MOUNT',
+            });
+        label: Create Demo Hero (1.5 cells)
+      - type: button
+        commands:
+          - |-
+            const enemyPositions = [
+              { x: 600, y: 400 },
+              { x: 800, y: 400 },
+              { x: 700, y: 600 }
+            ];
+            const tokens = enemyPositions.map((pos, i) => ({
+              url: 'EMPTY',
+              size: 1.0,
+              position: pos,
+              name: `Enemy ${i + 1}`,
+              label: `E${i + 1}`
+            }));
+            await createTokens(tokens);
+        label: Create 3 Enemies (1 cell each)
+      - type: button
+        commands:
+          - |-
+            const tokenId = await createToken({
+              url: 'https://sewef.github.io/justDices/JustDices.png',
+              position: { x: 500, y: 500 },
+              name: 'Boss',
+              label: 'BOSS',
+              size: 3.0
+            });
+
+            // Add HP tracker (value-max variant)
+            await OwlTrackers.addTracker(tokenId, {
+              variant: 'value-max',
+              name: 'HP',
+              value: 100,
+              max: 100,
+              color: 2
+            });
+
+            console.log('Created boss with ID:', tokenId);
+        label: Create Boss (3 cells) with HP & Metadata
+      - type: divider
+      - type: title
+        text: Tracker Management Examples
+      - type: button
+        commands:
+          - |-
+            const tokenId = await createToken({
+              url: 'https://sewef.github.io/ptu/img/logo64.png',
+              position: { x: 400, y: 400 },
+              name: 'Character with Trackers',
+              size: 1.5
+            });
+
+            // Add HP tracker (value-max variant)
+            await OwlTrackers.addTracker(tokenId, {
+              variant: 'value-max',
+              name: 'HP',
+              value: 103,
+              max: 103,
+              color: 2
+            });
+
+            // Add Temp HP tracker (value variant)
+            await OwlTrackers.addTracker(tokenId, {
+              variant: 'value',
+              name: 'Add HP',
+              value: 10,
+              color: 5
+            });
+
+            // Add Injuries counter
+            await OwlTrackers.addTracker(tokenId, {
+              variant: 'counter',
+              name: 'Injuries',
+              value: 5,
+              color: 2,
+              inlineMath: false
+            });
+
+            // Add unnamed counter
+            await OwlTrackers.addTracker(tokenId, {
+              variant: 'counter',
+              value: 0,
+              color: 8,
+              inlineMath: false
+            });
+
+            await setValue('createdTokenId', tokenId);
+            console.log('Created token with multiple trackers:', tokenId);
+        label: Create Token with Multiple Trackers
+      - type: button
+        commands:
+          - |-
+            if (!createdTokenId) {
+              console.error('No token ID available. Create a token first.');
+              return;
+            }
+
+            // Remove 'Temp HP' tracker
+            const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');
+            if (removed) {
+              console.log('Removed Temp HP tracker from token');
+            } else {
+              console.log('Temp HP tracker not found');
+            }
+        label: Remove 'Temp HP' Tracker
+  - label: Aurora
+    variables:
+      mapId:
+        eval: getMapIdFromToken(token)
+      auroraConfig:
+        eval: Aurora.getAurora(mapId)
+      hasAurora:
+        eval: Aurora.hasAurora(mapId)
+      saturation:
+        value: 100
+      lightness:
+        value: 100
+      hue:
+        value: 0
+      opacity:
+        value: 40
+      blendMode:
+        value: 3
+      feather:
+        value: 0
+    layout:
+      - type: title
+        text: Aurora Integration
+      - type: text
+        text: Control time-of-day lighting effects on maps
+      - type: divider
+      - type: title
+        text: Current Status
+      - type: row
+        children:
+          - type: value
+            var: hasAurora
+            label: Aurora Active?
+          - type: value
+            var: mapId
+            label: Map ID
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const myConfig = await Aurora.getAurora(mapId);
+                if (myConfig) {
+                  console.log('Aurora Config:', JSON.stringify(myConfig, null, 2));
+                } else {
+                  console.log('No Aurora configuration active');
+                }
+            label: Show Full Config
+      - type: divider
+      - type: title
+        text: Presets
+      - type: text
+        text: Apply predefined lighting presets
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await Aurora.setAurora(mapId, 'MIDNIGHT');
+            label: Midnight
+          - type: button
+            commands:
+              - await Aurora.setAurora(mapId, 'GOLDEN_HOUR');
+            label: Golden Hour
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await Aurora.setAurora(mapId, 'PRE_DAWN');
+            label: Pre-Dawn
+          - type: button
+            commands:
+              - await Aurora.setAurora(mapId, 'BLOOD_MOON');
+            label: Blood Moon
+      - type: divider
+      - type: title
+        text: Quick Presets
+      - type: text
+        text: Common lighting scenarios
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 100,
+                  lightness: 100,
+                  hue: 0,
+                  opacity: 0,
+                  enabled: true,
+                  name: 'Normal Light'
+                });
+            label: Normal Light
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 60,
+                  lightness: 60,
+                  hue: 180,
+                  opacity: 30,
+                  enabled: true,
+                  blendMode: 3,
+                  name: 'Night Time'
+                });
+            label: Night Time
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 130,
+                  lightness: 110,
+                  hue: 25,
+                  opacity: 25,
+                  enabled: true,
+                  blendMode: 2,
+                  name: 'Sunset'
+                });
+            label: Sunset
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 40,
+                  lightness: 40,
+                  hue: 0,
+                  opacity: 50,
+                  enabled: true,
+                  blendMode: 0,
+                  name: 'Dark Cave'
+                });
+            label: Dark Cave
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 150,
+                  lightness: 120,
+                  hue: -30,
+                  opacity: 20,
+                  enabled: true,
+                  blendMode: 2,
+                  name: 'Desert Heat'
+                });
+            label: Desert Heat
+          - type: button
+            commands:
+              - |-
+                await Aurora.setAurora(mapId, {
+                  saturation: 70,
+                  lightness: 90,
+                  hue: 120,
+                  opacity: 25,
+                  enabled: true,
+                  blendMode: 3,
+                  name: 'Mystic Forest'
+                });
+            label: Mystic Forest
+      - type: divider
+      - type: title
+        text: Custom Configuration
+      - type: text
+        text: Adjust individual properties
+      - type: row
+        children:
+          - type: counter
+            var: saturation
+            label: Saturation (0-200)
+            step: 10
+          - type: counter
+            var: lightness
+            label: Lightness (0-200)
+            step: 10
+      - type: row
+        children:
+          - type: counter
+            var: hue
+            label: Hue (-180 to 180)
+            step: 15
+          - type: counter
+            var: opacity
+            label: Opacity (0-100)
+            step: 5
+      - type: row
+        children:
+          - type: counter
+            var: blendMode
+            label: Blend Mode (0-3)
+            step: 1
+          - type: counter
+            var: feather
+            label: Feather (0-100)
+            step: 10
+      - type: button
+        commands:
+          - |-
+            const mapId = await getMapIdFromToken(token);
+            await Aurora.setAurora(mapId, {
+              saturation: saturation,
+              lightness: lightness,
+              hue: hue,
+              opacity: opacity,
+              enabled: true,
+              blendMode: blendMode,
+              feather: feather,
+              name: 'Custom'
+            });
+        label: Apply Custom Settings
+      - type: divider
+      - type: title
+        text: Update Properties
+      - type: text
+        text: Modify existing Aurora configuration
+      - type: row
+        children:
+          - type: button
+            commands:
+              - 'await Aurora.updateAurora(mapId, { opacity: opacity });'
+            label: Update Opacity
+          - type: button
+            commands:
+              - 'await Aurora.updateAurora(mapId, { hue: hue });'
+            label: Update Hue
+          - type: button
+            commands:
+              - 'await Aurora.updateAurora(mapId, { enabled: true });'
+            label: Enable
+      - type: row
+        children:
+          - type: button
+            commands:
+              - 'await Aurora.updateAurora(mapId, { enabled: false });'
+            label: Disable
+          - type: button
+            commands:
+              - |-
+                const current = await Aurora.getAurora(mapId);
+                if (current) {
+                  await Aurora.updateAurora(mapId, {
+                    saturation: current.saturation + 20,
+                    lightness: current.lightness - 10
+                  });
+                }
+            label: Brighten (+20 sat, -10 light)
+          - type: button
+            commands:
+              - |-
+                const current = await Aurora.getAurora(mapId);
+                if (current) {
+                  await Aurora.updateAurora(mapId, {
+                    saturation: current.saturation - 20,
+                    lightness: current.lightness + 10
+                  });
+                }
+            label: Darken (-20 sat, +10 light)
+      - type: divider
+      - type: title
+        text: Controls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const currentConfig = await Aurora.getAurora(mapId);
+                console.log('Aurora Config:', currentConfig);
+            label: Show Config
+          - type: button
+            commands:
+              - |-
+                const presets = Aurora.getPresets();
+                console.log('Available Presets:', presets);
+            label: List Presets
+          - type: button
+            commands:
+              - await Aurora.removeAurora(mapId);
+            label: Remove Aurora
+      - type: divider
+      - type: title
+        text: Time of Day Cycle
+      - type: text
+        text: Simulate a day/night cycle
+      - type: button
+        commands:
+          - |-
+            const mapId = await getMapIdFromToken(token);
+            const cycle = [
+              { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },
+              { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },
+              { config: { saturation: 100, lightness: 100, hue: 0, opacity: 0, enabled: true }, delay: 4000, name: 'Day' },
+              { preset: 'GOLDEN_HOUR', delay: 6000, name: 'Sunset' },
+              { preset: 'MIDNIGHT', delay: 8000, name: 'Night' }
+            ];
+
+            for (const phase of cycle) {
+              setTimeout(async () => {
+                console.log('Time of Day:', phase.name);
+                if (phase.preset) {
+                  await Aurora.setAurora(mapId, phase.preset);
+                } else {
+                  await Aurora.setAurora(mapId, phase.config);
+                }
+              }, phase.delay);
+            }
+
+            console.log('Day/Night cycle started (10 seconds)');
+        label: Start Day/Night Cycle
+  - label: Announcement
+    variables:
+      announcementData:
+        eval: Announcement.getAnnouncement()
+    layout:
+      - type: title
+        text: Announcement System
+      - type: text
+        text: Room-level announcements with Markdown support (dev.sharkbrain.announcement)
+      - type: divider
+      - type: title
+        text: Current Status
+      - type: button
+        commands:
+          - |-
+            const announcement = await Announcement.getAnnouncement();
+            if (announcement) {
+              console.log('Announcement Status:', announcement);
+              console.log('Active:', announcement.active);
+              console.log('Content:', announcement.content);
+            } else {
+              console.log('No announcement configured');
+            }
+        label: Show Full Status
+      - type: divider
+      - type: title
+        text: Custom Announcement
+      - type: text
+        text: Create custom announcement with Markdown
+      - type: button
+        commands:
+          - |-
+            const content = '# Test Announcement\n\nThis is a **bold** test with *italic* text.\n\n- Item 1\n- Item 2\n- Item 3';
+            await Announcement.setAnnouncement(content, true);
+        label: Create Test Announcement
+      - type: button
+        commands:
+          - |-
+            const content = '## Important Notice\n\nPlease check your inventory before the next encounter.\n\n### Items to Bring:\n1. Healing potions\n2. Rope\n3. Torches';
+            await Announcement.setAnnouncement(content, true);
+        label: Create Inventory Notice
+      - type: divider
+      - type: title
+        text: Visibility Controls
+      - type: text
+        text: Show/hide announcements
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await Announcement.showAnnouncement();
+            label: Show
+          - type: button
+            commands:
+              - await Announcement.hideAnnouncement();
+            label: Hide
+          - type: button
+            commands:
+              - |-
+                const newState = await Announcement.toggleAnnouncement();
+                console.log('Announcement now:', newState ? 'visible' : 'hidden');
+            label: Toggle
+      - type: divider
+      - type: title
+        text: Update Operations
+      - type: text
+        text: Modify existing announcement
+      - type: button
+        commands:
+          - await Announcement.updateContent('# Updated Content\n\nThis announcement has been updated!');
+        label: Update Content Only
+      - type: button
+        commands:
+          - 'await Announcement.updateAnnouncement({ active: false });'
+        label: Update Active Only
+      - type: button
+        commands:
+          - |-
+            await Announcement.updateAnnouncement({
+              content: '## Updated via Object\n\nBoth content and state updated.',
+              active: true
+            });
+        label: Update Both
+      - type: divider
+      - type: title
+        text: Management
+      - type: button
+        commands:
+          - |-
+            await Announcement.removeAnnouncementMetadata();
+            console.log('Announcement removed');
+        label: Remove Announcement Metadata
+  - label: Auras
+    layout:
+      - type: title
+        text: Auras and Emanations
+      - type: text
+        text: Manage auras on tokens and items (select a token first)
+      - type: divider
+      - type: title
+        text: Status
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            const hasAuras = await Auras.hasAura(item);
+            const auras = await Auras.getAuras(item);
+            console.log('Selected Item:', item);
+            console.log('Has Auras:', hasAuras);
+            console.log('Aura Count:', auras.length);
+        label: Check Status
+      - type: divider
+      - type: title
+        text: Add Aura
+      - type: text
+        text: Create a new aura on the selected item
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            await Auras.addAura(item, {
+              style: 'Glow',
+              color: '#FF0000',
+              size: 5
+            });
+            console.log('✓ Red Glow Aura added');
+        label: Add Red Glow Aura
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            await Auras.addAura(item, {
+              style: 'Bubble',
+              color: '#00FF00',
+              size: 3
+            });
+            console.log('✓ Green Bubble Aura added');
+        label: Add Green Bubble Aura
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            await Auras.addAura(item, {
+              style: 'Range',
+              color: '#0000FF',
+              size: 8
+            });
+            console.log('✓ Blue Range Aura added');
+        label: Add Blue Range Aura
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            await Auras.addAura(item, {
+              style: 'Image',
+              size: 5,
+              imageUrl: 'https://sewef.github.io/macrohero/logo.png'
+            });
+            console.log('✓ Image Aura added (auto-detected dimensions)');
+        label: Add Image Aura (Simple)
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            const imageBuildParams = await ImageHelper.buildImageBuildParams('https://sewef.github.io/macrohero/logo.png', { dpi: 72 });
+            await Auras.addAura(item, {
+              style: 'Image',
+              size: 5,
+              imageBuildParams: imageBuildParams
+            });
+            console.log('✓ Image Aura added (custom parameters)');
+        label: Add Image Aura (Advanced)
+      - type: divider
+      - type: title
+        text: Remove Aura
+      - type: text
+        text: Remove all auras from the selected item
+      - type: button
+        commands:
+          - |-
+            const item = await getSelectedTokenId();
+            if (!item) return console.warn('No item selected');
+            const hasBefore = await Auras.hasAura(item);
+            if (!hasBefore) return console.warn('No auras to remove');
+            await Auras.removeAura(item);
+            console.log('✓ All auras removed');
+        label: Remove All Auras
+      - type: title
+        text: Notes
+      - type: text
+        text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control.'
+  - label: DicePlus
+    variables:
+      diceNotation:
+        value: 2d20kh1+5
+      lastRollResult:
+        value: Roll a dice to see result
+      diceReady:
+        eval: DicePlus.isReady()
+    layout:
+      - type: title
+        text: DicePlus Integration
+      - type: text
+        text: Advanced dice rolling with DicePlus extension (Owlbear Rodeo)
+      - type: divider
+      - type: title
+        text: Status
+      - type: row
+        children:
+          - type: value
+            var: diceReady
+            label: DicePlus Ready?
+      - type: text
+        text: 'Last Roll: {lastRollResult}'
+      - type: divider
+      - type: title
+        text: Basic Rolls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('1d20');
+                await setValue('lastRollResult', 'D20: ' + result);
+            label: Roll d20
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('2d6+3');
+                await setValue('lastRollResult', '2d6+3: ' + result);
+            label: 2d6+3
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('3d6');
+                await setValue('lastRollResult', '3d6: ' + result);
+            label: 3d6
+      - type: divider
+      - type: title
+        text: Advantage / Disadvantage
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('2d20kh1+5');
+                await setValue('lastRollResult', 'Advantage (+5): ' + result);
+            label: Advantage (+5)
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('2d20kl1-2');
+                await setValue('lastRollResult', 'Disadvantage (-2): ' + result);
+            label: Disadvantage (-2)
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('4d6dl1');
+                await setValue('lastRollResult', '4d6 drop lowest: ' + result);
+            label: 4d6 Drop Lowest
+      - type: divider
+      - type: title
+        text: Damage Rolls
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('2d6 + 4');
+                await setValue('lastRollResult', 'Greatsword (2d6+4): ' + result);
+            label: Greatsword
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('1d8 + 3');
+                await setValue('lastRollResult', 'Longsword (1d8+3): ' + result);
+            label: Longsword
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('2d8 + 5');
+                await setValue('lastRollResult', 'Scimitar (2d8+5): ' + result);
+            label: Scimitar
+      - type: row
+        children:
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('8d6');
+                await setValue('lastRollResult', 'Fireball (8d6): ' + result);
+            label: Fireball
+          - type: button
+            commands:
+              - |-
+                const result = await DicePlus.rollTotal('10d6');
+                await setValue('lastRollResult', 'Meteor Storm (10d6): ' + result);
+            label: Meteor Storm
+      - type: divider
+      - type: title
+        text: Custom Notation
+      - type: input
+        var: diceNotation
+        label: Dice Notation
+        placeholder: e.g., 2d20kh1+5, 4d6dl1, 3d6!e
+      - type: button
+        commands:
+          - |-
+            try {
+              const result = await DicePlus.getRollObject(diceNotation);
+              const total = result.totalValue;
+              await setValue('lastRollResult', diceNotation + ' = ' + total);
+              console.log('Full result:', result);
+            } catch (error) {
+              await setValue('lastRollResult', 'Error: ' + error.message);
+            }
+        label: Roll Custom
+      - type: divider
+      - type: title
+        text: Roll Results
+      - type: button
+        commands:
+          - |-
+            const result = await DicePlus.getRollObject('3d6{Red} # Fire + 2d6{White} # Ice');
+            console.log('Full roll object:', result);
+            if (result.groups) {
+              result.groups.forEach(group => {
+                console.log(`${group.description}: ${group.total}`);
+              });
+            }
+        label: Roll with Description
+      - type: button
+        commands:
+          - |-
+            const result = await DicePlus.getRollObject('4d6');
+            console.log('Roll result:', result);
+            console.log('Total:', result.totalValue);
+            console.log('Dice count:', result.groups?.[0]?.dice?.length || 0);
+        label: Show Roll Details
+      - type: divider
+      - type: title
+        text: Advanced Examples
+      - type: button
+        commands:
+          - |-
+            const roll = await DicePlus.rollTotal('1d20 + 5');
+            if (roll >= 15) {
+              await Owlbear.notification.success(`Critical Success! (${roll})`);
+            } else if (roll >= 10) {
+              await Owlbear.notification.show(`Success! (${roll})`);
+            } else {
+              await Owlbear.notification.warning(`Failed! (${roll})`);
+            }
+        label: Roll with Notification
+      - type: button
+        commands:
+          - |-
+            const atkRoll = await DicePlus.rollTotal('1d20 + 7');
+            const dmgRoll = await DicePlus.rollTotal('2d8 + 5');
+            console.log(`Attack: ${atkRoll} vs DC 14`);
+            if (atkRoll >= 14) {
+              console.log(`HIT! Damage: ${dmgRoll}`);
+              await setValue('lastRollResult', `Hit! Attack: ${atkRoll}, Damage: ${dmgRoll}`);
+            } else {
+              console.log('MISS!');
+              await setValue('lastRollResult', `Miss! Attack: ${atkRoll}`);
+            }
+        label: Attack Roll Sequence
+  - label: SDK Helpers
+    variables:
+      message:
+        value: Task completed successfully!
+      variant:
+        value: DEFAULT
+    layout:
+      - type: title
+        text: SDK Helpers & Notifications
+      - type: text
+        text: Use centralized SDK wrapper for OBR notifications with consistent syntax
+      - type: divider
+      - type: title
+        text: Quick Notification
+      - type: text
+        text: Owlbear.notification.show(message, variant)
+      - type: row
+        children:
+          - type: input
+            var: message
+            label: Message
+            placeholder: Enter notification message
+          - type: dropdown
+            var: variant
+            label: Variant
+            options:
+              - DEFAULT
+              - INFO
+              - SUCCESS
+              - WARNING
+              - ERROR
+      - type: button
+        commands:
+          - |-
+            const id = await Owlbear.notification.show(message, variant);
+            console.log('Notification ID:', id);
+        label: Send Notification
+      - type: divider
+      - type: title
+        text: Variant Examples
+      - type: text
+        text: Pre-configured notification types
+      - type: row
+        children:
+          - type: button
+            commands:
+              - await Owlbear.notification.success('Operation completed successfully!');
+            label: Success
+          - type: button
+            commands:
+              - await Owlbear.notification.warning('This is a warning!');
+            label: Warning
+          - type: button
+            commands:
+              - await Owlbear.notification.error('An error occurred!');
+            label: Error
+      - type: divider
+      - type: title
+        text: Practical Examples
+      - type: button
+        commands:
+          - |-
+            const roll = await JustDices.rollSilent('1d20');
+            if (roll >= 15) {
+              await Owlbear.notification.success(`Critical Success! (${roll})`);
+            } else if (roll >= 10) {
+              await Owlbear.notification.show(`Success! (${roll})`);
+            } else {
+              await Owlbear.notification.warning(`Failed! (${roll})`);
+            }
+        label: Roll-Based Notification
+      - type: button
+        commands:
+          - |-
+            const selectedToken = await getSelectedTokenId();
+            if (!selectedToken) {
+              await Owlbear.notification.error('No token selected!');
+            } else {
+              await Owlbear.notification.success('Token selected and ready!');
+            }
+        label: Token Selection Check
+      - type: button
+        commands:
+          - |-
+            await Owlbear.notification.show('Starting operation...');
+            await new Promise(r => setTimeout(r, 1000));
+            await Owlbear.notification.success('Operation complete!');
+        label: Sequential Notifications
+      - type: divider
+      - type: title
+        text: How to Use in Your Code
+      - type: text
+        text: 'Import sdkHelpers at the top of your integration file:'
+      - type: text
+        text: import { Owlbear, NOTIFICATION_VARIANT } from '../shared/sdkHelpers.js';
+      - type: text
+        text: 'Then use notifications in your commands:'
+      - type: text
+        text: await Owlbear.notification.success('Your message here');
+      - type: divider
+      - type: title
+        text: Available Methods
+      - type: text
+        text: • Owlbear.notification.show(msg, variant?) → returns notification ID
+      - type: text
+        text: '• Owlbear.notification.success(msg) → variant: SUCCESS'
+      - type: text
+        text: '• Owlbear.notification.warning(msg) → variant: WARNING'
+      - type: text
+        text: '• Owlbear.notification.error(msg) → variant: ERROR'
+      - type: divider
+      - type: title
+        text: Notification Variants
+      - type: text
+        text: DEFAULT - Standard notification (gray)
+      - type: text
+        text: INFO - Informational (blue)
+      - type: text
+        text: SUCCESS - Success state (green)
+      - type: text
+        text: WARNING - Warning state (orange)
+      - type: text
+        text: ERROR - Error state (red)

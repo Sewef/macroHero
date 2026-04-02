@@ -459,8 +459,7 @@
       background: #333;
       border: 1px solid #555;
       border-radius: 4px;
-      padding: 8px;
-      margin-bottom: 8px;
+      padding: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -882,7 +881,7 @@
       <h2 style="margin:0;">Configuration Macro Hero</h2>
       <div class="tabs" style="margin-top:8px;">
         <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
-        <button type="button" class="tab" data-tab="json">JSON Editor</button>
+        <button type="button" class="tab" data-tab="json">Raw Editor</button>
         <button type="button" class="tab" data-tab="gsheets">Google Sheets</button>
         <button type="button" class="tab" data-tab="tokens">Token Helper</button>
         <button type="button" class="tab" data-tab="debug">Debug Mode</button>
@@ -967,8 +966,21 @@
     <!-- JSON Editor Tab -->
     <div id="json-tab" class="tab-content">
       <div class="input-group">
-        <label for="cfgArea">Raw JSON Configuration</label>
-        <textarea id="cfgArea" style="min-height: 400px;"></textarea>
+        <label>Configuration Format</label>
+        <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input type="radio" name="cfgFormat" value="json" id="formatJson" checked />
+            JSON
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input type="radio" name="cfgFormat" value="yaml" id="formatYaml" />
+            YAML
+          </label>
+        </div>
+      </div>
+      <div class="input-group">
+        <label for="cfgArea"><span id="cfgLabel">Raw JSON Configuration</span></label>
+        <textarea id="cfgArea" style="min-height: 400px; font-family: monospace;"></textarea>
       </div>
       <button type="button" id="syncFromJson">Sync to Visual Editor</button>
     </div>

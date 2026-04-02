@@ -1,4 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
+import YAML from "js-yaml";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { isDebugEnabled } from "./debugMode.js";
@@ -355,17 +356,166 @@ function switchTab(tabName) {
   }
 }
 
-// Sync visual editor to JSON
-function syncToJson() {
-  const config = buildConfigFromEditor();
-  document.getElementById("cfgArea").value = JSON.stringify(config, null, 2);
+// Get current config format preference
+function getConfigFormat() {
+  const json = document.getElementById("formatJson");
+  return json && json.checked ? 'json' : 'yaml';
 }
 
-// Sync JSON to visual editor
+// Convert config to requested format
+function formatConfig(config, format) {
+  // Deep clone and normalize commands before formatting
+  const normalizedConfig = normalizeCommandsForFormat(config, format);
+  
+  if (format === 'yaml') {
+    return YAML.dump(normalizedConfig, {
+      indent: 2,
+      lineWidth: -1,
+      forceQuotes: false,
+      sortKeys: false,
+      flowLevel: -1
+    });
+  } else {
+    return JSON.stringify(normalizedConfig, null, 2);
+  }
+}
+
+// Utility to remove common leading whitespace from multi-line strings
+function dedent(text) {
+  const lines = text.split('\n');
+  if (lines.length <= 1) return text;
+  
+  // Find minimum indentation (excluding empty lines)
+  const indents = lines
+    .filter(line => line.trim().length > 0)
+    .map(line => line.match(/^(\s*)/)[1].length);
+  
+  const minIndent = Math.min(...indents);
+  if (minIndent === 0) return text;
+  
+  // Remove common indentation
+  return lines
+    .map(line => line.length > minIndent ? line.slice(minIndent) : line)
+    .join('\n')
+    .trim();
+}
+
+// Dedent each line in an array of strings (for displaying commands)
+function dedentCommandList(commands) {
+  if (!Array.isArray(commands)) return commands;
+  if (commands.length === 0) return commands;
+  
+  // Join commands and dedent the whole thing
+  const joined = commands.join('\n');
+  const dedented = dedent(joined);
+  
+  // Split back into array
+  return dedented.split('\n');
+}
+
+// Normalize commands before formatting - arrays to multiline for YAML, keep as-is for JSON
+function normalizeCommandsForFormat(obj, format) {
+  if (!obj) return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => normalizeCommandsForFormat(item, format));
+  }
+  
+  if (typeof obj === 'object') {
+    const result = {};
+    for (const key in obj) {
+      if (key === 'commands' && Array.isArray(obj[key])) {
+        if (format === 'yaml') {
+          // YAML: join array of strings into single multiline string, wrap in array
+          // ["line1", "line2"] becomes ["line1\nline2"]
+          const joined = obj[key].join('\n');
+          result[key] = [joined];
+        } else {
+          // JSON: keep as-is (array of strings)
+          result[key] = obj[key];
+        }
+      } else {
+        result[key] = normalizeCommandsForFormat(obj[key], format);
+      }
+    }
+    return result;
+  }
+  
+  return obj;
+}
+
+// Parse config from text (auto-detect or use specified format)
+function parseConfig(text, format) {
+  let config;
+  if (format === 'yaml') {
+    config = YAML.load(text);
+  } else {
+    config = JSON.parse(text);
+  }
+  
+  // Post-process: convert multiline command strings to arrays
+  return normalizeCommands(config);
+}
+
+// Post-process config to split multiline command strings into arrays
+function normalizeCommands(obj) {
+  if (!obj) return obj;
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => normalizeCommands(item));
+  }
+  
+  if (typeof obj === 'object') {
+    const result = {};
+    for (const key in obj) {
+      if (key === 'commands') {
+        // For commands: if it's an array with a single multiline string, split it
+        if (Array.isArray(obj[key])) {
+          if (obj[key].length === 1 && typeof obj[key][0] === 'string' && obj[key][0].includes('\n')) {
+            // Split the multiline string into array of lines
+            const lines = obj[key][0].split('\n').filter(line => line.trim() !== '');
+            result[key] = lines;
+          } else {
+            // Keep as-is
+            result[key] = obj[key];
+          }
+        } else if (typeof obj[key] === 'string' && obj[key].includes('\n')) {
+          // If it's a string with newlines, split it
+          const lines = obj[key].split('\n').filter(line => line.trim() !== '');
+          result[key] = lines;
+        } else {
+          result[key] = obj[key];
+        }
+      } else {
+        result[key] = normalizeCommands(obj[key]);
+      }
+    }
+    return result;
+  }
+  
+  return obj;
+}
+
+// Sync visual editor to JSON/YAML
+function syncToJson() {
+  try {
+    const config = buildConfigFromEditor();
+    const format = getConfigFormat();
+    document.getElementById("cfgArea").value = formatConfig(config, format);
+    debugLog(`[CONFIG] Exported to ${format.toUpperCase()}`);
+  } catch (e) {
+    debugError(`[CONFIG] Error exporting config:`, e);
+    alert("Error exporting config: " + e.message);
+  }
+}
+
+// Sync JSON/YAML to visual editor
 function syncFromJson() {
   try {
     const text = document.getElementById("cfgArea").value;
-    const parsed = JSON.parse(text);
+    const format = getConfigFormat();
+    const parsed = parseConfig(text, format);
+    
     // Basic normalization to ensure expected structure for the visual editor
     if (!parsed.global) parsed.global = { title: "Macro Hero", width: 600, height: 600, variables: {} };
     if (!Array.isArray(parsed.pages)) parsed.pages = [];
@@ -380,9 +530,9 @@ function syncFromJson() {
 
     currentConfig = parsed;
     renderEditor(parsed);
-    alert("✓ Synced to visual editor");
+    alert(`✓ Synced from ${format.toUpperCase()} to visual editor`);
   } catch (e) {
-    alert("Invalid JSON: " + e.message);
+    alert(`Invalid ${format.toUpperCase()}: ` + e.message);
   }
 }
 
@@ -563,6 +713,69 @@ function renderPageContent(pageIndex) {
     html += `<div style="color: #888; font-size: 0.85em; padding: 12px 0;">(No variables)</div>`;
   }
   
+  // Helper function to render children recursively
+  const renderChildren = (children, parentIndex, pageIdx, parentChildIndex = null, level = 1) => {
+    let childHtml = '';
+    if (children && children.length > 0) {
+      children.forEach((child, childIdx) => {
+        const childType = child.type || 'unknown';
+        const childLabel = child.label || child.text || child.var || '';
+        const childContent = child.type === 'text' && child.text ? child.text.substring(0, 30) + (child.text.length > 30 ? '...' : '') : childLabel;
+        const indent = level * 20;
+        
+        // Determine which delete function to use based on nesting level
+        let deleteCall = '';
+        if (parentChildIndex !== null) {
+          // This is a nested child (third level)
+          deleteCall = `deleteChildElement(${pageIdx}, ${parentIndex}, ${parentChildIndex}, ${childIdx})`;
+        } else {
+          // This is a direct child (second level)
+          deleteCall = `deleteChildElement(${pageIdx}, ${parentIndex}, ${childIdx})`;
+        }
+        
+        let editCall = '';
+        if (parentChildIndex !== null) {
+          editCall = `editChildElement(${pageIdx}, ${parentIndex}, ${parentChildIndex}, ${childIdx})`;
+        } else {
+          editCall = `editChildElement(${pageIdx}, ${parentIndex}, ${childIdx})`;
+        }
+        
+        childHtml += `
+        <div class="layout-item" data-page-index="${pageIdx}" data-element-index="${parentIndex}" data-child-index="${childIdx}" draggable="true" style="margin-left: ${indent}px; opacity: 0.85;">
+          <div class="layout-item-info">
+            <span class="layout-item-type">├─ ${childType}</span>
+            <span>${childContent}</span>
+          </div>
+          <div class="layout-item-actions">
+            <button type="button" class="btn-small" onclick="${editCall}">✎</button>
+            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">×</button>
+          </div>
+        </div>
+        `;
+        
+        // Recursively render nested children (for Stack inside a Row, etc)
+        if (child.children && child.children.length > 0) {
+          childHtml += renderChildren(child.children, parentIndex, pageIdx, childIdx, level + 1);
+        }
+      });
+    }
+    return childHtml;
+  };
+  
+  // Helper to render container with add button
+  const renderContainer = (item, itemIndex, pageIdx, addButton = true) => {
+    let html = '';
+    if ((item.type === 'row' || item.type === 'Row' || item.type === 'stack' || item.type === 'Stack') && item.children) {
+      html += renderChildren(item.children, itemIndex, pageIdx);
+      if (addButton) {
+        html += `<div style="margin-left: 20px; margin-top: 2px;">
+          <button type="button" class="btn-small" style="width: auto; padding: 4px 8px; font-size: 0.85em;" onclick="addChildElement(${pageIdx}, ${itemIndex})">+ Item</button>
+        </div>`;
+      }
+    }
+    return html;
+  };
+  
   // Layout items
   const layoutItems = page.layout || [];
   if (layoutItems.length > 0) {
@@ -576,7 +789,7 @@ function renderPageContent(pageIndex) {
       const content = item.type === 'text' && item.text ? item.text.substring(0, 40) + (item.text.length > 40 ? '...' : '') : label;
       
       html += `
-      <div class="layout-item" data-element-index="${itemIndex}">
+      <div class="layout-item" data-page-index="${pageIndex}" data-element-index="${itemIndex}" draggable="true">
         <div class="layout-item-info">
           <span class="layout-item-type">${typeLabel}</span>
           <span>${content}</span>
@@ -587,10 +800,14 @@ function renderPageContent(pageIndex) {
         </div>
       </div>
       `;
+      
+      // Show children if it's a container (Row or Stack)
+      if ((item.type === 'row' || item.type === 'Row' || item.type === 'stack' || item.type === 'Stack')) {
+        html += renderContainer(item, itemIndex, pageIndex);
+      }
     });
     
     html += `</div>
-    <button type="button" class="btn-small" style="width: 100%; margin-top: 8px;" onclick="addElement(${pageIndex})">+ Element</button>
     </div>`;
   } else {
     html += `<div style="color: #888; font-size: 0.85em; padding: 12px 0; text-align: center;">(No layout elements)</div>`;
@@ -601,6 +818,43 @@ function renderPageContent(pageIndex) {
   </div>`;
   
   container.innerHTML = html;
+  
+  // Attach drag and drop listeners to layout items
+  const layoutItemElements = container.querySelectorAll('.layout-item');
+  layoutItemElements.forEach(item => {
+    item.addEventListener('dragstart', handleElementDragStart);
+    item.addEventListener('dragover', handleElementDragOver);
+    item.addEventListener('dragleave', handleElementDragLeave);
+    item.addEventListener('drop', handleElementDrop);
+    item.addEventListener('dragend', handleElementDragEnd);
+  });
+  
+  // Also attach drop handlers to the container itself for better UX
+  // This allows dropping anywhere in the list, not just on individual items
+  const layoutItemsContainer = container.querySelector('.layout-items');
+  if (layoutItemsContainer) {
+    layoutItemsContainer.addEventListener('dragover', (e) => {
+      if (draggedElement) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+    layoutItemsContainer.addEventListener('drop', handleElementDrop);
+    
+    // Add dragover/drop handler to drop-indicator when it exists
+    const observer = new MutationObserver(() => {
+      const dropIndicator = container.querySelector('.drop-indicator');
+      if (dropIndicator && !dropIndicator._dragHandlersAttached) {
+        dropIndicator._dragHandlersAttached = true;
+        dropIndicator.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+        dropIndicator.addEventListener('drop', handleElementDrop);
+      }
+    });
+    observer.observe(layoutItemsContainer, { childList: true, subtree: true });
+  }
 }
 
 // Update page label
@@ -689,6 +943,7 @@ let dropIndicator = null;
 let lastDropTarget = null;
 let dropPosition = null;
 let lastDropTargetMeta = null;
+let dragEndTime = 0;
 
 function createDropIndicator() {
   if (!dropIndicator) {
@@ -738,39 +993,50 @@ function handleElementDragOver(e) {
   
   const dropPageIndex = parseInt(this.dataset.pageIndex);
   
-  // Only show indicator within same page
-  if (draggedFromPageIndex === dropPageIndex) {
+  // Always capture drop target metadata (needed for drop event)
+  lastDropTarget = this;
+  dropPosition = 'before';
+  
+  if (dropPageIndex !== undefined && this.dataset.elementIndex !== undefined) {
     const rect = this.getBoundingClientRect();
     const midpoint = rect.top + rect.height / 2;
-    const indicator = createDropIndicator();
-    
-    // Store drop target info
-    lastDropTarget = this;
     dropPosition = e.clientY < midpoint ? 'before' : 'after';
+    
     // Capture metadata from dataset for nested handling
     lastDropTargetMeta = {
       elementIndex: this.dataset.elementIndex !== undefined ? parseInt(this.dataset.elementIndex) : null,
       childIndex: this.dataset.childIndex !== undefined ? parseInt(this.dataset.childIndex) : null,
       nestedIndex: this.dataset.nestedIndex !== undefined ? parseInt(this.dataset.nestedIndex) : null,
       parentChildIndex: this.dataset.parentChildIndex !== undefined ? parseInt(this.dataset.parentChildIndex) : null,
-      pageIndex: this.dataset.pageIndex !== undefined ? parseInt(this.dataset.pageIndex) : null
+      pageIndex: dropPageIndex
     };
     
-    // Determine if we should insert before or after this element
-    if (dropPosition === 'before') {
-      this.parentNode.insertBefore(indicator, this);
-    } else {
-      this.parentNode.insertBefore(indicator, this.nextSibling);
+    // Only show indicator within same page
+    if (draggedFromPageIndex === dropPageIndex) {
+      const indicator = createDropIndicator();
+      
+      // Determine if we should insert before or after this element
+      if (dropPosition === 'before') {
+        this.parentNode.insertBefore(indicator, this);
+      } else {
+        this.parentNode.insertBefore(indicator, this.nextSibling);
+      }
     }
   }
 }
 
 function handleElementDragLeave(e) {
-  // Don't remove indicator when leaving to another element
+  // Don't remove indicator when leaving to another element or to the drop indicator
   if (e.target === this && !this.contains(e.relatedTarget)) {
     // Only remove if we're leaving the layout-items container
     const layoutItems = this.closest('.layout-items');
-    if (e.relatedTarget && !layoutItems.contains(e.relatedTarget)) {
+    const isRelatedTarget = e.relatedTarget;
+    const isDropIndicator = isRelatedTarget && isRelatedTarget.classList && isRelatedTarget.classList.contains('drop-indicator');
+    
+    // Don't remove if leaving to drop-indicator
+    if (isDropIndicator) return;
+    
+    if (isRelatedTarget && layoutItems && !layoutItems.contains(isRelatedTarget)) {
       removeDropIndicator();
     }
   }
@@ -780,7 +1046,13 @@ function handleElementDrop(e) {
   e.preventDefault();
   e.stopPropagation();
   
-  if (!draggedElement || !lastDropTarget) {
+  if (!draggedElement) {
+    removeDropIndicator();
+    return;
+  }
+  
+  // Accept drop if we have metadata from dragover (allows dropping on the drop-indicator)
+  if (!lastDropTarget && !lastDropTargetMeta) {
     removeDropIndicator();
     return;
   }
@@ -792,70 +1064,86 @@ function handleElementDrop(e) {
   const dropNestedIndex = lastDropTargetMeta?.nestedIndex !== undefined ? lastDropTargetMeta.nestedIndex : null;
   const dropParentChildIndex = lastDropTargetMeta?.parentChildIndex !== undefined ? lastDropTargetMeta.parentChildIndex : null;
   
-  if (draggedFromPageIndex === dropPageIndex) {
-    const page = currentConfig.pages[dropPageIndex];
-    
-    // Get the dragged element/child
-    let draggedItem;
-    if (draggedNestedIndex !== null) {
-      // Dragging from a nested stack child
-      draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex].children[draggedNestedIndex];
-    } else if (draggedChildIndex !== null) {
-      // Dragging from a row child (direct)
-      draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex];
-    } else {
-      // Dragging a top-level element
-      draggedItem = page.layout[draggedElementIndex];
-    }
-    
-    // Remove from source
-    if (draggedNestedIndex !== null) {
-      page.layout[draggedElementIndex].children[draggedChildIndex].children.splice(draggedNestedIndex, 1);
-    } else if (draggedChildIndex !== null) {
-      page.layout[draggedElementIndex].children.splice(draggedChildIndex, 1);
-    } else {
-      page.layout.splice(draggedElementIndex, 1);
-    }
-    
-    // Insert into target
-    if (dropNestedIndex !== null) {
-      // Dropping relative to a nested child inside a stack -> insert into that stack's children
-      const targetParentStack = page.layout[dropElementIndex].children[dropChildIndex];
-      if (!targetParentStack.children) targetParentStack.children = [];
-      let insertIndex = dropNestedIndex;
-      if (draggedNestedIndex !== null && draggedElementIndex === dropElementIndex && draggedChildIndex === dropChildIndex) {
-        if (draggedNestedIndex < dropNestedIndex) insertIndex = dropNestedIndex - 1;
-      }
-      if (dropPosition === 'after') insertIndex++;
-      targetParentStack.children.splice(insertIndex, 0, draggedItem);
-    } else if (dropChildIndex !== null) {
-      // Dropping into a row (as a child of the row)
-      const targetRow = page.layout[dropElementIndex];
-      if (!targetRow.children) targetRow.children = [];
-      let insertIndex = dropChildIndex;
-      if (draggedChildIndex !== null && draggedElementIndex === dropElementIndex) {
-        if (draggedChildIndex < dropChildIndex) insertIndex = dropChildIndex - 1;
-      }
-      if (dropPosition === 'after') insertIndex++;
-      targetRow.children.splice(insertIndex, 0, draggedItem);
-    } else if (dropParentChildIndex !== null) {
-      // Dropping into an empty nested stack container (drop zone that belongs to a parent child)
-      const parentStack = page.layout[dropElementIndex].children[dropParentChildIndex];
-      if (!parentStack.children) parentStack.children = [];
-      parentStack.children.push(draggedItem);
-    } else {
-      // Dropping at top level
-      let insertIndex = dropElementIndex !== null ? dropElementIndex : page.layout.length;
-      if (draggedChildIndex === null) {
-        if (draggedElementIndex < insertIndex) insertIndex = insertIndex - 1;
-      }
-      if (dropPosition === 'after') insertIndex++;
-      page.layout.splice(insertIndex, 0, draggedItem);
-    }
-    
-    renderEditor(currentConfig);
+  if (draggedFromPageIndex !== dropPageIndex && draggedFromPageIndex !== null && dropPageIndex !== null) {
+    removeDropIndicator();
+    return;
   }
   
+  if (draggedFromPageIndex === null || dropPageIndex === null) {
+    removeDropIndicator();
+    return;
+  }
+  
+  const page = currentConfig.pages[dropPageIndex];
+  if (!page || !page.layout) {
+    removeDropIndicator();
+    return;
+  }
+  
+  // Get the dragged element/child
+  let draggedItem;
+  if (draggedNestedIndex !== null) {
+    // Dragging from a nested stack child
+    draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex].children[draggedNestedIndex];
+  } else if (draggedChildIndex !== null) {
+    // Dragging from a row child (direct)
+    draggedItem = page.layout[draggedElementIndex].children[draggedChildIndex];
+  } else {
+    // Dragging a top-level element
+    draggedItem = page.layout[draggedElementIndex];
+  }
+  
+  if (!draggedItem) {
+    removeDropIndicator();
+    return;
+  }
+  
+  // Remove from source
+  if (draggedNestedIndex !== null) {
+    page.layout[draggedElementIndex].children[draggedChildIndex].children.splice(draggedNestedIndex, 1);
+  } else if (draggedChildIndex !== null) {
+    page.layout[draggedElementIndex].children.splice(draggedChildIndex, 1);
+  } else {
+    page.layout.splice(draggedElementIndex, 1);
+  }
+  
+  // Insert into target
+  if (dropNestedIndex !== null) {
+    // Dropping relative to a nested child inside a stack -> insert into that stack's children
+    const targetParentStack = page.layout[dropElementIndex].children[dropChildIndex];
+    if (!targetParentStack.children) targetParentStack.children = [];
+    let insertIndex = dropNestedIndex;
+    if (draggedNestedIndex !== null && draggedElementIndex === dropElementIndex && draggedChildIndex === dropChildIndex) {
+      if (draggedNestedIndex < dropNestedIndex) insertIndex = dropNestedIndex - 1;
+    }
+    if (dropPosition === 'after') insertIndex++;
+    targetParentStack.children.splice(insertIndex, 0, draggedItem);
+  } else if (dropChildIndex !== null) {
+    // Dropping into a row (as a child of the row)
+    const targetRow = page.layout[dropElementIndex];
+    if (!targetRow.children) targetRow.children = [];
+    let insertIndex = dropChildIndex;
+    if (draggedChildIndex !== null && draggedElementIndex === dropElementIndex) {
+      if (draggedChildIndex < dropChildIndex) insertIndex = dropChildIndex - 1;
+    }
+    if (dropPosition === 'after') insertIndex++;
+    targetRow.children.splice(insertIndex, 0, draggedItem);
+  } else if (dropParentChildIndex !== null) {
+    // Dropping into an empty nested stack container (drop zone that belongs to a parent child)
+    const parentStack = page.layout[dropElementIndex].children[dropParentChildIndex];
+    if (!parentStack.children) parentStack.children = [];
+    parentStack.children.push(draggedItem);
+  } else {
+    // Dropping at top level
+    let insertIndex = dropElementIndex !== null ? dropElementIndex : page.layout.length;
+    if (draggedChildIndex === null) {
+      if (draggedElementIndex < insertIndex) insertIndex = insertIndex - 1;
+    }
+    if (dropPosition === 'after') insertIndex++;
+    page.layout.splice(insertIndex, 0, draggedItem);
+  }
+  
+  renderEditor(currentConfig);
   removeDropIndicator();
 }
 
@@ -911,6 +1199,7 @@ function handleElementDragEnd(e) {
   draggedFromPageIndex = null;
   draggedElementIndex = null;
   draggedChildIndex = null;
+  dragEndTime = Date.now();
 }
 
 // Element modal functions
@@ -1128,7 +1417,7 @@ window.updateElementFields = function(existingElement = null) {
         </div>
         <div class="input-group">
           <label>Commands (one per line)</label>
-          <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">        ${existingElement?.commands?.join('\n') || ''}</textarea>
+          <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">${dedentCommandList(existingElement?.commands || []).join('\n')}</textarea>
         </div>
       `;
       // Add event listener for checkbox to toggle color input
@@ -2166,8 +2455,60 @@ async function updateCategoryModules(categoryName, modules, isChecked) {
   debugLog(`Debug category '${categoryName}' toggled to:`, isChecked);
 }
 
+// Handle config format switching
+function switchConfigFormat() {
+  try {
+    const format = getConfigFormat();
+    const cfgArea = document.getElementById("cfgArea");
+    const cfgLabel = document.getElementById("cfgLabel");
+    
+    // Update label
+    cfgLabel.textContent = format === 'json' ? 
+      'Raw JSON Configuration' : 
+      'Raw YAML Configuration';
+    
+    // Convert current content to new format
+    const currentText = cfgArea.value.trim();
+    if (!currentText) return; // Nothing to convert
+    
+    try {
+      // Detect current format and parse accordingly
+      let config;
+      let currentFormat;
+      
+      // Try JSON first (more strict)
+      try {
+        config = JSON.parse(currentText);
+        currentFormat = 'json';
+      } catch {
+        // Fall back to YAML
+        config = YAML.load(currentText);
+        currentFormat = 'yaml';
+      }
+      
+      // Normalize commands after parsing
+      config = normalizeCommands(config);
+      
+      // Convert to target format
+      cfgArea.value = formatConfig(config, format);
+      debugLog(`[CONFIG] Converted from ${currentFormat.toUpperCase()} to ${format.toUpperCase()}`);
+    } catch (e) {
+      debugWarn(`[CONFIG] Could not convert config:`, e.message);
+      // Leave unchanged if conversion fails
+    }
+  } catch (e) {
+    debugError(`[CONFIG] Format switch error:`, e);
+  }
+}
+
 // Sync from JSON button
 document.getElementById("syncFromJson").onclick = syncFromJson;
+
+// Format switching radio buttons
+const formatRadios = document.querySelectorAll('input[name="cfgFormat"]');
+formatRadios.forEach(radio => {
+  radio.addEventListener('change', switchConfigFormat);
+});
 
 // Cancel
 document.getElementById("cancelBtn").onclick = () => {
@@ -2188,19 +2529,14 @@ document.getElementById("saveBtn").onclick = async () => {
     // Build config from current tab
     if (currentTab === 'json') {
       const text = document.getElementById("cfgArea").value;
-      config = JSON.parse(text);
+      const format = getConfigFormat(); // Utiliser le format sélectionné
+      config = parseConfig(text, format); // Utiliser parseConfig au lieu de JSON.parse
     } else {
       config = buildConfigFromEditor();
     }
     
     debugLog("✓ Config built successfully:", config);
     
-    // Validate structure
-    if (!config.global || !Array.isArray(config.pages)) {
-      throw new Error("Config must have 'global' object and 'pages' array");
-    }
-    
-    // Save Google Sheets credentials to localStorage
     const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
     const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
 
@@ -2312,15 +2648,15 @@ OBR.onReady(() => {
         switchTab(tab.dataset.tab);
       });
     });
-      // Token helper UI handlers - cache elements and add debounce for search
-      _tokensListEl = document.getElementById('tokensList');
-      _tokensStatusEl = document.getElementById('tokensStatus');
-      _tokensSearchEl = document.getElementById('tokensSearch');
-      _tokensFilterEl = document.getElementById('tokensFilter');
-      _tokensRefreshBtn = document.getElementById('tokensRefresh');
-      if (_tokensSearchEl) _tokensSearchEl.addEventListener('input', debounce(() => applyTokensFiltersAndRender(), 220));
-      if (_tokensFilterEl) _tokensFilterEl.addEventListener('change', () => applyTokensFiltersAndRender());
-      if (_tokensRefreshBtn) _tokensRefreshBtn.addEventListener('click', () => refreshTokenHelper());
+    // Token helper UI handlers - cache elements and add debounce for search
+    _tokensListEl = document.getElementById('tokensList');
+    _tokensStatusEl = document.getElementById('tokensStatus');
+    _tokensSearchEl = document.getElementById('tokensSearch');
+    _tokensFilterEl = document.getElementById('tokensFilter');
+    _tokensRefreshBtn = document.getElementById('tokensRefresh');
+    if (_tokensSearchEl) _tokensSearchEl.addEventListener('input', debounce(() => applyTokensFiltersAndRender(), 220));
+    if (_tokensFilterEl) _tokensFilterEl.addEventListener('change', () => applyTokensFiltersAndRender());
+    if (_tokensRefreshBtn) _tokensRefreshBtn.addEventListener('click', () => refreshTokenHelper());
     
     // Initialize Debug Mode UI
     initializeDebugModeUI();

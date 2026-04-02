@@ -3511,8 +3511,8 @@
         {
           "type": "button",
           "commands": [
-            "const token = await getSelectedTokenId();",
-            "if (!token) {",
+            "const selectedToken = await getSelectedTokenId();",
+            "if (!selectedToken) {",
             "  await Owlbear.notification.error('No token selected!');",
             "} else {",
             "  await Owlbear.notification.success('Token selected and ready!');",

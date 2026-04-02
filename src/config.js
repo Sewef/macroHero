@@ -2,6 +2,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
 import { isDebugEnabled } from "./debugMode.js";
+import { loadConfigFile } from "./yamlLoader.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
@@ -168,25 +169,29 @@ export async function loadConfig() {
         debugLog("[CONFIG] Room metadata keys:", Object.keys(roomMetadata));
         
         // Start with full config from room-scoped localStorage.
-        // If not found, try to load the bundled `src/default.json` shipped with the extension.
+        // If not found, try to load the bundled config (YAML or JSON) shipped with the extension.
         // Fallback to the in-code `defaultConfig` if that fails.
         const localStorageConfig = await loadConfigFromLocalStorage();
         let config;
         if (localStorageConfig) {
             config = JSON.parse(JSON.stringify(localStorageConfig));
         } else {
-            const tryPaths = ['/src/default.json', '/default.json', '/assets/default.json'];
+            // Try to load packaged config files - first YAML (modern format), then JSON (legacy)
+            const tryPaths = [
+                { base: '/src/default', format: 'YAML' },
+                { base: '/default', format: 'YAML' },
+                { base: '/assets/default', format: 'YAML' }
+            ];
             let packaged = null;
-            for (const p of tryPaths) {
+            
+            for (const { base, format } of tryPaths) {
                 try {
-                    const resp = await fetch(p);
-                    if (resp.ok) {
-                        packaged = await resp.json();
-                        debugLog('[CONFIG] Loaded packaged default config from', p);
-                        break;
-                    }
+                    packaged = await loadConfigFile(base);
+                    debugLog(`[CONFIG] Loaded packaged default config from ${base}.yaml or .json`);
+                    break;
                 } catch (e) {
-                    // ignore and try next path
+                    // Silently try next path
+                    debugWarn(`[CONFIG] Could not load config from ${base}:`, e.message);
                 }
             }
 
