@@ -1,7 +1,7 @@
 {
   "name": "macrohero",
   "private": true,
-  "version": "0.1r",
+  "version": "0.1s",
   "type": "module",
   "scripts": {
     "dev": "vite",
