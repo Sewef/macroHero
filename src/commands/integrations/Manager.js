@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integrations Manager
  * Centralized management of all integrations (GSheets, Local, etc.)
  */
@@ -25,18 +25,17 @@ import * as Announcement from "./Announcement.js";
 import * as Auras from "./Auras.js";
 import * as ImageHelper from "../shared/imageHelper.js";
 import { Owlbear, NOTIFICATION_VARIANT } from "../shared/sdkHelpers.js";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Manager') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Manager");
+
 
 class IntegrationsManager {
   constructor() {
     this.googleSheetsClient = null;
     this.local = new LocalIntegration();
-    debugLog("[IntegrationsManager] ✓ Initialized");
+    logger.log("[IntegrationsManager] âœ“ Initialized");
   }
 
   /**
@@ -45,7 +44,7 @@ class IntegrationsManager {
    */
   initializeGSheets(config) {
     if (!config?.apiKey || !config?.sheetId) {
-      debugWarn("[IntegrationsManager] GSheets config missing apiKey or sheetId");
+      logger.warn("[IntegrationsManager] GSheets config missing apiKey or sheetId");
       return;
     }
     
@@ -53,7 +52,7 @@ class IntegrationsManager {
       apiKey: config.apiKey,
       sheetId: config.sheetId
     });
-    debugLog("[IntegrationsManager] ✓ Google Sheets client initialized");
+    logger.log("[IntegrationsManager] âœ“ Google Sheets client initialized");
   }
 
   /**
@@ -76,7 +75,7 @@ class IntegrationsManager {
         
         return result;
       } catch (error) {
-        debugError('[IntegrationsManager] Error in async function:', error);
+        logger.error('[IntegrationsManager] Error in async function:', error);
         return null;
       }
     };
@@ -268,7 +267,7 @@ export function initializeIntegrations(config) {
     manager.initializeGSheets(gsheetConfig);
   } else if (config) {
     // Only warn if config was actually provided but incomplete
-    debugWarn("[IntegrationsManager] GSheets config incomplete or missing");
+    logger.warn("[IntegrationsManager] GSheets config incomplete or missing");
   }
 }
 
@@ -290,3 +289,4 @@ export function getIntegration(name) {
 }
 
 export default manager;
+

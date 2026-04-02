@@ -1,14 +1,14 @@
-/**
+﻿/**
  * Parser - Minimal version for Pure JavaScript edition
  * 
  * No complex parsing needed - commands are pure JavaScript.
  * Just keep utility functions for compatibility.
  */
 
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('parser') && console.log(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger('parser');
 
 /**
  * Validate an expression for basic syntax errors
@@ -126,3 +126,4 @@ export default {
   isValidVariableName,
   sanitizeVariableName,
 };
+

@@ -1,15 +1,14 @@
-/**
+﻿/**
  * Token Attachments Helper
  * Utilities for querying and managing token attachments in Owlbear Rodeo
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('tokenAttachments') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("tokenAttachments");
+
 
 /**
  * Get all attachments for a token
@@ -21,10 +20,10 @@ export async function getTokenAttachments(tokenId, allItems = null) {
   try {
     const items = allItems || await OBR.scene.items.getItems();
     const attachments = items.filter(item => item.attachedTo === tokenId);
-    debugLog(`[TokenAttachments] Found ${attachments.length} attachments for token ${tokenId}`);
+    logger.log(`[TokenAttachments] Found ${attachments.length} attachments for token ${tokenId}`);
     return attachments;
   } catch (error) {
-    debugError("[TokenAttachments] Error fetching attachments:", error);
+    logger.error("[TokenAttachments] Error fetching attachments:", error);
     return [];
   }
 }
@@ -90,9 +89,9 @@ export async function setAttachmentVisible(attachmentId, visible) {
         item.visible = visible;
       });
     });
-    debugLog(`[TokenAttachments] Set attachment ${attachmentId} visible to ${visible}`);
+    logger.log(`[TokenAttachments] Set attachment ${attachmentId} visible to ${visible}`);
   } catch (error) {
-    debugError("[TokenAttachments] Error setting visibility:", error);
+    logger.error("[TokenAttachments] Error setting visibility:", error);
   }
 }
 
@@ -108,9 +107,9 @@ export async function setAttachmentsVisible(attachmentIds, visible) {
         item.visible = visible;
       });
     });
-    debugLog(`[TokenAttachments] Set ${attachmentIds.length} attachments visible to ${visible}`);
+    logger.log(`[TokenAttachments] Set ${attachmentIds.length} attachments visible to ${visible}`);
   } catch (error) {
-    debugError("[TokenAttachments] Error setting visibility:", error);
+    logger.error("[TokenAttachments] Error setting visibility:", error);
   }
 }
 
@@ -243,3 +242,4 @@ export default {
   getTokenLabel,
   getAttachmentsGroupedByType,
 };
+

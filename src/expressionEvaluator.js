@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Expression Evaluator - REFACTORED to use VariableEngine
  * 
  * This module is now a thin wrapper around VariableEngine for backwards compatibility.
@@ -8,16 +8,16 @@
  */
 
 import { variableEngine } from "./engines/VariableEngine.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('expressionEvaluator') && console.log(...args);
+const logger = createDebugLogger('expressionEvaluator');
 
 /**
  * Evaluate a single variable expression
  * Delegated to VariableEngine
  */
 export async function evaluateExpression(expression, resolvedVars = {}) {
-  debugLog('[EVALUATOR] Delegating to VariableEngine');
+  logger.log('[EVALUATOR] Delegating to VariableEngine');
   return variableEngine.evaluateExpression(expression, resolvedVars);
 }
 
@@ -26,7 +26,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
  * Delegated to VariableEngine
  */
 export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null) {
-  debugLog('[EVALUATOR] Delegating to VariableEngine');
+  logger.log('[EVALUATOR] Delegating to VariableEngine');
   const resolved = await variableEngine.resolveVariables(variablesConfig, globalVars, onlyVars);
   
   // Call the callback for each variable if provided (backwards compatibility)
@@ -72,3 +72,4 @@ export default {
   getAffectedVariables,
   getDependentVariables,
 };
+

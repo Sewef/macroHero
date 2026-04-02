@@ -1,11 +1,10 @@
-/**
+﻿/**
  * Dropdown Component
  * Renders dropdown/select inputs
  */
 
 import { UIComponent } from "./UIComponent.js";
 
-const debugWarn = (...args) => console.warn(...args);
 
 export class DropdownComponent extends UIComponent {
   render() {
@@ -81,11 +80,11 @@ export class DropdownComponent extends UIComponent {
         if (Array.isArray(optionsValue)) {
           options = optionsValue;
         } else {
-          debugWarn(`[UI] optionsVar "${this.item.optionsVar}" is not an array`);
+          logger.warn(`[UI] optionsVar "${this.item.optionsVar}" is not an array`);
           options = [];
         }
       } else {
-        debugWarn(`[UI] optionsVar "${this.item.optionsVar}" not found`);
+        logger.warn(`[UI] optionsVar "${this.item.optionsVar}" not found`);
         options = [];
       }
     }
@@ -133,3 +132,4 @@ export class DropdownComponent extends UIComponent {
     }
   }
 }
+

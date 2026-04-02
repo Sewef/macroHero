@@ -1,11 +1,10 @@
-/**
+﻿/**
  * Checkbox Component
  * Renders checkbox inputs with variable management
  */
 
 import { UIComponent } from "./UIComponent.js";
 
-const debugError = (...args) => console.error(...args);
 
 export class CheckboxComponent extends UIComponent {
   render() {
@@ -89,3 +88,4 @@ export class CheckboxComponent extends UIComponent {
     }
   }
 }
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VariableStore - Centralized state management for variables
  * Single source of truth for page variables, global variables, and their resolved values
  * 
@@ -6,10 +6,9 @@
  */
 
 import { eventBus } from "../events/EventBus.js";
-import { isDebugEnabled } from "../debugMode.js";
+import { createDebugLogger } from "../debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('VariableStore') && console.log(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger('VariableStore');
 
 class VariableStore {
   constructor() {
@@ -34,7 +33,7 @@ class VariableStore {
   setConfig(config) {
     this.config = config;
     this.globalVariablesConfig = config.global?.variables || {};
-    debugLog('[VariableStore] Config set');
+    logger.log('[VariableStore] Config set');
     eventBus.emit('store:configChanged', config);
   }
 
@@ -43,7 +42,7 @@ class VariableStore {
    */
   setGlobalVariablesResolved(resolved) {
     this.globalVariablesResolved = { ...resolved };
-    debugLog('[VariableStore] Global variables resolved:', Object.keys(resolved));
+    logger.log('[VariableStore] Global variables resolved:', Object.keys(resolved));
     eventBus.emit('store:globalVariablesResolved', resolved);
   }
 
@@ -52,7 +51,7 @@ class VariableStore {
    */
   setCurrentPage(pageIndex) {
     if (pageIndex < 0 || pageIndex >= (this.config?.pages || []).length) {
-      debugWarn('[VariableStore] Invalid page index:', pageIndex);
+      logger.warn('[VariableStore] Invalid page index:', pageIndex);
       return;
     }
 
@@ -64,7 +63,7 @@ class VariableStore {
       this.pageVariablesResolved[pageIndex] = { ...this.globalVariablesResolved };
     }
 
-    debugLog('[VariableStore] Current page set to:', pageIndex);
+    logger.log('[VariableStore] Current page set to:', pageIndex);
     eventBus.emit('store:pageChanged', pageIndex, page);
   }
 
@@ -95,7 +94,7 @@ class VariableStore {
       // Global variable
       this.globalVariablesResolved[varName] = value;
       this.modifiedVariables.add(varName);
-      debugLog('[VariableStore] Global variable resolved:', varName, '=', value);
+      logger.log('[VariableStore] Global variable resolved:', varName, '=', value);
       eventBus.emit('store:variableResolved', varName, value, 'global');
     } else {
       // Page variable
@@ -104,7 +103,7 @@ class VariableStore {
       }
       this.pageVariablesResolved[targetIndex][varName] = value;
       this.modifiedVariables.add(varName);
-      debugLog('[VariableStore] Page variable resolved:', varName, '=', value, 'page:', targetIndex);
+      logger.log('[VariableStore] Page variable resolved:', varName, '=', value, 'page:', targetIndex);
       eventBus.emit('store:variableResolved', varName, value, 'page', targetIndex);
     }
   }
@@ -183,7 +182,7 @@ class VariableStore {
    */
   markVariableModified(varName) {
     this.modifiedVariables.add(varName);
-    debugLog('[VariableStore] Variable marked as modified:', varName);
+    logger.log('[VariableStore] Variable marked as modified:', varName);
   }
 
   /**
@@ -206,7 +205,7 @@ class VariableStore {
     this.pageVariablesConfigs = [];
     this.pageVariablesResolved = [];
     this.modifiedVariables.clear();
-    debugLog('[VariableStore] Cleared');
+    logger.log('[VariableStore] Cleared');
   }
 }
 
@@ -214,3 +213,4 @@ class VariableStore {
 export const variableStore = new VariableStore();
 
 export default VariableStore;
+

@@ -1,11 +1,10 @@
-/**
+﻿/**
  * Button Component
  * Renders action buttons with command execution
  */
 
 import { UIComponent } from "./UIComponent.js";
 
-const debugError = (...args) => console.error(...args);
 
 export class ButtonComponent extends UIComponent {
   render() {
@@ -77,3 +76,4 @@ export class ButtonComponent extends UIComponent {
     }
   }
 }
+

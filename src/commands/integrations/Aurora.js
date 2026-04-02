@@ -1,16 +1,15 @@
-/**
+﻿/**
  * Aurora Integration for Owlbear Rodeo
  * Interfaces with the Aurora extension for time-of-day lighting effects
  * https://github.com/Several-Record7234/aurora
  */
 
 import OBR, { isImage } from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Aurora') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Aurora");
+
 
 // Plugin ID for the Aurora extension
 const AURORA_METADATA_KEY = "com.aurora-vtt.aurora/config";
@@ -97,12 +96,12 @@ function fromAuroraMetadata(metadata) {
 export async function setAurora(mapId, config) {
   try {
     if (!mapId) {
-      debugError("[Aurora] setAurora: mapId is required");
+      logger.error("[Aurora] setAurora: mapId is required");
       throw new Error("mapId is required");
     }
 
     if (!config) {
-      debugError("[Aurora] setAurora: config is required");
+      logger.error("[Aurora] setAurora: config is required");
       throw new Error("config is required");
     }
 
@@ -111,12 +110,12 @@ export async function setAurora(mapId, config) {
     if (typeof config === 'string') {
       const preset = getPreset(config);
       if (!preset) {
-        debugError(`[Aurora] Unknown preset: ${config}`);
+        logger.error(`[Aurora] Unknown preset: ${config}`);
         throw new Error(`Unknown preset: ${config}. Available presets: ${Object.keys(AURORA_PRESETS).join(', ')}`);
       }
       // Convert preset (short format) to full format
       configToUse = fromAuroraMetadata(preset);
-      debugLog(`[Aurora] Using preset "${preset.n}":`, configToUse);
+      logger.log(`[Aurora] Using preset "${preset.n}":`, configToUse);
     }
 
     // Build Aurora config with defaults
@@ -159,20 +158,20 @@ export async function setAurora(mapId, config) {
     // Convert to Aurora metadata format
     const auroraMetadata = toAuroraMetadata(fullConfig);
 
-    debugLog(`[Aurora] Setting Aurora on map ${mapId}:`, auroraMetadata);
+    logger.log(`[Aurora] Setting Aurora on map ${mapId}:`, auroraMetadata);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           item.metadata[AURORA_METADATA_KEY] = auroraMetadata;
-          debugLog(`[Aurora] ✓ Aurora metadata set on map:`, item.name);
+          logger.log(`[Aurora] âœ“ Aurora metadata set on map:`, item.name);
         }
       }
     });
 
-    debugLog(`[Aurora] ✓ Aurora set successfully`);
+    logger.log(`[Aurora] âœ“ Aurora set successfully`);
   } catch (error) {
-    debugError(`[Aurora] Error setting Aurora:`, error.message);
+    logger.error(`[Aurora] Error setting Aurora:`, error.message);
     throw error;
   }
 }
@@ -185,24 +184,24 @@ export async function setAurora(mapId, config) {
 export async function removeAurora(mapId) {
   try {
     if (!mapId) {
-      debugError("[Aurora] removeAurora: mapId is required");
+      logger.error("[Aurora] removeAurora: mapId is required");
       throw new Error("mapId is required");
     }
 
-    debugLog(`[Aurora] Removing Aurora from map ${mapId}`);
+    logger.log(`[Aurora] Removing Aurora from map ${mapId}`);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           delete item.metadata[AURORA_METADATA_KEY];
-          debugLog(`[Aurora] ✓ Aurora removed from map:`, item.name);
+          logger.log(`[Aurora] âœ“ Aurora removed from map:`, item.name);
         }
       }
     });
 
-    debugLog(`[Aurora] ✓ Aurora removed successfully`);
+    logger.log(`[Aurora] âœ“ Aurora removed successfully`);
   } catch (error) {
-    debugError(`[Aurora] Error removing Aurora:`, error.message);
+    logger.error(`[Aurora] Error removing Aurora:`, error.message);
     throw error;
   }
 }
@@ -215,7 +214,7 @@ export async function removeAurora(mapId) {
 export async function getAurora(mapId) {
   try {
     if (!mapId) {
-      debugError("[Aurora] getAurora: mapId is required");
+      logger.error("[Aurora] getAurora: mapId is required");
       throw new Error("mapId is required");
     }
 
@@ -223,24 +222,24 @@ export async function getAurora(mapId) {
     const map = items[0];
 
     if (!map || !isImage(map) || (map.layer !== 'MAP' && map.layer !== 'FOG')) {
-      debugWarn(`[Aurora] Item ${mapId} is not a valid map`);
+      logger.warn(`[Aurora] Item ${mapId} is not a valid map`);
       return null;
     }
 
     const metadata = map.metadata[AURORA_METADATA_KEY];
     
     if (!metadata) {
-      debugLog(`[Aurora] No Aurora on map ${mapId}`);
+      logger.log(`[Aurora] No Aurora on map ${mapId}`);
       return null;
     }
 
     // Convert from Aurora metadata format to full property names
     const config = fromAuroraMetadata(metadata);
     
-    debugLog(`[Aurora] Aurora config for map ${mapId}:`, config);
+    logger.log(`[Aurora] Aurora config for map ${mapId}:`, config);
     return config;
   } catch (error) {
-    debugError(`[Aurora] Error getting Aurora:`, error.message);
+    logger.error(`[Aurora] Error getting Aurora:`, error.message);
     throw error;
   }
 }
@@ -255,7 +254,7 @@ export async function hasAurora(mapId) {
     const config = await getAurora(mapId);
     return config !== null;
   } catch (error) {
-    debugError(`[Aurora] Error checking Aurora:`, error.message);
+    logger.error(`[Aurora] Error checking Aurora:`, error.message);
     return false;
   }
 }
@@ -281,12 +280,12 @@ export function getPresets() {
 export async function updateAurora(mapId, updates) {
   try {
     if (!mapId) {
-      debugError("[Aurora] updateAurora: mapId is required");
+      logger.error("[Aurora] updateAurora: mapId is required");
       throw new Error("mapId is required");
     }
 
     if (!updates || Object.keys(updates).length === 0) {
-      debugWarn("[Aurora] No updates provided");
+      logger.warn("[Aurora] No updates provided");
       return;
     }
 
@@ -313,7 +312,7 @@ export async function updateAurora(mapId, updates) {
     // Convert updates to Aurora metadata format
     const metadataUpdates = toAuroraMetadata(updates);
 
-    debugLog(`[Aurora] Updating Aurora on map ${mapId} with:`, metadataUpdates);
+    logger.log(`[Aurora] Updating Aurora on map ${mapId} with:`, metadataUpdates);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
@@ -322,17 +321,17 @@ export async function updateAurora(mapId, updates) {
           if (metadata && typeof metadata === 'object') {
             // Update properties directly on the metadata object
             Object.assign(metadata, metadataUpdates);
-            debugLog(`[Aurora] ✓ Aurora updated on map:`, item.name, metadata);
+            logger.log(`[Aurora] âœ“ Aurora updated on map:`, item.name, metadata);
           } else {
-            debugWarn(`[Aurora] No Aurora on map:`, item.name);
+            logger.warn(`[Aurora] No Aurora on map:`, item.name);
           }
         }
       }
     });
 
-    debugLog(`[Aurora] ✓ Aurora update completed`);
+    logger.log(`[Aurora] âœ“ Aurora update completed`);
   } catch (error) {
-    debugError(`[Aurora] Error updating Aurora:`, error.message);
+    logger.error(`[Aurora] Error updating Aurora:`, error.message);
     throw error;
   }
 }
@@ -347,3 +346,4 @@ export default {
   // Expose preset constants for direct access
   PRESETS: AURORA_PRESETS
 };
+

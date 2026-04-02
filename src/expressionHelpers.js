@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Expression Helpers
  * Provides integrations context for variable expressions
  * 
@@ -8,17 +8,17 @@
  */
 
 import { initializeIntegrations, getIntegrationsContext } from "./commands/integrations/Manager.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('expressionHelpers') && console.log(...args);
+const logger = createDebugLogger("expressionHelpers");
 
 /**
  * Initialize expression helpers with configuration
  * @param {Object} config - Configuration object with gsheet settings
  */
 export function initializeExpressions(config) {
-  debugLog("[expressionHelpers] Initializing integrations...");
+  logger.log("[expressionHelpers] Initializing integrations...");
   initializeIntegrations(config);
   // Cache the context on init; reset async methods so they can be recomputed
   cachedContext = null;
@@ -79,4 +79,5 @@ export default {
   getExpressionContext,
   getAsyncMethods,
 };
+
 

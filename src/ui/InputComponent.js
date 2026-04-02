@@ -1,11 +1,10 @@
-/**
+﻿/**
  * Input Component
  * Renders text input fields
  */
 
 import { UIComponent } from "./UIComponent.js";
 
-const debugError = (...args) => console.error(...args);
 
 export class InputComponent extends UIComponent {
   constructor(item, page, services, inStack = false) {
@@ -161,3 +160,4 @@ export class InputComponent extends UIComponent {
     }
   }
 }
+

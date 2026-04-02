@@ -1,10 +1,9 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('sceneMetadata') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("sceneMetadata");
+
 
 /**
  * Get all scene metadata
@@ -114,3 +113,4 @@ export async function getSceneItem(itemId) {
 export async function updateSceneItem(itemId, updates) {
   await OBR.scene.updateItems([{ id: itemId, ...updates }]);
 }
+

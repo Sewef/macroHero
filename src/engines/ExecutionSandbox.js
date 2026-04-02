@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ExecutionSandbox - Safe execution environment for expressions
  * Replaces dangerous new Function() calls with a cleaner, safer approach
  * 
@@ -11,10 +11,9 @@
 
 import * as math from "mathjs";
 import { getExpressionContext } from "../expressionHelpers.js";
-import { isDebugEnabled } from "../debugMode.js";
+import { createDebugLogger } from "../debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('ExecutionSandbox') && console.log(...args);
-const debugError = (...args) => console.error(...args);
+const logger = createDebugLogger('ExecutionSandbox');
 
 class ExecutionSandbox {
   constructor() {
@@ -53,7 +52,7 @@ class ExecutionSandbox {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      debugLog('[Sandbox] Executing sync:', expression);
+      logger.log('[Sandbox] Executing sync:', expression);
 
       const context = this.buildContext(resolvedVars);
       
@@ -74,10 +73,10 @@ class ExecutionSandbox {
       );
       
       const result = evaluator(context);
-      debugLog('[Sandbox] Result:', result);
+      logger.log('[Sandbox] Result:', result);
       return result;
     } catch (error) {
-      debugError('[Sandbox] Sync execution error:', error);
+      logger.error('[Sandbox] Sync execution error:', error);
       throw error;
     }
   }
@@ -95,7 +94,7 @@ class ExecutionSandbox {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      debugLog('[Sandbox] Executing async:', expression);
+      logger.log('[Sandbox] Executing async:', expression);
 
       const context = this.buildContext(resolvedVars);
       
@@ -130,10 +129,10 @@ class ExecutionSandbox {
       );
       
       const result = await evaluator(context);
-      debugLog('[Sandbox] Result:', result);
+      logger.log('[Sandbox] Result:', result);
       return result;
     } catch (error) {
-      debugError('[Sandbox] Async execution error:', error);
+      logger.error('[Sandbox] Async execution error:', error);
       throw error;
     }
   }
@@ -148,7 +147,7 @@ class ExecutionSandbox {
   async executeCommand(code, context = {}) {
     try {
       const script = Array.isArray(code) ? code.join('\n') : code;
-      debugLog('[Sandbox] Executing command:', script);
+      logger.log('[Sandbox] Executing command:', script);
 
       const fullContext = {
         integrations: context.integrations || getExpressionContext(),
@@ -177,7 +176,7 @@ class ExecutionSandbox {
 
       return await executor(fullContext);
     } catch (error) {
-      debugError('[Sandbox] Command execution error:', error);
+      logger.error('[Sandbox] Command execution error:', error);
       throw error;
     }
   }
@@ -187,3 +186,4 @@ class ExecutionSandbox {
 export const executionSandbox = new ExecutionSandbox();
 
 export default ExecutionSandbox;
+

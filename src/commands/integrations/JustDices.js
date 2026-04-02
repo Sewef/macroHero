@@ -1,16 +1,15 @@
-/**
+﻿/**
  * JustDices Integration
  * Handles communication with the JustDices extension via broadcast API
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('JustDices') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("JustDices");
+
 
 let SELF_ID_PROMISE = null;
 
@@ -78,7 +77,7 @@ export async function roll(expression, hiddenOrOptions = {}) {
       throw new Error(error);
     }
   } catch (error) {
-    debugError("[JustDices] Roll failed:", error.message);
+    logger.error("[JustDices] Roll failed:", error.message);
     throw error;
   }
 }
@@ -125,7 +124,7 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
       throw new Error(error);
     }
   } catch (error) {
-    debugError("[JustDices] getRollObject failed:", error.message);
+    logger.error("[JustDices] getRollObject failed:", error.message);
     throw error;
   }
 }
@@ -156,3 +155,4 @@ export default {
   rollSilent,
   getRollObjectSilent,
 };
+

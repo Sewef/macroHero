@@ -1,16 +1,15 @@
-import { 
+﻿import { 
   getValue as getMetadataValue,
   setValue as setMetadataValue,
   addValue as addMetadataValue,
   getTokenMetadataValue,
   setTokenMetadata
 } from "../token/tokenMetadata.js";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('OwlTrackers') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("OwlTrackers");
+
 
 const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 
@@ -29,11 +28,11 @@ export async function getValue(tokenId, trackerName) {
   try {
     const value = await getMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName);
     if (value === null) {
-      debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+      logger.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
     }
     return value;
   } catch (error) {
-    debugError(`[OwlTrackers] Failed to get tracker "${trackerName}" value from token ${tokenId}:`, error.message);
+    logger.error(`[OwlTrackers] Failed to get tracker "${trackerName}" value from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -48,19 +47,19 @@ export async function getMax(tokenId, trackerName) {
   try {
     const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
     if (!Array.isArray(trackers)) {
-      debugWarn(`[OwlTrackers] No trackers found on token ${tokenId}`);
+      logger.warn(`[OwlTrackers] No trackers found on token ${tokenId}`);
       return null;
     }
     
     const tracker = trackers.find(t => t.name === trackerName);
     if (!tracker) {
-      debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
+      logger.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
       return null;
     }
     
     return tracker.max ?? null;
   } catch (error) {
-    debugError(`[OwlTrackers] Failed to get tracker "${trackerName}" max from token ${tokenId}:`, error.message);
+    logger.error(`[OwlTrackers] Failed to get tracker "${trackerName}" max from token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -84,19 +83,19 @@ export async function setValue(tokenId, trackerName, value) {
  * @returns {Promise<void>}
  */
 export async function addValue(tokenId, trackerName, delta = 1) {
-  debugLog(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
+  logger.log(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
   const currentValue = await getValue(tokenId, trackerName);
-  debugLog(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
+  logger.log(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
   
   if (currentValue === null) {
-    debugWarn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
+    logger.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
     return;
   }
   
   const newValue = currentValue + Number(delta);
-  debugLog(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
+  logger.log(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
   await setValue(tokenId, trackerName, newValue);
-  debugLog(`[OwlTrackers.addValue] Complete`);
+  logger.log(`[OwlTrackers.addValue] Complete`);
 }
 
 /**
@@ -141,7 +140,7 @@ export async function addTracker(tokenId, trackerConfig) {
     const { variant, name, color, value, max, checked, showOnMap = true, inlineMath = false } = trackerConfig;
     
     if (!variant) {
-      debugError(`[OwlTrackers.addTracker] Missing required "variant" field`);
+      logger.error(`[OwlTrackers.addTracker] Missing required "variant" field`);
       return null;
     }
     
@@ -177,7 +176,7 @@ export async function addTracker(tokenId, trackerConfig) {
     } else if (variant === "checkbox") {
       newTracker.checked = checked !== undefined ? checked : false;
     } else {
-      debugError(`[OwlTrackers.addTracker] Invalid variant "${variant}". Must be: value, value-max, counter, or checkbox`);
+      logger.error(`[OwlTrackers.addTracker] Invalid variant "${variant}". Must be: value, value-max, counter, or checkbox`);
       return null;
     }
     
@@ -187,11 +186,11 @@ export async function addTracker(tokenId, trackerConfig) {
     // Update token metadata
     await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, trackers);
     
-    debugLog(`[OwlTrackers.addTracker] Added ${variant} tracker "${name || 'unnamed'}" with ID ${trackerId} to token ${tokenId}`);
+    logger.log(`[OwlTrackers.addTracker] Added ${variant} tracker "${name || 'unnamed'}" with ID ${trackerId} to token ${tokenId}`);
     return trackerId;
     
   } catch (error) {
-    debugError(`[OwlTrackers.addTracker] Failed to add tracker to token ${tokenId}:`, error.message);
+    logger.error(`[OwlTrackers.addTracker] Failed to add tracker to token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -207,7 +206,7 @@ export async function removeTracker(tokenId, trackerIdentifier) {
     const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
     
     if (!Array.isArray(trackers)) {
-      debugWarn(`[OwlTrackers.removeTracker] No trackers found on token ${tokenId}`);
+      logger.warn(`[OwlTrackers.removeTracker] No trackers found on token ${tokenId}`);
       return false;
     }
     
@@ -218,18 +217,18 @@ export async function removeTracker(tokenId, trackerIdentifier) {
     );
     
     if (updatedTrackers.length === initialLength) {
-      debugWarn(`[OwlTrackers.removeTracker] Tracker "${trackerIdentifier}" not found on token ${tokenId}`);
+      logger.warn(`[OwlTrackers.removeTracker] Tracker "${trackerIdentifier}" not found on token ${tokenId}`);
       return false;
     }
     
     // Update token metadata
     await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, updatedTrackers);
     
-    debugLog(`[OwlTrackers.removeTracker] Removed tracker "${trackerIdentifier}" from token ${tokenId}`);
+    logger.log(`[OwlTrackers.removeTracker] Removed tracker "${trackerIdentifier}" from token ${tokenId}`);
     return true;
     
   } catch (error) {
-    debugError(`[OwlTrackers.removeTracker] Failed to remove tracker from token ${tokenId}:`, error.message);
+    logger.error(`[OwlTrackers.removeTracker] Failed to remove tracker from token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -242,3 +241,4 @@ export default {
   addTracker,
   removeTracker
 };
+

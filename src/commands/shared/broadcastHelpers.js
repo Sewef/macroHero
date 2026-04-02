@@ -1,16 +1,15 @@
-/**
+﻿/**
  * Broadcast Helpers for Owlbear Rodeo SDK
  * Provides utilities for sending and receiving broadcast messages
  * Handles retries, destination management, and message tracking
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Broadcast') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Broadcast");
+
 
 // Message type constants
 export const BROADCAST_DESTINATIONS = {
@@ -49,7 +48,7 @@ export async function broadcastMessage(messageId, data, options = {}) {
 
     if (!messageId || typeof messageId !== 'string') {
         const err = "Message ID is required and must be a string";
-        debugError("[Broadcast] sendMessage:", err);
+        logger.error("[Broadcast] sendMessage:", err);
         throw new Error(err);
     }
 
@@ -66,7 +65,7 @@ export async function broadcastMessage(messageId, data, options = {}) {
         for (const dest of destinations) {
             try {
                 await OBR.broadcast.sendMessage(messageId, data, { destination: dest });
-                debugLog(`[Broadcast] Message sent to ${dest}`, { messageId, dataSize: JSON.stringify(data).length });
+                logger.log(`[Broadcast] Message sent to ${dest}`, { messageId, dataSize: JSON.stringify(data).length });
                 return {
                     success: true,
                     destination: dest,
@@ -74,7 +73,7 @@ export async function broadcastMessage(messageId, data, options = {}) {
                 };
             } catch (error) {
                 const errorMsg =  error && error.error ? error.error : String(error);
-                debugWarn(`[Broadcast] Failed to send ${messageId} to ${dest} (attempt ${attempt + 1}/${maxAttempts}):`, errorMsg);
+                logger.warn(`[Broadcast] Failed to send ${messageId} to ${dest} (attempt ${attempt + 1}/${maxAttempts}):`, errorMsg);
 
                 if (attempt < maxAttempts - 1 && dest !== destinations[destinations.length - 1]) {
                     // Try next destination immediately or wait before retrying
@@ -89,7 +88,7 @@ export async function broadcastMessage(messageId, data, options = {}) {
 
     // All attempts failed
     const finalError = `Failed to broadcast message "${messageId}" after ${maxAttempts} attempts`;
-    debugError("[Broadcast]", finalError);
+    logger.error("[Broadcast]", finalError);
     return {
         success: false,
         destination: null,
@@ -112,29 +111,29 @@ export function broadcastListener(messageId, callback, options = {}) {
     const { returnUnsub = true } = options;
 
     if (!messageId || typeof messageId !== 'string') {
-        debugError("[Broadcast] Listener: Message ID is required and must be a string");
+        logger.error("[Broadcast] Listener: Message ID is required and must be a string");
         throw new Error("Message ID is required");
     }
 
     if (!callback || typeof callback !== 'function') {
-        debugError("[Broadcast] Listener: Callback must be a function");
+        logger.error("[Broadcast] Listener: Callback must be a function");
         throw new Error("Callback must be a function");
     }
 
     try {
         const unsubscribe = OBR.broadcast.onMessage(messageId, (event) => {
             try {
-                debugLog(`[Broadcast] Received message "${messageId}":`, event.data);
+                logger.log(`[Broadcast] Received message "${messageId}":`, event.data);
                 callback(event);
             } catch (error) {
-                debugError(`[Broadcast] Error in callback for "${messageId}":`, error);
+                logger.error(`[Broadcast] Error in callback for "${messageId}":`, error);
             }
         });
 
-        debugLog(`[Broadcast] Listener registered for "${messageId}"`);
+        logger.log(`[Broadcast] Listener registered for "${messageId}"`);
         return returnUnsub ? unsubscribe : undefined;
     } catch (error) {
-        debugError(`[Broadcast] Failed to register listener for "${messageId}":`, error);
+        logger.error(`[Broadcast] Failed to register listener for "${messageId}":`, error);
         throw error;
     }
 }
@@ -161,7 +160,7 @@ export async function broadcastRequest(requestId, responseId, data, options = {}
     const responsePromise = new Promise((resolve, reject) => {
         // Listen for response
         unsubscribe = OBR.broadcast.onMessage(responseId, (event) => {
-            debugLog(`[Broadcast] Received response to "${requestId}":`, event.data);
+            logger.log(`[Broadcast] Received response to "${requestId}":`, event.data);
             if (timeoutHandle) clearTimeout(timeoutHandle);
             resolve(event.data);
         });
@@ -182,7 +181,7 @@ export async function broadcastRequest(requestId, responseId, data, options = {}
 
         // Wait for response
         const responseData = await responsePromise;
-        debugLog(`[Broadcast] Request "${requestId}" completed successfully`);
+        logger.log(`[Broadcast] Request "${requestId}" completed successfully`);
 
         return {
             success: true,
@@ -190,7 +189,7 @@ export async function broadcastRequest(requestId, responseId, data, options = {}
             broadcastResult
         };
     } catch (error) {
-        debugError(`[Broadcast] Request "${requestId}" failed:`, error.message);
+        logger.error(`[Broadcast] Request "${requestId}" failed:`, error.message);
         return {
             success: false,
             error: error.message,
@@ -274,19 +273,19 @@ export async function broadcastOnce(messageId, options = {}) {
 
         try {
             unsubscribe = OBR.broadcast.onMessage(messageId, (event) => {
-                debugLog(`[Broadcast] One-time listener triggered for "${messageId}"`);
+                logger.log(`[Broadcast] One-time listener triggered for "${messageId}"`);
                 clearTimeout(timeoutHandle);
                 unsubscribe();
                 resolve(event.data);
             });
 
             timeoutHandle = setTimeout(() => {
-                debugWarn(`[Broadcast] Timeout waiting for "${messageId}"`);
+                logger.warn(`[Broadcast] Timeout waiting for "${messageId}"`);
                 unsubscribe();
                 reject(new Error(`Timeout waiting for "${messageId}" after ${timeoutMs}ms`));
             }, timeoutMs);
         } catch (error) {
-            debugError(`[Broadcast] Error setting up one-time listener for "${messageId}":`, error);
+            logger.error(`[Broadcast] Error setting up one-time listener for "${messageId}":`, error);
             reject(error);
         }
     });
@@ -316,7 +315,7 @@ export async function broadcastBatch(messages, options = {}) {
             results.push(result);
 
             if (!result.success && stopOnError) {
-                debugWarn("[Broadcast] Batch stopped due to error:", result.error);
+                logger.warn("[Broadcast] Batch stopped due to error:", result.error);
                 break;
             }
         } catch (error) {
@@ -329,7 +328,7 @@ export async function broadcastBatch(messages, options = {}) {
         }
     }
 
-    debugLog(`[Broadcast] Batch completed:`, { total: messages.length, successful: results.filter(r => r.success).length });
+    logger.log(`[Broadcast] Batch completed:`, { total: messages.length, successful: results.filter(r => r.success).length });
     return results;
 }
 
@@ -342,3 +341,4 @@ export async function broadcastBatch(messages, options = {}) {
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+

@@ -3,15 +3,13 @@
  * Handles rendering and updating the user interface
  */
 
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 import { eventBus as EventBus } from "./events/EventBus.js";
 import { variableStore } from "./stores/VariableStore.js";
 import { ComponentRegistry } from "./ui/ComponentRegistry.js";
 
-// Debug mode constants
-const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
-const debugWarn = (...args) => console.warn(...args);
-const debugError = (...args) => console.error(...args);
+// Debug logger
+const logger = createDebugLogger('ui');
 
 let config = null;
 let currentPage = null;
@@ -32,9 +30,9 @@ import { eventBus } from "./events/EventBus.js";
 async function broadcastConfigUpdated() {
   try {
     await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromUI: true }, { destination: "LOCAL" });
-    debugLog("[UI] Config update broadcasted");
+    logger.log("[UI] Config update broadcasted");
   } catch (err) {
-    debugWarn("[UI] Warning: failed to broadcast config update:", err);
+    logger.warn("[UI] Warning: failed to broadcast config update:", err);
   }
 }
 
@@ -52,7 +50,7 @@ export function initUI(cfg) {
   
   // Listen for variable updates from VariableStore and update UI
   eventBus.on('store:variableResolved', (varName, value, pageIndex) => {
-    debugLog('[UI] Variable updated via EventBus:', varName, '=', value);
+    logger.log('[UI] Variable updated via EventBus:', varName, '=', value);
     updateRenderedValue(varName, value);
   });
 }
@@ -64,7 +62,7 @@ function showLoadingOverlay() {
     const content = document.getElementById('content');
     if (loader) loader.classList.remove('hidden');
     if (content) content.classList.add('hidden');
-  } catch (e) { debugWarn('[UI] Failed to show loading overlay', e); }
+  } catch (e) { logger.warn('[UI] Failed to show loading overlay', e); }
 }
 
 // Update the header title from config.global.title
@@ -74,7 +72,7 @@ function updateHeaderTitle() {
     if (headerTitle) {
       headerTitle.textContent = config?.global?.title || 'Macro Hero';
     }
-  } catch (e) { debugWarn('[UI] Failed to update header title', e); }
+  } catch (e) { logger.warn('[UI] Failed to update header title', e); }
 }
 
 // Hide the loading overlay and show the main content
@@ -84,7 +82,7 @@ function hideLoadingOverlay() {
     const content = document.getElementById('content');
     if (loader) loader.classList.add('hidden');
     if (content) content.classList.remove('hidden');
-  } catch (e) { debugWarn('[UI] Failed to hide loading overlay', e); }
+  } catch (e) { logger.warn('[UI] Failed to hide loading overlay', e); }
 }
 
 /**
@@ -93,7 +91,7 @@ function hideLoadingOverlay() {
  */
 export function setGlobalVariables(vars) {
   globalVariables = vars;
-  debugLog("[UI] Global variables stored:", globalVariables);
+  logger.log("[UI] Global variables stored:", globalVariables);
 }
 
 // ============================================
@@ -155,7 +153,7 @@ function selectFirstPage() {
     currentPage = 0;
     // Ensure the tabs update to reflect the selected page
     renderPageButtons();
-    renderPageContent(first).catch(err => debugError('[UI] Error rendering first page:', err));
+    renderPageContent(first).catch(err => logger.error('[UI] Error rendering first page:', err));
   } else {
       // No pages configured
       currentPage = null;
@@ -234,10 +232,10 @@ async function renderPageContent(page) {
       resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve)
         .then(allResolved => {
           page._resolved = allResolved;
-          debugLog('[UI] Background variable resolution complete for page');
+          logger.log('[UI] Background variable resolution complete for page');
         })
         .catch(err => {
-          debugError('[UI] Error during background variable resolution:', err);
+          logger.error('[UI] Error during background variable resolution:', err);
         });
     }
   }
@@ -290,10 +288,10 @@ export function updateRenderedValue(varName, value) {
         const resolvedVars = { ...globalVariables, ...(entry.page?._resolved || {}) };
         evaluateItemText(entry.item, resolvedVars)
           .then(res => { entry.element.textContent = res; })
-          .catch(err => debugError('[UI] Error evaluating layout expression:', err));
+          .catch(err => logger.error('[UI] Error evaluating layout expression:', err));
       }
     } catch (err) {
-      debugError('[UI] Error updating expression element:', err);
+      logger.error('[UI] Error updating expression element:', err);
     }
   }
 }
@@ -387,7 +385,7 @@ function evaluateAndSetElementText(element, item, page) {
   const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
   evaluateItemText(item, resolvedVars)
     .then(res => { element.textContent = res; })
-    .catch(err => { debugError('[UI] Error evaluating element text:', err); });
+    .catch(err => { logger.error('[UI] Error evaluating element text:', err); });
   
   return true;
 }
@@ -491,7 +489,7 @@ function renderLayoutElement(layoutItem, page) {
     return element;
   }
 
-  debugWarn("Unknown layout type:", layoutItem.type);
+  logger.warn("Unknown layout type:", layoutItem.type);
   return null;
 }
 
@@ -515,7 +513,7 @@ export function renderConfigUI() {
     renderScheduled = false;
 
     if (!config) {
-      debugWarn("[UI] No config available");
+      logger.warn("[UI] No config available");
       return;
     }
 
@@ -536,7 +534,7 @@ export function renderConfigUI() {
 }
 
 export async function updateConfig(newConfig) {
-  debugLog("[UI] Config updated, refreshing UI");
+  logger.log("[UI] Config updated, refreshing UI");
   // Don't show loading overlay - let the UI update progressively
   config = newConfig;
   updateHeaderTitle();
@@ -553,7 +551,7 @@ export async function updateConfig(newConfig) {
       page._resolved = { ...globalVars }; // Start with global vars
     }
   } catch (error) {
-    debugError("[UI] Error re-resolving global variables:", error);
+    logger.error("[UI] Error re-resolving global variables:", error);
   }
 
   // Re-render UI immediately - variables will resolve in background

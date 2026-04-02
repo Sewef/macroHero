@@ -1,11 +1,11 @@
-/**
+﻿/**
  * EventBus - Simple pub/sub system for variable changes
  * Replaces scattered callbacks with a cleaner event-based architecture
  */
 
-import { isDebugEnabled } from "../debugMode.js";
+import { createDebugLogger } from "../debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('EventBus') && console.log(...args);
+const logger = createDebugLogger('EventBus');
 
 class EventBus {
   constructor() {
@@ -23,7 +23,7 @@ class EventBus {
       this.listeners.set(eventName, new Set());
     }
     this.listeners.get(eventName).add(callback);
-    debugLog(`[EventBus] Subscribed to ${eventName}`);
+    logger.log(`[EventBus] Subscribed to ${eventName}`);
 
     // Return unsubscribe function
     return () => this.off(eventName, callback);
@@ -50,7 +50,7 @@ class EventBus {
       if (listeners.size === 0) {
         this.listeners.delete(eventName);
       }
-      debugLog(`[EventBus] Unsubscribed from ${eventName}`);
+      logger.log(`[EventBus] Unsubscribed from ${eventName}`);
     }
   }
 
@@ -95,7 +95,7 @@ class EventBus {
    */
   clear() {
     this.listeners.clear();
-    debugLog('[EventBus] All listeners cleared');
+    logger.log('[EventBus] All listeners cleared');
   }
 }
 
@@ -103,3 +103,4 @@ class EventBus {
 export const eventBus = new EventBus();
 
 export default EventBus;
+

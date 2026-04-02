@@ -1,29 +1,27 @@
 // config.js
 import OBR from "@owlbear-rodeo/sdk";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 import { loadConfigFile } from "./yamlLoader.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
 export const MODAL_LABEL = "macrohero.config";
 
-// Debug mode constants
-const debugLog = (...args) => isDebugEnabled('config') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+// Debug logger
+const logger = createDebugLogger('config');
 
 let isOBRReady = false;
 let currentPlayerId = null;
 
 OBR.onReady(async () => {
     isOBRReady = true;
-    debugLog("[OBR] SDK Ready");
+    logger.log("[OBR] SDK Ready");
     try {
         currentPlayerId = await OBR.player.getId();
-        debugLog("[OBR] Current player ID:", currentPlayerId);
+        logger.log("[OBR] Current player ID:", currentPlayerId);
     } catch (error) {
-        debugError("[OBR] Error getting player ID:", error);
+        logger.error("[OBR] Error getting player ID:", error);
     }
 });
 
@@ -40,7 +38,7 @@ async function ensureOBRReady() {
         // Safety timeout after 5 seconds
         setTimeout(() => {
             clearInterval(check);
-            debugWarn("[OBR] Timeout waiting for OBR ready");
+            logger.warn("[OBR] Timeout waiting for OBR ready");
             resolve();
         }, 5000);
     });
@@ -66,7 +64,7 @@ async function getRoomScopedLocalStorageKey() {
         const roomId = (OBR.room && OBR.room.id) ? OBR.room.id : (OBR.room && typeof OBR.room.getId === 'function' ? await OBR.room.getId() : 'unknown');
         return `${LOCAL_STORAGE_CONFIG_KEY}/${roomId}`;
     } catch (e) {
-        debugWarn('[CONFIG] Could not determine room id for localStorage key, using fallback', e);
+        logger.warn('[CONFIG] Could not determine room id for localStorage key, using fallback', e);
         return `${LOCAL_STORAGE_CONFIG_KEY}/unknown`;
     }
 }
@@ -89,7 +87,7 @@ export function cleanConfigForSave(cfg) {
         }
         return clone;
     } catch (e) {
-        debugWarn('[CONFIG] cleanConfigForSave failed, falling back to shallow clone', e);
+        logger.warn('[CONFIG] cleanConfigForSave failed, falling back to shallow clone', e);
         const clone = Object.assign({}, cfg);
         delete clone._resolvedGlobal;
         delete clone._modifiedVars;
@@ -116,10 +114,10 @@ export async function saveConfigToLocalStorage(cfg) {
         const key = await getRoomScopedLocalStorageKey();
         localStorage.setItem(key, configJson);
         const sizeKB = (new Blob([configJson]).size / 1024).toFixed(2);
-        debugLog("[CONFIG] Full config saved to localStorage (", sizeKB, "KB )", "key=", key);
+        logger.log("[CONFIG] Full config saved to localStorage (", sizeKB, "KB )", "key=", key);
         return true;
     } catch (error) {
-        debugError("[CONFIG] Error saving to localStorage:", error);
+        logger.error("[CONFIG] Error saving to localStorage:", error);
         return false;
     }
 }
@@ -131,11 +129,11 @@ export async function loadConfigFromLocalStorage() {
         const configJson = localStorage.getItem(key);
         if (configJson) {
             const cfg = JSON.parse(configJson);
-            debugLog("[CONFIG] Full config loaded from localStorage", "key=", key);
+            logger.log("[CONFIG] Full config loaded from localStorage", "key=", key);
             return cfg;
         }
     } catch (error) {
-        debugError("[CONFIG] Error loading from localStorage:", error);
+        logger.error("[CONFIG] Error loading from localStorage:", error);
     }
     return null;
 }
@@ -164,11 +162,11 @@ export async function loadConfig() {
         await ensureOBRReady();
         
         const playerId = await getPlayerId();
-        debugLog("[CONFIG] Loading config for player:", playerId);
+        logger.log("[CONFIG] Loading config for player:", playerId);
         
         // Get room metadata (persists across page reloads)
         const roomMetadata = await OBR.room.getMetadata();
-        debugLog("[CONFIG] Room metadata keys:", Object.keys(roomMetadata));
+        logger.log("[CONFIG] Room metadata keys:", Object.keys(roomMetadata));
         
         // Start with full config from room-scoped localStorage.
         // If not found, try to load the bundled config (YAML or JSON) shipped with the extension.
@@ -189,11 +187,11 @@ export async function loadConfig() {
             for (const { base, format } of tryPaths) {
                 try {
                     packaged = await loadConfigFile(base);
-                    debugLog(`[CONFIG] Loaded packaged default config from ${base}.yaml or .json`);
+                    logger.log(`[CONFIG] Loaded packaged default config from ${base}.yaml or .json`);
                     break;
                 } catch (e) {
                     // Silently try next path
-                    debugWarn(`[CONFIG] Could not load config from ${base}:`, e.message);
+                    logger.warn(`[CONFIG] Could not load config from ${base}:`, e.message);
                 }
             }
 
@@ -201,12 +199,12 @@ export async function loadConfig() {
                 config = JSON.parse(JSON.stringify(packaged));
                 try {
                     await saveConfigToLocalStorage(config);
-                    debugLog('[CONFIG] Packaged default persisted to room-scoped localStorage');
+                    logger.log('[CONFIG] Packaged default persisted to room-scoped localStorage');
                 } catch (e) {
-                    debugWarn('[CONFIG] Failed to persist packaged default to localStorage', e);
+                    logger.warn('[CONFIG] Failed to persist packaged default to localStorage', e);
                 }
             } else {
-                debugWarn('[CONFIG] Could not load packaged default config, using in-code defaultConfig');
+                logger.warn('[CONFIG] Could not load packaged default config, using in-code defaultConfig');
                 config = JSON.parse(JSON.stringify(defaultConfig));
             }
         }
@@ -228,7 +226,7 @@ export async function loadConfig() {
         
         return config;
     } catch (error) {
-        debugError("✗ [CONFIG] Error loading config:", error);
+        logger.error("✗ [CONFIG] Error loading config:", error);
         return defaultConfig;
     }
 }
@@ -250,7 +248,7 @@ export async function saveConfig(cfg) {
         await ensureOBRReady();
         
         const playerId = await getPlayerId();
-        debugLog("[CONFIG] Saving config for player:", playerId);
+        logger.log("[CONFIG] Saving config for player:", playerId);
         
         // Save full config to room-scoped localStorage (clean runtime fields first)
         await saveConfigToLocalStorage(cfg);
@@ -258,8 +256,8 @@ export async function saveConfig(cfg) {
         // No longer saving evaluated variable values to room metadata
         return true;
     } catch (error) {
-        debugError("✗ [CONFIG] Error saving config:", error);
-        debugError("[CONFIG] Error stack:", error.stack);
+        logger.error("✗ [CONFIG] Error saving config:", error);
+        logger.error("[CONFIG] Error stack:", error.stack);
         throw error;
     }
 }
@@ -270,52 +268,52 @@ export async function saveConfig(cfg) {
 // Flow: Modal edits config → sends broadcast → main app saves → main app re-renders
 // --------------------------------------
 export async function openConfigModal() {
-    debugLog("[MODAL] Opening config modal...");
+    logger.log("[MODAL] Opening config modal...");
     const current = await loadConfig();
-    debugLog("[MODAL] Current config loaded:", current);
+    logger.log("[MODAL] Current config loaded:", current);
 
     // Listen for the result from the modal
     const unsubscribe = OBR.broadcast.onMessage("macrohero.config.result", async (event) => {
-        debugLog("[MODAL] Received broadcast 'macrohero.config.result':", event.data);
+        logger.log("[MODAL] Received broadcast 'macrohero.config.result':", event.data);
         try {
             if (event.data?.updatedConfig) {
-                debugLog("[MODAL] Updated config found; persisting via saveConfig...", event.data.updatedConfig);
+                logger.log("[MODAL] Updated config found; persisting via saveConfig...", event.data.updatedConfig);
                 try {
                     await saveConfig(event.data.updatedConfig);
-                    debugLog("[MODAL] Config persisted via updatedConfig path");
+                    logger.log("[MODAL] Config persisted via updatedConfig path");
                 } catch (error) {
-                    debugError("✗ [MODAL] Failed to save config (updatedConfig path):", error);
+                    logger.error("✗ [MODAL] Failed to save config (updatedConfig path):", error);
                 }
             } else if (event.data?.savedFromModal) {
-                debugLog("[MODAL] Received savedFromModal flag — loading full config from room-scoped localStorage");
+                logger.log("[MODAL] Received savedFromModal flag — loading full config from room-scoped localStorage");
                 try {
                     const cfg = await loadConfigFromLocalStorage();
                     if (cfg) {
-                        debugLog("[MODAL] Full config loaded from localStorage; persisting via saveConfig...");
+                        logger.log("[MODAL] Full config loaded from localStorage; persisting via saveConfig...");
                         await saveConfig(cfg);
                     } else {
-                        debugWarn("[MODAL] No full config found in localStorage to persist");
+                        logger.warn("[MODAL] No full config found in localStorage to persist");
                     }
                 } catch (error) {
-                    debugError("✗ [MODAL] Error loading/saving config from localStorage:", error);
+                    logger.error("✗ [MODAL] Error loading/saving config from localStorage:", error);
                 }
             } else {
-                debugLog("[MODAL] Modal closed without config update");
+                logger.log("[MODAL] Modal closed without config update");
             }
 
             // Notify main app to reload UI — send a small flag to avoid size limits
             try {
                 await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromModal: true }, { destination: "LOCAL" });
-                debugLog("[MODAL] Broadcasted small config.updated flag to LOCAL");
+                logger.log("[MODAL] Broadcasted small config.updated flag to LOCAL");
             } catch (err) {
-                debugWarn("[MODAL] Warning: failed to broadcast small config.updated flag:", err);
+                logger.warn("[MODAL] Warning: failed to broadcast small config.updated flag:", err);
             }
         } finally {
             unsubscribe();
         }
     });
 
-    debugLog("[MODAL] Opening modal window...");
+    logger.log("[MODAL] Opening modal window...");
     await OBR.modal.open({
         id: "macrohero.config",
         url: "/configModal.html",

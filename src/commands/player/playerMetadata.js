@@ -1,10 +1,9 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('playerMetadata') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("playerMetadata");
+
 
 /**
  * Get all player metadata
@@ -99,3 +98,4 @@ export async function getPlayerRole() {
 export async function hasPlayerPermission(permission) {
   return await OBR.player.hasPermission(permission);
 }
+

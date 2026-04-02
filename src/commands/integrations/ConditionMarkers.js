@@ -1,16 +1,15 @@
-/**
+﻿/**
  * Conditions Markers Integration
  * Handles status conditions and markers on tokens (poison, stun, etc.)
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('ConditionMarkers') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("ConditionMarkers");
+
 
 /**
  * Get conditions applied to an item
@@ -27,9 +26,9 @@ export async function getConditions(itemId) {
       if (typeof ext.getConditions === 'function') {
         return await ext.getConditions(itemId);
       }
-      debugLog("[ConditionMarkers] Native extension present but no getItemConditions/getConditions method");
+      logger.log("[ConditionMarkers] Native extension present but no getItemConditions/getConditions method");
     } else {
-      debugLog("[ConditionMarkers] Native extension not present, using fallback");
+      logger.log("[ConditionMarkers] Native extension not present, using fallback");
     }
 
     // Fallback: scan scene attachments for condition markers
@@ -37,7 +36,7 @@ export async function getConditions(itemId) {
     const markers = items.filter(item => item.attachedTo === itemId && item.name && item.name.startsWith("Condition Marker - "));
     return markers.map(m => ({ name: m.name.replace("Condition Marker - ", "") }));
   } catch (error) {
-    debugError("Failed to get item conditions:", error);
+    logger.error("Failed to get item conditions:", error);
     throw error;
   }
 }
@@ -53,7 +52,7 @@ export async function getConditions(itemId) {
 export async function addCondition(itemId, conditionName, value = null) {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.addCondition === 'function') {
-      debugLog(`[ConditionMarkers] Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
+      logger.log(`[ConditionMarkers] Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
       return await Ext.ConditionMarkers.addCondition(itemId, conditionName, value);
     }
     // Fallback: attempt to use the Condition Markers API (request/response pattern)
@@ -66,7 +65,7 @@ export async function addCondition(itemId, conditionName, value = null) {
       payload.value = value;
     }
 
-    debugLog(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
+    logger.log(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
 
     const requestResult = await BroadcastHelpers.broadcastRequest(
       API_REQUEST_CHANNEL,
@@ -76,17 +75,16 @@ export async function addCondition(itemId, conditionName, value = null) {
     );
 
     if (requestResult.success) {
-      debugLog(`[ConditionMarkers] API response for add '${conditionName}':`, requestResult.data);
+      logger.log(`[ConditionMarkers] API response for add '${conditionName}':`, requestResult.data);
       return requestResult.data;
     } else {
       throw new Error(requestResult.error);
     }
   } catch (error) {
-    debugError("Failed to add condition:", error);
+    logger.error("Failed to add condition:", error);
     throw error;
   }
 }
-
 
 
 /**
@@ -131,10 +129,10 @@ export async function removeCondition(itemId, conditionName) {
       }, 5000);
     });
 
-    debugLog(`[ConditionMarkers] API response for remove '${conditionName}':`, res);
+    logger.log(`[ConditionMarkers] API response for remove '${conditionName}':`, res);
     return res;
   } catch (error) {
-    debugError("Failed to remove condition:", error);
+    logger.error("Failed to remove condition:", error);
     throw error;
   }
 }
@@ -161,7 +159,7 @@ export async function toggleCondition(itemId, conditionName) {
       await addCondition(itemId, conditionName);
     }
   } catch (error) {
-    debugError("Failed to toggle condition:", error);
+    logger.error("Failed to toggle condition:", error);
     throw error;
   }
 }
@@ -183,7 +181,7 @@ export async function clearAllConditions(itemId) {
       await removeCondition(itemId, name);
     }
   } catch (error) {
-    debugError("Failed to clear conditions:", error);
+    logger.error("Failed to clear conditions:", error);
     throw error;
   }
 }
@@ -203,7 +201,7 @@ export async function hasCondition(itemId, conditionName) {
     const conditions = await getConditions(itemId);
     return conditions.some(c => (c.name ? c.name === conditionName : c === conditionName));
   } catch (error) {
-    debugError("Failed to check condition:", error);
+    logger.error("Failed to check condition:", error);
     throw error;
   }
 }
@@ -224,7 +222,7 @@ export async function hasCondition(itemId, conditionName) {
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
-    debugLog(`[ConditionMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
+    logger.log(`[ConditionMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
     
     let tokenItem = null;
     if (allItems) {
@@ -235,7 +233,7 @@ export async function getValue(tokenId, conditionName, allItems = null) {
     }
     
     if (!tokenItem) {
-      debugLog(`[ConditionMarkers.getValue] Token not found`);
+      logger.log(`[ConditionMarkers.getValue] Token not found`);
       return null;
     }
     
@@ -249,11 +247,11 @@ export async function getValue(tokenId, conditionName, allItems = null) {
       "keegan.dev.condition-markers/metadata" in item.metadata
     );
     
-    debugLog(`[ConditionMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
+    logger.log(`[ConditionMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
     
     // For each marker, find TEXT labels attached to it
     for (const marker of markers) {
-      debugLog(`[ConditionMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
+      logger.log(`[ConditionMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
       
       const labels = allSceneItems.filter(item =>
         item.attachedTo === marker.id &&
@@ -263,33 +261,33 @@ export async function getValue(tokenId, conditionName, allItems = null) {
         item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
       );
       
-      debugLog(`[ConditionMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
+      logger.log(`[ConditionMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
       
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
-        debugLog(`[ConditionMarkers.getValue] Label text: "${labelText}"`);
+        logger.log(`[ConditionMarkers.getValue] Label text: "${labelText}"`);
         const trimmed = labelText && labelText.trim() ? labelText.trim() : null;
         if (!trimmed) {
-          debugLog(`[ConditionMarkers.getValue] Returning: null (empty)`);
+          logger.log(`[ConditionMarkers.getValue] Returning: null (empty)`);
           return null;
         }
 
         // Simpler numeric parsing: use Number() and ensure it's finite.
         const n = Number(trimmed);
         if (Number.isFinite(n)) {
-          debugLog(`[ConditionMarkers.getValue] Parsed number: ${n}`);
+          logger.log(`[ConditionMarkers.getValue] Parsed number: ${n}`);
           return n;
         }
 
-        debugLog(`[ConditionMarkers.getValue] Label not numeric, returning null`);
+        logger.log(`[ConditionMarkers.getValue] Label not numeric, returning null`);
         return null;
       }
     }
     
-    debugLog(`[ConditionMarkers.getValue] No matching label found, returning null`);
+    logger.log(`[ConditionMarkers.getValue] No matching label found, returning null`);
     return null;
   } catch (error) {
-    debugError(`[ConditionMarkers.getValue] Error:`, error);
+    logger.error(`[ConditionMarkers.getValue] Error:`, error);
     return null;
   }
 }
@@ -303,3 +301,4 @@ export default {
   hasCondition,
   getValue
 };
+

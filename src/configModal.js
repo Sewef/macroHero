@@ -1,13 +1,10 @@
-import OBR from "@owlbear-rodeo/sdk";
+﻿import OBR from "@owlbear-rodeo/sdk";
 import YAML from "js-yaml";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStorage } from "./config.js";
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
-// Debug mode constants - use centralized debugMode module
-const debugLog = (...args) => isDebugEnabled('configModal') && console.log(...args);
-const debugWarn = (...args) => console.warn(...args);
-const debugError = (...args) => console.error(...args);
+const logger = createDebugLogger('configModal');
 
 let currentConfig = null;
 let currentTab = 'editor';
@@ -72,7 +69,7 @@ function ensureVariableModalInDom() {
         <div class="modal-content" style="width: 500px; max-width: 95vw;">
           <div class="modal-header">
             <h3 id="variableModalTitle">Edit Variable</h3>
-            <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">×</button>
+            <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">Ã—</button>
           </div>
           <div class="input-group">
             <label for="variableKey">Name</label>
@@ -298,31 +295,31 @@ async function closeModal(data) {
           } else {
             await OBR.broadcast.sendMessage("macrohero.config.result", data);
           }
-          debugLog(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
+          logger.log(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
           sent = true;
           break;
         } catch (err) {
           // Log detailed info for debugging
           try {
-            debugWarn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
+            logger.warn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
           } catch (logErr) {
-            debugWarn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
+            logger.warn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
           }
         }
       }
 
       if (!sent) {
-        debugError('[MODAL] ERROR: All attempts to broadcast config.result failed');
+        logger.error('[MODAL] ERROR: All attempts to broadcast config.result failed');
       }
     }
   } catch (err) {
-    debugError("[MODAL] Unexpected error while broadcasting config result:", err);
+    logger.error("[MODAL] Unexpected error while broadcasting config result:", err);
   }
 
   try {
     await OBR.modal.close(MODAL_LABEL);
   } catch (err) {
-    debugWarn("[MODAL] Warning: modal.close failed:", err);
+    logger.warn("[MODAL] Warning: modal.close failed:", err);
   }
 }
 
@@ -502,9 +499,9 @@ function syncToJson() {
     const config = buildConfigFromEditor();
     const format = getConfigFormat();
     document.getElementById("cfgArea").value = formatConfig(config, format);
-    debugLog(`[CONFIG] Exported to ${format.toUpperCase()}`);
+    logger.log(`[CONFIG] Exported to ${format.toUpperCase()}`);
   } catch (e) {
-    debugError(`[CONFIG] Error exporting config:`, e);
+    logger.error(`[CONFIG] Error exporting config:`, e);
     alert("Error exporting config: " + e.message);
   }
 }
@@ -530,7 +527,7 @@ function syncFromJson() {
 
     currentConfig = parsed;
     renderEditor(parsed);
-    alert(`✓ Synced from ${format.toUpperCase()} to visual editor`);
+    alert(`âœ“ Synced from ${format.toUpperCase()} to visual editor`);
   } catch (e) {
     alert(`Invalid ${format.toUpperCase()}: ` + e.message);
   }
@@ -599,8 +596,8 @@ function renderEditorSidebar(config) {
           <span class="variable-key">${k}</span>
           <span class="variable-value" title="${def}">${def.substring(0, 30)}${def.length > 30 ? '...' : ''}</span>
           <div class="variable-actions">
-            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">✎</button>
-            <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">×</button>
+            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">âœŽ</button>
+            <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">Ã—</button>
           </div>
         </div>
         `;
@@ -633,7 +630,7 @@ function renderPageList(config) {
       <div class="page-item-sidebar ${isSelected ? 'active' : ''}" data-page-index="${index}" onclick="selectPage(${index})">
         <span class="page-item-sidebar-name">${label}</span>
         <div class="page-item-sidebar-actions" onclick="event.stopPropagation()">
-          <button type="button" class="btn-small" onclick="deletePage(${index}); event.stopPropagation();">×</button>
+          <button type="button" class="btn-small" onclick="deletePage(${index}); event.stopPropagation();">Ã—</button>
         </div>
       </div>
     `;
@@ -699,8 +696,8 @@ function renderPageContent(pageIndex) {
         <span class="variable-key">${key}</span>
         <span class="variable-value" title="${def}">${def.substring(0, 20)}${def.length > 20 ? '...' : ''}</span>
         <div class="variable-actions">
-          <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${pageIndex}, '${key}')">✎</button>
-          <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${pageIndex}, '${key}')">×</button>
+          <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${pageIndex}, '${key}')">âœŽ</button>
+          <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${pageIndex}, '${key}')">Ã—</button>
         </div>
       </div>
       `;
@@ -743,12 +740,12 @@ function renderPageContent(pageIndex) {
         childHtml += `
         <div class="layout-item" data-page-index="${pageIdx}" data-element-index="${parentIndex}" data-child-index="${childIdx}" draggable="true" style="margin-left: ${indent}px; opacity: 0.85;">
           <div class="layout-item-info">
-            <span class="layout-item-type">├─ ${childType}</span>
+            <span class="layout-item-type">â”œâ”€ ${childType}</span>
             <span>${childContent}</span>
           </div>
           <div class="layout-item-actions">
-            <button type="button" class="btn-small" onclick="${editCall}">✎</button>
-            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">×</button>
+            <button type="button" class="btn-small" onclick="${editCall}">âœŽ</button>
+            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">Ã—</button>
           </div>
         </div>
         `;
@@ -795,8 +792,8 @@ function renderPageContent(pageIndex) {
           <span>${content}</span>
         </div>
         <div class="layout-item-actions">
-          <button type="button" class="btn-small" onclick="editElement(${pageIndex}, ${itemIndex})">✎</button>
-          <button type="button" class="btn-small btn-danger" onclick="deleteElement(${pageIndex}, ${itemIndex})">×</button>
+          <button type="button" class="btn-small" onclick="editElement(${pageIndex}, ${itemIndex})">âœŽ</button>
+          <button type="button" class="btn-small btn-danger" onclick="deleteElement(${pageIndex}, ${itemIndex})">Ã—</button>
         </div>
       </div>
       `;
@@ -1864,12 +1861,12 @@ async function getCurrentUserId() {
     if (OBR && OBR.player) {
       if (OBR.player.id) {
         _tokenHelperMeId = OBR.player.id;
-        debugLog('[TOKEN_HELPER] detected current user via OBR.player.id:', _tokenHelperMeId);
+        logger.log('[TOKEN_HELPER] detected current user via OBR.player.id:', _tokenHelperMeId);
         return _tokenHelperMeId;
       }
     }
   } catch (err) {
-    debugWarn('[TOKEN_HELPER] getCurrentUserId unexpected error:', err);
+    logger.warn('[TOKEN_HELPER] getCurrentUserId unexpected error:', err);
   }
 
   return null;
@@ -1890,7 +1887,7 @@ async function fetchSceneItemsForTokenHelper() {
     _tokenHelperCache = Array.isArray(items) ? items : [];
     return _tokenHelperCache;
   } catch (err) {
-    debugError('[TOKEN_HELPER] Error fetching scene items:', err);
+    logger.error('[TOKEN_HELPER] Error fetching scene items:', err);
     _tokenHelperCache = [];
     throw err;
   }
@@ -1898,7 +1895,7 @@ async function fetchSceneItemsForTokenHelper() {
 
 function truncated(str, len = 36) {
   if (!str) return '';
-  return str.length > len ? str.substring(0, len) + '…' : str;
+  return str.length > len ? str.substring(0, len) + 'â€¦' : str;
 }
 
 async function copyToClipboard(text) {
@@ -1927,7 +1924,7 @@ async function copyToClipboard(text) {
       await navigator.clipboard.writeText(text);
       return;
     } catch (err) {
-      // Use debug-level logging here — browser will often emit a policy violation message
+      // Use debug-level logging here â€” browser will often emit a policy violation message
       // that cannot be suppressed; keep our log quieter and continue to fallbacks.
       console.debug('[TOKEN_HELPER] navigator.clipboard.writeText failed (falling back):', err);
     }
@@ -1948,9 +1945,9 @@ async function copyToClipboard(text) {
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     if (ok) return;
-    debugWarn('[TOKEN_HELPER] document.execCommand returned false');
+    logger.warn('[TOKEN_HELPER] document.execCommand returned false');
   } catch (err) {
-    debugWarn('[TOKEN_HELPER] execCommand fallback failed:', err);
+    logger.warn('[TOKEN_HELPER] execCommand fallback failed:', err);
   }
 
   // Last resort: show a prompt with the text so the user can copy manually
@@ -1958,7 +1955,7 @@ async function copyToClipboard(text) {
     window.prompt('Copy the ID (Ctrl/Cmd+C then Enter):', text);
     return;
   } catch (err) {
-    debugWarn('[TOKEN_HELPER] prompt fallback failed:', err);
+    logger.warn('[TOKEN_HELPER] prompt fallback failed:', err);
   }
 
   throw new Error('Copy to clipboard failed (all fallbacks)');
@@ -1997,7 +1994,7 @@ function renderTokenHelperList(items) {
     header.style.marginBottom = '8px';
 
     const title = document.createElement('div');
-    title.innerHTML = `<strong style="color:#c8adff">${layer}</strong> — ${groups[layer].length} items`;
+    title.innerHTML = `<strong style="color:#c8adff">${layer}</strong> â€” ${groups[layer].length} items`;
     header.appendChild(title);
 
     const expandAllBtn = document.createElement('div');
@@ -2065,11 +2062,11 @@ function renderTokenHelperList(items) {
       const meta = document.createElement('span');
       meta.style.color = '#bbb';
       meta.style.fontSize = '0.9em';
-      meta.textContent = `${it.layer || ''} • ${it.visible ? 'visible' : 'hidden'}`;
+      meta.textContent = `${it.layer || ''} â€¢ ${it.visible ? 'visible' : 'hidden'}`;
       // show an abbreviated creator id and reveal full id on hover
       const creator = it.createdUserId || it.createdBy || it.ownerId || it.lastModifiedUserId || null;
       if (creator) {
-        meta.textContent += ` • creator: ${String(creator).substring(0, 8)}`;
+        meta.textContent += ` â€¢ creator: ${String(creator).substring(0, 8)}`;
         meta.title = `creator: ${creator}`;
       }
       left.appendChild(meta);
@@ -2100,10 +2097,10 @@ function renderTokenHelperList(items) {
           copyBtn.textContent = 'Copied';
           setTimeout(() => { copyBtn.textContent = original; }, 1200);
         } catch (err) {
-          debugWarn('[TOKEN_HELPER] copy failed:', err);
+          logger.warn('[TOKEN_HELPER] copy failed:', err);
           // copyToClipboard already used prompt fallback - inform user in status
           const s = document.getElementById('tokensStatus');
-          if (s) s.textContent = 'Copy failed — please copy the ID from the prompt or manually.';
+          if (s) s.textContent = 'Copy failed â€” please copy the ID from the prompt or manually.';
         }
       };
       right.appendChild(copyBtn);
@@ -2187,7 +2184,7 @@ async function applyTokensFiltersAndRender() {
       if (!detected) {
         // Inform the user and show no items (safer than showing all)
         const container = document.getElementById('tokensList');
-        if (container) container.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID — cannot filter by "Me". Try Refresh.</div>';
+        if (container) container.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID â€” cannot filter by "Me". Try Refresh.</div>';
         if (status) status.textContent = 'Could not detect current user ID';
         return;
       }
@@ -2198,9 +2195,9 @@ async function applyTokensFiltersAndRender() {
     // Diagnostics: log total and some creator ids
     try {
       const creators = Array.from(new Set(items.map(it => it.createdUserId).filter(Boolean)));
-      debugLog('[TOKEN_HELPER] applyFilters', { filter, me: _tokenHelperMeId, total: items.length, creators: creators.slice(0, 20) });
+      logger.log('[TOKEN_HELPER] applyFilters', { filter, me: _tokenHelperMeId, total: items.length, creators: creators.slice(0, 20) });
     } catch (err) {
-      debugWarn('[TOKEN_HELPER] diagnostics failure', err);
+      logger.warn('[TOKEN_HELPER] diagnostics failure', err);
     }
 
     // Use a robust getter for creator id to handle different possible shapes
@@ -2224,7 +2221,7 @@ async function applyTokensFiltersAndRender() {
 
     renderTokenHelperList(items);
   } catch (err) {
-    debugError('[TOKEN_HELPER] Filter/render failed:', err);
+    logger.error('[TOKEN_HELPER] Filter/render failed:', err);
   }
 }
 
@@ -2293,7 +2290,7 @@ function loadDebugModes() {
     try {
       return JSON.parse(stored);
     } catch (e) {
-      debugError('Failed to parse debug modes from localStorage:', e);
+      logger.error('Failed to parse debug modes from localStorage:', e);
       return {};
     }
   }
@@ -2307,9 +2304,9 @@ function loadDebugModes() {
 function saveDebugModesToStorage(debugModes) {
   try {
     localStorage.setItem('macroHero_debugMode', JSON.stringify(debugModes));
-    debugLog('Debug modes saved to localStorage:', debugModes);
+    logger.log('Debug modes saved to localStorage:', debugModes);
   } catch (e) {
-    debugError('Failed to save debug modes to localStorage:', e);
+    logger.error('Failed to save debug modes to localStorage:', e);
   }
 }
 
@@ -2320,9 +2317,9 @@ function saveDebugModesToStorage(debugModes) {
 async function broadcastDebugModes(debugModes) {
   try {
     await OBR.broadcast.sendMessage('macrohero.debug.modes', debugModes, { destination: 'LOCAL' });
-    debugLog('Debug modes broadcasted locally:', debugModes);
+    logger.log('Debug modes broadcasted locally:', debugModes);
   } catch (err) {
-    debugWarn('Failed to broadcast debug modes:', err);
+    logger.warn('Failed to broadcast debug modes:', err);
   }
 }
 
@@ -2453,7 +2450,7 @@ async function handleModuleToggle(moduleName, isChecked, categoryName, categoryC
   // Restore change listener
   categoryCheckbox.onchange = oldChangeHandler;
   
-  debugLog(`Debug mode toggled for ${moduleName}:`, isChecked);
+  logger.log(`Debug mode toggled for ${moduleName}:`, isChecked);
 }
 
 /**
@@ -2488,7 +2485,7 @@ async function updateCategoryModules(categoryName, modules, isChecked) {
     categoryCheckbox.indeterminate = false;
   }
   
-  debugLog(`Debug category '${categoryName}' toggled to:`, isChecked);
+  logger.log(`Debug category '${categoryName}' toggled to:`, isChecked);
 }
 
 // Handle config format switching
@@ -2527,13 +2524,13 @@ function switchConfigFormat() {
       
       // Convert to target format
       cfgArea.value = formatConfig(config, format);
-      debugLog(`[CONFIG] Converted from ${currentFormat.toUpperCase()} to ${format.toUpperCase()}`);
+      logger.log(`[CONFIG] Converted from ${currentFormat.toUpperCase()} to ${format.toUpperCase()}`);
     } catch (e) {
-      debugWarn(`[CONFIG] Could not convert config:`, e.message);
+      logger.warn(`[CONFIG] Could not convert config:`, e.message);
       // Leave unchanged if conversion fails
     }
   } catch (e) {
-    debugError(`[CONFIG] Format switch error:`, e);
+    logger.error(`[CONFIG] Format switch error:`, e);
   }
 }
 
@@ -2548,7 +2545,7 @@ formatRadios.forEach(radio => {
 
 // Cancel
 document.getElementById("cancelBtn").onclick = () => {
-  debugLog("Cancel clicked");
+  logger.log("Cancel clicked");
   closeModal()
 };
 
@@ -2557,7 +2554,7 @@ document.getElementById("saveBtn").onclick = async () => {
   const apiKeyInput = document.getElementById("apiKeyInput");
   const sheetIdInput = document.getElementById("sheetIdInput");
   
-  debugLog("Save clicked, validating...");
+  logger.log("Save clicked, validating...");
 
   try {
     let config;
@@ -2565,13 +2562,13 @@ document.getElementById("saveBtn").onclick = async () => {
     // Build config from current tab
     if (currentTab === 'json') {
       const text = document.getElementById("cfgArea").value;
-      const format = getConfigFormat(); // Utiliser le format sélectionné
+      const format = getConfigFormat(); // Utiliser le format sÃ©lectionnÃ©
       config = parseConfig(text, format); // Utiliser parseConfig au lieu de JSON.parse
     } else {
       config = buildConfigFromEditor();
     }
     
-    debugLog("✓ Config built successfully:", config);
+    logger.log("âœ“ Config built successfully:", config);
     
     const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
     const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
@@ -2620,15 +2617,15 @@ document.getElementById("saveBtn").onclick = async () => {
     // Persist full config to room-scoped localStorage (modal context)
     try {
       await saveConfigToLocalStorage(config);
-      debugLog("✓ Config saved to room-scoped localStorage by modal");
+      logger.log("âœ“ Config saved to room-scoped localStorage by modal");
     } catch (err) {
-      debugWarn("[MODAL] Failed to save full config to localStorage:", err);
+      logger.warn("[MODAL] Failed to save full config to localStorage:", err);
     }
 
-    debugLog("✓ Config valid, notifying main app to reload from storage...");
+    logger.log("âœ“ Config valid, notifying main app to reload from storage...");
     await closeModal({ savedFromModal: true, gsheetUpdated: true });
   } catch (e) {
-    debugError("✗ Validation error:", e);
+    logger.error("âœ— Validation error:", e);
     alert("Error: " + e.message);
   }
 };
@@ -2645,12 +2642,12 @@ function maskSensitiveData(str, visibleChars = 4) {
   }
   const start = str.substring(0, visibleChars);
   const end = str.substring(str.length - visibleChars);
-  const masked = '•'.repeat(Math.min(12, str.length - visibleChars * 2));
+  const masked = 'â€¢'.repeat(Math.min(12, str.length - visibleChars * 2));
   return `${start}${masked}${end}`;
 }
 
 OBR.onReady(() => {
-  debugLog("=== Config Modal Ready ===");
+  logger.log("=== Config Modal Ready ===");
   
   // Load Google Sheets credentials from localStorage
   const { apiKey, sheetId } = getGoogleSheetsCredentials();
@@ -2673,7 +2670,7 @@ OBR.onReady(() => {
   
   // Load current config
   loadConfig().then(cfg => {
-    debugLog("Modal loaded current config:", cfg);
+    logger.log("Modal loaded current config:", cfg);
     currentConfig = cfg;
     renderEditor(cfg);
     document.getElementById("cfgArea").value = JSON.stringify(cfg, null, 2);
@@ -2697,17 +2694,18 @@ OBR.onReady(() => {
     // Initialize Debug Mode UI
     initializeDebugModeUI();
     
-    // No delegated fallback — explicit handlers above are sufficient and less intrusive.
+    // No delegated fallback â€” explicit handlers above are sufficient and less intrusive.
     // Ensure initial tab state
     switchTab(currentTab);
   }).catch(error => {
-    debugError("Error loading config in modal:", error);
+    logger.error("Error loading config in modal:", error);
   });
   
   // --- Token Helper Init ---
   try {
     refreshTokenHelper();
   } catch (err) {
-    debugError('[TOKEN_HELPER] Init error:', err);
+    logger.error('[TOKEN_HELPER] Init error:', err);
   }
 });
+

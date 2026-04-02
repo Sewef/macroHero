@@ -1,12 +1,11 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 import { getTokenPosition } from "../token/tokenHelpers.js";
 import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Embers') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Embers");
+
 
 // Embers constants
 const APP_KEY = "eu.armindo.embers";
@@ -22,7 +21,7 @@ async function getPlayerId() {
   try {
     return await OBR.player.getId();
   } catch (error) {
-    debugError(`[Embers] Failed to get player ID:`, error.message);
+    logger.error(`[Embers] Failed to get player ID:`, error.message);
     return "unknown";
   }
 }
@@ -105,11 +104,11 @@ class EmbersSequence {
         const casterPos = await getTokenPosition(casterId);
         const targetPos = await getTokenPosition(targetId);
         if (!casterPos) {
-          debugWarn(`[Embers] Caster ${casterId} not found`);
+          logger.warn(`[Embers] Caster ${casterId} not found`);
           return false;
         }
         if (!targetPos) {
-          debugWarn(`[Embers] Target ${targetId} not found`);
+          logger.warn(`[Embers] Target ${targetId} not found`);
           return false;
         }
         instruction.effectProperties.source = casterPos;
@@ -148,7 +147,7 @@ class EmbersSequence {
       this.asyncResolvers.push(async () => {
         const position = await getTokenPosition(tokenId);
         if (!position) {
-          debugWarn(`[Embers] Token ${tokenId} not found`);
+          logger.warn(`[Embers] Token ${tokenId} not found`);
           return false;
         }
         instruction.effectProperties.source = position;
@@ -185,7 +184,7 @@ class EmbersSequence {
       const casterPos = await getTokenPosition(casterId);
       const targetPos = await getTokenPosition(targetId);
       if (!casterPos || !targetPos) {
-        debugWarn(`[Embers] Caster or target not found`);
+        logger.warn(`[Embers] Caster or target not found`);
         return false;
       }
       instruction.effectProperties.source = casterPos;
@@ -228,7 +227,7 @@ class EmbersSequence {
    */
   then() {
     if (this.currentContext.length === 0) {
-      debugWarn('[Embers] then() called with no previous instruction');
+      logger.warn('[Embers] then() called with no previous instruction');
       return this;
     }
     
@@ -275,7 +274,7 @@ class EmbersSequence {
       }
 
       if (this.instructions.length === 0) {
-        debugError('[Embers] No instructions to cast');
+        logger.error('[Embers] No instructions to cast');
         return;
       }
 
@@ -283,7 +282,7 @@ class EmbersSequence {
       const playerId = await getPlayerId();
       const message = buildMessage(this.instructions, finalOptions, playerId);
 
-      debugLog(`[Embers] Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
+      logger.log(`[Embers] Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
         JSON.stringify(message, null, 2));
 
       const result = await BroadcastHelpers.broadcastMessage(
@@ -293,26 +292,26 @@ class EmbersSequence {
       );
       
       if (result.success) {
-        debugLog(`[Embers] ✓ Message sent (${this.instructions.length} instruction(s))`);
+        logger.log(`[Embers] âœ“ Message sent (${this.instructions.length} instruction(s))`);
       } else {
-        debugError(`[Embers] Failed to broadcast: ${result.error}`);
+        logger.error(`[Embers] Failed to broadcast: ${result.error}`);
       }
     } catch (error) {
-      debugError('[Embers] Failed to cast:', error.message);
+      logger.error('[Embers] Failed to cast:', error.message);
     }
   }
 }
 
 export async function sendInstructions(instructions, options = {}) {
   if (!Array.isArray(instructions) || instructions.length === 0) {
-    debugError('[Embers] sendInstructions requires a non-empty array');
+    logger.error('[Embers] sendInstructions requires a non-empty array');
     return;
   }
 
   try {
     const playerId = await getPlayerId();
     const message = buildMessage(instructions, options, playerId);
-    debugLog(`[Embers] Broadcasting ${instructions.length} raw instruction(s):`, 
+    logger.log(`[Embers] Broadcasting ${instructions.length} raw instruction(s):`, 
       JSON.stringify(message, null, 2));
     
     const result = await BroadcastHelpers.broadcastMessage(
@@ -322,12 +321,12 @@ export async function sendInstructions(instructions, options = {}) {
     );
     
     if (result.success) {
-      debugLog(`[Embers] ✓ Message sent`);
+      logger.log(`[Embers] âœ“ Message sent`);
     } else {
-      debugError(`[Embers] Failed to broadcast: ${result.error}`);
+      logger.error(`[Embers] Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
-    debugError('[Embers] Failed to send instructions:', error.message);
+    logger.error('[Embers] Failed to send instructions:', error.message);
   }
 }
 
@@ -354,3 +353,4 @@ export async function castCone(effectId, casterId, targetId, config) {
     .cone(effectId, casterId, targetId, config)
     .cast();
 }
+

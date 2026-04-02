@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VariableEngine - Centralized variable resolution and evaluation
  * 
  * Consolidates:
@@ -14,10 +14,9 @@ import * as math from "mathjs";
 import { executionSandbox } from "./ExecutionSandbox.js";
 import { eventBus } from "../events/EventBus.js";
 import { variableStore } from "../stores/VariableStore.js";
-import { isDebugEnabled } from "../debugMode.js";
+import { createDebugLogger } from "../debugMode.js";
 
-const debugLog = (...args) => isDebugEnabled('VariableEngine') && console.log(...args);
-const debugError = (...args) => console.error(...args);
+const logger = createDebugLogger('VariableEngine');
 
 // Cache for dependency graphs
 const dependencyCache = new WeakMap();
@@ -42,7 +41,7 @@ class VariableEngine {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      debugLog('[Engine] Evaluating expression:', expression);
+      logger.log('[Engine] Evaluating expression:', expression);
 
       // Detect if async is needed
       const hasAsync = this._hasAsyncCall(expression);
@@ -54,7 +53,7 @@ class VariableEngine {
 
       return result;
     } catch (error) {
-      debugError('[Engine] Evaluation error:', error);
+      logger.error('[Engine] Evaluation error:', error);
       return null;
     }
   }
@@ -168,7 +167,7 @@ class VariableEngine {
         // Emit event for this variable resolution
         eventBus.emit('engine:variableResolved', varName, value);
       } catch (error) {
-        debugError('[Engine] Error resolving', varName, error);
+        logger.error('[Engine] Error resolving', varName, error);
         resolved[varName] = null;
       }
     }
@@ -296,3 +295,4 @@ class VariableEngine {
 export const variableEngine = new VariableEngine();
 
 export default VariableEngine;
+

@@ -1,10 +1,9 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Announcement') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Announcement");
+
 
 /**
  * Announcement Integration
@@ -22,7 +21,7 @@ const ANNOUNCEMENT_KEY = "dev.sharkbrain.announcement/bar-1";
  * @returns {Promise<void>}
  */
 export async function setAnnouncement(content, active = true) {
-    debugLog("Setting announcement", { content, active });
+    logger.log("Setting announcement", { content, active });
     
     const metadata = await OBR.room.getMetadata();
     
@@ -42,7 +41,7 @@ export async function setAnnouncement(content, active = true) {
  * @returns {Promise<{active: boolean, content: string} | null>}
  */
 export async function getAnnouncement() {
-    debugLog("Getting announcement");
+    logger.log("Getting announcement");
     
     const metadata = await OBR.room.getMetadata();
     const announcement = metadata[ANNOUNCEMENT_KEY];
@@ -62,7 +61,7 @@ export async function getAnnouncement() {
  * @returns {Promise<void>}
  */
 export async function removeAnnouncementMetadata() {
-    debugLog("Removing announcement");
+    logger.log("Removing announcement");
     
     const metadata = await OBR.room.getMetadata();
     delete metadata[ANNOUNCEMENT_KEY];
@@ -78,7 +77,7 @@ export async function removeAnnouncementMetadata() {
  * @returns {Promise<void>}
  */
 export async function updateAnnouncement(updates) {
-    debugLog("Updating announcement", updates);
+    logger.log("Updating announcement", updates);
     
     const current = await getAnnouncement();
     
@@ -99,7 +98,7 @@ export async function updateAnnouncement(updates) {
  * @returns {Promise<boolean>} New active state
  */
 export async function toggleAnnouncement() {
-    debugLog("Toggling announcement");
+    logger.log("Toggling announcement");
     
     const current = await getAnnouncement();
     
@@ -137,3 +136,4 @@ export async function hideAnnouncement() {
 export async function updateContent(content) {
     await updateAnnouncement({ content });
 }
+

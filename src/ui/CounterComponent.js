@@ -1,15 +1,14 @@
-/**
+﻿/**
  * Counter Component
  * Renders numeric counter inputs with +/- buttons and constraints
  */
 
 import { UIComponent } from "./UIComponent.js";
-import { isDebugEnabled } from "../debugMode.js";
+import { createDebugLogger } from "../debugMode.js";
 import { eventBus as EventBus } from "../events/EventBus.js";
 import { variableStore } from "../stores/VariableStore.js";
 
-const debugLog = (...args) => isDebugEnabled('ui') && console.log(...args);
-const debugError = (...args) => console.error(...args);
+const logger = createDebugLogger('ui');
 
 export class CounterComponent extends UIComponent {
   constructor(item, page, services, inStack = false) {
@@ -60,12 +59,12 @@ export class CounterComponent extends UIComponent {
 
     // Event listeners for input
     this.addEventListener(input, "input", (e) => {
-      debugLog("[Counter DEBUG] Input event fired on", this.item.var, "new value:", e.target.value);
+      logger.log("[Counter DEBUG] Input event fired on", this.item.var, "new value:", e.target.value);
       this.updateCounterValue(input, variable, this.item.var);
     });
 
     this.addEventListener(input, "change", (e) => {
-      debugLog("[Counter DEBUG] Change event fired on", this.item.var, "new value:", e.target.value);
+      logger.log("[Counter DEBUG] Change event fired on", this.item.var, "new value:", e.target.value);
       this.updateCounterValue(input, variable, this.item.var);
     });
 
@@ -75,7 +74,7 @@ export class CounterComponent extends UIComponent {
     const incrementBtn = this.createElement("button", "mh-counter-btn");
     incrementBtn.textContent = "+";
     this.addEventListener(incrementBtn, "click", () => {
-      debugLog("[Counter DEBUG] Increment button clicked on", this.item.var);
+      logger.log("[Counter DEBUG] Increment button clicked on", this.item.var);
       input.value = Number(input.value) + (this.item.step ?? 1);
       this.updateCounterValue(input, variable, this.item.var);
     });
@@ -83,7 +82,7 @@ export class CounterComponent extends UIComponent {
     const decrementBtn = this.createElement("button", "mh-counter-btn");
     decrementBtn.textContent = "-";
     this.addEventListener(decrementBtn, "click", () => {
-      debugLog("[Counter DEBUG] Decrement button clicked on", this.item.var);
+      logger.log("[Counter DEBUG] Decrement button clicked on", this.item.var);
       input.value = Number(input.value) - (this.item.step ?? 1);
       this.updateCounterValue(input, variable, this.item.var);
     });
@@ -136,7 +135,7 @@ export class CounterComponent extends UIComponent {
       return;
     }
     
-    debugLog("[Counter] Value changed:", varName, "=>", constrained);
+    logger.log("[Counter] Value changed:", varName, "=>", constrained);
     
     input.value = constrained;
     this.lastSavedValue = constrained;
@@ -150,7 +149,7 @@ export class CounterComponent extends UIComponent {
     if (this.page._pageIndex !== undefined) {
       variableStore.setVariableResolved(varName, constrained, this.page._pageIndex);
       variableStore.markVariableModified(varName);
-      debugLog("[Counter] VariableStore notified for:", varName);
+      logger.log("[Counter] VariableStore notified for:", varName);
     }
     
     // Notify EventBus
@@ -163,7 +162,7 @@ export class CounterComponent extends UIComponent {
     
     this.saveTimer = setTimeout(async () => {
       try {
-        debugLog("[Counter] Debounce triggered for:", varName);
+        logger.log("[Counter] Debounce triggered for:", varName);
         
         await this.services.saveConfig(this.services.config)
           .catch(err => this.handleError("Counter", err));
@@ -179,7 +178,7 @@ export class CounterComponent extends UIComponent {
           this.page.variables,
           [varName]
         );
-        debugLog("[Counter] Dependent variables:", Array.from(dependentVars));
+        logger.log("[Counter] Dependent variables:", Array.from(dependentVars));
         
         for (const depVar of dependentVars) {
           if (depVar !== varName) {
@@ -188,9 +187,9 @@ export class CounterComponent extends UIComponent {
         }
         
         if (dependentVars.size > 1) {
-          debugLog("[Counter] Resolving", dependentVars.size, "dependent variables...");
+          logger.log("[Counter] Resolving", dependentVars.size, "dependent variables...");
           const onVariableResolved = (resolvedVarName, value) => {
-            debugLog("[Counter] Resolved dependent:", resolvedVarName, "=>", value);
+            logger.log("[Counter] Resolved dependent:", resolvedVarName, "=>", value);
             this.page._resolved[resolvedVarName] = value;
             this.services.updateRenderedValue(resolvedVarName, value);
           };
@@ -215,7 +214,7 @@ export class CounterComponent extends UIComponent {
   setupExternalChangeListener() {
     this.unsubscribe = EventBus.on('store:variableResolved', (varName, value) => {
       if (varName === this.item.var && !this.isUpdatingCounter) {
-        debugLog("[Counter] External change detected for:", varName, "=>", value);
+        logger.log("[Counter] External change detected for:", varName, "=>", value);
         const constrained = this.applyConstraints(value);
         const input = this.services.renderedValueElements[this.item.var]?.querySelector('.mh-counter-input');
         if (input) {
@@ -258,3 +257,5 @@ export class CounterComponent extends UIComponent {
     }
   }
 }
+
+

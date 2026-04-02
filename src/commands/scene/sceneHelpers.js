@@ -1,10 +1,9 @@
-import OBR, { isImage } from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR, { isImage } from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('sceneHelpers') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("sceneHelpers");
+
 
 /**
  * Get the map ID where a token is placed based on its position
@@ -18,25 +17,25 @@ export async function getMapIdFromToken(tokenId) {
     const token = tokens[0];
     
     if (!token) {
-      debugWarn(`[sceneHelpers] Token ${tokenId} not found`);
+      logger.warn(`[sceneHelpers] Token ${tokenId} not found`);
       return null;
     }
     
-    debugLog(`[sceneHelpers] Found token:`, { id: token.id, name: token.name, layer: token.layer, position: token.position });
+    logger.log(`[sceneHelpers] Found token:`, { id: token.id, name: token.name, layer: token.layer, position: token.position });
     
     // Get token position (center point)
     const tokenPosition = token.position;
     if (!tokenPosition) {
-      debugWarn(`[sceneHelpers] Token ${tokenId} has no position`);
+      logger.warn(`[sceneHelpers] Token ${tokenId} has no position`);
       return null;
     }
     
     // Get only map items using filter (maps are images on the MAP layer)
     const maps = await OBR.scene.items.getItems((item) => isImage(item) && item.layer === 'MAP');
-    debugLog(`[sceneHelpers] Found ${maps.length} maps in scene`);
+    logger.log(`[sceneHelpers] Found ${maps.length} maps in scene`);
     
     if (maps.length === 0) {
-      debugWarn(`[sceneHelpers] No maps found in scene`);
+      logger.warn(`[sceneHelpers] No maps found in scene`);
       return null;
     }
     
@@ -50,7 +49,7 @@ export async function getMapIdFromToken(tokenId) {
         // Use OBR SDK to get the actual bounds of the map item
         const bounds = await OBR.scene.items.getItemBounds([map.id]);
         
-        debugLog(`[sceneHelpers] Checking map:`, { 
+        logger.log(`[sceneHelpers] Checking map:`, { 
           id: map.id, 
           name: map.name, 
           bounds: bounds,
@@ -62,19 +61,20 @@ export async function getMapIdFromToken(tokenId) {
             tokenPosition.x <= bounds.max.x && 
             tokenPosition.y >= bounds.min.y && 
             tokenPosition.y <= bounds.max.y) {
-          debugLog(`[sceneHelpers] Token ${tokenId} is on map ${map.id} (${map.name})`);
+          logger.log(`[sceneHelpers] Token ${tokenId} is on map ${map.id} (${map.name})`);
           return map.id;
         }
       } catch (error) {
-        debugWarn(`[sceneHelpers] Error getting bounds for map ${map.id}:`, error);
+        logger.warn(`[sceneHelpers] Error getting bounds for map ${map.id}:`, error);
         continue;
       }
     }
     
-    debugLog(`[sceneHelpers] Token ${tokenId} (position: ${tokenPosition.x}, ${tokenPosition.y}) is not on any map`);
+    logger.log(`[sceneHelpers] Token ${tokenId} (position: ${tokenPosition.x}, ${tokenPosition.y}) is not on any map`);
     return null;
   } catch (error) {
-    debugError(`[sceneHelpers] Error getting map ID for token ${tokenId}:`, error.message);
+    logger.error(`[sceneHelpers] Error getting map ID for token ${tokenId}:`, error.message);
     return null;
   }
 }
+

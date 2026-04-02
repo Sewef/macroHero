@@ -5,22 +5,18 @@ import { resolveVariables } from "./expressionEvaluator.js";
 import { initializeExpressions } from "./expressionHelpers.js";
 import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { flushPendingChanges } from "./storage.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
-// Debug mode constants
-const debugLog = (...args) => isDebugEnabled('main') && console.log(...args);
-const debugWarn = (...args) => console.warn(...args);
-const debugError = (...args) => console.error(...args);
+// Debug logger
+const logger = createDebugLogger('main');
 
 /**
  * Apply OBR theme to the extension UI
  * Respects the user's theme preference and updates colors dynamically
  */
 function applyTheme(theme) {
-  const root = document.documentElement;
-  const isLight = theme.mode === "LIGHT";
   
-  debugLog(`[THEME] Applying ${isLight ? "LIGHT" : "DARK"} mode`);
+  logger.log(`[THEME] Applying ${isLight ? "LIGHT" : "DARK"} mode`);
   
   // Toggle light mode class (handles all color variables via CSS)
   root.classList.toggle('light-mode', isLight);
@@ -43,7 +39,7 @@ window.addEventListener('beforeunload', async () => {
 // Chargement initial
 OBR.onReady(async () => {
   try {
-    debugLog("[MAIN] App loading...");
+    logger.log("[MAIN] App loading...");
 
     // Get and apply current theme
     try {
@@ -52,11 +48,11 @@ OBR.onReady(async () => {
       
       // Listen for theme changes
       OBR.theme.onChange((newTheme) => {
-        debugLog("[THEME] Theme changed to:", newTheme.mode);
+        logger.log("[THEME] Theme changed to:", newTheme.mode);
         applyTheme(newTheme);
       });
     } catch (err) {
-      debugWarn("[MAIN] Theme API not available, using dark theme defaults");
+      logger.warn("[MAIN] Theme API not available, using dark theme defaults");
     }
 
     const cfg = await loadConfig();
@@ -67,7 +63,7 @@ OBR.onReady(async () => {
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
     } else {
-      debugWarn("[MAIN] Google Sheets not configured - missing credentials");
+      logger.warn("[MAIN] Google Sheets not configured - missing credentials");
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
@@ -115,23 +111,23 @@ OBR.onReady(async () => {
           }
         }
       } catch (err) {
-        debugWarn('[MAIN] Scene logging skipped or failed:', err);
+        logger.warn('[MAIN] Scene logging skipped or failed:', err);
       }
     })();
 
     // Listen for config changes from the modal
     OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
-      debugLog("[MAIN] Config updated via broadcast");
+      logger.log("[MAIN] Config updated via broadcast");
 
       // If this is just an UI update (button click, counter change, etc.), skip re-resolution
       if (event.data && event.data.savedFromUI && !event.data.savedFromModal) {
-        debugLog("[MAIN] Skipping re-resolution for UI-only update");
+        logger.log("[MAIN] Skipping re-resolution for UI-only update");
         return;
       }
 
       // If config was saved from modal, reload the page to ensure everything is fresh
       if (event.data && event.data.savedFromModal) {
-        debugLog("[MAIN] Config saved from modal - reloading page");
+        logger.log("[MAIN] Config saved from modal - reloading page");
         window.location.reload();
         return;
       }
@@ -151,11 +147,11 @@ OBR.onReady(async () => {
           if (cfg) {
             newConfig = cfg;
           } else {
-            debugWarn('[MAIN] No config found in localStorage after config saved');
+            logger.warn('[MAIN] No config found in localStorage after config saved');
             return;
           }
         } catch (err) {
-          debugError('[MAIN] Failed to load config from localStorage after config saved:', err);
+          logger.error('[MAIN] Failed to load config from localStorage after config saved:', err);
           return;
         }
       }
@@ -173,12 +169,12 @@ OBR.onReady(async () => {
 
     // Listen for debug mode changes from the config modal
     OBR.broadcast.onMessage("macrohero.debug.modes", async (event) => {
-      debugLog("[MAIN] Debug modes updated via broadcast:", event.data);
+      logger.log("[MAIN] Debug modes updated via broadcast:", event.data);
       // localStorage is already updated by the modal, this is just a trigger
       // to let other modules know the debug modes have changed
     });
   } catch (error) {
-    debugError("Error during initialization:", error);
+    logger.error("Error during initialization:", error);
   }
 });
 
@@ -188,9 +184,9 @@ async function logOBRImageItems() {
 
   try {
     const items = await OBR.scene.items.getItems();
-    debugLog("[MAIN] Scene items:", items);
+    logger.log("[MAIN] Scene items:", items);
   } catch (err) {
-    debugError("[MAIN] Error fetching scene items:", err);
+    logger.error("[MAIN] Error fetching scene items:", err);
   }
 
 }
@@ -198,8 +194,8 @@ async function logOBRImageItems() {
 async function logOBRSceneMetadata() {
   try {
     const metadata = await OBR.scene.getMetadata();
-    debugLog("[MAIN] Scene metadata:", metadata);
+    logger.log("[MAIN] Scene metadata:", metadata);
   } catch (err) {
-    debugError("[MAIN] Error fetching scene metadata:", err);
+    logger.error("[MAIN] Error fetching scene metadata:", err);
   }
 }

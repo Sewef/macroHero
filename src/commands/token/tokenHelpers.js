@@ -1,10 +1,9 @@
-import OBR, { buildImage } from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+﻿import OBR, { buildImage } from "@owlbear-rodeo/sdk";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('tokenHelpers') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("tokenHelpers");
+
 
 // Placeholder image for invalid or empty URLs
 const PLACEHOLDER_IMAGE = "https://macrohero.onrender.com/logo.png";
@@ -17,14 +16,14 @@ export async function getSelectedTokenId() {
   try {
     const selection = await OBR.player.getSelection();
     if (!selection || selection.length === 0) {
-      debugLog(`[tokenHelpers] No token selected`);
+      logger.log(`[tokenHelpers] No token selected`);
       return null;
     }
     const selectedId = selection[0];
-    debugLog(`[tokenHelpers] Selected token ID:`, selectedId);
+    logger.log(`[tokenHelpers] Selected token ID:`, selectedId);
     return selectedId;
   } catch (error) {
-    debugError(`[tokenHelpers] Error getting selected token ID:`, error);
+    logger.error(`[tokenHelpers] Error getting selected token ID:`, error);
     throw error;
   }
 }
@@ -37,13 +36,13 @@ export async function getSelectedTokensIds() {
   try {
     const selection = await OBR.player.getSelection();
     if (!selection || selection.length === 0) {
-      debugLog(`[tokenHelpers] No tokens selected`);
+      logger.log(`[tokenHelpers] No tokens selected`);
       return [];
     }
-    debugLog(`[tokenHelpers] Selected ${selection.length} token(s):`, selection);
+    logger.log(`[tokenHelpers] Selected ${selection.length} token(s):`, selection);
     return selection;
   } catch (error) {
-    debugError(`[tokenHelpers] Error getting selected tokens IDs:`, error);
+    logger.error(`[tokenHelpers] Error getting selected tokens IDs:`, error);
     throw error;
   }
 }
@@ -57,13 +56,13 @@ export async function getTokenPosition(tokenId) {
   try {
     const items = await OBR.scene.items.getItems([tokenId]);
     if (items.length === 0) {
-      debugWarn(`[tokenHelpers] Token ${tokenId} not found`);
+      logger.warn(`[tokenHelpers] Token ${tokenId} not found`);
       return null;
     }
-    debugLog(`[tokenHelpers] Token ${tokenId} position:`, items[0].position);
+    logger.log(`[tokenHelpers] Token ${tokenId} position:`, items[0].position);
     return items[0].position;
   } catch (error) {
-    debugError(`[tokenHelpers] Failed to get token position:`, error.message);
+    logger.error(`[tokenHelpers] Failed to get token position:`, error.message);
     return null;
   }
 }
@@ -77,14 +76,14 @@ export async function getTokenSize(tokenId) {
   try {
     const items = await OBR.scene.items.getItems([tokenId]);
     if (items.length === 0) {
-      debugWarn(`[tokenHelpers] Token ${tokenId} not found`);
+      logger.warn(`[tokenHelpers] Token ${tokenId} not found`);
       return null;
     }
     const size = typeof items[0].size === "number" ? items[0].size : null;
-    debugLog(`[tokenHelpers] Token ${tokenId} size:`, size);
+    logger.log(`[tokenHelpers] Token ${tokenId} size:`, size);
     return size;
   } catch (error) {
-    debugError(`[tokenHelpers] Failed to get token size:`, error.message);
+    logger.error(`[tokenHelpers] Failed to get token size:`, error.message);
     return null;
   }
 }
@@ -106,13 +105,13 @@ export async function getClosestTokenId(tokenId, filter = null) {
     // Get the reference token's position and z-index
     const referenceItems = await OBR.scene.items.getItems([tokenId]);
     if (referenceItems.length === 0) {
-      debugWarn(`[tokenHelpers] Reference token ${tokenId} not found`);
+      logger.warn(`[tokenHelpers] Reference token ${tokenId} not found`);
       return null;
     }
     const referenceToken = referenceItems[0];
     const referencePos = referenceToken.position;
     const referenceZIndex = referenceToken.zIndex;
-    debugLog(`[tokenHelpers] Reference token ${tokenId} position:`, referencePos, `z-index:`, referenceZIndex);
+    logger.log(`[tokenHelpers] Reference token ${tokenId} position:`, referencePos, `z-index:`, referenceZIndex);
 
     // Get all items in the scene
     const allItems = await OBR.scene.items.getItems();
@@ -125,20 +124,20 @@ export async function getClosestTokenId(tokenId, filter = null) {
       if (typeof filter === 'string') {
         // Simple string filter
         layerFilter = [filter];
-        debugLog(`[tokenHelpers] Filtering by layer: ${filter}`);
+        logger.log(`[tokenHelpers] Filtering by layer: ${filter}`);
       } else if (Array.isArray(filter)) {
         // Array of layers
         layerFilter = filter;
-        debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+        logger.log(`[tokenHelpers] Filtering by layers:`, layerFilter);
       } else if (typeof filter === 'object') {
         // Advanced object filter
         if (filter.layers) {
           layerFilter = Array.isArray(filter.layers) ? filter.layers : [filter.layers];
-          debugLog(`[tokenHelpers] Filtering by layers:`, layerFilter);
+          logger.log(`[tokenHelpers] Filtering by layers:`, layerFilter);
         }
         if (filter.excludeOverlapping) {
           excludeOverlapping = true;
-          debugLog(`[tokenHelpers] Excluding overlapping tokens (same position)`);
+          logger.log(`[tokenHelpers] Excluding overlapping tokens (same position)`);
         }
       }
     }
@@ -152,7 +151,7 @@ export async function getClosestTokenId(tokenId, filter = null) {
     });
 
     if (candidateItems.length === 0) {
-      debugLog(`[tokenHelpers] No candidate tokens found matching filter`);
+      logger.log(`[tokenHelpers] No candidate tokens found matching filter`);
       return null;
     }
 
@@ -172,13 +171,13 @@ export async function getClosestTokenId(tokenId, filter = null) {
     }
 
     if (closestToken) {
-      debugLog(`[tokenHelpers] Closest token:`, closestToken.id, `at distance ${minDistance.toFixed(2)}`);
+      logger.log(`[tokenHelpers] Closest token:`, closestToken.id, `at distance ${minDistance.toFixed(2)}`);
       return closestToken.id;
     }
 
     return null;
   } catch (error) {
-    debugError(`[tokenHelpers] Error finding closest token:`, error.message);
+    logger.error(`[tokenHelpers] Error finding closest token:`, error.message);
     throw error;
   }
 }
@@ -196,10 +195,10 @@ async function getViewportCenter() {
     const viewportCenterPoint = { x: viewportWidth / 2, y: viewportHeight / 2 };
     const scenePosition = await OBR.viewport.inverseTransformPoint(viewportCenterPoint);
     
-    debugLog(`[tokenHelpers] Viewport center:`, scenePosition);
+    logger.log(`[tokenHelpers] Viewport center:`, scenePosition);
     return scenePosition;
   } catch (error) {
-    debugError(`[tokenHelpers] Error getting viewport center:`, error);
+    logger.error(`[tokenHelpers] Error getting viewport center:`, error);
     return { x: 0, y: 0 }; // Fallback to origin
   }
 }
@@ -218,7 +217,7 @@ async function getImageDimensions(url, usePlaceholderOnError = true) {
     };
     img.onerror = () => {
       if (usePlaceholderOnError && url !== PLACEHOLDER_IMAGE) {
-        debugWarn(`[tokenHelpers] Failed to load image: ${url}, using placeholder`);
+        logger.warn(`[tokenHelpers] Failed to load image: ${url}, using placeholder`);
         // Try with placeholder
         getImageDimensions(PLACEHOLDER_IMAGE, false)
           .then(resolve)
@@ -238,7 +237,7 @@ async function getImageDimensions(url, usePlaceholderOnError = true) {
  */
 async function selectAsset(layer = "CHARACTER") {
   try {
-    debugLog(`[tokenHelpers] Opening asset picker...`);
+    logger.log(`[tokenHelpers] Opening asset picker...`);
     const images = await OBR.assets.downloadImages(false, undefined, layer);
     
     if (!images || images.length === 0) {
@@ -246,7 +245,7 @@ async function selectAsset(layer = "CHARACTER") {
     }
     
     const selectedImage = images[0];
-    debugLog(`[tokenHelpers] Selected image:`, selectedImage);
+    logger.log(`[tokenHelpers] Selected image:`, selectedImage);
     
     return {
       url: selectedImage.image.url,
@@ -261,7 +260,7 @@ async function selectAsset(layer = "CHARACTER") {
       locked: selectedImage.locked
     };
   } catch (error) {
-    debugError(`[tokenHelpers] Error selecting asset:`, error);
+    logger.error(`[tokenHelpers] Error selecting asset:`, error);
     throw new Error(`Failed to select asset: ${error.message || JSON.stringify(error)}`);
   }
 }
@@ -332,7 +331,7 @@ export async function createToken(params) {
     // Handle empty or placeholder URL
     if (!url || url === "EMPTY") {
       url = PLACEHOLDER_IMAGE;
-      debugLog(`[tokenHelpers] Using placeholder image`);
+      logger.log(`[tokenHelpers] Using placeholder image`);
     }
 
     // Special case: if url is "SELECT", open asset picker
@@ -357,29 +356,29 @@ export async function createToken(params) {
     // Special case: if position is "HERE", use viewport center
     if (position === "HERE") {
       position = await getViewportCenter();
-      debugLog(`[tokenHelpers] Using viewport center for position:`, position);
+      logger.log(`[tokenHelpers] Using viewport center for position:`, position);
     }
 
     // Auto-detect DPI from scene grid if not provided
     if (!dpi) {
       dpi = await OBR.scene.grid.getDpi();
-      debugLog(`[tokenHelpers] Auto-detected grid DPI: ${dpi}`);
+      logger.log(`[tokenHelpers] Auto-detected grid DPI: ${dpi}`);
     }
 
     // Auto-detect MIME type if not provided
     if (!mime) {
       mime = detectMimeType(url);
-      debugLog(`[tokenHelpers] Auto-detected MIME type: ${mime}`);
+      logger.log(`[tokenHelpers] Auto-detected MIME type: ${mime}`);
     }
 
     // Auto-detect dimensions if not provided
     if (!width || !height) {
-      debugLog(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
+      logger.log(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
       const result = await getImageDimensions(url);
       width = result.width;
       height = result.height;
       url = result.url; // Use final URL (may be placeholder if original failed)
-      debugLog(`[tokenHelpers] Auto-detected dimensions: ${width}x${height}`);
+      logger.log(`[tokenHelpers] Auto-detected dimensions: ${width}x${height}`);
     }
 
     // Auto-calculate offset if not provided
@@ -392,7 +391,7 @@ export async function createToken(params) {
       const sizeInPixels = size * dpi;
       const maxDimension = Math.max(width, height);
       scale = sizeInPixels / maxDimension;
-      debugLog(`[tokenHelpers] Size ${size} cells = ${sizeInPixels}px, calculated scale = ${scale}`);
+      logger.log(`[tokenHelpers] Size ${size} cells = ${sizeInPixels}px, calculated scale = ${scale}`);
     }
 
     // Convert grid position to scene position if gridPosition is true
@@ -403,10 +402,10 @@ export async function createToken(params) {
         x: gridX * dpi + dpi / 2,
         y: gridY * dpi + dpi / 2
       };
-      debugLog(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, position);
+      logger.log(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, position);
     }
 
-    debugLog(`[tokenHelpers] Creating token:`, { url, width, height, position, layer, scale });
+    logger.log(`[tokenHelpers] Creating token:`, { url, width, height, position, layer, scale });
 
     // Build the image item
     let builder = buildImage(
@@ -451,11 +450,11 @@ export async function createToken(params) {
     const item = builder.build();
     await OBR.scene.items.addItems([item]);
 
-    debugLog(`[tokenHelpers] Token created successfully:`, item.id);
+    logger.log(`[tokenHelpers] Token created successfully:`, item.id);
     return item.id;
 
   } catch (error) {
-    debugError(`[tokenHelpers] Error creating token:`, error.message);
+    logger.error(`[tokenHelpers] Error creating token:`, error.message);
     throw error;
   }
 }
@@ -474,7 +473,7 @@ export async function createToken(params) {
  */
 export async function createTokens(tokensParams) {
   try {
-    debugLog(`[tokenHelpers] Creating ${tokensParams.length} tokens`);
+    logger.log(`[tokenHelpers] Creating ${tokensParams.length} tokens`);
 
     // Check if any token uses "SELECT" for URL
     const needsAssetSelection = tokensParams.some(p => p.url === "SELECT");
@@ -496,7 +495,7 @@ export async function createTokens(tokensParams) {
 
     // Get grid DPI once for all tokens
     const gridDpi = await OBR.scene.grid.getDpi();
-    debugLog(`[tokenHelpers] Grid DPI: ${gridDpi}`);
+    logger.log(`[tokenHelpers] Grid DPI: ${gridDpi}`);
 
     // Process each token parameter - detect dimensions if needed
     const processedParams = await Promise.all(tokensParams.map(async (params) => {
@@ -527,7 +526,7 @@ export async function createTokens(tokensParams) {
 
       // Auto-detect dimensions if not provided
       if (!width || !height) {
-        debugLog(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
+        logger.log(`[tokenHelpers] Auto-detecting dimensions for: ${url}`);
         const result = await getImageDimensions(url);
         width = result.width;
         height = result.height;
@@ -538,7 +537,7 @@ export async function createTokens(tokensParams) {
           const sizeInPixels = size * gridDpi;
           const maxDimension = Math.max(width, height);
           params.scale = sizeInPixels / maxDimension;
-          debugLog(`[tokenHelpers] Size ${size} cells = ${sizeInPixels}px, scale = ${params.scale}`);
+          logger.log(`[tokenHelpers] Size ${size} cells = ${sizeInPixels}px, scale = ${params.scale}`);
         }
       }
 
@@ -624,11 +623,11 @@ export async function createTokens(tokensParams) {
     await OBR.scene.items.addItems(items);
 
     const ids = items.map(item => item.id);
-    debugLog(`[tokenHelpers] ${ids.length} tokens created successfully`);
+    logger.log(`[tokenHelpers] ${ids.length} tokens created successfully`);
     return ids;
 
   } catch (error) {
-    debugError(`[tokenHelpers] Error creating tokens:`, error.message);
+    logger.error(`[tokenHelpers] Error creating tokens:`, error.message);
     throw error;
   }
 }
@@ -642,7 +641,7 @@ export async function createTokens(tokensParams) {
 export async function setItemsVisible(itemIds, visible) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) visible to ${visible}`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) visible to ${visible}`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -650,9 +649,9 @@ export async function setItemsVisible(itemIds, visible) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items visibility updated successfully`);
+    logger.log(`[tokenHelpers] Items visibility updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items visible:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items visible:`, error.message);
     throw error;
   }
 }
@@ -666,7 +665,7 @@ export async function setItemsVisible(itemIds, visible) {
 export async function setItemsLocked(itemIds, locked) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) locked to ${locked}`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) locked to ${locked}`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -674,9 +673,9 @@ export async function setItemsLocked(itemIds, locked) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items locked state updated successfully`);
+    logger.log(`[tokenHelpers] Items locked state updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items locked:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items locked:`, error.message);
     throw error;
   }
 }
@@ -691,7 +690,7 @@ export async function setItemsLocked(itemIds, locked) {
 export async function setItemsImage(itemIds, url, mime) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) image to ${url}`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) image to ${url}`);
     
     // Auto-detect MIME type if not provided
     const detectedMime = mime || detectMimeType(url);
@@ -705,9 +704,9 @@ export async function setItemsImage(itemIds, url, mime) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items image updated successfully`);
+    logger.log(`[tokenHelpers] Items image updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items image:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items image:`, error.message);
     throw error;
   }
 }
@@ -721,7 +720,7 @@ export async function setItemsImage(itemIds, url, mime) {
 export async function setItemsName(itemIds, name) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) name to "${name}"`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) name to "${name}"`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -729,9 +728,9 @@ export async function setItemsName(itemIds, name) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items name updated successfully`);
+    logger.log(`[tokenHelpers] Items name updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items name:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items name:`, error.message);
     throw error;
   }
 }
@@ -745,7 +744,7 @@ export async function setItemsName(itemIds, name) {
 export async function setItemsLabel(itemIds, label) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) label to "${label}"`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) label to "${label}"`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -755,9 +754,9 @@ export async function setItemsLabel(itemIds, label) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items label updated successfully`);
+    logger.log(`[tokenHelpers] Items label updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items label:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items label:`, error.message);
     throw error;
   }
 }
@@ -771,7 +770,7 @@ export async function setItemsLabel(itemIds, label) {
 export async function setItemsLayer(itemIds, layer) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) layer to "${layer}"`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) layer to "${layer}"`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -779,9 +778,9 @@ export async function setItemsLayer(itemIds, layer) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items layer updated successfully`);
+    logger.log(`[tokenHelpers] Items layer updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items layer:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items layer:`, error.message);
     throw error;
   }
 }
@@ -796,7 +795,7 @@ export async function setItemsLayer(itemIds, layer) {
 export async function setItemsPosition(itemIds, position, gridPosition = false) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) position to`, position);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) position to`, position);
     
     let targetPosition = position;
     if (gridPosition) {
@@ -807,7 +806,7 @@ export async function setItemsPosition(itemIds, position, gridPosition = false) 
         x: gridX * dpi + dpi / 2,
         y: gridY * dpi + dpi / 2
       };
-      debugLog(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, targetPosition);
+      logger.log(`[tokenHelpers] Converted grid position (${gridX}, ${gridY}) to scene position:`, targetPosition);
     }
     
     await OBR.scene.items.updateItems(ids, (draft) => {
@@ -816,9 +815,9 @@ export async function setItemsPosition(itemIds, position, gridPosition = false) 
       });
     });
     
-    debugLog(`[tokenHelpers] Items position updated successfully`);
+    logger.log(`[tokenHelpers] Items position updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items position:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items position:`, error.message);
     throw error;
   }
 }
@@ -833,7 +832,7 @@ export async function setItemsScale(itemIds, scale) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
     const scaleObj = typeof scale === 'number' ? { x: scale, y: scale } : scale;
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) scale to`, scaleObj);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) scale to`, scaleObj);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -841,9 +840,9 @@ export async function setItemsScale(itemIds, scale) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items scale updated successfully`);
+    logger.log(`[tokenHelpers] Items scale updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items scale:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items scale:`, error.message);
     throw error;
   }
 }
@@ -857,7 +856,7 @@ export async function setItemsScale(itemIds, scale) {
 export async function setItemsRotation(itemIds, rotation) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-    debugLog(`[tokenHelpers] Setting ${ids.length} item(s) rotation to ${rotation}°`);
+    logger.log(`[tokenHelpers] Setting ${ids.length} item(s) rotation to ${rotation}Â°`);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -865,9 +864,9 @@ export async function setItemsRotation(itemIds, rotation) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items rotation updated successfully`);
+    logger.log(`[tokenHelpers] Items rotation updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items rotation:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items rotation:`, error.message);
     throw error;
   }
 }
@@ -882,7 +881,7 @@ export async function setItemsMetadata(itemIds, metadata) {
   try {
     const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
     const isFunction = typeof metadata === 'function';
-    debugLog(`[tokenHelpers] Setting metadata for ${ids.length} item(s)`, isFunction ? '[function]' : metadata);
+    logger.log(`[tokenHelpers] Setting metadata for ${ids.length} item(s)`, isFunction ? '[function]' : metadata);
     
     await OBR.scene.items.updateItems(ids, (draft) => {
       draft.forEach(item => {
@@ -894,9 +893,10 @@ export async function setItemsMetadata(itemIds, metadata) {
       });
     });
     
-    debugLog(`[tokenHelpers] Items metadata updated successfully`);
+    logger.log(`[tokenHelpers] Items metadata updated successfully`);
   } catch (error) {
-    debugError(`[tokenHelpers] Error setting items metadata:`, error.message);
+    logger.error(`[tokenHelpers] Error setting items metadata:`, error.message);
     throw error;
   }
 }
+

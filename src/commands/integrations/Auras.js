@@ -1,18 +1,17 @@
-/**
+﻿/**
  * Auras Integration
  * Provides access to Auras auras on items/tokens
  * Communicates with Auras extension via broadcast messages
  */
 
 import OBR from "@owlbear-rodeo/sdk";
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 import * as ImageHelper from "../shared/imageHelper.js";
 import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('Auras') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("Auras");
+
 
 // Auras broadcast channel
 const AURAS_CHANNEL = "com.desain.emanation/message";
@@ -25,11 +24,11 @@ const AURAS_METADATA_KEY = "com.desain.emanation/metadata";
  */
 export async function hasAura(itemId) {
   try {
-    debugLog(`[Auras.hasAura] Checking auras for item ${itemId}`);
+    logger.log(`[Auras.hasAura] Checking auras for item ${itemId}`);
     const items = await OBR.scene.items.getItems([itemId]);
     
     if (items.length === 0) {
-      debugWarn(`[Auras.hasAura] Item not found: ${itemId}`);
+      logger.warn(`[Auras.hasAura] Item not found: ${itemId}`);
       return false;
     }
 
@@ -39,10 +38,10 @@ export async function hasAura(itemId) {
       Array.isArray(item.metadata[AURAS_METADATA_KEY].auras) &&
       item.metadata[AURAS_METADATA_KEY].auras.length > 0;
 
-    debugLog(`[Auras.hasAura] Item ${itemId} has auras: ${hasAuras}`);
+    logger.log(`[Auras.hasAura] Item ${itemId} has auras: ${hasAuras}`);
     return hasAuras;
   } catch (error) {
-    debugError(`[Auras.hasAura] Error checking auras for item ${itemId}:`, error);
+    logger.error(`[Auras.hasAura] Error checking auras for item ${itemId}:`, error);
     throw error;
   }
 }
@@ -54,21 +53,21 @@ export async function hasAura(itemId) {
  */
 export async function getAuras(itemId) {
   try {
-    debugLog(`[Auras.getAuras] Getting auras for item ${itemId}`);
+    logger.log(`[Auras.getAuras] Getting auras for item ${itemId}`);
     const items = await OBR.scene.items.getItems([itemId]);
     
     if (items.length === 0) {
-      debugWarn(`[Auras.getAuras] Item not found: ${itemId}`);
+      logger.warn(`[Auras.getAuras] Item not found: ${itemId}`);
       return [];
     }
 
     const item = items[0];
     const auras = item.metadata[AURAS_METADATA_KEY]?.auras || [];
     
-    debugLog(`[Auras.getAuras] Found ${auras.length} aura(s) on item ${itemId}`, auras);
+    logger.log(`[Auras.getAuras] Found ${auras.length} aura(s) on item ${itemId}`, auras);
     return auras;
   } catch (error) {
-    debugError(`[Auras.getAuras] Error getting auras for item ${itemId}:`, error);
+    logger.error(`[Auras.getAuras] Error getting auras for item ${itemId}:`, error);
     throw error;
   }
 }
@@ -79,20 +78,20 @@ export async function getAuras(itemId) {
  * @param {Object} config - Aura configuration object
  *   
  *   Required:
- *   - size: number — Aura radius in grid units
+ *   - size: number â€” Aura radius in grid units
  *
  *   Optional (omitted = uses player defaults):
- *   - style: string — Glow|Bubble|Range|Solid|Simple|Distort|Spirits|Image|Custom
- *   - color: string — Hex color code (#FF0000, etc.). Required if style is not Image/Custom
- *   - opacity: number — 0-1, opacity value
- *   - blendMode: string — Blend mode (PLUS, DIFFERENCE, SATURATION, etc.)
- *   - layer: string — DRAWING, POST_PROCESS, etc.
- *   - visibleTo: string | null — Player ID for visibility (null = invisible to all)
- *   - sksl: string — Shader code for Custom style auras (required if style is Custom)
+ *   - style: string â€” Glow|Bubble|Range|Solid|Simple|Distort|Spirits|Image|Custom
+ *   - color: string â€” Hex color code (#FF0000, etc.). Required if style is not Image/Custom
+ *   - opacity: number â€” 0-1, opacity value
+ *   - blendMode: string â€” Blend mode (PLUS, DIFFERENCE, SATURATION, etc.)
+ *   - layer: string â€” DRAWING, POST_PROCESS, etc.
+ *   - visibleTo: string | null â€” Player ID for visibility (null = invisible to all)
+ *   - sksl: string â€” Shader code for Custom style auras (required if style is Custom)
  *   
  *   For Image style auras, EITHER:
- *   - imageUrl: string — Image URL (automatically detects dimensions and MIME type)
- *   - imageBuildParams: object — Full {image: ImageContent, grid: ImageGrid} (overrides imageUrl)
+ *   - imageUrl: string â€” Image URL (automatically detects dimensions and MIME type)
+ *   - imageBuildParams: object â€” Full {image: ImageContent, grid: ImageGrid} (overrides imageUrl)
  *
  * @returns {Promise<void>}
  */
@@ -125,7 +124,7 @@ export async function addAura(itemId, config) {
           message.imageBuildParams = config.imageBuildParams;
         } else if (config.imageUrl) {
           // Auto-detect dimensions and MIME type from URL
-          debugLog(`[Auras.addAura] Auto-detecting parameters for image: ${config.imageUrl}`);
+          logger.log(`[Auras.addAura] Auto-detecting parameters for image: ${config.imageUrl}`);
           const imageBuildParams = await ImageHelper.buildImageBuildParams(config.imageUrl, {
             width: config.imageWidth,
             height: config.imageHeight,
@@ -136,7 +135,7 @@ export async function addAura(itemId, config) {
           
           message.style = config.style;
           message.imageBuildParams = imageBuildParams;
-          debugLog(`[Auras.addAura] ✓ Auto-detected image parameters:`, imageBuildParams);
+          logger.log(`[Auras.addAura] âœ“ Auto-detected image parameters:`, imageBuildParams);
         } else {
           throw new Error(
             "[Auras.addAura] Image style requires either 'imageUrl' (auto-detect) or 'imageBuildParams' (explicit)"
@@ -179,17 +178,17 @@ export async function addAura(itemId, config) {
       message.layer = config.layer;
     }
 
-    debugLog(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
+    logger.log(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
 
     const result = await BroadcastHelpers.broadcastLocal(AURAS_CHANNEL, message);
     
     if (result.success) {
-      debugLog(`[Auras.addAura] ✓ Aura creation message sent`);
+      logger.log(`[Auras.addAura] âœ“ Aura creation message sent`);
     } else {
-      debugError(`[Auras.addAura] Failed to broadcast: ${result.error}`);
+      logger.error(`[Auras.addAura] Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
-    debugError(`[Auras.addAura] Error adding aura:`, error);
+    logger.error(`[Auras.addAura] Error adding aura:`, error);
     throw error;
   }
 }
@@ -202,7 +201,7 @@ export async function addAura(itemId, config) {
 export async function removeAura(itemId) {
   try {
     const sources = Array.isArray(itemId) ? itemId : [itemId];
-    debugLog(`[Auras.removeAura] Removing all auras from ${sources.length} item(s)`);
+    logger.log(`[Auras.removeAura] Removing all auras from ${sources.length} item(s)`);
 
     const result = await BroadcastHelpers.broadcastLocal(
       AURAS_CHANNEL,
@@ -213,12 +212,13 @@ export async function removeAura(itemId) {
     );
 
     if (result.success) {
-      debugLog(`[Auras.removeAura] ✓ Aura removal message sent`);
+      logger.log(`[Auras.removeAura] âœ“ Aura removal message sent`);
     } else {
-      debugError(`[Auras.removeAura] Failed to broadcast: ${result.error}`);
+      logger.error(`[Auras.removeAura] Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
-    debugError(`[Auras.removeAura] Error removing auras:`, error);
+    logger.error(`[Auras.removeAura] Error removing auras:`, error);
     throw error;
   }
 }
+

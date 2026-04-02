@@ -1,9 +1,8 @@
-/**
+﻿/**
  * Base UI Component Class
  * Provides common functionality for all UI components
  */
 
-const debugError = (...args) => console.error(...args);
 
 export class UIComponent {
   /**
@@ -52,7 +51,7 @@ export class UIComponent {
    * @param {Error} error - The error object
    */
   handleError(context, error) {
-    debugError(`[${context}] Error:`, error);
+    logger.error(`[${context}] Error:`, error);
   }
 
   /**
@@ -162,3 +161,4 @@ export class UIComponent {
     }
   }
 }
+

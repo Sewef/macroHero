@@ -62,13 +62,16 @@ export function onDebugModesChanged(callback) {
 
 /**
  * Create a debug logger for a specific module
+ * All methods respect debug mode for consistency
  * @param {string} moduleName - The name of the module
  * @returns {Object} Object with log, warn, and error functions that respect debug mode
  */
 export function createDebugLogger(moduleName) {
+  const isEnabled = () => isDebugEnabled(moduleName);
+  
   return {
-    log: (...args) => isDebugEnabled(moduleName) && console.log(`[${moduleName}]`, ...args),
-    warn: (...args) => isDebugEnabled(moduleName) && console.warn(`[${moduleName}]`, ...args),
-    error: (...args) => isDebugEnabled(moduleName) && console.error(`[${moduleName}]`, ...args),
+    log: (...args) => isEnabled() && console.log(`[${moduleName}]`, ...args),
+    warn: (...args) => isEnabled() && console.warn(`[${moduleName}]`, ...args),
+    error: (...args) => isEnabled() && console.error(`[${moduleName}]`, ...args),
   };
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Centralized Storage Manager
  * Handles all localStorage operations with batching and debouncing
  * Ensures a single source of truth for persisted data
@@ -6,11 +6,10 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { ensureOBRReady } from "./config.js";
-import { isDebugEnabled } from "./debugMode.js";
+import { createDebugLogger } from "./debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('storage') && console.log(...args);
-const debugError = (...args) => console.error(...args);
+const logger = createDebugLogger("storage");
 
 // Cache for room ID to avoid repeated lookups
 let roomIdCache = null;
@@ -48,10 +47,10 @@ export async function loadAllEvaluatedVariables() {
   try {
     const json = localStorage.getItem(key);
     evaluatedVariablesCache = json ? JSON.parse(json) : {};
-    debugLog("[STORAGE] Evaluated variables loaded from localStorage", evaluatedVariablesCache);
+    logger.log("[STORAGE] Evaluated variables loaded from localStorage", evaluatedVariablesCache);
     return evaluatedVariablesCache;
   } catch (error) {
-    debugError("[STORAGE] Error loading evaluated variables:", error);
+    logger.error("[STORAGE] Error loading evaluated variables:", error);
     evaluatedVariablesCache = {};
     return evaluatedVariablesCache;
   }
@@ -95,7 +94,7 @@ export async function updateEvaluatedVariable(pageIndex, varName, value) {
   // Schedule a batched write
   await scheduleBatchSave();
   
-  debugLog(`[STORAGE] Variable queued: page${pageIndex}.${varName} = ${value}`);
+  logger.log(`[STORAGE] Variable queued: page${pageIndex}.${varName} = ${value}`);
 }
 
 /**
@@ -119,12 +118,12 @@ async function scheduleBatchSave() {
       const json = JSON.stringify(evaluatedVariablesCache);
       localStorage.setItem(key, json);
       const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-      debugLog(`[STORAGE] Batch saved evaluated variables (${sizeKB}KB)`);
+      logger.log(`[STORAGE] Batch saved evaluated variables (${sizeKB}KB)`);
       
       // Clear pending changes after successful save
       pendingChanges = {};
     } catch (error) {
-      debugError("[STORAGE] Error during batch save:", error);
+      logger.error("[STORAGE] Error during batch save:", error);
       // Keep pending changes for retry
     }
     
@@ -143,7 +142,7 @@ export async function flushPendingChanges() {
   }
   
   if (Object.keys(pendingChanges).length === 0) {
-    debugLog("[STORAGE] No pending changes to flush");
+    logger.log("[STORAGE] No pending changes to flush");
     return;
   }
   
@@ -152,10 +151,10 @@ export async function flushPendingChanges() {
     const json = JSON.stringify(evaluatedVariablesCache);
     localStorage.setItem(key, json);
     const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-    debugLog(`[STORAGE] Flushed evaluated variables (${sizeKB}KB)`);
+    logger.log(`[STORAGE] Flushed evaluated variables (${sizeKB}KB)`);
     pendingChanges = {};
   } catch (error) {
-    debugError("[STORAGE] Error flushing changes:", error);
+    logger.error("[STORAGE] Error flushing changes:", error);
   }
 }
 
@@ -169,9 +168,9 @@ export async function clearAllEvaluatedVariables() {
   try {
     const key = await getRoomScopedEvaluatedVarsKey();
     localStorage.removeItem(key);
-    debugLog("[STORAGE] All evaluated variables cleared");
+    logger.log("[STORAGE] All evaluated variables cleared");
   } catch (error) {
-    debugError("[STORAGE] Error clearing variables:", error);
+    logger.error("[STORAGE] Error clearing variables:", error);
   }
 }
 
@@ -189,3 +188,4 @@ export function getStorageStats() {
     isSaving: saveBatchTimer !== null
   };
 }
+

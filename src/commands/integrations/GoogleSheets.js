@@ -1,14 +1,13 @@
-/**
+﻿/**
  * Google Sheets Integration
  * Handles reading and writing data to Google Sheets
  */
 
-import { isDebugEnabled } from "../../debugMode.js";
+import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants
-const debugLog = (...args) => isDebugEnabled('GoogleSheets') && console.log(...args);
-const debugError = (...args) => console.error(...args);
-const debugWarn = (...args) => console.warn(...args);
+const logger = createDebugLogger("GoogleSheets");
+
 
 /**
  * Initialize Google Sheets integration
@@ -19,7 +18,7 @@ const debugWarn = (...args) => console.warn(...args);
  */
 export function initializeGoogleSheets(config) {
   if (!config.apiKey || !config.sheetId) {
-    debugWarn("Google Sheets not configured - missing API key or sheet ID");
+    logger.warn("Google Sheets not configured - missing API key or sheet ID");
     return null;
   }
 
@@ -110,7 +109,7 @@ export function getGoogleSheetsCredentials() {
 export function saveGoogleSheetsApiKey(apiKey) {
   if (apiKey && apiKey.trim()) {
     localStorage.setItem(GSHEET_API_KEY_STORAGE, apiKey);
-    debugLog("✓ API key saved to localStorage");
+    logger.log("âœ“ API key saved to localStorage");
   } else {
     localStorage.removeItem(GSHEET_API_KEY_STORAGE);
   }
@@ -123,7 +122,7 @@ export function saveGoogleSheetsApiKey(apiKey) {
 export function saveGoogleSheetsSheetId(sheetId) {
   if (sheetId && sheetId.trim()) {
     localStorage.setItem(GSHEET_SHEET_ID_STORAGE, sheetId);
-    debugLog("✓ Sheet ID saved to localStorage");
+    logger.log("âœ“ Sheet ID saved to localStorage");
   } else {
     localStorage.removeItem(GSHEET_SHEET_ID_STORAGE);
   }
@@ -151,17 +150,17 @@ async function readSheetRange(client, range) {
 
   try {
     const url = `${client.baseUrl}/${client.sheetId}/values/${encodeURIComponent(range)}?key=${client.apiKey}`;
-    debugLog("[GSHEET-API] Fetching URL:", url.replace(client.apiKey, "***"));
-    debugLog("[GSHEET-API] Sheet ID:", client.sheetId);
-    debugLog("[GSHEET-API] Range:", range);
+    logger.log("[GSHEET-API] Fetching URL:", url.replace(client.apiKey, "***"));
+    logger.log("[GSHEET-API] Sheet ID:", client.sheetId);
+    logger.log("[GSHEET-API] Range:", range);
 
     const response = await fetch(url);
 
-    debugLog("[GSHEET-API] Response status:", response.status, response.statusText);
+    logger.log("[GSHEET-API] Response status:", response.status, response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
-      debugError("[GSHEET-API] Error response body:", errorText);
+      logger.error("[GSHEET-API] Error response body:", errorText);
 
       // Parse error details if it's JSON
       let errorDetails = errorText;
@@ -173,12 +172,12 @@ async function readSheetRange(client, range) {
       }
 
       const errorMsg = `Failed to read sheet (${response.status} ${response.statusText}): ${errorDetails}`;
-      debugError("[GSHEET-API]", errorMsg);
+      logger.error("[GSHEET-API]", errorMsg);
       throw new Error(errorMsg);
     }
 
     const data = await response.json();
-    debugLog("[GSHEET-API] ✓ Successfully read sheet range, rows:", data.values?.length ?? 0);
+    logger.log("[GSHEET-API] âœ“ Successfully read sheet range, rows:", data.values?.length ?? 0);
 
     const values = data.values || [];
 
@@ -194,20 +193,20 @@ async function readSheetRange(client, range) {
 
     // Log conversions if any
     if (conversionCount > 0) {
-      debugLog(`[GSHEET-API] ✓ Converted ${conversionCount} localized numeric strings to numbers`);
+      logger.log(`[GSHEET-API] âœ“ Converted ${conversionCount} localized numeric strings to numbers`);
     }
 
     // Flatten single-column ranges for convenience
     // If all rows have exactly 1 column, return a 1D array instead of 2D
     if (convertedValues.length > 0 && convertedValues.every(row => row.length === 1)) {
       const flattened = convertedValues.map(row => row[0]);
-      debugLog("[GSHEET-API] ✓ Flattened single-column range to 1D array");
+      logger.log("[GSHEET-API] âœ“ Flattened single-column range to 1D array");
       return flattened;
     }
 
     return convertedValues;
   } catch (error) {
-    debugError("[GSHEET-API] Exception:", error);
+    logger.error("[GSHEET-API] Exception:", error);
     throw error;
   }
 }
@@ -265,13 +264,13 @@ async function writeSheetRange(client, range, values) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      debugError("Failed to write sheet range:", response.status, errorText);
+      logger.error("Failed to write sheet range:", response.status, errorText);
       throw new Error(`Failed to write sheet: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
   } catch (error) {
-    debugError("Failed to write sheet range:", error);
+    logger.error("Failed to write sheet range:", error);
     throw error;
   }
 }
@@ -304,7 +303,7 @@ async function appendToSheet(client, range, values) {
 
     return await response.json();
   } catch (error) {
-    debugError("Failed to append to sheet:", error);
+    logger.error("Failed to append to sheet:", error);
     throw error;
   }
 }
@@ -329,7 +328,7 @@ async function getSheetMetadata(client) {
 
     return await response.json();
   } catch (error) {
-    debugError("Failed to get sheet metadata:", error);
+    logger.error("Failed to get sheet metadata:", error);
     throw error;
   }
 }
@@ -345,4 +344,5 @@ export default {
   GSHEET_API_KEY_STORAGE,
   GSHEET_SHEET_ID_STORAGE
 };
+
 
