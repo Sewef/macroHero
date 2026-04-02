@@ -109,6 +109,11 @@ export class DropdownComponent extends UIComponent {
         .catch(err => this.handleError("Dropdown", err));
       await this.services.broadcastConfigUpdated();
 
+      // Execute onupdate commands if defined
+      if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
+        await this.executeOnUpdate(this.item.onupdate, "DropdownOnUpdate");
+      }
+
       // Re-evaluate dependent variables
       const dependentVars = this.services.getDependentVariables(this.page.variables, [this.item.var]);
       if (dependentVars.size > 0) {

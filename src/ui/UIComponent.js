@@ -107,4 +107,57 @@ export class UIComponent {
     }
     return element;
   }
+
+  /**
+   * Create a debounced version of a function
+   * @param {Function} func - Function to debounce
+   * @param {number} delayMs - Delay in milliseconds (default 500ms for UI updates)
+   * @returns {Function} Debounced function and a cancel method
+   */
+  createDebouncedFunction(func, delayMs = 500) {
+    let timeoutId = null;
+    const debouncedFunc = (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delayMs);
+    };
+    debouncedFunc.cancel = () => clearTimeout(timeoutId);
+    return debouncedFunc;
+  }
+
+  /**
+   * Execute onupdate commands
+   * @param {Array} commands - Array of command strings
+   * @param {string} componentName - Name of the component (for debugging)
+   */
+  async executeOnUpdate(commands, componentName) {
+    if (!Array.isArray(commands) || commands.length === 0) {
+      return;
+    }
+
+    try {
+      const pageObj = (this.services.currentPage !== null && this.services.currentPage !== undefined) 
+        ? this.services.findPageByIndex(this.services.currentPage) 
+        : this.page;
+
+      const onVariableResolved = (varName, value) => {
+        pageObj._resolved[varName] = value;
+        this.services.updateRenderedValue(varName, value);
+      };
+
+      await this.services.handleButtonClick(
+        commands,
+        pageObj,
+        this.services.globalVariables,
+        onVariableResolved
+      );
+
+      await this.services.saveConfig(this.services.config)
+        .catch(err => this.handleError(componentName, err));
+      await this.services.broadcastConfigUpdated();
+    } catch (error) {
+      this.handleError(componentName, error);
+    }
+  }
 }

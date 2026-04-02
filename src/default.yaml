@@ -27,6 +27,7 @@ pages:
           - type: value
             var: sheetValue
             label: Cell Value
+    _pageIndex: 0
   - label: Conditions
     variables:
       isBandaged:
@@ -48,59 +49,60 @@ pages:
             var: conditionValue
             label: Bandaged Value
       - type: button
-        commands:
-          - 'isBandaged ? console.log(''Has Bandaged condition'') : console.log(''No Bandaged condition'');'
         label: Check Condition
+        onclick:
+          - 'isBandaged ? console.log(''Has Bandaged condition'') : console.log(''No Bandaged condition'');'
       - type: divider
       - type: title
         text: Manage Conditions
       - type: button
-        commands:
-          - await ConditionMarkers.toggleCondition(token, 'Bandaged');
         label: Toggle Bandage
+        onclick:
+          - await ConditionMarkers.toggleCondition(token, 'Bandaged');
       - type: button
-        commands:
-          - await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);
         label: Increment Bandage
+        onclick:
+          - await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);
       - type: button
-        commands:
-          - await ConditionMarkers.removeCondition(token, 'Bandaged');
         label: Remove Bandage
+        onclick:
+          - await ConditionMarkers.removeCondition(token, 'Bandaged');
       - type: button
-        commands:
-          - await ConditionMarkers.clearAllConditions(token);
         label: Clear All Conditions
+        onclick:
+          - await ConditionMarkers.clearAllConditions(token);
       - type: divider
       - type: title
         text: Common Conditions
       - type: row
         children:
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Poisoned');
             label: Poisoned
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Poisoned');
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Stunned');
             label: Stunned
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Stunned');
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Prone');
             label: Prone
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Prone');
       - type: row
         children:
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Paralyzed');
             label: Paralyzed
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Paralyzed');
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Blessed');
             label: Blessed
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Blessed');
           - type: button
-            commands:
-              - await ConditionMarkers.addCondition(token, 'Concentrating');
             label: Concentrating
+            onclick:
+              - await ConditionMarkers.addCondition(token, 'Concentrating');
+    _pageIndex: 1
   - label: Trackers
     variables:
       trackerHP:
@@ -127,36 +129,37 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await OwlTrackers.addValue(token, 'HP', 10);
             label: Heal 10
+            onclick:
+              - await OwlTrackers.addValue(token, 'HP', 10);
           - type: button
-            commands:
-              - await OwlTrackers.addValue(token, 'HP', 5);
             label: Heal 5
+            onclick:
+              - await OwlTrackers.addValue(token, 'HP', 5);
           - type: button
-            commands:
-              - await OwlTrackers.setValue(token, 'HP', trackerMaxHP);
             label: Full Heal
+            onclick:
+              - await OwlTrackers.setValue(token, 'HP', trackerMaxHP);
       - type: row
         children:
           - type: button
-            commands:
-              - await OwlTrackers.addValue(token, 'HP', -5);
             label: Damage 5
+            onclick:
+              - await OwlTrackers.addValue(token, 'HP', -5);
           - type: button
-            commands:
-              - await OwlTrackers.addValue(token, 'HP', -10);
             label: Damage 10
+            onclick:
+              - await OwlTrackers.addValue(token, 'HP', -10);
           - type: button
-            commands:
-              - await OwlTrackers.setValue(token, 'HP', 0);
             label: Down to 0
+            onclick:
+              - await OwlTrackers.setValue(token, 'HP', 0);
       - type: divider
       - type: title
         text: Add Tracker
       - type: button
-        commands:
+        label: Add HP Tracker (50/50)
+        onclick:
           - |-
             await OwlTrackers.addTracker(token, {
               variant: 'value-max',
@@ -165,9 +168,9 @@ pages:
               max: 50,
               color: 2
             });
-        label: Add HP Tracker (50/50)
       - type: button
-        commands:
+        label: Add Temp HP (10)
+        onclick:
           - |-
             await OwlTrackers.addTracker(token, {
               variant: 'value',
@@ -175,11 +178,11 @@ pages:
               value: 10,
               color: 5
             });
-        label: Add Temp HP (10)
       - type: button
-        commands:
-          - await OwlTrackers.removeTracker(token, 'HP');
         label: Remove HP Tracker
+        onclick:
+          - await OwlTrackers.removeTracker(token, 'HP');
+    _pageIndex: 2
   - label: StatBubbles
     variables:
       bubbleHealth:
@@ -211,65 +214,66 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await StatBubbles.heal(token, 15);
             label: Heal 15
+            onclick:
+              - await StatBubbles.heal(token, 15);
           - type: button
-            commands:
-              - await StatBubbles.heal(token, 5);
             label: Heal 5
+            onclick:
+              - await StatBubbles.heal(token, 5);
           - type: button
-            commands:
-              - await StatBubbles.setValue(token, 'health', bubbleMaxHealth);
             label: Full Heal
+            onclick:
+              - await StatBubbles.setValue(token, 'health', bubbleMaxHealth);
       - type: row
         children:
           - type: button
-            commands:
-              - await StatBubbles.damage(token, 8);
             label: Damage 8
+            onclick:
+              - await StatBubbles.damage(token, 8);
           - type: button
-            commands:
-              - await StatBubbles.damage(token, 15);
             label: Damage 15
+            onclick:
+              - await StatBubbles.damage(token, 15);
           - type: button
-            commands:
-              - await StatBubbles.setValue(token, 'health', 0);
             label: Down to 0
+            onclick:
+              - await StatBubbles.setValue(token, 'health', 0);
       - type: divider
       - type: title
         text: Other Stats
       - type: row
         children:
           - type: button
-            commands:
-              - await StatBubbles.setValue(token, 'temporary health', 20);
             label: Set Temp HP 20
+            onclick:
+              - await StatBubbles.setValue(token, 'temporary health', 20);
           - type: button
-            commands:
-              - await StatBubbles.setValue(token, 'temporary health', 0);
             label: Remove Temp HP
+            onclick:
+              - await StatBubbles.setValue(token, 'temporary health', 0);
       - type: row
         children:
           - type: button
-            commands:
-              - await StatBubbles.addValue(token, 'armor class', 2);
             label: AC +2
+            onclick:
+              - await StatBubbles.addValue(token, 'armor class', 2);
           - type: button
-            commands:
-              - await StatBubbles.addValue(token, 'armor class', -2);
             label: AC -2
+            onclick:
+              - await StatBubbles.addValue(token, 'armor class', -2);
           - type: button
-            commands:
+            label: Show Health %
+            onclick:
               - |-
                 const percentage = await StatBubbles.getHealthPercentage(token);
                 console.log('Health: ' + percentage + '%');
-            label: Show Health %
       - type: divider
       - type: title
         text: Combat Example
       - type: button
-        commands:
+        label: Attack Roll (DC 15, 10 dmg)
+        onclick:
           - |-
             const roll = await JustDices.rollSilent('1d20 + ' + bubbleAC);
             if (roll > 15) {
@@ -278,7 +282,7 @@ pages:
             } else {
               console.log('Attack missed!');
             }
-        label: Attack Roll (DC 15, 10 dmg)
+    _pageIndex: 3
   - label: Rings
     variables:
       ringColors:
@@ -302,54 +306,55 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#1a6aff');
             label: Add Blue
+            onclick:
+              - await ColoredRings.addRing(token, '#1a6aff');
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#ff7433');
             label: Add Orange
+            onclick:
+              - await ColoredRings.addRing(token, '#ff7433');
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#00ff00');
             label: Add Green
+            onclick:
+              - await ColoredRings.addRing(token, '#00ff00');
       - type: row
         children:
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#ff0000');
             label: Add Red
+            onclick:
+              - await ColoredRings.addRing(token, '#ff0000');
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#ffff00');
             label: Add Yellow
+            onclick:
+              - await ColoredRings.addRing(token, '#ffff00');
           - type: button
-            commands:
-              - await ColoredRings.addRing(token, '#ff00ff');
             label: Add Purple
+            onclick:
+              - await ColoredRings.addRing(token, '#ff00ff');
       - type: divider
       - type: title
         text: Remove Rings
       - type: row
         children:
           - type: button
-            commands:
-              - await ColoredRings.removeRing(token, '#1a6aff');
             label: Remove Blue
+            onclick:
+              - await ColoredRings.removeRing(token, '#1a6aff');
           - type: button
-            commands:
-              - await ColoredRings.removeRing(token, '#ff7433');
             label: Remove Orange
+            onclick:
+              - await ColoredRings.removeRing(token, '#ff7433');
           - type: button
-            commands:
-              - await ColoredRings.removeRing(token, '#00ff00');
             label: Remove Green
+            onclick:
+              - await ColoredRings.removeRing(token, '#00ff00');
       - type: button
-        commands:
+        label: Show All Rings
+        onclick:
           - |-
             const rings = await ColoredRings.getRings(token);
             console.log('Current rings:', rings);
-        label: Show All Rings
+    _pageIndex: 4
   - label: PrettySordid
     variables:
       prettyHasInitiative:
@@ -381,46 +386,47 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) + 1) : await PrettySordid.setInitiative(token, 1);'
             label: Increment / Assign 1
+            onclick:
+              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) + 1) : await PrettySordid.setInitiative(token, 1);'
           - type: button
-            commands:
-              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) - 1) : null;'
             label: Decrement
+            onclick:
+              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) - 1) : null;'
           - type: button
-            commands:
-              - await PrettySordid.setInitiative(token, 0);
             label: Reset to 0
+            onclick:
+              - await PrettySordid.setInitiative(token, 0);
       - type: divider
       - type: title
         text: Quick Set
       - type: row
         children:
           - type: button
-            commands:
+            label: Roll Initiative (+3)
+            onclick:
               - |-
                 const roll = await JustDices.rollSilent('1d20 + 3');
                 await PrettySordid.setInitiative(token, roll);
                 console.log('Initiative set to:', roll);
-            label: Roll Initiative (+3)
           - type: button
-            commands:
-              - await PrettySordid.setInitiative(token, 20);
             label: Set to 20
+            onclick:
+              - await PrettySordid.setInitiative(token, 20);
           - type: button
-            commands:
-              - await PrettySordid.setInitiative(token, 10);
             label: Set to 10
+            onclick:
+              - await PrettySordid.setInitiative(token, 10);
       - type: divider
       - type: title
         text: Remove Initiative
       - type: button
-        commands:
+        label: Remove All Initiative Data
+        onclick:
           - |-
             await PrettySordid.removeInitiative(token);
             console.log('Initiative metadata removed');
-        label: Remove All Initiative Data
+    _pageIndex: 5
   - label: JustDices
     variables:
       token:
@@ -436,70 +442,71 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await JustDices.roll('1d20');
             label: Roll d20
+            onclick:
+              - await JustDices.roll('1d20');
           - type: button
-            commands:
-              - await JustDices.roll('1d12');
             label: Roll d12
+            onclick:
+              - await JustDices.roll('1d12');
           - type: button
-            commands:
-              - await JustDices.roll('1d10');
             label: Roll d10
+            onclick:
+              - await JustDices.roll('1d10');
       - type: row
         children:
           - type: button
-            commands:
-              - await JustDices.roll('1d8');
             label: Roll d8
+            onclick:
+              - await JustDices.roll('1d8');
           - type: button
-            commands:
-              - await JustDices.roll('1d6');
             label: Roll d6
+            onclick:
+              - await JustDices.roll('1d6');
           - type: button
-            commands:
-              - await JustDices.roll('1d4');
             label: Roll d4
+            onclick:
+              - await JustDices.roll('1d4');
       - type: divider
       - type: title
         text: With Modifiers
       - type: row
         children:
           - type: button
-            commands:
-              - await JustDices.roll('1d20 + 5');
             label: d20 + 5
+            onclick:
+              - await JustDices.roll('1d20 + 5');
           - type: button
-            commands:
-              - await JustDices.roll('2d6 + 3');
             label: 2d6 + 3
+            onclick:
+              - await JustDices.roll('2d6 + 3');
           - type: button
-            commands:
-              - await JustDices.roll('3d6');
             label: 3d6
+            onclick:
+              - await JustDices.roll('3d6');
       - type: divider
       - type: title
         text: Damage Rolls
       - type: row
         children:
           - type: button
-            commands:
-              - await JustDices.roll('2d6 + 4');
             label: Greatsword (2d6+4)
+            onclick:
+              - await JustDices.roll('2d6 + 4');
           - type: button
-            commands:
-              - await JustDices.roll('1d8 + 3');
             label: Longsword (1d8+3)
+            onclick:
+              - await JustDices.roll('1d8 + 3');
           - type: button
-            commands:
-              - await JustDices.roll('8d6');
             label: Fireball (8d6)
+            onclick:
+              - await JustDices.roll('8d6');
       - type: divider
       - type: title
         text: Silent Rolls (for logic)
       - type: button
-        commands:
+        label: Silent Roll + Logic
+        onclick:
           - |-
             const roll = await JustDices.rollSilent('1d20');
             if (roll >= 15) {
@@ -507,13 +514,13 @@ pages:
             } else {
               console.log('Failure! (' + roll + ')');
             }
-        label: Silent Roll + Logic
       - type: button
-        commands:
+        label: Get Roll Object
+        onclick:
           - |-
             const rollObj = await JustDices.getRollObjectSilent('1d20 + 5');
             console.log('Roll object:', rollObj);
-        label: Get Roll Object
+    _pageIndex: 6
   - label: Local
     variables:
       inputName:
@@ -531,52 +538,53 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - 'await JustDices.roll(''Global Player Name: '' + playerName);'
             label: Show Global Name
+            onclick:
+              - 'await JustDices.roll(''Global Player Name: '' + playerName);'
           - type: button
-            commands:
-              - 'await JustDices.roll(''Input Name: '' + inputName);'
             label: Show Input Name
+            onclick:
+              - 'await JustDices.roll(''Input Name: '' + inputName);'
       - type: divider
       - type: title
         text: Save & Retrieve
       - type: button
-        commands:
-          - await Local.set('playerName', inputName);
         label: Save Input as Player Name
+        onclick:
+          - await Local.set('playerName', inputName);
       - type: button
-        commands:
-          - 'await JustDices.roll(''Player: '' + await Local.value(''playerName'', ''Unknown''));'
         label: Show Saved Player Name
+        onclick:
+          - 'await JustDices.roll(''Player: '' + await Local.value(''playerName'', ''Unknown''));'
       - type: button
-        commands:
+        label: List All Keys
+        onclick:
           - |-
             const keys = await Local.keys();
             console.log('Stored keys:', keys);
-        label: List All Keys
       - type: button
-        commands:
+        label: Clear All Storage
+        onclick:
           - |-
             await Local.clear();
             console.log('Local storage cleared');
-        label: Clear All Storage
       - type: divider
       - type: title
         text: Examples
       - type: button
-        commands:
+        label: Increment Counter
+        onclick:
           - |-
             await Local.set('counter', (await Local.value('counter', 0)) + 1);
             const count = await Local.value('counter', 0);
             console.log('Counter:', count);
-        label: Increment Counter
       - type: button
-        commands:
+        label: Save Last Roll
+        onclick:
           - |-
             await Local.set('lastRoll', await JustDices.rollSilent('1d20'));
             console.log('Saved last roll:', await Local.value('lastRoll', 0));
-        label: Save Last Roll
+    _pageIndex: 7
   - label: Weather
     variables:
       token:
@@ -592,111 +600,112 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: Snow
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });
-            label: Snow
           - type: button
-            commands:
+            label: Rain
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });
-            label: Rain
           - type: button
-            commands:
+            label: Sand
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });
-            label: Sand
       - type: row
         children:
           - type: button
-            commands:
+            label: Fire
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });
-            label: Fire
           - type: button
-            commands:
+            label: Cloud
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });
-            label: Cloud
           - type: button
-            commands:
+            label: Bloom
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });
-            label: Bloom
       - type: row
         children:
           - type: button
-            commands:
+            label: Energy Storm
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });
-            label: Energy Storm
           - type: button
-            commands:
+            label: Water
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });
-            label: Water
           - type: button
-            commands:
+            label: Current
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });
-            label: Current
       - type: divider
       - type: title
         text: Weather Tints
       - type: row
         children:
           - type: button
-            commands:
+            label: Blue Tint
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#88aaff' });
-            label: Blue Tint
           - type: button
-            commands:
+            label: Orange Tint
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#ff8844' });
-            label: Orange Tint
           - type: button
-            commands:
+            label: Green Tint
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#88ff88' });
-            label: Green Tint
       - type: divider
       - type: title
         text: Controls
       - type: row
         children:
           - type: button
-            commands:
+            label: Show Config
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 const config = await Weather.getWeather(mapId);
                 console.log('Weather config:', config);
-            label: Show Config
           - type: button
-            commands:
+            label: Check Weather
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 const has = await Weather.hasWeather(mapId);
                 console.log('Has weather:', has);
-            label: Check Weather
           - type: button
-            commands:
+            label: Remove Weather
+            onclick:
               - |-
                 const mapId = await getMapIdFromToken(token);
                 await Weather.removeWeather(mapId);
-            label: Remove Weather
+    _pageIndex: 8
   - label: Embers
     variables:
       caster:
@@ -716,26 +725,26 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: Magic Missile
+            onclick:
               - |-
                 await Embers.sequence()
                   .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 })
                   .cast({ spellName: 'Magic Missile' });
-            label: Magic Missile
           - type: button
-            commands:
+            label: Cure Wounds (AOE)
+            onclick:
               - |-
                 await Embers.sequence()
                   .aoe('cure_wounds', await getSelectedTokenId(), { size: 2 })
                   .cast({ spellName: 'Cure Wounds' });
-            label: Cure Wounds (AOE)
           - type: button
-            commands:
+            label: Shield
+            onclick:
               - |-
                 await Embers.sequence()
                   .aoe('shield.hit', caster, { size: 2 })
                   .cast({ spellName: 'Shield' });
-            label: Shield
       - type: divider
       - type: title
         text: Simultaneous Effects
@@ -744,37 +753,38 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: 2 Projectiles (Simultaneous)
+            onclick:
               - |-
                 await Embers.sequence()
                   .projectile('magic_missile', caster, [await getSelectedTokenId()])
                   .projectile('fire_bolt', caster, await getSelectedTokenId())
                   .cast({ spellName: 'Double Attack' });
-            label: 2 Projectiles (Simultaneous)
           - type: button
-            commands:
+            label: 2 AOEs (Simultaneous)
+            onclick:
               - |-
                 await Embers.sequence()
                   .aoe('shield.complete', caster, { size: 6 })
                   .aoe('fireball.explosion', await getSelectedTokenId(), { size: 4 })
                   .cast({ spellName: 'Blessings' });
-            label: 2 AOEs (Simultaneous)
       - type: divider
       - type: title
         text: Sequential Effects (with .then())
       - type: text
         text: Effects queue up - next waits for previous to finish
       - type: button
-        commands:
+        label: Projectile → Impact
+        onclick:
           - |-
             await Embers.sequence()
               .projectile('magic_missile', caster, await getSelectedTokenId())
               .then()
               .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 4 })
               .cast({ spellName: 'Missile Impact' });
-        label: Projectile → Impact
       - type: button
-        commands:
+        label: Fireball → Explosion → Knockback
+        onclick:
           - |-
             await Embers.sequence()
               .projectile('fireball.beam', caster, await getSelectedTokenId())
@@ -783,42 +793,42 @@ pages:
               .then()
               .action('slide', [await getSelectedTokenId(), { x: await getSelectedTokenId().x + 100, y: await getSelectedTokenId().y }, 500])
               .cast({ spellName: 'Fireball Chain' });
-        label: Fireball → Explosion → Knockback
       - type: divider
       - type: title
         text: Cone Effects
       - type: row
         children:
           - type: button
-            commands:
+            label: Burning Hands
+            onclick:
               - |-
                 await Embers.sequence()
                   .cone('burning_hands', caster, await getSelectedTokenId(), { size: 6 })
                   .cast({ spellName: 'Burning Hands' });
-            label: Burning Hands
           - type: button
-            commands:
+            label: Cone of Cold
+            onclick:
               - |-
                 await Embers.sequence()
                   .cone('cone_of_cold', caster, await getSelectedTokenId(), { size: 8 })
                   .cast({ spellName: 'Cone of Cold' });
-            label: Cone of Cold
       - type: divider
       - type: title
         text: Delays
       - type: text
         text: Add timing delays between effects
       - type: button
-        commands:
+        label: Arrow (then 300ms delay) → Impact
+        onclick:
           - |-
             await Embers.sequence()
               .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await getSelectedTokenId())
               .delay(300)
               .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 3 })
               .cast({ spellName: 'Delayed Impact' });
-        label: Arrow (then 300ms delay) → Impact
       - type: button
-        commands:
+        label: Cast → Projectile → Hit (with delays)
+        onclick:
           - |-
             await Embers.sequence()
               .aoe('moonbeam.intro', caster, { size: 2 })
@@ -827,14 +837,14 @@ pages:
               .delay(200)
               .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 5 })
               .cast({ spellName: 'Energy Casting' });
-        label: Cast → Projectile → Hit (with delays)
       - type: divider
       - type: title
         text: Complex Sequences
       - type: text
         text: Showcase fluent API chains
       - type: button
-        commands:
+        label: Multi-Projectile Barrage
+        onclick:
           - |-
             await Embers.sequence()
               .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 2 })
@@ -847,7 +857,6 @@ pages:
                 spellName: 'Barrage',
                 destination: 'ALL'
               });
-        label: Multi-Projectile Barrage
       - type: divider
       - type: title
         text: Helper Functions
@@ -856,17 +865,17 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - 'await castProjectile(''magic_missile'', caster, await getSelectedTokenId(), { copies: 3 });'
             label: castProjectile()
+            onclick:
+              - 'await castProjectile(''magic_missile'', caster, await getSelectedTokenId(), { copies: 3 });'
           - type: button
-            commands:
-              - 'await castAOE(''bless'', [caster, await getSelectedTokenId()], { size: 4 });'
             label: castAOE()
+            onclick:
+              - 'await castAOE(''bless'', [caster, await getSelectedTokenId()], { size: 4 });'
           - type: button
-            commands:
-              - 'await castCone(''burning_hands'', caster, await getSelectedTokenId(), { size: 6 });'
             label: castCone()
+            onclick:
+              - 'await castCone(''burning_hands'', caster, await getSelectedTokenId(), { size: 6 });'
       - type: divider
       - type: title
         text: API Reference
@@ -890,6 +899,7 @@ pages:
         text: • .broadcast(dest) - Set broadcast destination
       - type: text
         text: • .cast(options?) - Send to Embers
+    _pageIndex: 9
   - label: Layout
     variables:
       textVar:
@@ -976,11 +986,11 @@ pages:
                 label: Base Value
               - type: button
                 label: Button
-                commands:
+                onclick:
                   - await JustDices.roll('1d6');
               - type: button
                 label: Button
-                commands:
+                onclick:
                   - await JustDices.roll('1d6');
       - type: row
         children:
@@ -994,28 +1004,28 @@ pages:
                 label: Base Value
               - type: button
                 label: Button
-                commands:
+                onclick:
                   - await JustDices.roll('1d6');
               - type: button
                 label: Button
-                commands:
+                onclick:
                   - await JustDices.roll('1d6');
       - type: divider
       - type: title
         text: Button
       - type: button
         label: Example Button
-        commands:
+        onclick:
           - await JustDices.roll('1d20');
       - type: button
         label: Button with tooltip
         tooltip: This is a button with a tooltip
-        commands:
+        onclick:
           - await JustDices.roll('1d20');
       - type: button
         label: Button with color
         color: '#ff4e4e'
-        commands:
+        onclick:
           - await JustDices.roll('1d20');
       - type: divider
       - type: title
@@ -1047,6 +1057,76 @@ pages:
             color: '#9b59b6'
       - type: divider
       - type: title
+        text: onupdate Examples (NEW)
+      - type: text
+        text: All input components can now execute commands when their value changes. Below are examples with logging.
+      - type: row
+        children:
+          - type: checkbox
+            var: checkboxVar
+            label: Checkbox with onupdate
+            color: '#2ecc71'
+            onupdate:
+              - |-
+                console.log('✓ Checkbox changed to:', checkboxVar);
+                const status = checkboxVar ? 'ENABLED' : 'DISABLED';
+                console.log('Status:', status);
+      - type: text
+        text: ☝ Check the console when toggling the checkbox above (executes immediately)
+      - type: divider
+      - type: text
+        text: Counter with debounced onUpdate (executes after 150ms of inactivity)
+      - type: counter
+        var: counterVar
+        label: Counter with onupdate
+        step: 1
+        color: '#f39c12'
+        onupdate:
+          - |-
+            console.log('⏱ Counter value updated to:', counterVar);
+            const isHigh = counterVar > 20;
+            console.log('Value is', isHigh ? 'HIGH (>20)' : 'NORMAL (≤20)');
+      - type: text
+        text: ☝ Modify the counter above - onupdate executes 150ms after you stop changing it
+      - type: divider
+      - type: text
+        text: Input with debounced onupdate (executes after 500ms of inactivity during typing, immediately on blur)
+      - type: input
+        var: inputVar
+        label: Input with onupdate
+        placeholder: Type here and check console...
+        onupdate:
+          - |-
+            console.log('📝 Input value changed to:', inputVar);
+            console.log('Length:', inputVar.length, 'characters');
+      - type: text
+        text: ☝ Type in the input above - onupdate executes 500ms after you stop typing, or immediately when you click away
+      - type: divider
+      - type: text
+        text: Dropdown with onupdate (executes immediately)
+      - type: row
+        children:
+          - type: dropdown
+            var: dropdownModeVar
+            label: Difficulty (with onupdate)
+            color: '#9b59b6'
+            options:
+              - label: Easy
+                value: easy
+              - label: Normal
+                value: normal
+              - label: Hard
+                value: hard
+            onupdate:
+              - |-
+                console.log('🎮 Difficulty changed to:', dropdownModeVar);
+                const multipliers = { easy: 0.5, normal: 1, hard: 1.5 };
+                const mult = multipliers[dropdownModeVar] || 1;
+                console.log('Damage multiplier:', mult);
+      - type: text
+        text: ☝ Change the dropdown selection - onupdate executes immediately
+      - type: divider
+      - type: title
         text: Stack with Border and Color
       - type: text
         text: Stacks can have borders and custom accent colors
@@ -1076,8 +1156,9 @@ pages:
               - type: button
                 label: Button in stack
                 color: '#e74c3c'
-                commands:
+                onclick:
                   - await JustDices.roll('1d20');
+    _pageIndex: 10
   - label: Tests
     variables:
       spdCS:
@@ -1111,31 +1192,32 @@ pages:
             var: floorResult
             label: floor({spdCS}/2)
       - type: button
-        commands:
-          - 'await JustDices.roll(''floorResult: '' + floorResult);'
         label: Show floor result
+        onclick:
+          - 'await JustDices.roll(''floorResult: '' + floorResult);'
       - type: button
-        commands:
-          - await JustDices.roll('1d10');
         label: Test Roll
-      - type: button
-        commands:
+        onclick:
           - await JustDices.roll('1d10');
+      - type: button
         label: Test Roll2
+        onclick:
+          - await JustDices.roll('1d10');
       - type: button
-        commands:
-          - await JustDices.roll('1d10 + ' + spdCS);
         label: Test with spdCS
+        onclick:
+          - await JustDices.roll('1d10 + ' + spdCS);
       - type: button
-        commands:
+        label: Test Async
+        onclick:
           - |-
             result = await JustDices.roll('1d20');
             message = result > 10 ? 'Effect' : 'No Effect';
             message += result == 20 ? ' (Critical)' : '';
             console.log(`Result: ${result} - ${message}`);
-        label: Test Async
       - type: button
-        commands:
+        label: Multi-line Script Example
+        onclick:
           - |-
             const healAmount = 15;
             const currentHP = trackerHP;
@@ -1143,9 +1225,9 @@ pages:
             const newHP = min(currentHP + healAmount, maxHP);
             await OwlTrackers.setValue(token, 'HP', newHP);
             console.log(`Healed ${newHP - currentHP} HP`);
-        label: Multi-line Script Example
       - type: button
-        commands:
+        label: Conditional Logic Example
+        onclick:
           - |-
             const roll = await JustDices.roll('1d20');
             if (roll >= 15) {
@@ -1157,15 +1239,14 @@ pages:
             } else {
               console.log('Failure!');
             }
-        label: Conditional Logic Example
       - type: button
-        commands:
+        label: Loop Example
+        onclick:
           - |-
             for (let i = 0; i < 3; i++) {
               const roll = await JustDices.roll('1d6');
               console.log(`Roll ${i + 1}: ${roll}`);
             }
-        label: Loop Example
       - type: divider
       - type: title
         text: Dropdown with Array
@@ -1189,17 +1270,18 @@ pages:
             var: mapIdFromToken
             label: Map ID
       - type: button
-        commands:
+        label: Get Map ID from Token
+        onclick:
           - |-
             mapId = await getMapIdFromToken(testToken);
             console.log('Map ID: ' + (mapId || 'Not on a map'));
-        label: Get Map ID from Token
       - type: button
-        commands:
+        label: Get Closest Token Id
+        onclick:
           - |-
             tokenId = await getClosestTokenId(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
             console.log('Closest Token Id: ' + (tokenId || 'No token found'));
-        label: Get Closest Token Id
+    _pageIndex: 11
   - label: Tokens
     variables:
       tokenUrl:
@@ -1244,7 +1326,8 @@ pages:
         var: tokenSize
         label: Token Size (grid cells)
       - type: button
-        commands:
+        label: Create Token
+        onclick:
           - |-
             const tokenId = await createToken({
               url: tokenUrl,
@@ -1253,7 +1336,6 @@ pages:
               label: tokenName
             });
             await setValue('createdTokenId', tokenId);
-        label: Create Token
       - type: value
         var: createdTokenId
         label: Created Token ID
@@ -1269,7 +1351,8 @@ pages:
             var: gridY
             label: Grid Y
       - type: button
-        commands:
+        label: Create Token at Grid Position
+        onclick:
           - |-
             const tokenId = await createToken({
               url: tokenUrl,
@@ -1279,12 +1362,12 @@ pages:
               size: tokenSize
             });
             await setValue('createdTokenId', tokenId);
-        label: Create Token at Grid Position
       - type: divider
       - type: title
         text: Quick Examples
       - type: button
-        commands:
+        label: Create Demo Hero (1.5 cells)
+        onclick:
           - |-
             await createToken({
               url: 'SELECT',
@@ -1293,9 +1376,9 @@ pages:
               size: 1.5,
               layer: 'MOUNT',
             });
-        label: Create Demo Hero (1.5 cells)
       - type: button
-        commands:
+        label: Create 3 Enemies (1 cell each)
+        onclick:
           - |-
             const enemyPositions = [
               { x: 600, y: 400 },
@@ -1310,9 +1393,9 @@ pages:
               label: `E${i + 1}`
             }));
             await createTokens(tokens);
-        label: Create 3 Enemies (1 cell each)
       - type: button
-        commands:
+        label: Create Boss (3 cells) with HP & Metadata
+        onclick:
           - |-
             const tokenId = await createToken({
               url: 'https://sewef.github.io/justDices/JustDices.png',
@@ -1332,12 +1415,12 @@ pages:
             });
 
             console.log('Created boss with ID:', tokenId);
-        label: Create Boss (3 cells) with HP & Metadata
       - type: divider
       - type: title
         text: Tracker Management Examples
       - type: button
-        commands:
+        label: Create Token with Multiple Trackers
+        onclick:
           - |-
             const tokenId = await createToken({
               url: 'https://sewef.github.io/ptu/img/logo64.png',
@@ -1382,9 +1465,9 @@ pages:
 
             await setValue('createdTokenId', tokenId);
             console.log('Created token with multiple trackers:', tokenId);
-        label: Create Token with Multiple Trackers
       - type: button
-        commands:
+        label: Remove 'Temp HP' Tracker
+        onclick:
           - |-
             if (!createdTokenId) {
               console.error('No token ID available. Create a token first.');
@@ -1398,7 +1481,7 @@ pages:
             } else {
               console.log('Temp HP tracker not found');
             }
-        label: Remove 'Temp HP' Tracker
+    _pageIndex: 12
   - label: Aurora
     variables:
       mapId:
@@ -1438,7 +1521,8 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: Show Full Config
+            onclick:
               - |-
                 const myConfig = await Aurora.getAurora(mapId);
                 if (myConfig) {
@@ -1446,7 +1530,6 @@ pages:
                 } else {
                   console.log('No Aurora configuration active');
                 }
-            label: Show Full Config
       - type: divider
       - type: title
         text: Presets
@@ -1455,23 +1538,23 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await Aurora.setAurora(mapId, 'MIDNIGHT');
             label: Midnight
+            onclick:
+              - await Aurora.setAurora(mapId, 'MIDNIGHT');
           - type: button
-            commands:
-              - await Aurora.setAurora(mapId, 'GOLDEN_HOUR');
             label: Golden Hour
+            onclick:
+              - await Aurora.setAurora(mapId, 'GOLDEN_HOUR');
       - type: row
         children:
           - type: button
-            commands:
-              - await Aurora.setAurora(mapId, 'PRE_DAWN');
             label: Pre-Dawn
+            onclick:
+              - await Aurora.setAurora(mapId, 'PRE_DAWN');
           - type: button
-            commands:
-              - await Aurora.setAurora(mapId, 'BLOOD_MOON');
             label: Blood Moon
+            onclick:
+              - await Aurora.setAurora(mapId, 'BLOOD_MOON');
       - type: divider
       - type: title
         text: Quick Presets
@@ -1480,7 +1563,8 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: Normal Light
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 100,
@@ -1490,9 +1574,9 @@ pages:
                   enabled: true,
                   name: 'Normal Light'
                 });
-            label: Normal Light
           - type: button
-            commands:
+            label: Night Time
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 60,
@@ -1503,9 +1587,9 @@ pages:
                   blendMode: 3,
                   name: 'Night Time'
                 });
-            label: Night Time
           - type: button
-            commands:
+            label: Sunset
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 130,
@@ -1516,11 +1600,11 @@ pages:
                   blendMode: 2,
                   name: 'Sunset'
                 });
-            label: Sunset
       - type: row
         children:
           - type: button
-            commands:
+            label: Dark Cave
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 40,
@@ -1531,9 +1615,9 @@ pages:
                   blendMode: 0,
                   name: 'Dark Cave'
                 });
-            label: Dark Cave
           - type: button
-            commands:
+            label: Desert Heat
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 150,
@@ -1544,9 +1628,9 @@ pages:
                   blendMode: 2,
                   name: 'Desert Heat'
                 });
-            label: Desert Heat
           - type: button
-            commands:
+            label: Mystic Forest
+            onclick:
               - |-
                 await Aurora.setAurora(mapId, {
                   saturation: 70,
@@ -1557,7 +1641,6 @@ pages:
                   blendMode: 3,
                   name: 'Mystic Forest'
                 });
-            label: Mystic Forest
       - type: divider
       - type: title
         text: Custom Configuration
@@ -1594,7 +1677,8 @@ pages:
             label: Feather (0-100)
             step: 10
       - type: button
-        commands:
+        label: Apply Custom Settings
+        onclick:
           - |-
             const mapId = await getMapIdFromToken(token);
             await Aurora.setAurora(mapId, {
@@ -1607,7 +1691,6 @@ pages:
               feather: feather,
               name: 'Custom'
             });
-        label: Apply Custom Settings
       - type: divider
       - type: title
         text: Update Properties
@@ -1616,25 +1699,26 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - 'await Aurora.updateAurora(mapId, { opacity: opacity });'
             label: Update Opacity
+            onclick:
+              - 'await Aurora.updateAurora(mapId, { opacity: opacity });'
           - type: button
-            commands:
-              - 'await Aurora.updateAurora(mapId, { hue: hue });'
             label: Update Hue
+            onclick:
+              - 'await Aurora.updateAurora(mapId, { hue: hue });'
           - type: button
-            commands:
-              - 'await Aurora.updateAurora(mapId, { enabled: true });'
             label: Enable
+            onclick:
+              - 'await Aurora.updateAurora(mapId, { enabled: true });'
       - type: row
         children:
           - type: button
-            commands:
-              - 'await Aurora.updateAurora(mapId, { enabled: false });'
             label: Disable
+            onclick:
+              - 'await Aurora.updateAurora(mapId, { enabled: false });'
           - type: button
-            commands:
+            label: Brighten (+20 sat, -10 light)
+            onclick:
               - |-
                 const current = await Aurora.getAurora(mapId);
                 if (current) {
@@ -1643,9 +1727,9 @@ pages:
                     lightness: current.lightness - 10
                   });
                 }
-            label: Brighten (+20 sat, -10 light)
           - type: button
-            commands:
+            label: Darken (-20 sat, +10 light)
+            onclick:
               - |-
                 const current = await Aurora.getAurora(mapId);
                 if (current) {
@@ -1654,35 +1738,35 @@ pages:
                     lightness: current.lightness + 10
                   });
                 }
-            label: Darken (-20 sat, +10 light)
       - type: divider
       - type: title
         text: Controls
       - type: row
         children:
           - type: button
-            commands:
+            label: Show Config
+            onclick:
               - |-
                 const currentConfig = await Aurora.getAurora(mapId);
                 console.log('Aurora Config:', currentConfig);
-            label: Show Config
           - type: button
-            commands:
+            label: List Presets
+            onclick:
               - |-
                 const presets = Aurora.getPresets();
                 console.log('Available Presets:', presets);
-            label: List Presets
           - type: button
-            commands:
-              - await Aurora.removeAurora(mapId);
             label: Remove Aurora
+            onclick:
+              - await Aurora.removeAurora(mapId);
       - type: divider
       - type: title
         text: Time of Day Cycle
       - type: text
         text: Simulate a day/night cycle
       - type: button
-        commands:
+        label: Start Day/Night Cycle
+        onclick:
           - |-
             const mapId = await getMapIdFromToken(token);
             const cycle = [
@@ -1705,7 +1789,7 @@ pages:
             }
 
             console.log('Day/Night cycle started (10 seconds)');
-        label: Start Day/Night Cycle
+    _pageIndex: 13
   - label: Announcement
     variables:
       announcementData:
@@ -1719,7 +1803,8 @@ pages:
       - type: title
         text: Current Status
       - type: button
-        commands:
+        label: Show Full Status
+        onclick:
           - |-
             const announcement = await Announcement.getAnnouncement();
             if (announcement) {
@@ -1729,24 +1814,23 @@ pages:
             } else {
               console.log('No announcement configured');
             }
-        label: Show Full Status
       - type: divider
       - type: title
         text: Custom Announcement
       - type: text
         text: Create custom announcement with Markdown
       - type: button
-        commands:
+        label: Create Test Announcement
+        onclick:
           - |-
             const content = '# Test Announcement\n\nThis is a **bold** test with *italic* text.\n\n- Item 1\n- Item 2\n- Item 3';
             await Announcement.setAnnouncement(content, true);
-        label: Create Test Announcement
       - type: button
-        commands:
+        label: Create Inventory Notice
+        onclick:
           - |-
             const content = '## Important Notice\n\nPlease check your inventory before the next encounter.\n\n### Items to Bring:\n1. Healing potions\n2. Rope\n3. Torches';
             await Announcement.setAnnouncement(content, true);
-        label: Create Inventory Notice
       - type: divider
       - type: title
         text: Visibility Controls
@@ -1755,49 +1839,50 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await Announcement.showAnnouncement();
             label: Show
+            onclick:
+              - await Announcement.showAnnouncement();
           - type: button
-            commands:
-              - await Announcement.hideAnnouncement();
             label: Hide
+            onclick:
+              - await Announcement.hideAnnouncement();
           - type: button
-            commands:
+            label: Toggle
+            onclick:
               - |-
                 const newState = await Announcement.toggleAnnouncement();
                 console.log('Announcement now:', newState ? 'visible' : 'hidden');
-            label: Toggle
       - type: divider
       - type: title
         text: Update Operations
       - type: text
         text: Modify existing announcement
       - type: button
-        commands:
-          - await Announcement.updateContent('# Updated Content\n\nThis announcement has been updated!');
         label: Update Content Only
+        onclick:
+          - await Announcement.updateContent('# Updated Content\n\nThis announcement has been updated!');
       - type: button
-        commands:
-          - 'await Announcement.updateAnnouncement({ active: false });'
         label: Update Active Only
+        onclick:
+          - 'await Announcement.updateAnnouncement({ active: false });'
       - type: button
-        commands:
+        label: Update Both
+        onclick:
           - |-
             await Announcement.updateAnnouncement({
               content: '## Updated via Object\n\nBoth content and state updated.',
               active: true
             });
-        label: Update Both
       - type: divider
       - type: title
         text: Management
       - type: button
-        commands:
+        label: Remove Announcement Metadata
+        onclick:
           - |-
             await Announcement.removeAnnouncementMetadata();
             console.log('Announcement removed');
-        label: Remove Announcement Metadata
+    _pageIndex: 14
   - label: Auras
     layout:
       - type: title
@@ -1808,7 +1893,8 @@ pages:
       - type: title
         text: Status
       - type: button
-        commands:
+        label: Check Status
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1817,14 +1903,14 @@ pages:
             console.log('Selected Item:', item);
             console.log('Has Auras:', hasAuras);
             console.log('Aura Count:', auras.length);
-        label: Check Status
       - type: divider
       - type: title
         text: Add Aura
       - type: text
         text: Create a new aura on the selected item
       - type: button
-        commands:
+        label: Add Red Glow Aura
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1834,9 +1920,9 @@ pages:
               size: 5
             });
             console.log('✓ Red Glow Aura added');
-        label: Add Red Glow Aura
       - type: button
-        commands:
+        label: Add Green Bubble Aura
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1846,9 +1932,9 @@ pages:
               size: 3
             });
             console.log('✓ Green Bubble Aura added');
-        label: Add Green Bubble Aura
       - type: button
-        commands:
+        label: Add Blue Range Aura
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1858,9 +1944,9 @@ pages:
               size: 8
             });
             console.log('✓ Blue Range Aura added');
-        label: Add Blue Range Aura
       - type: button
-        commands:
+        label: Add Image Aura (Simple)
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1870,9 +1956,9 @@ pages:
               imageUrl: 'https://sewef.github.io/macrohero/logo.png'
             });
             console.log('✓ Image Aura added (auto-detected dimensions)');
-        label: Add Image Aura (Simple)
       - type: button
-        commands:
+        label: Add Image Aura (Advanced)
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1883,14 +1969,14 @@ pages:
               imageBuildParams: imageBuildParams
             });
             console.log('✓ Image Aura added (custom parameters)');
-        label: Add Image Aura (Advanced)
       - type: divider
       - type: title
         text: Remove Aura
       - type: text
         text: Remove all auras from the selected item
       - type: button
-        commands:
+        label: Remove All Auras
+        onclick:
           - |-
             const item = await getSelectedTokenId();
             if (!item) return console.warn('No item selected');
@@ -1898,17 +1984,18 @@ pages:
             if (!hasBefore) return console.warn('No auras to remove');
             await Auras.removeAura(item);
             console.log('✓ All auras removed');
-        label: Remove All Auras
       - type: title
         text: Notes
       - type: text
         text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control.'
+    _pageIndex: 15
   - label: DicePlus
     variables:
       diceNotation:
         value: 2d20kh1+5
       lastRollResult:
         value: Roll a dice to see result
+        expression: '4d6 drop lowest: 15'
       diceReady:
         eval: DicePlus.isReady()
     layout:
@@ -1932,85 +2019,85 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
+            label: Roll d20
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('1d20');
                 await setValue('lastRollResult', 'D20: ' + result);
-            label: Roll d20
           - type: button
-            commands:
+            label: 2d6+3
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('2d6+3');
                 await setValue('lastRollResult', '2d6+3: ' + result);
-            label: 2d6+3
           - type: button
-            commands:
+            label: 3d6
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('3d6');
                 await setValue('lastRollResult', '3d6: ' + result);
-            label: 3d6
       - type: divider
       - type: title
         text: Advantage / Disadvantage
       - type: row
         children:
           - type: button
-            commands:
+            label: Advantage (+5)
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('2d20kh1+5');
                 await setValue('lastRollResult', 'Advantage (+5): ' + result);
-            label: Advantage (+5)
           - type: button
-            commands:
+            label: Disadvantage (-2)
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('2d20kl1-2');
                 await setValue('lastRollResult', 'Disadvantage (-2): ' + result);
-            label: Disadvantage (-2)
       - type: row
         children:
           - type: button
-            commands:
+            label: 4d6 Drop Lowest
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('4d6dl1');
                 await setValue('lastRollResult', '4d6 drop lowest: ' + result);
-            label: 4d6 Drop Lowest
       - type: divider
       - type: title
         text: Damage Rolls
       - type: row
         children:
           - type: button
-            commands:
+            label: Greatsword
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('2d6 + 4');
                 await setValue('lastRollResult', 'Greatsword (2d6+4): ' + result);
-            label: Greatsword
           - type: button
-            commands:
+            label: Longsword
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('1d8 + 3');
                 await setValue('lastRollResult', 'Longsword (1d8+3): ' + result);
-            label: Longsword
           - type: button
-            commands:
+            label: Scimitar
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('2d8 + 5');
                 await setValue('lastRollResult', 'Scimitar (2d8+5): ' + result);
-            label: Scimitar
       - type: row
         children:
           - type: button
-            commands:
+            label: Fireball
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('8d6');
                 await setValue('lastRollResult', 'Fireball (8d6): ' + result);
-            label: Fireball
           - type: button
-            commands:
+            label: Meteor Storm
+            onclick:
               - |-
                 const result = await DicePlus.rollTotal('10d6');
                 await setValue('lastRollResult', 'Meteor Storm (10d6): ' + result);
-            label: Meteor Storm
       - type: divider
       - type: title
         text: Custom Notation
@@ -2019,7 +2106,8 @@ pages:
         label: Dice Notation
         placeholder: e.g., 2d20kh1+5, 4d6dl1, 3d6!e
       - type: button
-        commands:
+        label: Roll Custom
+        onclick:
           - |-
             try {
               const result = await DicePlus.getRollObject(diceNotation);
@@ -2029,12 +2117,12 @@ pages:
             } catch (error) {
               await setValue('lastRollResult', 'Error: ' + error.message);
             }
-        label: Roll Custom
       - type: divider
       - type: title
         text: Roll Results
       - type: button
-        commands:
+        label: Roll with Description
+        onclick:
           - |-
             const result = await DicePlus.getRollObject('3d6{Red} # Fire + 2d6{White} # Ice');
             console.log('Full roll object:', result);
@@ -2043,20 +2131,20 @@ pages:
                 console.log(`${group.description}: ${group.total}`);
               });
             }
-        label: Roll with Description
       - type: button
-        commands:
+        label: Show Roll Details
+        onclick:
           - |-
             const result = await DicePlus.getRollObject('4d6');
             console.log('Roll result:', result);
             console.log('Total:', result.totalValue);
             console.log('Dice count:', result.groups?.[0]?.dice?.length || 0);
-        label: Show Roll Details
       - type: divider
       - type: title
         text: Advanced Examples
       - type: button
-        commands:
+        label: Roll with Notification
+        onclick:
           - |-
             const roll = await DicePlus.rollTotal('1d20 + 5');
             if (roll >= 15) {
@@ -2066,9 +2154,9 @@ pages:
             } else {
               await Owlbear.notification.warning(`Failed! (${roll})`);
             }
-        label: Roll with Notification
       - type: button
-        commands:
+        label: Attack Roll Sequence
+        onclick:
           - |-
             const atkRoll = await DicePlus.rollTotal('1d20 + 7');
             const dmgRoll = await DicePlus.rollTotal('2d8 + 5');
@@ -2080,7 +2168,7 @@ pages:
               console.log('MISS!');
               await setValue('lastRollResult', `Miss! Attack: ${atkRoll}`);
             }
-        label: Attack Roll Sequence
+    _pageIndex: 16
   - label: SDK Helpers
     variables:
       message:
@@ -2113,11 +2201,11 @@ pages:
               - WARNING
               - ERROR
       - type: button
-        commands:
+        label: Send Notification
+        onclick:
           - |-
             const id = await Owlbear.notification.show(message, variant);
             console.log('Notification ID:', id);
-        label: Send Notification
       - type: divider
       - type: title
         text: Variant Examples
@@ -2126,22 +2214,23 @@ pages:
       - type: row
         children:
           - type: button
-            commands:
-              - await Owlbear.notification.success('Operation completed successfully!');
             label: Success
+            onclick:
+              - await Owlbear.notification.success('Operation completed successfully!');
           - type: button
-            commands:
-              - await Owlbear.notification.warning('This is a warning!');
             label: Warning
+            onclick:
+              - await Owlbear.notification.warning('This is a warning!');
           - type: button
-            commands:
-              - await Owlbear.notification.error('An error occurred!');
             label: Error
+            onclick:
+              - await Owlbear.notification.error('An error occurred!');
       - type: divider
       - type: title
         text: Practical Examples
       - type: button
-        commands:
+        label: Roll-Based Notification
+        onclick:
           - |-
             const roll = await JustDices.rollSilent('1d20');
             if (roll >= 15) {
@@ -2151,9 +2240,9 @@ pages:
             } else {
               await Owlbear.notification.warning(`Failed! (${roll})`);
             }
-        label: Roll-Based Notification
       - type: button
-        commands:
+        label: Token Selection Check
+        onclick:
           - |-
             const selectedToken = await getSelectedTokenId();
             if (!selectedToken) {
@@ -2161,14 +2250,13 @@ pages:
             } else {
               await Owlbear.notification.success('Token selected and ready!');
             }
-        label: Token Selection Check
       - type: button
-        commands:
+        label: Sequential Notifications
+        onclick:
           - |-
             await Owlbear.notification.show('Starting operation...');
             await new Promise(r => setTimeout(r, 1000));
             await Owlbear.notification.success('Operation complete!');
-        label: Sequential Notifications
       - type: divider
       - type: title
         text: How to Use in Your Code
@@ -2204,3 +2292,4 @@ pages:
         text: WARNING - Warning state (orange)
       - type: text
         text: ERROR - Error state (red)
+    _pageIndex: 17

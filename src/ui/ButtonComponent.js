@@ -24,8 +24,8 @@ export class ButtonComponent extends UIComponent {
       btn.textContent = this.item.label ?? "Button";
     }
 
-    // Add command handler if commands exist
-    if (this.item.commands && Array.isArray(this.item.commands) && this.item.commands.length > 0) {
+    // Add command handler if onclick commands exist
+    if (this.item.onclick && Array.isArray(this.item.onclick) && this.item.onclick.length > 0) {
       this.addEventListener(btn, "click", async () => {
         await this.executeCommands(btn);
       });
@@ -60,7 +60,7 @@ export class ButtonComponent extends UIComponent {
       };
 
       await this.services.handleButtonClick(
-        this.item.commands,
+        this.item.onclick,
         pageObj,
         this.services.globalVariables,
         onVariableResolved

@@ -424,7 +424,7 @@ function normalizeCommandsForFormat(obj, format) {
   if (typeof obj === 'object') {
     const result = {};
     for (const key in obj) {
-      if (key === 'commands' && Array.isArray(obj[key])) {
+      if ((key === 'commands' || key === 'onupdate' || key === 'onclick') && Array.isArray(obj[key])) {
         if (format === 'yaml') {
           // YAML: join array of strings into single multiline string, wrap in array
           // ["line1", "line2"] becomes ["line1\nline2"]
@@ -468,8 +468,8 @@ function normalizeCommands(obj) {
   if (typeof obj === 'object') {
     const result = {};
     for (const key in obj) {
-      if (key === 'commands') {
-        // For commands: if it's an array with a single multiline string, split it
+      if (key === 'commands' || key === 'onupdate' || key === 'onclick') {
+        // For commands, onupdate, and onclick: if it's an array with a single multiline string, split it
         if (Array.isArray(obj[key])) {
           if (obj[key].length === 1 && typeof obj[key][0] === 'string' && obj[key][0].includes('\n')) {
             // Split the multiline string into array of lines
@@ -1416,8 +1416,8 @@ window.updateElementFields = function(existingElement = null) {
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
         </div>
         <div class="input-group">
-          <label>Commands (one per line)</label>
-          <textarea id="elem_commands" placeholder="JustDices.roll('1d20')">${dedentCommandList(existingElement?.commands || []).join('\n')}</textarea>
+          <label>onclick Commands (one per line)</label>
+          <textarea id="elem_onclick" placeholder="JustDices.roll('1d20')">${dedentCommandList(existingElement?.onclick || []).join('\n')}</textarea>
         </div>
       `;
       // Add event listener for checkbox to toggle color input
@@ -1457,6 +1457,11 @@ window.updateElementFields = function(existingElement = null) {
           <label>Placeholder</label>
           <input type="text" id="elem_placeholder" value="${existingElement?.placeholder || ''}" placeholder="Placeholder text..." />
         </div>
+        <div class="input-group">
+          <label>onupdate Commands (one per line, optional)</label>
+          <textarea id="elem_onupdate" placeholder="console.log('Input value:', ${existingElement?.var || 'variableName'});">${dedentCommandList(existingElement?.onupdate || []).join('\n')}</textarea>
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Debounced 500ms during typing, immediate on blur</small>
+        </div>
       `;
       break;
     case 'counter':
@@ -1480,6 +1485,11 @@ window.updateElementFields = function(existingElement = null) {
           </label>
           <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
+        <div class="input-group">
+          <label>onupdate Commands (one per line, optional)</label>
+          <textarea id="elem_onupdate" placeholder="console.log('Counter value:', ${existingElement?.var || 'variableName'});">${dedentCommandList(existingElement?.onupdate || []).join('\n')}</textarea>
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Debounced 150ms during updates</small>
         </div>
       `;
       // Add event listener for checkbox to toggle color input
@@ -1510,6 +1520,11 @@ window.updateElementFields = function(existingElement = null) {
           </label>
           <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
+        <div class="input-group">
+          <label>onupdate Commands (one per line, optional)</label>
+          <textarea id="elem_onupdate" placeholder="console.log('Checked:', ${existingElement?.var || 'variableName'});">${dedentCommandList(existingElement?.onupdate || []).join('\n')}</textarea>
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Executes immediately when toggled</small>
         </div>
       `;
       // Add event listener for checkbox to toggle color input
@@ -1548,6 +1563,11 @@ window.updateElementFields = function(existingElement = null) {
           <label>Options (one per line)</label>
           <textarea id="elem_options" placeholder="Option 1\nFacile | easy\nOption 3">${optionsText}</textarea>
           <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Format: "Label" ou "Label | value"</small>
+        </div>
+        <div class="input-group">
+          <label>onupdate Commands (one per line, optional)</label>
+          <textarea id="elem_onupdate" placeholder="console.log('Selected:', ${existingElement?.var || 'variableName'});">${dedentCommandList(existingElement?.onupdate || []).join('\n')}</textarea>
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Executes immediately when selection changes</small>
         </div>
       `;
       break;
@@ -1638,8 +1658,8 @@ window.saveElement = function() {
       const hasCustomColor = document.getElementById("elem_customColor")?.checked;
       const color = document.getElementById("elem_color")?.value;
       if (hasCustomColor && color) element.color = color;
-      const commands = document.getElementById("elem_commands")?.value || '';
-      element.commands = commands.split('\n').filter(c => c.trim());
+      const commands = document.getElementById("elem_onclick")?.value || '';
+      element.onclick = commands.split('\n').filter(c => c.trim());
       break;
     case 'value':
       element.var = document.getElementById("elem_var")?.value || '';
@@ -1651,6 +1671,10 @@ window.saveElement = function() {
       const hasCustomColorCheckbox = document.getElementById("elem_customColor")?.checked;
       const colorCheckbox = document.getElementById("elem_color")?.value;
       if (hasCustomColorCheckbox && colorCheckbox) element.color = colorCheckbox;
+      const onupdateCheckbox = document.getElementById("elem_onupdate")?.value || '';
+      if (onupdateCheckbox.trim()) {
+        element.onupdate = onupdateCheckbox.split('\n').filter(c => c.trim());
+      }
       break;
     case 'dropdown':
       element.var = document.getElementById("elem_var")?.value || '';
@@ -1668,11 +1692,19 @@ window.saveElement = function() {
         // Otherwise, treat as simple string option
         return line.trim();
       });
+      const onupdateDropdown = document.getElementById("elem_onupdate")?.value || '';
+      if (onupdateDropdown.trim()) {
+        element.onupdate = onupdateDropdown.split('\n').filter(c => c.trim());
+      }
       break;
     case 'input':
       element.var = document.getElementById("elem_var")?.value || '';
       element.label = document.getElementById("elem_label")?.value || '';
       element.placeholder = document.getElementById("elem_placeholder")?.value || '';
+      const onupdateInput = document.getElementById("elem_onupdate")?.value || '';
+      if (onupdateInput.trim()) {
+        element.onupdate = onupdateInput.split('\n').filter(c => c.trim());
+      }
       break;
     case 'counter':
       element.var = document.getElementById("elem_var")?.value || '';
@@ -1682,6 +1714,10 @@ window.saveElement = function() {
       const hasCustomColorCounter = document.getElementById("elem_customColor")?.checked;
       const colorCounter = document.getElementById("elem_color")?.value;
       if (hasCustomColorCounter && colorCounter) element.color = colorCounter;
+      const onupdateCounter = document.getElementById("elem_onupdate")?.value || '';
+      if (onupdateCounter.trim()) {
+        element.onupdate = onupdateCounter.split('\n').filter(c => c.trim());
+      }
       break;
     case 'title':
       element.text = document.getElementById("elem_text")?.value || '';

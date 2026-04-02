@@ -20,6 +20,7 @@ export class CounterComponent extends UIComponent {
     this.lastSavedValue = null;
     this.unsubscribe = null;
     this.observer = null;
+    this.onUpdateDebounced = null;
   }
 
   render() {
@@ -168,6 +169,11 @@ export class CounterComponent extends UIComponent {
           .catch(err => this.handleError("Counter", err));
         await this.services.broadcastConfigUpdated();
         
+        // Execute onupdate commands if defined
+        if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
+          await this.executeOnUpdate(this.item.onupdate, "CounterOnUpdate");
+        }
+        
         // Re-resolve dependent variables
         const dependentVars = this.services.getDependentVariables(
           this.page.variables,
@@ -246,6 +252,9 @@ export class CounterComponent extends UIComponent {
     }
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
+    }
+    if (this.onUpdateDebounced) {
+      this.onUpdateDebounced.cancel();
     }
   }
 }
