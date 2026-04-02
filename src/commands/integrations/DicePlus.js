@@ -220,7 +220,7 @@ export async function rollTotal(diceNotation, options = {}) {
 /**
  * Roll dice for a specific player who can see results
  * @param {string} diceNotation - Dice notation
- * @param {'self' | 'dm' | 'gm_only'} visibility - Who sees the roll
+ * @param {'everyone' | 'self' | 'dm' | 'gm_only'} visibility - Who sees the roll
  * @param {Object} options - Additional roll options
  * @returns {Promise<Object>} Roll result object
  */

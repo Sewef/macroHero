@@ -158,12 +158,6 @@ class IntegrationsManager {
         rollTotal: this.wrapAsync((diceNotation, options) => DicePlus.rollTotal(diceNotation, options)),
         rollSecret: this.wrapAsync((diceNotation, visibility, options) => DicePlus.rollSecret(diceNotation, visibility, options)),
         getRollObject: this.wrapAsync((diceNotation, options) => DicePlus.getRollObject(diceNotation, options)),
-        getGroupByDescription: (rollResult, searchTerm) => DicePlus.getGroupByDescription(rollResult, searchTerm),
-        getDiceValues: (group) => DicePlus.getDiceValues(group),
-        getKeptDiceValues: (group) => DicePlus.getKeptDiceValues(group),
-        formatResult: (rollResult) => DicePlus.formatResult(rollResult),
-        onRollResult: (callback) => DicePlus.onRollResult(callback),
-        onRollError: (callback) => DicePlus.onRollError(callback),
       },
       // PrettySordid (initiative helper)
       PrettySordid: {
