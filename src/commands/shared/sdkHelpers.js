@@ -7,10 +7,7 @@
  * imageHelper.js utilities.
  *
  * Usage in macros (no imports needed — injected via integration context):
- *   Owlbear.notification.show("Hello!")
- *   Owlbear.notification.success("Success!")
- *   Owlbear.notification.warning("Caution!")
- *   Owlbear.notification.error("Error!")
+ *   Owlbear.notification.show("Hello!", "SUCCESS")
  *   Owlbear.broadcast.sendMessage("my.event", data, { destination: "ROOM" })
  *   Owlbear.scene.items.getItems()
  *   Owlbear.player.getName()
@@ -347,18 +344,7 @@ const broadcastNamespace = {
 // All original OBR methods are preserved; extras are added alongside them.
 // ============================================================================
 
-/** notification: augmented with success / warning / error / info shortcuts */
-const notificationNamespace = {
-  show: (...args) => OBR.notification.show(...args),
-  clear: (...args) => OBR.notification.clear?.(...args),
-  success: (msg) => OBR.notification.show(msg, NOTIFICATION_VARIANT.SUCCESS),
-  warning: (msg) => OBR.notification.show(msg, NOTIFICATION_VARIANT.WARNING),
-  error: (msg) => OBR.notification.show(msg, NOTIFICATION_VARIANT.ERROR),
-  info: (msg) => OBR.notification.show(msg, NOTIFICATION_VARIANT.INFO),
-};
-
 const OVERRIDES = {
-  notification: notificationNamespace,
   broadcast: broadcastNamespace,
   image: imageNamespace,
 };
@@ -372,7 +358,7 @@ const OVERRIDES = {
  * - Any `Owlbear.xyz` that is NOT in OVERRIDES delegates directly to `OBR.xyz`.
  * - Overridden namespaces (notification, image) replace the OBR equivalent.
  *
- * @type {typeof OBR & { notification: typeof notificationNamespace, image: typeof imageNamespace }}
+ * @type {typeof OBR & { broadcast: typeof broadcastNamespace, image: typeof imageNamespace }}
  */
 export const Owlbear = new Proxy(OBR, {
   get(target, prop) {

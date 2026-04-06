@@ -2117,11 +2117,11 @@ pages:
           - |-
             const roll = await DicePlus.rollTotal('1d20 + 5');
             if (roll >= 15) {
-              await Owlbear.notification.success(`Critical Success! (${roll})`);
+              await Owlbear.notification.show(`Critical Success! (${roll})`, 'SUCCESS');
             } else if (roll >= 10) {
               await Owlbear.notification.show(`Success! (${roll})`);
             } else {
-              await Owlbear.notification.warning(`Failed! (${roll})`);
+              await Owlbear.notification.show(`Failed! (${roll})`, 'WARNING');
             }
       - type: button
         label: Attack Roll Sequence
@@ -2184,15 +2184,15 @@ pages:
           - type: button
             label: Success
             onclick:
-              - await Owlbear.notification.success('Operation completed successfully!');
+              - await Owlbear.notification.show('Operation completed successfully!', 'SUCCESS');
           - type: button
             label: Warning
             onclick:
-              - await Owlbear.notification.warning('This is a warning!');
+              - await Owlbear.notification.show('This is a warning!', 'WARNING');
           - type: button
             label: Error
             onclick:
-              - await Owlbear.notification.error('An error occurred!');
+              - await Owlbear.notification.show('An error occurred!', 'ERROR');
       - type: divider
       - type: title
         text: Practical Examples
@@ -2202,11 +2202,11 @@ pages:
           - |-
             const roll = await JustDices.rollSilent('1d20');
             if (roll >= 15) {
-              await Owlbear.notification.success(`Critical Success! (${roll})`);
+              await Owlbear.notification.show(`Critical Success! (${roll})`, 'SUCCESS');
             } else if (roll >= 10) {
               await Owlbear.notification.show(`Success! (${roll})`);
             } else {
-              await Owlbear.notification.warning(`Failed! (${roll})`);
+              await Owlbear.notification.show(`Failed! (${roll})`, 'WARNING');
             }
       - type: button
         label: Token Selection Check
@@ -2214,9 +2214,9 @@ pages:
           - |-
             const selectedToken = await Token.getSelected();
             if (!selectedToken) {
-              await Owlbear.notification.error('No token selected!');
+              await Owlbear.notification.show('No token selected!', 'ERROR');
             } else {
-              await Owlbear.notification.success('Token selected and ready!');
+              await Owlbear.notification.show('Token selected and ready!', 'SUCCESS');
             }
       - type: button
         label: Sequential Notifications
@@ -2224,12 +2224,12 @@ pages:
           - |-
             await Owlbear.notification.show('Starting operation...');
             await new Promise(r => setTimeout(r, 1000));
-            await Owlbear.notification.success('Operation complete!');
+            await Owlbear.notification.show('Operation complete!', 'SUCCESS');
       - type: divider
       - type: title
         text: Player API
       - type: text
-        text: 'Live tests — results are logged to the console'
+        text: Live tests — results are logged to the console
       - type: row
         children:
           - type: button
@@ -2238,21 +2238,21 @@ pages:
               - |-
                 const name = await Owlbear.player.getName();
                 console.log('Player name:', name);
-                await Owlbear.notification.info(`Name: ${name}`);
+                await Owlbear.notification.show(`Name: ${name}`, 'INFO');
           - type: button
             label: Get Role
             onclick:
               - |-
                 const role = await Owlbear.player.getRole();
                 console.log('Player role:', role);
-                await Owlbear.notification.info(`Role: ${role}`);
+                await Owlbear.notification.show(`Role: ${role}`, 'INFO');
           - type: button
             label: Get Color
             onclick:
               - |-
                 const color = await Owlbear.player.getColor();
                 console.log('Player color:', color);
-                await Owlbear.notification.info(`Color: ${color}`);
+                await Owlbear.notification.show(`Color: ${color}`, 'INFO');
       - type: row
         children:
           - type: button
@@ -2261,7 +2261,7 @@ pages:
               - |-
                 const id = await Owlbear.player.getId();
                 console.log('Player ID:', id);
-                await Owlbear.notification.info(`ID: ${id}`);
+                await Owlbear.notification.show(`ID: ${id}`, 'INFO');
           - type: button
             label: Get Selection
             onclick:
@@ -2269,14 +2269,14 @@ pages:
                 const sel = await Owlbear.player.getSelection();
                 const count = sel ? sel.length : 0;
                 console.log('Selected items:', sel);
-                await Owlbear.notification.info(`${count} item(s) selected`);
+                await Owlbear.notification.show(`${count} item(s) selected`, 'INFO');
           - type: button
             label: Get Metadata
             onclick:
               - |-
                 const meta = await Owlbear.player.getMetadata();
                 console.log('Player metadata:', meta);
-                await Owlbear.notification.info(`Metadata keys: ${Object.keys(meta || {}).join(', ') || '(none)'}`);
+                await Owlbear.notification.show(`Metadata keys: ${Object.keys(meta || {}).join(', ') || '(none)'}`, 'INFO');
       - type: divider
       - type: title
         text: Scene API
@@ -2288,19 +2288,19 @@ pages:
               - |-
                 const items = await Owlbear.scene.items.getItems();
                 console.log('Scene items:', items);
-                await Owlbear.notification.info(`${items.length} item(s) on scene`);
+                await Owlbear.notification.show(`${items.length} item(s) on scene`, 'INFO');
           - type: button
             label: Selected Items
             onclick:
               - |-
                 const sel = await Owlbear.player.getSelection();
                 if (!sel || sel.length === 0) {
-                  await Owlbear.notification.warning('No items selected');
+                  await Owlbear.notification.show('No items selected', 'WARNING');
                 } else {
                   const items = await Owlbear.scene.items.getItems(sel);
                   console.log('Selected items:', items);
                   const names = items.map(i => i.name || i.id).join(', ');
-                  await Owlbear.notification.info(`Selected: ${names}`);
+                  await Owlbear.notification.show(`Selected: ${names}`, 'INFO');
                 }
           - type: button
             label: Scene Ready?
@@ -2310,7 +2310,7 @@ pages:
                 console.log('Scene ready:', ready);
                 await (ready
                   ? Owlbear.notification.success('Scene is ready')
-                  : Owlbear.notification.warning('Scene not ready'));
+                  : Owlbear.notification.show('Scene not ready'), 'WARNING');
       - type: divider
       - type: title
         text: Viewport API
@@ -2322,14 +2322,14 @@ pages:
               - |-
                 const scale = await Owlbear.viewport.getScale();
                 console.log('Viewport scale:', scale);
-                await Owlbear.notification.info(`Scale: ${Math.round(scale * 100)}%`);
+                await Owlbear.notification.show(`Scale: ${Math.round(scale * 100)}%`, 'INFO');
           - type: button
             label: Reset Viewport
             onclick:
               - |-
                 const t = await Owlbear.viewport.reset();
                 console.log('Viewport reset to:', t);
-                await Owlbear.notification.success(`Viewport reset (scale: ${t?.scale ?? '?'})`);
+                await Owlbear.notification.show(`Viewport reset (scale: ${t?.scale ?? '?'})`, 'SUCCESS');
           - type: button
             label: Get Position + Scale
             onclick:
@@ -2337,7 +2337,7 @@ pages:
                 const pos = await Owlbear.viewport.getPosition();
                 const scale = await Owlbear.viewport.getScale();
                 console.log('Viewport position:', pos, 'scale:', scale);
-                await Owlbear.notification.info(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`);
+                await Owlbear.notification.show(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`, 'INFO');
       - type: divider
       - type: title
         text: Broadcast API
@@ -2348,21 +2348,21 @@ pages:
             onclick:
               - |-
                 await Owlbear.broadcast.sendLocal('macrohero.test', { msg: 'hello local', ts: Date.now() });
-                await Owlbear.notification.success('LOCAL broadcast sent (open console to see)');
+                await Owlbear.notification.show('LOCAL broadcast sent (open console to see)', 'SUCCESS');
           - type: button
             label: Send ROOM
             onclick:
               - |-
                 await Owlbear.broadcast.sendToRoom('macrohero.test', { msg: 'hello room', ts: Date.now() });
-                await Owlbear.notification.success('ROOM broadcast sent');
+                await Owlbear.notification.show('ROOM broadcast sent', 'SUCCESS');
           - type: button
             label: Listen once
             onclick:
               - |-
-                await Owlbear.notification.info('Listening for macrohero.test for 5s…');
+                await Owlbear.notification.show('Listening for macrohero.test for 5s…', 'INFO');
                 const data = await Owlbear.broadcast.once('macrohero.test', { timeoutMs: 5000 });
                 console.log('Received:', data);
-                await Owlbear.notification.success(`Received: ${JSON.stringify(data)}`);
+                await Owlbear.notification.show(`Received: ${JSON.stringify(data)}`, 'SUCCESS');
       - type: divider
       - type: title
         text: Image Utilities
@@ -2375,7 +2375,7 @@ pages:
                 const url = 'https://sewef.github.io/macrohero/logo.png';
                 const mime = Owlbear.image.detectMimeType(url);
                 console.log('MIME:', mime);
-                await Owlbear.notification.info(`MIME: ${mime}`);
+                await Owlbear.notification.show(`MIME: ${mime}`, 'INFO');
           - type: button
             label: Get Dimensions
             onclick:
@@ -2383,7 +2383,7 @@ pages:
                 const url = 'https://sewef.github.io/macrohero/logo.png';
                 const dims = await Owlbear.image.getDimensions(url);
                 console.log('Dimensions:', dims);
-                await Owlbear.notification.info(`${dims.width} × ${dims.height}px`);
+                await Owlbear.notification.show(`${dims.width} × ${dims.height}px`, 'INFO');
           - type: button
             label: Build Params
             onclick:
@@ -2391,25 +2391,25 @@ pages:
                 const url = 'https://sewef.github.io/macrohero/logo.png';
                 const params = await Owlbear.image.buildParams(url, { dpi: 72 });
                 console.log('imageBuildParams:', params);
-                await Owlbear.notification.success(`image: ${params.image.width}×${params.image.height} | dpi: ${params.grid.dpi}`);
+                await Owlbear.notification.show(`image: ${params.image.width}×${params.image.height} | dpi: ${params.grid.dpi}`, 'SUCCESS');
       - type: divider
       - type: title
         text: Full SDK Access
       - type: text
-        text: 'Owlbear is a transparent proxy over the OBR SDK — every Owlbear.x maps directly to OBR.x.'
+        text: Owlbear is a transparent proxy over the OBR SDK — every Owlbear.x maps directly to OBR.x.
       - type: text
-        text: 'Owlbear.scene.items.getItems()  →  OBR.scene.items.getItems()'
+        text: Owlbear.scene.items.getItems()  →  OBR.scene.items.getItems()
       - type: text
         text: 'Owlbear.broadcast.sendMessage(id, data, { destination: "ROOM" })'
       - type: text
-        text: 'Owlbear.player.getName()'
+        text: Owlbear.player.getName()
       - type: text
-        text: 'Owlbear.viewport.reset()  →  reset to default view'
+        text: Owlbear.viewport.reset()  →  reset to default view
       - type: divider
       - type: title
         text: Notification Methods
       - type: text
-        text: '• Owlbear.notification.show(msg, variant?) → standard SDK call'
+        text: • Owlbear.notification.show(msg, variant?) → standard SDK call
       - type: text
         text: '• Owlbear.notification.success(msg) → variant: SUCCESS'
       - type: text
@@ -2422,15 +2422,15 @@ pages:
       - type: title
         text: Image Utilities (Owlbear.image.*)
       - type: text
-        text: '• Owlbear.image.buildParams(url, opts?) → { image, grid } for Auras API'
+        text: • Owlbear.image.buildParams(url, opts?) → { image, grid } for Auras API
       - type: text
-        text: '• Owlbear.image.buildContent(url, opts?) → image content object'
+        text: • Owlbear.image.buildContent(url, opts?) → image content object
       - type: text
-        text: '• Owlbear.image.buildGrid(opts?) → grid object'
+        text: • Owlbear.image.buildGrid(opts?) → grid object
       - type: text
-        text: '• Owlbear.image.getDimensions(url) → { width, height }'
+        text: • Owlbear.image.getDimensions(url) → { width, height }
       - type: text
-        text: '• Owlbear.image.detectMimeType(url) → mime string'
+        text: • Owlbear.image.detectMimeType(url) → mime string
       - type: divider
       - type: title
         text: Notification Variants
