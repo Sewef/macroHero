@@ -5,7 +5,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
-import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
+import { broadcastRequest } from "../shared/sdkHelpers.js";
 
 // Debug mode constants
 const logger = createDebugLogger("JustDices");
@@ -63,7 +63,7 @@ export async function roll(expression, hiddenOrOptions = {}) {
   try {
     const payload = { callId, expression: finalExpression, showInLogs, requesterId };
     
-    const result = await BroadcastHelpers.broadcastRequest(
+    const result = await broadcastRequest(
       "justdices.api.request",
       "justdices.api.response",
       payload,
@@ -110,7 +110,7 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
   try {
     const payload = { callId, expression: finalExpression, showInLogs, requesterId };
     
-    const result = await BroadcastHelpers.broadcastRequest(
+    const result = await broadcastRequest(
       "justdices.api.request",
       "justdices.api.response",
       payload,

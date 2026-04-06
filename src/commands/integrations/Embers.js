@@ -1,7 +1,7 @@
 ﻿import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
 import { getTokenPosition } from "../token/tokenHelpers.js";
-import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
+import { broadcastMessage, BROADCAST_DESTINATIONS } from "../shared/sdkHelpers.js";
 
 // Debug mode constants
 const logger = createDebugLogger("Embers");
@@ -285,10 +285,10 @@ class EmbersSequence {
       logger.log(`[Embers] Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
         JSON.stringify(message, null, 2));
 
-      const result = await BroadcastHelpers.broadcastMessage(
+      const result = await broadcastMessage(
         MESSAGE_CHANNEL, 
         message, 
-        { destination: finalOptions.destination ?? BroadcastHelpers.BROADCAST_DESTINATIONS.ALL }
+        { destination: finalOptions.destination ?? BROADCAST_DESTINATIONS.ALL }
       );
       
       if (result.success) {
@@ -314,10 +314,10 @@ export async function sendInstructions(instructions, options = {}) {
     logger.log(`[Embers] Broadcasting ${instructions.length} raw instruction(s):`, 
       JSON.stringify(message, null, 2));
     
-    const result = await BroadcastHelpers.broadcastMessage(
+    const result = await broadcastMessage(
       MESSAGE_CHANNEL, 
       message, 
-      { destination: options.destination ?? BroadcastHelpers.BROADCAST_DESTINATIONS.ALL }
+      { destination: options.destination ?? BROADCAST_DESTINATIONS.ALL }
     );
     
     if (result.success) {

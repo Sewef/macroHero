@@ -23,7 +23,6 @@ import * as Aurora from "./Aurora.js";
 import * as Embers from "./Embers.js";
 import * as Announcement from "./Announcement.js";
 import * as Auras from "./Auras.js";
-import * as ImageHelper from "../shared/imageHelper.js";
 import { Owlbear, NOTIFICATION_VARIANT } from "../shared/sdkHelpers.js";
 import { createDebugLogger } from "../../debugMode.js";
 
@@ -209,43 +208,40 @@ class IntegrationsManager {
         addAura: this.wrapAsync((itemId, config) => Auras.addAura(itemId, config)),
         removeAura: this.wrapAsync((itemId) => Auras.removeAura(itemId)),
       },
-      // Image Helper utilities (for building image aura parameters)
-      ImageHelper: {
-        buildImageBuildParams: this.wrapAsync((url, options) => ImageHelper.buildImageBuildParams(url, options)),
-        buildImageContent: this.wrapAsync((url, options) => ImageHelper.buildImageContent(url, options)),
-        buildImageGrid: (options) => ImageHelper.buildImageGrid(options),
-        getImageDimensions: this.wrapAsync((url) => ImageHelper.getImageDimensions(url)),
-        detectMimeType: (url) => ImageHelper.detectMimeType(url),
-        validateImageBuildParams: (params) => ImageHelper.validateImageBuildParams(params),
-      },
       // Metadata modules
       playerMetadata,
       sceneMetadata,
       tokenMetadata,
       tokenAttachments,
-      sceneHelpers,
-      // Token helpers - exposed directly
-      createToken: this.wrapAsync((params) => tokenHelpers.createToken(params)),
-      createTokens: this.wrapAsync((tokensParams) => tokenHelpers.createTokens(tokensParams)),
-      getSelectedTokenId: this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
-      getSelectedTokensIds: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
-      getTokenPosition: this.wrapAsync((tokenId) => tokenHelpers.getTokenPosition(tokenId)),
-      getTokenSize: this.wrapAsync((tokenId) => tokenHelpers.getTokenSize(tokenId)),
-      getClosestTokenId: this.wrapAsync((tokenId, filter) => tokenHelpers.getClosestTokenId(tokenId, filter)),
-      // Item setter functions
-      setItemsVisible: this.wrapAsync((itemIds, visible) => tokenHelpers.setItemsVisible(itemIds, visible)),
-      setItemsLocked: this.wrapAsync((itemIds, locked) => tokenHelpers.setItemsLocked(itemIds, locked)),
-      setItemsImage: this.wrapAsync((itemIds, url, mime) => tokenHelpers.setItemsImage(itemIds, url, mime)),
-      setItemsName: this.wrapAsync((itemIds, name) => tokenHelpers.setItemsName(itemIds, name)),
-      setItemsLabel: this.wrapAsync((itemIds, label) => tokenHelpers.setItemsLabel(itemIds, label)),
-      setItemsLayer: this.wrapAsync((itemIds, layer) => tokenHelpers.setItemsLayer(itemIds, layer)),
-      setItemsPosition: this.wrapAsync((itemIds, position, gridPosition) => tokenHelpers.setItemsPosition(itemIds, position, gridPosition)),
-      setItemsScale: this.wrapAsync((itemIds, scale) => tokenHelpers.setItemsScale(itemIds, scale)),
-      setItemsRotation: this.wrapAsync((itemIds, rotation) => tokenHelpers.setItemsRotation(itemIds, rotation)),
-      setItemsMetadata: this.wrapAsync((itemIds, metadata) => tokenHelpers.setItemsMetadata(itemIds, metadata)),
-      // Scene helpers - exposed directly
-      getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
-      // SDK wrapper (centralized Owlbear proxy maintaining OBR syntax)
+      // Token — namespaced helpers (getters, creators, setters)
+      Token: {
+        // Getters
+        getSelected:    this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
+        getSelectedAll: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
+        getPosition:    this.wrapAsync((tokenId) => tokenHelpers.getTokenPosition(tokenId)),
+        getSize:        this.wrapAsync((tokenId) => tokenHelpers.getTokenSize(tokenId)),
+        getClosest:     this.wrapAsync((tokenId, filter) => tokenHelpers.getClosestTokenId(tokenId, filter)),
+        // Creators
+        create:         this.wrapAsync((params) => tokenHelpers.createToken(params)),
+        createMany:     this.wrapAsync((tokensParams) => tokenHelpers.createTokens(tokensParams)),
+        // Setters
+        setVisible:     this.wrapAsync((itemIds, visible) => tokenHelpers.setItemsVisible(itemIds, visible)),
+        setLocked:      this.wrapAsync((itemIds, locked) => tokenHelpers.setItemsLocked(itemIds, locked)),
+        setImage:       this.wrapAsync((itemIds, url, mime) => tokenHelpers.setItemsImage(itemIds, url, mime)),
+        setName:        this.wrapAsync((itemIds, name) => tokenHelpers.setItemsName(itemIds, name)),
+        setLabel:       this.wrapAsync((itemIds, label) => tokenHelpers.setItemsLabel(itemIds, label)),
+        setLayer:       this.wrapAsync((itemIds, layer) => tokenHelpers.setItemsLayer(itemIds, layer)),
+        setPosition:    this.wrapAsync((itemIds, position, gridPosition) => tokenHelpers.setItemsPosition(itemIds, position, gridPosition)),
+        setScale:       this.wrapAsync((itemIds, scale) => tokenHelpers.setItemsScale(itemIds, scale)),
+        setRotation:    this.wrapAsync((itemIds, rotation) => tokenHelpers.setItemsRotation(itemIds, rotation)),
+        setMetadata:    this.wrapAsync((itemIds, metadata) => tokenHelpers.setItemsMetadata(itemIds, metadata)),
+      },
+      // Scene — namespaced helpers
+      Scene: {
+        getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
+      },
+      // Full OBR SDK proxy — Owlbear.anything maps to OBR.anything
+      // Augmented: Owlbear.notification.{success,warning,error,info}, Owlbear.image.*
       Owlbear,
       NOTIFICATION_VARIANT,
     };

@@ -5,7 +5,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
-import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
+import { broadcastRequest } from "../shared/sdkHelpers.js";
 
 // Debug mode constants
 const logger = createDebugLogger("ConditionMarkers");
@@ -67,7 +67,7 @@ export async function addCondition(itemId, conditionName, value = null) {
 
     logger.log(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
 
-    const requestResult = await BroadcastHelpers.broadcastRequest(
+    const requestResult = await broadcastRequest(
       API_REQUEST_CHANNEL,
       API_RESPONSE_CHANNEL,
       payload,

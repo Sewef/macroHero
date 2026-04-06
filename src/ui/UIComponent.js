@@ -3,6 +3,8 @@
  * Provides common functionality for all UI components
  */
 
+import { createDebugLogger } from "../debugMode.js";
+const logger = createDebugLogger("UIComponent");
 
 export class UIComponent {
   /**

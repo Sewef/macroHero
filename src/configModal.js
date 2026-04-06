@@ -2282,8 +2282,6 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'EventBus'
   ],
   'Shared Utilities': [
-    'broadcastHelpers',
-    'imageHelper',
     'sdkHelpers'
   ],
   'Command Modules': [

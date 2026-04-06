@@ -581,19 +581,19 @@ pages:
             label: Snow
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });
           - type: button
             label: Rain
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });
           - type: button
             label: Sand
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });
       - type: row
         children:
@@ -601,19 +601,19 @@ pages:
             label: Fire
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });
           - type: button
             label: Cloud
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });
           - type: button
             label: Bloom
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });
       - type: row
         children:
@@ -621,19 +621,19 @@ pages:
             label: Energy Storm
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });
           - type: button
             label: Water
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });
           - type: button
             label: Current
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });
       - type: divider
       - type: title
@@ -644,19 +644,19 @@ pages:
             label: Blue Tint
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#88aaff' });
           - type: button
             label: Orange Tint
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#ff8844' });
           - type: button
             label: Green Tint
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.updateWeather(mapId, { tint: '#88ff88' });
       - type: divider
       - type: title
@@ -667,21 +667,21 @@ pages:
             label: Show Config
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 const config = await Weather.getWeather(mapId);
                 console.log('Weather config:', config);
           - type: button
             label: Check Weather
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 const has = await Weather.hasWeather(mapId);
                 console.log('Has weather:', has);
           - type: button
             label: Remove Weather
             onclick:
               - |-
-                const mapId = await getMapIdFromToken(token);
+                const mapId = await Scene.getMapIdFromToken(token);
                 await Weather.removeWeather(mapId);
   - label: Embers
     variables:
@@ -706,14 +706,14 @@ pages:
             onclick:
               - |-
                 await Embers.sequence()
-                  .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 3 })
+                  .projectile('magic_missile', caster, await Token.getSelected(), { copies: 3 })
                   .cast({ spellName: 'Magic Missile' });
           - type: button
             label: Cure Wounds (AOE)
             onclick:
               - |-
                 await Embers.sequence()
-                  .aoe('cure_wounds', await getSelectedTokenId(), { size: 2 })
+                  .aoe('cure_wounds', await Token.getSelected(), { size: 2 })
                   .cast({ spellName: 'Cure Wounds' });
           - type: button
             label: Shield
@@ -734,8 +734,8 @@ pages:
             onclick:
               - |-
                 await Embers.sequence()
-                  .projectile('magic_missile', caster, [await getSelectedTokenId()])
-                  .projectile('fire_bolt', caster, await getSelectedTokenId())
+                  .projectile('magic_missile', caster, [await Token.getSelected()])
+                  .projectile('fire_bolt', caster, await Token.getSelected())
                   .cast({ spellName: 'Double Attack' });
           - type: button
             label: 2 AOEs (Simultaneous)
@@ -743,7 +743,7 @@ pages:
               - |-
                 await Embers.sequence()
                   .aoe('shield.complete', caster, { size: 6 })
-                  .aoe('fireball.explosion', await getSelectedTokenId(), { size: 4 })
+                  .aoe('fireball.explosion', await Token.getSelected(), { size: 4 })
                   .cast({ spellName: 'Blessings' });
       - type: divider
       - type: title
@@ -755,20 +755,20 @@ pages:
         onclick:
           - |-
             await Embers.sequence()
-              .projectile('magic_missile', caster, await getSelectedTokenId())
+              .projectile('magic_missile', caster, await Token.getSelected())
               .then()
-              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 4 })
+              .aoe('generic.impact.fire', await Token.getSelected(), { size: 4 })
               .cast({ spellName: 'Missile Impact' });
       - type: button
         label: Fireball → Explosion → Knockback
         onclick:
           - |-
             await Embers.sequence()
-              .projectile('fireball.beam', caster, await getSelectedTokenId())
+              .projectile('fireball.beam', caster, await Token.getSelected())
               .then()
-              .aoe('fireball.explosion', await getSelectedTokenId(), { size: 6 })
+              .aoe('fireball.explosion', await Token.getSelected(), { size: 6 })
               .then()
-              .action('slide', [await getSelectedTokenId(), { x: await getSelectedTokenId().x + 100, y: await getSelectedTokenId().y }, 500])
+              .action('slide', [await Token.getSelected(), { x: await Token.getSelected().x + 100, y: await Token.getSelected().y }, 500])
               .cast({ spellName: 'Fireball Chain' });
       - type: divider
       - type: title
@@ -780,14 +780,14 @@ pages:
             onclick:
               - |-
                 await Embers.sequence()
-                  .cone('burning_hands', caster, await getSelectedTokenId(), { size: 6 })
+                  .cone('burning_hands', caster, await Token.getSelected(), { size: 6 })
                   .cast({ spellName: 'Burning Hands' });
           - type: button
             label: Cone of Cold
             onclick:
               - |-
                 await Embers.sequence()
-                  .cone('cone_of_cold', caster, await getSelectedTokenId(), { size: 8 })
+                  .cone('cone_of_cold', caster, await Token.getSelected(), { size: 8 })
                   .cast({ spellName: 'Cone of Cold' });
       - type: divider
       - type: title
@@ -799,9 +799,9 @@ pages:
         onclick:
           - |-
             await Embers.sequence()
-              .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await getSelectedTokenId())
+              .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await Token.getSelected())
               .delay(300)
-              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 3 })
+              .aoe('generic.impact.fire', await Token.getSelected(), { size: 3 })
               .cast({ spellName: 'Delayed Impact' });
       - type: button
         label: Cast → Projectile → Hit (with delays)
@@ -810,9 +810,9 @@ pages:
             await Embers.sequence()
               .aoe('moonbeam.intro', caster, { size: 2 })
               .delay(500)
-              .projectile('magic_missile', caster, await getSelectedTokenId())
+              .projectile('magic_missile', caster, await Token.getSelected())
               .delay(200)
-              .aoe('generic.impact.fire', await getSelectedTokenId(), { size: 5 })
+              .aoe('generic.impact.fire', await Token.getSelected(), { size: 5 })
               .cast({ spellName: 'Energy Casting' });
       - type: divider
       - type: title
@@ -824,12 +824,12 @@ pages:
         onclick:
           - |-
             await Embers.sequence()
-              .projectile('magic_missile', caster, await getSelectedTokenId(), { copies: 2 })
-              .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await getSelectedTokenId())
+              .projectile('magic_missile', caster, await Token.getSelected(), { copies: 2 })
+              .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await Token.getSelected())
               .then()
-              .aoe('fireball.explosion', await getSelectedTokenId(), { size: 5 })
+              .aoe('fireball.explosion', await Token.getSelected(), { size: 5 })
               .then()
-              .aoe('generic.smoke.fumes.grey.1.complete', await getSelectedTokenId(), { size: 6 })
+              .aoe('generic.smoke.fumes.grey.1.complete', await Token.getSelected(), { size: 6 })
               .cast({ 
                 spellName: 'Barrage',
                 destination: 'ALL'
@@ -844,15 +844,15 @@ pages:
           - type: button
             label: castProjectile()
             onclick:
-              - 'await castProjectile(''magic_missile'', caster, await getSelectedTokenId(), { copies: 3 });'
+              - 'await castProjectile(''magic_missile'', caster, await Token.getSelected(), { copies: 3 });'
           - type: button
             label: castAOE()
             onclick:
-              - 'await castAOE(''bless'', [caster, await getSelectedTokenId()], { size: 4 });'
+              - 'await castAOE(''bless'', [caster, await Token.getSelected()], { size: 4 });'
           - type: button
             label: castCone()
             onclick:
-              - 'await castCone(''burning_hands'', caster, await getSelectedTokenId(), { size: 6 });'
+              - 'await castCone(''burning_hands'', caster, await Token.getSelected(), { size: 6 });'
       - type: divider
       - type: title
         text: API Reference
@@ -1144,7 +1144,7 @@ pages:
       testToken:
         value: 996ed434-a22c-4510-aa82-9df34820c0be
       mapIdFromToken:
-        eval: getMapIdFromToken(testToken)
+        eval: Scene.getMapIdFromToken(testToken)
       dropdownOptions:
         value:
           - Option A
@@ -1248,13 +1248,13 @@ pages:
         label: Get Map ID from Token
         onclick:
           - |-
-            mapId = await getMapIdFromToken(testToken);
+            mapId = await Scene.getMapIdFromToken(testToken);
             console.log('Map ID: ' + (mapId || 'Not on a map'));
       - type: button
         label: Get Closest Token Id
         onclick:
           - |-
-            tokenId = await getClosestTokenId(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
+            tokenId = await Token.getClosest(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
             console.log('Closest Token Id: ' + (tokenId || 'No token found'));
   - label: Tokens
     variables:
@@ -1303,7 +1303,7 @@ pages:
         label: Create Token
         onclick:
           - |-
-            const tokenId = await createToken({
+            const tokenId = await Token.create({
               url: tokenUrl,
               position: { x: tokenX, y: tokenY },
               size: tokenSize,
@@ -1328,7 +1328,7 @@ pages:
         label: Create Token at Grid Position
         onclick:
           - |-
-            const tokenId = await createToken({
+            const tokenId = await Token.create({
               url: tokenUrl,
               position: { x: gridX, y: gridY },
               gridPosition: true,
@@ -1343,7 +1343,7 @@ pages:
         label: Create Demo Hero (1.5 cells)
         onclick:
           - |-
-            await createToken({
+            await Token.create({
               url: 'SELECT',
               name: 'Hero',
               position: { x: 300, y: 300 },
@@ -1366,12 +1366,12 @@ pages:
               name: `Enemy ${i + 1}`,
               label: `E${i + 1}`
             }));
-            await createTokens(tokens);
+            await Token.createMany(tokens);
       - type: button
         label: Create Boss (3 cells) with HP & Metadata
         onclick:
           - |-
-            const tokenId = await createToken({
+            const tokenId = await Token.create({
               url: 'https://sewef.github.io/justDices/JustDices.png',
               position: { x: 500, y: 500 },
               name: 'Boss',
@@ -1396,7 +1396,7 @@ pages:
         label: Create Token with Multiple Trackers
         onclick:
           - |-
-            const tokenId = await createToken({
+            const tokenId = await Token.create({
               url: 'https://sewef.github.io/ptu/img/logo64.png',
               position: { x: 400, y: 400 },
               name: 'Character with Trackers',
@@ -1458,7 +1458,7 @@ pages:
   - label: Aurora
     variables:
       mapId:
-        eval: getMapIdFromToken(token)
+        eval: Scene.getMapIdFromToken(token)
       auroraConfig:
         eval: Aurora.getAurora(mapId)
       hasAurora:
@@ -1653,7 +1653,7 @@ pages:
         label: Apply Custom Settings
         onclick:
           - |-
-            const mapId = await getMapIdFromToken(token);
+            const mapId = await Scene.getMapIdFromToken(token);
             await Aurora.setAurora(mapId, {
               saturation: saturation,
               lightness: lightness,
@@ -1741,7 +1741,7 @@ pages:
         label: Start Day/Night Cycle
         onclick:
           - |-
-            const mapId = await getMapIdFromToken(token);
+            const mapId = await Scene.getMapIdFromToken(token);
             const cycle = [
               { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },
               { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },
@@ -1867,7 +1867,7 @@ pages:
         label: Check Status
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             const hasAuras = await Auras.hasAura(item);
             const auras = await Auras.getAuras(item);
@@ -1883,7 +1883,7 @@ pages:
         label: Add Red Glow Aura
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             await Auras.addAura(item, {
               style: 'Glow',
@@ -1895,7 +1895,7 @@ pages:
         label: Add Green Bubble Aura
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             await Auras.addAura(item, {
               style: 'Bubble',
@@ -1907,7 +1907,7 @@ pages:
         label: Add Blue Range Aura
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             await Auras.addAura(item, {
               style: 'Range',
@@ -1919,7 +1919,7 @@ pages:
         label: Add Image Aura (Simple)
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             await Auras.addAura(item, {
               style: 'Image',
@@ -1931,9 +1931,9 @@ pages:
         label: Add Image Aura (Advanced)
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
-            const imageBuildParams = await ImageHelper.buildImageBuildParams('https://sewef.github.io/macrohero/logo.png', { dpi: 72 });
+            const imageBuildParams = await Owlbear.image.buildParams('https://sewef.github.io/macrohero/logo.png', { dpi: 72 });
             await Auras.addAura(item, {
               style: 'Image',
               size: 5,
@@ -1949,7 +1949,7 @@ pages:
         label: Remove All Auras
         onclick:
           - |-
-            const item = await getSelectedTokenId();
+            const item = await Token.getSelected();
             if (!item) return console.warn('No item selected');
             const hasBefore = await Auras.hasAura(item);
             if (!hasBefore) return console.warn('No auras to remove');
@@ -1958,7 +1958,7 @@ pages:
       - type: title
         text: Notes
       - type: text
-        text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or ImageHelper utilities for full control.'
+        text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or Owlbear.image utilities for full control.'
   - label: DicePlus
     variables:
       diceNotation:
@@ -2212,7 +2212,7 @@ pages:
         label: Token Selection Check
         onclick:
           - |-
-            const selectedToken = await getSelectedTokenId();
+            const selectedToken = await Token.getSelected();
             if (!selectedToken) {
               await Owlbear.notification.error('No token selected!');
             } else {
@@ -2227,26 +2227,210 @@ pages:
             await Owlbear.notification.success('Operation complete!');
       - type: divider
       - type: title
-        text: How to Use in Your Code
+        text: Player API
       - type: text
-        text: 'Import sdkHelpers at the top of your integration file:'
-      - type: text
-        text: import { Owlbear, NOTIFICATION_VARIANT } from '../shared/sdkHelpers.js';
-      - type: text
-        text: 'Then use notifications in your commands:'
-      - type: text
-        text: await Owlbear.notification.success('Your message here');
+        text: 'Live tests — results are logged to the console'
+      - type: row
+        children:
+          - type: button
+            label: Get Name
+            onclick:
+              - |-
+                const name = await Owlbear.player.getName();
+                console.log('Player name:', name);
+                await Owlbear.notification.info(`Name: ${name}`);
+          - type: button
+            label: Get Role
+            onclick:
+              - |-
+                const role = await Owlbear.player.getRole();
+                console.log('Player role:', role);
+                await Owlbear.notification.info(`Role: ${role}`);
+          - type: button
+            label: Get Color
+            onclick:
+              - |-
+                const color = await Owlbear.player.getColor();
+                console.log('Player color:', color);
+                await Owlbear.notification.info(`Color: ${color}`);
+      - type: row
+        children:
+          - type: button
+            label: Get ID
+            onclick:
+              - |-
+                const id = await Owlbear.player.getId();
+                console.log('Player ID:', id);
+                await Owlbear.notification.info(`ID: ${id}`);
+          - type: button
+            label: Get Selection
+            onclick:
+              - |-
+                const sel = await Owlbear.player.getSelection();
+                const count = sel ? sel.length : 0;
+                console.log('Selected items:', sel);
+                await Owlbear.notification.info(`${count} item(s) selected`);
+          - type: button
+            label: Get Metadata
+            onclick:
+              - |-
+                const meta = await Owlbear.player.getMetadata();
+                console.log('Player metadata:', meta);
+                await Owlbear.notification.info(`Metadata keys: ${Object.keys(meta || {}).join(', ') || '(none)'}`);
       - type: divider
       - type: title
-        text: Available Methods
+        text: Scene API
+      - type: row
+        children:
+          - type: button
+            label: Count All Items
+            onclick:
+              - |-
+                const items = await Owlbear.scene.items.getItems();
+                console.log('Scene items:', items);
+                await Owlbear.notification.info(`${items.length} item(s) on scene`);
+          - type: button
+            label: Selected Items
+            onclick:
+              - |-
+                const sel = await Owlbear.player.getSelection();
+                if (!sel || sel.length === 0) {
+                  await Owlbear.notification.warning('No items selected');
+                } else {
+                  const items = await Owlbear.scene.items.getItems(sel);
+                  console.log('Selected items:', items);
+                  const names = items.map(i => i.name || i.id).join(', ');
+                  await Owlbear.notification.info(`Selected: ${names}`);
+                }
+          - type: button
+            label: Scene Ready?
+            onclick:
+              - |-
+                const ready = await Owlbear.scene.isReady();
+                console.log('Scene ready:', ready);
+                await (ready
+                  ? Owlbear.notification.success('Scene is ready')
+                  : Owlbear.notification.warning('Scene not ready'));
+      - type: divider
+      - type: title
+        text: Viewport API
+      - type: row
+        children:
+          - type: button
+            label: Get Scale
+            onclick:
+              - |-
+                const scale = await Owlbear.viewport.getScale();
+                console.log('Viewport scale:', scale);
+                await Owlbear.notification.info(`Scale: ${Math.round(scale * 100)}%`);
+          - type: button
+            label: Reset Viewport
+            onclick:
+              - |-
+                const t = await Owlbear.viewport.reset();
+                console.log('Viewport reset to:', t);
+                await Owlbear.notification.success(`Viewport reset (scale: ${t?.scale ?? '?'})`);
+          - type: button
+            label: Get Position + Scale
+            onclick:
+              - |-
+                const pos = await Owlbear.viewport.getPosition();
+                const scale = await Owlbear.viewport.getScale();
+                console.log('Viewport position:', pos, 'scale:', scale);
+                await Owlbear.notification.info(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`);
+      - type: divider
+      - type: title
+        text: Broadcast API
+      - type: row
+        children:
+          - type: button
+            label: Send LOCAL
+            onclick:
+              - |-
+                await Owlbear.broadcast.sendLocal('macrohero.test', { msg: 'hello local', ts: Date.now() });
+                await Owlbear.notification.success('LOCAL broadcast sent (open console to see)');
+          - type: button
+            label: Send ROOM
+            onclick:
+              - |-
+                await Owlbear.broadcast.sendToRoom('macrohero.test', { msg: 'hello room', ts: Date.now() });
+                await Owlbear.notification.success('ROOM broadcast sent');
+          - type: button
+            label: Listen once
+            onclick:
+              - |-
+                await Owlbear.notification.info('Listening for macrohero.test for 5s…');
+                const data = await Owlbear.broadcast.once('macrohero.test', { timeoutMs: 5000 });
+                console.log('Received:', data);
+                await Owlbear.notification.success(`Received: ${JSON.stringify(data)}`);
+      - type: divider
+      - type: title
+        text: Image Utilities
+      - type: row
+        children:
+          - type: button
+            label: Detect MIME
+            onclick:
+              - |-
+                const url = 'https://sewef.github.io/macrohero/logo.png';
+                const mime = Owlbear.image.detectMimeType(url);
+                console.log('MIME:', mime);
+                await Owlbear.notification.info(`MIME: ${mime}`);
+          - type: button
+            label: Get Dimensions
+            onclick:
+              - |-
+                const url = 'https://sewef.github.io/macrohero/logo.png';
+                const dims = await Owlbear.image.getDimensions(url);
+                console.log('Dimensions:', dims);
+                await Owlbear.notification.info(`${dims.width} × ${dims.height}px`);
+          - type: button
+            label: Build Params
+            onclick:
+              - |-
+                const url = 'https://sewef.github.io/macrohero/logo.png';
+                const params = await Owlbear.image.buildParams(url, { dpi: 72 });
+                console.log('imageBuildParams:', params);
+                await Owlbear.notification.success(`image: ${params.image.width}×${params.image.height} | dpi: ${params.grid.dpi}`);
+      - type: divider
+      - type: title
+        text: Full SDK Access
       - type: text
-        text: • Owlbear.notification.show(msg, variant?) → returns notification ID
+        text: 'Owlbear is a transparent proxy over the OBR SDK — every Owlbear.x maps directly to OBR.x.'
+      - type: text
+        text: 'Owlbear.scene.items.getItems()  →  OBR.scene.items.getItems()'
+      - type: text
+        text: 'Owlbear.broadcast.sendMessage(id, data, { destination: "ROOM" })'
+      - type: text
+        text: 'Owlbear.player.getName()'
+      - type: text
+        text: 'Owlbear.viewport.reset()  →  reset to default view'
+      - type: divider
+      - type: title
+        text: Notification Methods
+      - type: text
+        text: '• Owlbear.notification.show(msg, variant?) → standard SDK call'
       - type: text
         text: '• Owlbear.notification.success(msg) → variant: SUCCESS'
       - type: text
         text: '• Owlbear.notification.warning(msg) → variant: WARNING'
       - type: text
         text: '• Owlbear.notification.error(msg) → variant: ERROR'
+      - type: text
+        text: '• Owlbear.notification.info(msg) → variant: INFO'
+      - type: divider
+      - type: title
+        text: Image Utilities (Owlbear.image.*)
+      - type: text
+        text: '• Owlbear.image.buildParams(url, opts?) → { image, grid } for Auras API'
+      - type: text
+        text: '• Owlbear.image.buildContent(url, opts?) → image content object'
+      - type: text
+        text: '• Owlbear.image.buildGrid(opts?) → grid object'
+      - type: text
+        text: '• Owlbear.image.getDimensions(url) → { width, height }'
+      - type: text
+        text: '• Owlbear.image.detectMimeType(url) → mime string'
       - type: divider
       - type: title
         text: Notification Variants

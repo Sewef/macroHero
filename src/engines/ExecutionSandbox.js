@@ -101,9 +101,9 @@ class ExecutionSandbox {
       // Process expression to auto-await integration calls
       let processed = expression;
       const integrationNames = [
-        'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles', 
+        'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles',
         'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather',
-        'Aurora', 'Announcement', 'Auras', 'ImageHelper', 'Owlbear'
+        'Aurora', 'Announcement', 'Auras', 'Owlbear', 'Token', 'Scene'
       ];
       
       for (const integration of integrationNames) {

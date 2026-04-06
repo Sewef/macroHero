@@ -1,7 +1,7 @@
 {
   "name": "macrohero",
   "private": true,
-  "version": "0.1s",
+  "version": "0.1t",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@owlbear-rodeo/sdk": "^3.1.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "mathjs": "^15.1.0"
   }
 }

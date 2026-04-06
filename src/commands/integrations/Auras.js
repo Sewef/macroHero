@@ -6,8 +6,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
-import * as ImageHelper from "../shared/imageHelper.js";
-import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
+import { buildImageBuildParams, validateImageBuildParams, broadcastLocal } from "../shared/sdkHelpers.js";
 
 // Debug mode constants
 const logger = createDebugLogger("Auras");
@@ -115,7 +114,7 @@ export async function addAura(itemId, config) {
         // For Image auras: either imageBuildParams (explicit) or imageUrl (auto-detect)
         if (config.imageBuildParams) {
           // Use explicit imageBuildParams if provided
-          if (!ImageHelper.validateImageBuildParams(config.imageBuildParams)) {
+          if (!validateImageBuildParams(config.imageBuildParams)) {
             throw new Error(
               "[Auras.addAura] Invalid imageBuildParams: must have {image: ImageContent, grid: ImageGrid}"
             );
@@ -125,7 +124,7 @@ export async function addAura(itemId, config) {
         } else if (config.imageUrl) {
           // Auto-detect dimensions and MIME type from URL
           logger.log(`[Auras.addAura] Auto-detecting parameters for image: ${config.imageUrl}`);
-          const imageBuildParams = await ImageHelper.buildImageBuildParams(config.imageUrl, {
+          const imageBuildParams = await buildImageBuildParams(config.imageUrl, {
             width: config.imageWidth,
             height: config.imageHeight,
             mime: config.imageMime,
@@ -180,7 +179,7 @@ export async function addAura(itemId, config) {
 
     logger.log(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
 
-    const result = await BroadcastHelpers.broadcastLocal(AURAS_CHANNEL, message);
+    const result = await broadcastLocal(AURAS_CHANNEL, message);
     
     if (result.success) {
       logger.log(`[Auras.addAura] âœ“ Aura creation message sent`);
@@ -203,7 +202,7 @@ export async function removeAura(itemId) {
     const sources = Array.isArray(itemId) ? itemId : [itemId];
     logger.log(`[Auras.removeAura] Removing all auras from ${sources.length} item(s)`);
 
-    const result = await BroadcastHelpers.broadcastLocal(
+    const result = await broadcastLocal(
       AURAS_CHANNEL,
       {
         type: "REMOVE_AURAS",

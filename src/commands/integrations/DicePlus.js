@@ -6,7 +6,6 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
-import * as BroadcastHelpers from "../shared/broadcastHelpers.js";
 
 // Debug mode constants
 const logger = createDebugLogger("DicePlus");
