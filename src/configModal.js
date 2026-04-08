@@ -100,7 +100,7 @@ function ensureVariableModalInDom() {
         <div class="modal-content" style="width: 500px; max-width: 95vw;">
           <div class="modal-header">
             <h3 id="variableModalTitle">Edit Variable</h3>
-            <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">Ã—</button>
+            <button type="button" class="close-modal" onclick="(function(){document.getElementById('variableModal').style.display='none';})();">×</button>
           </div>
           <div class="input-group">
             <label for="variableKey">Name</label>
@@ -561,7 +561,7 @@ function syncFromJson() {
 
     currentConfig = parsed;
     renderEditor(parsed);
-    alert(`âœ“ Synced from ${format.toUpperCase()} to visual editor`);
+    alert(`✓ Synced from ${format.toUpperCase()} to visual editor`);
   } catch (e) {
     alert(`Invalid ${format.toUpperCase()}: ` + e.message);
   }
@@ -630,8 +630,8 @@ function renderEditorSidebar(config) {
           <span class="variable-key">${k}</span>
           <span class="variable-value" title="${def}">${def.substring(0, 30)}${def.length > 30 ? '...' : ''}</span>
           <div class="variable-actions">
-            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">âœŽ</button>
-            <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">Ã—</button>
+            <button type="button" class="btn-small" onclick="event.stopPropagation(); editGlobalVariable('${k}')">✎</button>
+            <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteGlobalVariable('${k}')">×</button>
           </div>
         </div>
         `;
@@ -664,7 +664,7 @@ function renderPageList(config) {
       <div class="page-item-sidebar ${isSelected ? 'active' : ''}" data-page-index="${index}" onclick="selectPage(${index})">
         <span class="page-item-sidebar-name">${label}</span>
         <div class="page-item-sidebar-actions" onclick="event.stopPropagation()">
-          <button type="button" class="btn-small" onclick="deletePage(${index}); event.stopPropagation();">Ã—</button>
+          <button type="button" class="btn-small" onclick="deletePage(${index}); event.stopPropagation();">×</button>
         </div>
       </div>
     `;
@@ -730,8 +730,8 @@ function renderPageContent(pageIndex) {
         <span class="variable-key">${key}</span>
         <span class="variable-value" title="${def}">${def.substring(0, 20)}${def.length > 20 ? '...' : ''}</span>
         <div class="variable-actions">
-          <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${pageIndex}, '${key}')">âœŽ</button>
-          <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${pageIndex}, '${key}')">Ã—</button>
+          <button type="button" class="btn-small" onclick="event.stopPropagation(); editVariable(${pageIndex}, '${key}')">✎</button>
+          <button type="button" class="btn-small btn-danger" onclick="event.stopPropagation(); deleteVariable(${pageIndex}, '${key}')">×</button>
         </div>
       </div>
       `;
@@ -778,8 +778,8 @@ function renderPageContent(pageIndex) {
             <span>${childContent}</span>
           </div>
           <div class="layout-item-actions">
-            <button type="button" class="btn-small" onclick="${editCall}">âœŽ</button>
-            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">Ã—</button>
+            <button type="button" class="btn-small" onclick="${editCall}">✎</button>
+            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">×</button>
           </div>
         </div>
         `;
@@ -826,8 +826,8 @@ function renderPageContent(pageIndex) {
           <span>${content}</span>
         </div>
         <div class="layout-item-actions">
-          <button type="button" class="btn-small" onclick="editElement(${pageIndex}, ${itemIndex})">âœŽ</button>
-          <button type="button" class="btn-small btn-danger" onclick="deleteElement(${pageIndex}, ${itemIndex})">Ã—</button>
+          <button type="button" class="btn-small" onclick="editElement(${pageIndex}, ${itemIndex})">✎</button>
+          <button type="button" class="btn-small btn-danger" onclick="deleteElement(${pageIndex}, ${itemIndex})">×</button>
         </div>
       </div>
       `;
@@ -1957,7 +1957,7 @@ async function copyToClipboard(text) {
       await navigator.clipboard.writeText(text);
       return;
     } catch (err) {
-      // Use debug-level logging here â€” browser will often emit a policy violation message
+      // Use debug-level logging here — browser will often emit a policy violation message
       // that cannot be suppressed; keep our log quieter and continue to fallbacks.
       console.debug('[TOKEN_HELPER] navigator.clipboard.writeText failed (falling back):', err);
     }
@@ -2027,7 +2027,7 @@ function renderTokenHelperList(items) {
     header.style.marginBottom = '8px';
 
     const title = document.createElement('div');
-    title.innerHTML = `<strong style="color:#c8adff">${layer}</strong> â€” ${groups[layer].length} items`;
+    title.innerHTML = `<strong style="color:#c8adff">${layer}</strong> — ${groups[layer].length} items`;
     header.appendChild(title);
 
     const expandAllBtn = document.createElement('div');
@@ -2095,11 +2095,11 @@ function renderTokenHelperList(items) {
       const meta = document.createElement('span');
       meta.style.color = '#bbb';
       meta.style.fontSize = '0.9em';
-      meta.textContent = `${it.layer || ''} â€¢ ${it.visible ? 'visible' : 'hidden'}`;
+      meta.textContent = `${it.layer || ''} • ${it.visible ? 'visible' : 'hidden'}`;
       // show an abbreviated creator id and reveal full id on hover
       const creator = it.createdUserId || it.createdBy || it.ownerId || it.lastModifiedUserId || null;
       if (creator) {
-        meta.textContent += ` â€¢ creator: ${String(creator).substring(0, 8)}`;
+        meta.textContent += ` • creator: ${String(creator).substring(0, 8)}`;
         meta.title = `creator: ${creator}`;
       }
       left.appendChild(meta);
@@ -2133,7 +2133,7 @@ function renderTokenHelperList(items) {
           logger.warn('[TOKEN_HELPER] copy failed:', err);
           // copyToClipboard already used prompt fallback - inform user in status
           const s = document.getElementById('tokensStatus');
-          if (s) s.textContent = 'Copy failed â€” please copy the ID from the prompt or manually.';
+          if (s) s.textContent = 'Copy failed — please copy the ID from the prompt or manually.';
         }
       };
       right.appendChild(copyBtn);
@@ -2217,7 +2217,7 @@ async function applyTokensFiltersAndRender() {
       if (!detected) {
         // Inform the user and show no items (safer than showing all)
         const container = document.getElementById('tokensList');
-        if (container) container.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID â€” cannot filter by "Me". Try Refresh.</div>';
+        if (container) container.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID — cannot filter by "Me". Try Refresh.</div>';
         if (status) status.textContent = 'Could not detect current user ID';
         return;
       }
@@ -2593,13 +2593,13 @@ document.getElementById("saveBtn").onclick = async () => {
     // Build config from current tab
     if (currentTab === 'json') {
       const text = document.getElementById("cfgArea").value;
-      const format = getConfigFormat(); // Utiliser le format sÃ©lectionnÃ©
+      const format = getConfigFormat(); // Utiliser le format sélectionné
       config = parseConfig(text, format); // Utiliser parseConfig au lieu de JSON.parse
     } else {
       config = buildConfigFromEditor();
     }
     
-    logger.log("âœ“ Config built successfully:", config);
+    logger.log("✓ Config built successfully:", config);
     
     const apiKey = apiKeyInput.value.trim() || apiKeyInput.dataset.original || "";
     const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || "";
@@ -2648,12 +2648,12 @@ document.getElementById("saveBtn").onclick = async () => {
     // Persist full config to room-scoped localStorage (modal context)
     try {
       await saveConfigToLocalStorage(config);
-      logger.log("âœ“ Config saved to room-scoped localStorage by modal");
+      logger.log("✓ Config saved to room-scoped localStorage by modal");
     } catch (err) {
       logger.warn("[MODAL] Failed to save full config to localStorage:", err);
     }
 
-    logger.log("âœ“ Config valid, notifying main app to reload from storage...");
+    logger.log("✓ Config valid, notifying main app to reload from storage...");
     await closeModal({ savedFromModal: true, gsheetUpdated: true });
   } catch (e) {
     logger.error("âœ— Validation error:", e);
@@ -2673,7 +2673,7 @@ function maskSensitiveData(str, visibleChars = 4) {
   }
   const start = str.substring(0, visibleChars);
   const end = str.substring(str.length - visibleChars);
-  const masked = 'â€¢'.repeat(Math.min(12, str.length - visibleChars * 2));
+  const masked = '•'.repeat(Math.min(12, str.length - visibleChars * 2));
   return `${start}${masked}${end}`;
 }
 
@@ -2725,7 +2725,7 @@ OBR.onReady(() => {
     // Initialize Debug Mode UI
     initializeDebugModeUI();
     
-    // No delegated fallback â€” explicit handlers above are sufficient and less intrusive.
+    // No delegated fallback — explicit handlers above are sufficient and less intrusive.
     // Ensure initial tab state
     switchTab(currentTab);
   }).catch(error => {
