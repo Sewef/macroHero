@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * Aurora Integration for Owlbear Rodeo
  * Interfaces with the Aurora extension for time-of-day lighting effects
  * https://github.com/Several-Record7234/aurora

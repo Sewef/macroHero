@@ -1,4 +1,4 @@
-﻿/**
+/**
  * YAML configuration loader
  * Provides utilities to load and parse YAML config files
  */

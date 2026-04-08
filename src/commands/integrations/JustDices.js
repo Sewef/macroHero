@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * JustDices Integration
  * Handles communication with the JustDices extension via broadcast API
  */

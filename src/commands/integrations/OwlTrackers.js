@@ -1,4 +1,4 @@
-﻿﻿import { 
+﻿import { 
   getValue as getMetadataValue,
   setValue as setMetadataValue,
   addValue as addMetadataValue,

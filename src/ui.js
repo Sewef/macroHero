@@ -1,4 +1,4 @@
-﻿/**
+/**
  * UI Manager
  * Handles rendering and updating the user interface
  */

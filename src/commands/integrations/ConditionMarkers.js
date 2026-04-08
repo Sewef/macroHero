@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * Conditions Markers Integration
  * Handles status conditions and markers on tokens (poison, stun, etc.)
  */

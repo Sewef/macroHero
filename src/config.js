@@ -1,4 +1,4 @@
-﻿// config.js
+// config.js
 import OBR from "@owlbear-rodeo/sdk";
 import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";

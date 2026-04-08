@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * DicePlus Integration
  * Handles communication with the DicePlus extension via broadcast API
  * Supports advanced dice notation (2d20kh1+5, 3d6!e, etc.)

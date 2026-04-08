@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * Weather Integration for Owlbear Rodeo
  * Interfaces with the official Weather extension
  * https://github.com/owlbear-rodeo/weather

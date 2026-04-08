@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Command Executor - REFACTORED to use VariableEngine and ExecutionSandbox
  * 
  * Simplified execution flow:

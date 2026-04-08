@@ -1,4 +1,4 @@
-﻿﻿/**
+﻿/**
  * Google Sheets Integration
  * Handles reading and writing data to Google Sheets
  */

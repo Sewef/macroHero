@@ -1,4 +1,4 @@
-﻿﻿import OBR from "@owlbear-rodeo/sdk";
+﻿import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
 import { getTokenPosition } from "../token/tokenHelpers.js";
 import { broadcastMessage, BROADCAST_DESTINATIONS } from "../shared/sdkHelpers.js";
