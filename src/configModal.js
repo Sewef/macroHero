@@ -774,7 +774,7 @@ function renderPageContent(pageIndex) {
         childHtml += `
         <div class="layout-item" data-page-index="${pageIdx}" data-element-index="${parentIndex}" data-child-index="${childIdx}" draggable="true" style="margin-left: ${indent}px; opacity: 0.85;">
           <div class="layout-item-info">
-            <span class="layout-item-type">â”œâ”€ ${childType}</span>
+            <span class="layout-item-type">├─ ${childType}</span>
             <span>${childContent}</span>
           </div>
           <div class="layout-item-actions">
