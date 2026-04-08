@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Debug Mode Manager
  * Provides a centralized way for modules to check and listen to debug mode states
  * Debug states are stored in localStorage and can be updated via broadcasts

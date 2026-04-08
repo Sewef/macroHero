@@ -1,4 +1,4 @@
-﻿/**
+﻿﻿/**
  * Local Storage Integration
  * Provides access to local storage in variable expressions
  * Persists to browser localStorage for cross-session access

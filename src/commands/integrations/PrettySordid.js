@@ -1,4 +1,4 @@
-﻿import OBR from "@owlbear-rodeo/sdk";
+﻿﻿import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
 
 // Debug mode constants

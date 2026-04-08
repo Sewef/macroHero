@@ -1,4 +1,4 @@
-import OBR from "@owlbear-rodeo/sdk";
+﻿import OBR from "@owlbear-rodeo/sdk";
 import { openConfigModal, loadConfig, loadConfigFromLocalStorage } from "./config.js";
 import { initUI, updateConfig, setGlobalVariables, reloadCurrentPage } from "./ui.js";
 import { resolveVariables } from "./expressionEvaluator.js";

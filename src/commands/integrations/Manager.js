@@ -1,4 +1,4 @@
-﻿/**
+﻿﻿/**
  * Integrations Manager
  * Centralized management of all integrations (GSheets, Local, etc.)
  */
@@ -34,7 +34,7 @@ class IntegrationsManager {
   constructor() {
     this.googleSheetsClient = null;
     this.local = new LocalIntegration();
-    logger.log("[IntegrationsManager] âœ“ Initialized");
+    logger.log("[IntegrationsManager] ✓ Initialized");
   }
 
   /**
@@ -51,7 +51,7 @@ class IntegrationsManager {
       apiKey: config.apiKey,
       sheetId: config.sheetId
     });
-    logger.log("[IntegrationsManager] âœ“ Google Sheets client initialized");
+    logger.log("[IntegrationsManager] ✓ Google Sheets client initialized");
   }
 
   /**

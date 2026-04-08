@@ -1,4 +1,4 @@
-﻿/**
+﻿﻿/**
  * Auras Integration
  * Provides access to Auras auras on items/tokens
  * Communicates with Auras extension via broadcast messages

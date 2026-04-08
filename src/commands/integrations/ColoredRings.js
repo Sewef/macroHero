@@ -1,4 +1,4 @@
-﻿import OBR, { buildShape } from "@owlbear-rodeo/sdk";
+﻿﻿import OBR, { buildShape } from "@owlbear-rodeo/sdk";
 import { getAttachmentsWithMetadata } from "../token/tokenAttachments.js";
 import { createDebugLogger } from "../../debugMode.js";
 
