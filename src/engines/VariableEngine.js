@@ -36,6 +36,108 @@ ASYNC_INTEGRATION_NAMES.forEach(name => {
 });
 
 class VariableEngine {
+  constructor() {
+    // Event listeners for variable changes
+    this.variableListeners = new Map();
+  }
+
+  /**
+   * Register a listener for variable changes
+   * @param {string} varName - Variable name
+   * @param {Function} callback - Called when variable changes: (oldValue, newValue) => {}
+   * @returns {Function} Unsubscribe function
+   */
+  onVariableChange(varName, callback) {
+    if (!this.variableListeners.has(varName)) {
+      this.variableListeners.set(varName, []);
+    }
+    
+    const listeners = this.variableListeners.get(varName);
+    listeners.push(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Notify listeners about variable change
+   */
+  _notifyVariableChange(varName, oldValue, newValue) {
+    if (this.variableListeners.has(varName)) {
+      const listeners = this.variableListeners.get(varName);
+      for (const callback of listeners) {
+        try {
+          callback(oldValue, newValue);
+        } catch (error) {
+          logger.error(`Error in listener for ${varName}:`, error);
+        }
+      }
+    }
+  }
+
+  /**
+   * Track variable dependencies by executing with a tracking Proxy
+   * More reliable than regex-based detection
+   * @param {string} expression - Expression to analyze
+   * @param {Object} variablesConfig - Variable definitions (needed for structure)
+   * @returns {Set} Set of variable names actually used
+   */
+  _trackDependencies(expression, variablesConfig = {}) {
+    const trackedVars = new Set();
+    const varNames = Object.keys(variablesConfig || {});
+
+    // Create a proxy that tracks property access
+    const trackingProxy = new Proxy({}, {
+      get: (target, prop) => {
+        const propStr = String(prop);
+        // Only track if it's a known variable
+        if (varNames.includes(propStr)) {
+          trackedVars.add(propStr);
+        }
+        // Return undefined or a nested proxy for chaining
+        return new Proxy({}, {
+          get: () => undefined,
+          has: () => false,
+        });
+      },
+      has: (target, prop) => {
+        const propStr = String(prop);
+        if (varNames.includes(propStr)) {
+          trackedVars.add(propStr);
+        }
+        return false;
+      },
+    });
+
+    try {
+      // Try to parse and track variable access
+      // Create a minimal context
+      const context = {
+        variables: trackingProxy,
+      };
+
+      // Execute the expression in a try-catch to handle errors gracefully
+      new Function('variables', `return (${expression});`)(trackingProxy);
+    } catch (error) {
+      // If execution fails, fall back to regex-based detection
+      logger.log("Tracking failed, falling back to regex detection", error.message);
+      
+      // Fallback: use simple substring matching for known variables
+      for (const varName of varNames) {
+        if (expression.includes(varName)) {
+          trackedVars.add(varName);
+        }
+      }
+    }
+
+    return trackedVars;
+  }
+
   /**
    * Evaluate a single expression
    * @param {string|number|boolean} expression - Expression to evaluate
@@ -85,7 +187,8 @@ class VariableEngine {
   }
 
   /**
-   * Build and cache dependency graph
+   * Build and cache dependency graph using execution tracking
+   * More reliable than static regex analysis
    */
   _buildDependencyGraph(variablesConfig) {
     // Check cache first
@@ -102,22 +205,23 @@ class VariableEngine {
       if (varConfig.eval) {
         const expr = String(varConfig.eval);
 
-        // Find this.varName references
-        const thisRefs = expr.match(REGEX_PATTERNS.thisReference) || [];
-        for (const ref of thisRefs) {
-          const depVar = ref.replace('this.', '');
-          if (depVar in variablesConfig && depVar !== varName) {
+        // Use tracking to detect actual dependencies
+        let trackedDeps = this._trackDependencies(expr, variablesConfig);
+
+        // Filter out self-references
+        for (const depVar of trackedDeps) {
+          if (depVar !== varName && !deps.includes(depVar)) {
             deps.push(depVar);
           }
         }
 
-        // Find direct variable references - check against known variable names only
-        for (const otherVar of varNames) {
-          if (otherVar !== varName && expr.includes(otherVar)) {
-            // Use simple string contains check instead of creating regex for each variable
-            // This is safe because we're checking against a known set of variable names
-            if (!deps.includes(otherVar)) {
-              deps.push(otherVar);
+        // Fallback: if tracking found nothing, use this.varName references as backup
+        if (deps.length === 0) {
+          const thisRefs = expr.match(REGEX_PATTERNS.thisReference) || [];
+          for (const ref of thisRefs) {
+            const depVar = ref.replace('this.', '');
+            if (depVar in variablesConfig && depVar !== varName) {
+              deps.push(depVar);
             }
           }
         }
@@ -171,6 +275,7 @@ class VariableEngine {
 
       try {
         let value;
+        const oldValue = resolved[varName];
 
         if (varConfig.value !== undefined) {
           value = varConfig.value;
@@ -182,7 +287,10 @@ class VariableEngine {
 
         resolved[varName] = value;
 
-        // Emit event for this variable resolution
+        // Notify listeners and emit event for variable resolution
+        if (oldValue !== value) {
+          this._notifyVariableChange(varName, oldValue, value);
+        }
         eventBus.emit('engine:variableResolved', varName, value);
       } catch (error) {
         logger.error('Error resolving variable:', varName, error);
