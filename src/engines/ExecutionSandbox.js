@@ -12,14 +12,50 @@
 import * as math from "mathjs";
 import { getExpressionContext } from "../expressionHelpers.js";
 import { createDebugLogger } from "../debugMode.js";
+import { ASYNC_INTEGRATION_NAMES } from "../constants.js";
 
 const logger = createDebugLogger('ExecutionSandbox');
+
+// Pre-compiled regex patterns for integration auto-await
+const INTEGRATION_REGEX_MAP = new Map();
+ASYNC_INTEGRATION_NAMES.forEach(name => {
+  INTEGRATION_REGEX_MAP.set(name, new RegExp(`(?<!await\\s+)\\b(${name}\\.\\w+)\\(`, 'g'));
+});
 
 class ExecutionSandbox {
   constructor() {
     // Cache integrated context (functions, etc) to avoid rebuilding
     this.contextCache = null;
     this.contextCacheKey = null;
+    
+    // LRU cache for compiled Function objects (max 100 entries)
+    this.functionCache = new Map();
+    this.maxCacheSize = 100;
+  }
+
+  /**
+   * Add to LRU cache with eviction
+   */
+  _setCacheEntry(key, value) {
+    // Remove oldest entry if at capacity
+    if (this.functionCache.size >= this.maxCacheSize) {
+      const firstKey = this.functionCache.keys().next().value;
+      this.functionCache.delete(firstKey);
+    }
+    this.functionCache.set(key, value);
+  }
+
+  /**
+   * Simple hash function for expressions
+   */
+  _hashExpression(expression) {
+    let hash = 0;
+    for (let i = 0; i < expression.length; i++) {
+      const char = expression.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return 'h' + Math.abs(hash).toString(36);
   }
 
   /**
@@ -56,21 +92,29 @@ class ExecutionSandbox {
 
       const context = this.buildContext(resolvedVars);
       
-      // Create a safe evaluation using Function constructor with proper scoping
-      // Destructure integrations and math into scope
-      const integrationKeys = Object.keys(context.integrations).join(', ');
-      const mathKeys = Object.keys(context.math).join(', ');
-      const varKeys = Object.keys(resolvedVars).join(', ');
+      // Generate cache key including expression hash
+      const exprHash = this._hashExpression(expression);
+      const integrationKeys = Object.keys(context.integrations).sort().join(', ');
+      const mathKeys = Object.keys(context.math).sort().join(', ');
+      const varKeysArray = Object.keys(resolvedVars).sort().join(', ');
+      const cacheKey = `sync:${exprHash}:${integrationKeys}|${mathKeys}|${varKeysArray}`;
 
-      const evaluator = new Function(
-        'context',
-        `
-          const { ${integrationKeys} } = context.integrations;
-          const { ${mathKeys} } = context.math;
-          const { ${varKeys} } = context.variables;
-          return (${expression});
-        `
-      );
+      // Check if this evaluator is cached
+      let evaluator = this.functionCache.get(cacheKey);
+      
+      if (!evaluator) {
+        // Create new evaluator and cache it
+        evaluator = new Function(
+          'context',
+          `
+            const { ${integrationKeys} } = context.integrations;
+            const { ${mathKeys} } = context.math;
+            const { ${varKeysArray} } = context.variables;
+            return (${expression});
+          `
+        );
+        this._setCacheEntry(cacheKey, evaluator);
+      }
       
       const result = evaluator(context);
       logger.log('Result:', result);
@@ -98,35 +142,37 @@ class ExecutionSandbox {
 
       const context = this.buildContext(resolvedVars);
       
-      // Process expression to auto-await integration calls
+      // Process expression to auto-await integration calls using pre-compiled regex
       let processed = expression;
-      const integrationNames = [
-        'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles',
-        'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather',
-        'Aurora', 'Announcement', 'Auras', 'Owlbear', 'Token', 'Scene'
-      ];
-      
-      for (const integration of integrationNames) {
-        const regex = new RegExp(`(?<!await\\s+)\\b(${integration}\\.\\w+)\\(`, 'g');
+      for (const [integrationName, regex] of INTEGRATION_REGEX_MAP.entries()) {
         processed = processed.replace(regex, (match, methodCall) => `await ${methodCall}(`);
       }
 
-      // Create async evaluator with proper scope
-      const integrationKeys = Object.keys(context.integrations).join(', ');
-      const mathKeys = Object.keys(context.math).join(', ');
-      const varKeys = Object.keys(resolvedVars).join(', ');
+      // Generate cache key including expression hash
+      const exprHash = this._hashExpression(processed);
+      const integrationKeys = Object.keys(context.integrations).sort().join(', ');
+      const mathKeys = Object.keys(context.math).sort().join(', ');
+      const varKeysArray = Object.keys(resolvedVars).sort().join(', ');
+      const cacheKey = `async:${exprHash}:${integrationKeys}|${mathKeys}|${varKeysArray}`;
 
-      const evaluator = new Function(
-        'context',
-        `
-          return (async () => {
-            const { ${integrationKeys} } = context.integrations;
-            const { ${mathKeys} } = context.math;
-            const { ${varKeys} } = context.variables;
-            return (${processed});
-          })();
-        `
-      );
+      // Check if this evaluator is cached
+      let evaluator = this.functionCache.get(cacheKey);
+      
+      if (!evaluator) {
+        // Create new evaluator and cache it
+        evaluator = new Function(
+          'context',
+          `
+            return (async () => {
+              const { ${integrationKeys} } = context.integrations;
+              const { ${mathKeys} } = context.math;
+              const { ${varKeysArray} } = context.variables;
+              return (${processed});
+            })();
+          `
+        );
+        this._setCacheEntry(cacheKey, evaluator);
+      }
       
       const result = await evaluator(context);
       logger.log('Result:', result);
@@ -156,23 +202,33 @@ class ExecutionSandbox {
         helpers: context.helpers || {},
       };
 
-      const integrationKeys = Object.keys(fullContext.integrations).join(', ');
-      const mathKeys = Object.keys(fullContext.math).join(', ');
-      const varKeys = Object.keys(fullContext.variables).join(', ');
-      const helperKeys = Object.keys(fullContext.helpers).join(', ');
+      // Generate cache key including code hash
+      const codeHash = this._hashExpression(script);
+      const integrationKeys = Object.keys(fullContext.integrations).sort().join(', ');
+      const mathKeys = Object.keys(fullContext.math).sort().join(', ');
+      const varKeys = Object.keys(fullContext.variables).sort().join(', ');
+      const helperKeys = Object.keys(fullContext.helpers).sort().join(', ');
+      const cacheKey = `cmd:${codeHash}:${integrationKeys}|${mathKeys}|${varKeys}|${helperKeys}`;
 
-      const executor = new Function(
-        'context',
-        `
-          return (async () => {
-            const { ${integrationKeys} } = context.integrations;
-            const { ${mathKeys} } = context.math;
-            const { ${varKeys} } = context.variables;
-            const { ${helperKeys} } = context.helpers;
-            ${script}
-          })();
-        `
-      );
+      // Check if this executor is cached
+      let executor = this.functionCache.get(cacheKey);
+      
+      if (!executor) {
+        // Create new executor and cache it
+        executor = new Function(
+          'context',
+          `
+            return (async () => {
+              const { ${integrationKeys} } = context.integrations;
+              const { ${mathKeys} } = context.math;
+              const { ${varKeys} } = context.variables;
+              const { ${helperKeys} } = context.helpers;
+              ${script}
+            })();
+          `
+        );
+        this._setCacheEntry(cacheKey, executor);
+      }
 
       return await executor(fullContext);
     } catch (error) {

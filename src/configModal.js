@@ -4,6 +4,7 @@ import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig, saveConfigToLocalStor
 import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { createDebugLogger } from "./debugMode.js";
 import { deepClone } from "./utils.js";
+import { ASYNC_INTEGRATION_NAMES } from "./constants.js";
 
 const logger = createDebugLogger('configModal');
 
@@ -2292,23 +2293,7 @@ const DEBUG_MODULES_BY_CATEGORY = {
     'sceneHelpers',
     'tokenHelpers'
   ],
-  'Integration Modules': [
-    'Local',
-    'Manager',
-    'Announcement',
-    'Auras',
-    'Aurora',
-    'ColoredRings',
-    'ConditionMarkers',
-    'DicePlus',
-    'Embers',
-    'GoogleSheets',
-    'JustDices',
-    'OwlTrackers',
-    'PrettySordid',
-    'StatBubbles',
-    'Weather'
-  ]
+  'Integration Modules': ['Local', 'Manager', ...ASYNC_INTEGRATION_NAMES]
 };
 
 /**

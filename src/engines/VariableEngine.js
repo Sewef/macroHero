@@ -15,17 +15,25 @@ import { executionSandbox } from "./ExecutionSandbox.js";
 import { eventBus } from "../events/EventBus.js";
 import { variableStore } from "../stores/VariableStore.js";
 import { createDebugLogger } from "../debugMode.js";
+import { ASYNC_INTEGRATION_NAMES } from "../constants.js";
 
 const logger = createDebugLogger('VariableEngine');
 
 // Cache for dependency graphs
 const dependencyCache = new WeakMap();
 
-// Integration names for detection
-const INTEGRATION_NAMES = [
-  'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles',
-  'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather'
-];
+// Pre-compiled regex patterns
+const REGEX_PATTERNS = {
+  awaitKeyword: /\bawait\s+/,
+  thisReference: /\bthis\.(\w+)/g,
+  variableIdentifier: /\b([a-z_][a-zA-Z0-9_]*)\b/g,
+};
+
+// Build integration detection regex map
+const INTEGRATION_REGEX_MAP = new Map();
+ASYNC_INTEGRATION_NAMES.forEach(name => {
+  INTEGRATION_REGEX_MAP.set(name, new RegExp(`\\b${name}\\.\\w+`, 'g'));
+});
 
 class VariableEngine {
   /**
@@ -62,11 +70,18 @@ class VariableEngine {
    * Check if expression has async calls
    */
   _hasAsyncCall(expression) {
-    const hasAwait = /\bawait\s+/.test(expression);
-    const hasIntegration = INTEGRATION_NAMES.some(
-      intName => new RegExp(`\\b${intName}\\.`).test(expression)
-    );
-    return hasAwait || hasIntegration;
+    if (REGEX_PATTERNS.awaitKeyword.test(expression)) return true;
+    
+    // Check if any integration is used
+    for (const [integrationName, regex] of INTEGRATION_REGEX_MAP.entries()) {
+      if (regex.test(expression)) {
+        // Reset regex state for next test
+        regex.lastIndex = 0;
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -79,6 +94,7 @@ class VariableEngine {
     }
 
     const dependencies = new Map();
+    const varNames = Object.keys(variablesConfig || {});
 
     for (const [varName, varConfig] of Object.entries(variablesConfig || {})) {
       const deps = [];
@@ -87,7 +103,7 @@ class VariableEngine {
         const expr = String(varConfig.eval);
 
         // Find this.varName references
-        const thisRefs = expr.match(/\bthis\.(\w+)/g) || [];
+        const thisRefs = expr.match(REGEX_PATTERNS.thisReference) || [];
         for (const ref of thisRefs) {
           const depVar = ref.replace('this.', '');
           if (depVar in variablesConfig && depVar !== varName) {
@@ -95,9 +111,11 @@ class VariableEngine {
           }
         }
 
-        // Find direct variable references
-        for (const otherVar of Object.keys(variablesConfig)) {
-          if (otherVar !== varName && new RegExp(`\\b${otherVar}\\b`).test(expr)) {
+        // Find direct variable references - check against known variable names only
+        for (const otherVar of varNames) {
+          if (otherVar !== varName && expr.includes(otherVar)) {
+            // Use simple string contains check instead of creating regex for each variable
+            // This is safe because we're checking against a known set of variable names
             if (!deps.includes(otherVar)) {
               deps.push(otherVar);
             }
@@ -209,8 +227,8 @@ class VariableEngine {
 
     for (const cmd of commands) {
       const cmdStr = String(cmd);
-      // Match variable identifiers
-      const matches = cmdStr.matchAll(/\b([a-z_][a-zA-Z0-9_]*)\b/g);
+      // Match variable identifiers using pre-compiled regex
+      const matches = cmdStr.matchAll(REGEX_PATTERNS.variableIdentifier);
       for (const match of matches) {
         usedVars.add(match[1]);
       }
@@ -229,11 +247,11 @@ class VariableEngine {
     // Find integration calls in commands
     const integrationCalls = new Set();
     for (const cmd of commands) {
-      for (const integration of INTEGRATION_NAMES) {
-        const regex = new RegExp(`\\b${integration}\\.\\w+`, 'g');
-        const matches = String(cmd).matchAll(regex);
-        for (const match of matches) {
+      const cmdStr = String(cmd);
+      for (const [integration, regex] of INTEGRATION_REGEX_MAP.entries()) {
+        if (regex.test(cmdStr)) {
           integrationCalls.add(integration);
+          regex.lastIndex = 0; // Reset regex state
         }
       }
     }
