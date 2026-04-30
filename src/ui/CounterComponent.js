@@ -140,6 +140,9 @@ export class CounterComponent extends UIComponent {
     input.value = constrained;
     this.lastSavedValue = constrained;
     
+    // Set flag BEFORE any async operations or events
+    this.isUpdatingCounter = true;
+    
     // Update resolved value immediately
     this.setResolvedValue(varName, constrained);
     variable.value = constrained;
@@ -154,8 +157,6 @@ export class CounterComponent extends UIComponent {
     
     // Notify EventBus
     EventBus.emit('store:variableResolved', varName, constrained, this.page._pageIndex);
-    
-    this.isUpdatingCounter = true;
     
     // Clear pending save and reschedule
     clearTimeout(this.saveTimer);
