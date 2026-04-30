@@ -23,7 +23,7 @@ class EventBus {
       this.listeners.set(eventName, new Set());
     }
     this.listeners.get(eventName).add(callback);
-    logger.log(`[EventBus] Subscribed to ${eventName}`);
+    logger.log(`Subscribed to event: ${eventName}`);
 
     // Return unsubscribe function
     return () => this.off(eventName, callback);
@@ -50,7 +50,7 @@ class EventBus {
       if (listeners.size === 0) {
         this.listeners.delete(eventName);
       }
-      logger.log(`[EventBus] Unsubscribed from ${eventName}`);
+      logger.log(`Unsubscribed from event: ${eventName}`);
     }
   }
 
@@ -66,7 +66,7 @@ class EventBus {
         try {
           callback(...args);
         } catch (error) {
-          console.error(`[EventBus] Error in listener for ${eventName}:`, error);
+          logger.error(`Error in listener for ${eventName}:`, error);
         }
       }
     }
@@ -82,7 +82,7 @@ class EventBus {
         try {
           return Promise.resolve(callback(...args));
         } catch (error) {
-          console.error(`[EventBus] Error in listener for ${eventName}:`, error);
+          logger.error(`Error in listener for ${eventName}:`, error);
           return Promise.reject(error);
         }
       });
@@ -95,7 +95,7 @@ class EventBus {
    */
   clear() {
     this.listeners.clear();
-    logger.log('[EventBus] All listeners cleared');
+    logger.log("All listeners cleared");
   }
 }
 

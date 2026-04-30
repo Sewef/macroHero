@@ -83,9 +83,9 @@ export async function setValue(tokenId, trackerName, value) {
  * @returns {Promise<void>}
  */
 export async function addValue(tokenId, trackerName, delta = 1) {
-  logger.log(`[OwlTrackers.addValue] Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
+  logger.log(`Called with tokenId=${tokenId}, trackerName=${trackerName}, delta=${delta}`);
   const currentValue = await getValue(tokenId, trackerName);
-  logger.log(`[OwlTrackers.addValue] Current value for ${trackerName}: ${currentValue}`);
+  logger.log(`Current value for ${trackerName}: ${currentValue}`);
   
   if (currentValue === null) {
     logger.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}. Cannot add to non-existent tracker.`);
@@ -93,9 +93,9 @@ export async function addValue(tokenId, trackerName, delta = 1) {
   }
   
   const newValue = currentValue + Number(delta);
-  logger.log(`[OwlTrackers.addValue] Setting ${trackerName} to ${newValue} (was ${currentValue})`);
+  logger.log(`Setting ${trackerName} to ${newValue} (was ${currentValue})`);
   await setValue(tokenId, trackerName, newValue);
-  logger.log(`[OwlTrackers.addValue] Complete`);
+  logger.log(`Complete`);
 }
 
 /**
@@ -140,7 +140,7 @@ export async function addTracker(tokenId, trackerConfig) {
     const { variant, name, color, value, max, checked, showOnMap = true, inlineMath = false } = trackerConfig;
     
     if (!variant) {
-      logger.error(`[OwlTrackers.addTracker] Missing required "variant" field`);
+      logger.error(`Missing required "variant" field`);
       return null;
     }
     
@@ -176,7 +176,7 @@ export async function addTracker(tokenId, trackerConfig) {
     } else if (variant === "checkbox") {
       newTracker.checked = checked !== undefined ? checked : false;
     } else {
-      logger.error(`[OwlTrackers.addTracker] Invalid variant "${variant}". Must be: value, value-max, counter, or checkbox`);
+      logger.error(`Invalid variant "${variant}". Must be: value, value-max, counter, or checkbox`);
       return null;
     }
     
@@ -186,11 +186,11 @@ export async function addTracker(tokenId, trackerConfig) {
     // Update token metadata
     await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, trackers);
     
-    logger.log(`[OwlTrackers.addTracker] Added ${variant} tracker "${name || 'unnamed'}" with ID ${trackerId} to token ${tokenId}`);
+    logger.log(`Added ${variant} tracker "${name || 'unnamed'}" with ID ${trackerId} to token ${tokenId}`);
     return trackerId;
     
   } catch (error) {
-    logger.error(`[OwlTrackers.addTracker] Failed to add tracker to token ${tokenId}:`, error.message);
+    logger.error(`Failed to add tracker to token ${tokenId}:`, error.message);
     return null;
   }
 }
@@ -206,7 +206,7 @@ export async function removeTracker(tokenId, trackerIdentifier) {
     const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
     
     if (!Array.isArray(trackers)) {
-      logger.warn(`[OwlTrackers.removeTracker] No trackers found on token ${tokenId}`);
+      logger.warn(`No trackers found on token ${tokenId}`);
       return false;
     }
     
@@ -217,18 +217,18 @@ export async function removeTracker(tokenId, trackerIdentifier) {
     );
     
     if (updatedTrackers.length === initialLength) {
-      logger.warn(`[OwlTrackers.removeTracker] Tracker "${trackerIdentifier}" not found on token ${tokenId}`);
+      logger.warn(`Tracker "${trackerIdentifier}" not found on token ${tokenId}`);
       return false;
     }
     
     // Update token metadata
     await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, updatedTrackers);
     
-    logger.log(`[OwlTrackers.removeTracker] Removed tracker "${trackerIdentifier}" from token ${tokenId}`);
+    logger.log(`Removed tracker "${trackerIdentifier}" from token ${tokenId}`);
     return true;
     
   } catch (error) {
-    logger.error(`[OwlTrackers.removeTracker] Failed to remove tracker from token ${tokenId}:`, error.message);
+    logger.error(`Failed to remove tracker from token ${tokenId}:`, error.message);
     return false;
   }
 }

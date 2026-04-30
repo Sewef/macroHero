@@ -17,7 +17,7 @@ const logger = createDebugLogger('expressionEvaluator');
  * Delegated to VariableEngine
  */
 export async function evaluateExpression(expression, resolvedVars = {}) {
-  logger.log('[EVALUATOR] Delegating to VariableEngine');
+  logger.log("Delegating to VariableEngine");
   return variableEngine.evaluateExpression(expression, resolvedVars);
 }
 
@@ -26,7 +26,7 @@ export async function evaluateExpression(expression, resolvedVars = {}) {
  * Delegated to VariableEngine
  */
 export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null) {
-  logger.log('[EVALUATOR] Delegating to VariableEngine');
+  logger.log("Delegating to VariableEngine");
   const resolved = await variableEngine.resolveVariables(variablesConfig, globalVars, onlyVars);
   
   // Call the callback for each variable if provided (backwards compatibility)

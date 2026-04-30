@@ -34,7 +34,7 @@ function cleanupAllListeners() {
     }
   });
   activeListeners = [];
-  logger.log('[ConfigModal] Cleaned up ' + activeListeners.length + ' event listeners');
+  logger.log("Cleaned up ' + activeListeners.length + ' event listeners");
 }
 
 let currentConfig = null;
@@ -329,21 +329,21 @@ async function closeModal(data) {
           } else {
             await OBR.broadcast.sendMessage("macrohero.config.result", data);
           }
-          logger.log(`[MODAL] broadcast.sendMessage succeeded (mode=${attempt.desc})`);
+          logger.log(`broadcast.sendMessage succeeded (mode=${attempt.desc})`);
           sent = true;
           break;
         } catch (err) {
           // Log detailed info for debugging
           try {
-            logger.warn(`[MODAL] broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
+            logger.warn(`broadcast.sendMessage failed (mode=${attempt.desc}):`, err && err.error ? err.error : err);
           } catch (logErr) {
-            logger.warn('[MODAL] broadcast.sendMessage failed (and could not stringify error)');
+            logger.warn("[MODAL] broadcast.sendMessage failed (and could not stringify error)");
           }
         }
       }
 
       if (!sent) {
-        logger.error('[MODAL] ERROR: All attempts to broadcast config.result failed');
+        logger.error("[MODAL] ERROR: All attempts to broadcast config.result failed");
       }
     }
   } catch (err) {
@@ -533,9 +533,9 @@ function syncToJson() {
     const config = buildConfigFromEditor();
     const format = getConfigFormat();
     document.getElementById("cfgArea").value = formatConfig(config, format);
-    logger.log(`[CONFIG] Exported to ${format.toUpperCase()}`);
+    logger.log(`Exported to ${format.toUpperCase()}`);
   } catch (e) {
-    logger.error(`[CONFIG] Error exporting config:`, e);
+    logger.error(`Error exporting config:`, e);
     alert("Error exporting config: " + e.message);
   }
 }
@@ -1978,7 +1978,7 @@ async function copyToClipboard(text) {
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     if (ok) return;
-    logger.warn('[TOKEN_HELPER] document.execCommand returned false');
+    logger.warn("[TOKEN_HELPER] document.execCommand returned false");
   } catch (err) {
     logger.warn('[TOKEN_HELPER] execCommand fallback failed:', err);
   }
@@ -2555,13 +2555,13 @@ function switchConfigFormat() {
       
       // Convert to target format
       cfgArea.value = formatConfig(config, format);
-      logger.log(`[CONFIG] Converted from ${currentFormat.toUpperCase()} to ${format.toUpperCase()}`);
+      logger.log(`Converted from ${currentFormat.toUpperCase()} to ${format.toUpperCase()}`);
     } catch (e) {
-      logger.warn(`[CONFIG] Could not convert config:`, e.message);
+      logger.warn(`Could not convert config:`, e.message);
       // Leave unchanged if conversion fails
     }
   } catch (e) {
-    logger.error(`[CONFIG] Format switch error:`, e);
+    logger.error(`Format switch error:`, e);
   }
 }
 

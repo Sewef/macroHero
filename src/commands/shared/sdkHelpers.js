@@ -68,7 +68,7 @@ function getDimensions(url) {
     img.onload = () =>
       resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
     img.onerror = () => {
-      logger.warn(`[sdkHelpers] Failed to load image: ${url}, using 256×256`);
+      logger.warn(`Failed to load image: ${url}, using 256×256`);
       resolve({ width: 256, height: 256 });
     };
     img.src = url;
@@ -214,18 +214,18 @@ export async function broadcastMessage(messageId, data, options = {}) {
     for (const dest of destinations) {
       try {
         await OBR.broadcast.sendMessage(messageId, data, { destination: dest });
-        logger.log(`[sdkHelpers] Broadcast sent to ${dest}`, { messageId });
+        logger.log(`Broadcast sent to ${dest}`, { messageId });
         return { success: true, destination: dest, attempts: attempt + 1 };
       } catch (err) {
         const msg = err?.error ?? String(err);
-        logger.warn(`[sdkHelpers] Broadcast failed → ${dest} (attempt ${attempt + 1}/${maxAttempts}):`, msg);
+        logger.warn(`Broadcast failed → ${dest} (attempt ${attempt + 1}/${maxAttempts}):`, msg);
         if (attempt < maxAttempts - 1 && dest !== destinations[destinations.length - 1]) continue;
         if (attempt < maxAttempts - 1) await _delay(delayMs);
       }
     }
   }
 
-  const finalError = `[sdkHelpers] broadcastMessage "${messageId}" failed after ${maxAttempts} attempts`;
+  const finalError = `broadcastMessage "${messageId}" failed after ${maxAttempts} attempts`;
   logger.error(finalError);
   return { success: false, destination: null, attempts: maxAttempts, error: finalError };
 }
@@ -263,7 +263,7 @@ export function broadcastListener(messageId, callback) {
   if (typeof callback !== "function")
     throw new Error("[sdkHelpers] broadcastListener: callback must be a function");
   return OBR.broadcast.onMessage(messageId, (event) => {
-    try { callback(event); } catch (err) { logger.error(`[sdkHelpers] broadcastListener error for "${messageId}":`, err); }
+    try { callback(event); } catch (err) { logger.error(`broadcastListener error for "${messageId}":`, err); }
   });
 }
 
@@ -284,7 +284,7 @@ export function broadcastOnce(messageId, options = {}) {
     });
     timer = setTimeout(() => {
       unsub();
-      reject(new Error(`[sdkHelpers] broadcastOnce timeout for "${messageId}" after ${timeoutMs}ms`));
+      reject(new Error(`broadcastOnce timeout for "${messageId}" after ${timeoutMs}ms`));
     }, timeoutMs);
   });
 }
@@ -306,7 +306,7 @@ export async function broadcastRequest(requestId, responseId, data, options = {}
       clearTimeout(timer);
       resolve(event.data);
     });
-    timer = setTimeout(() => reject(new Error(`[sdkHelpers] broadcastRequest timeout on "${responseId}" after ${timeoutMs}ms`)), timeoutMs);
+    timer = setTimeout(() => reject(new Error(`broadcastRequest timeout on "${responseId}" after ${timeoutMs}ms`)), timeoutMs);
   });
 
   try {
@@ -315,7 +315,7 @@ export async function broadcastRequest(requestId, responseId, data, options = {}
     const responseData = await responsePromise;
     return { success: true, data: responseData, broadcastResult };
   } catch (err) {
-    logger.error(`[sdkHelpers] broadcastRequest "${requestId}" failed:`, err.message);
+    logger.error(`broadcastRequest "${requestId}" failed:`, err.message);
     return { success: false, error: err.message, broadcastResult: null };
   } finally {
     if (unsub) unsub();

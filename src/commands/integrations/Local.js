@@ -15,7 +15,7 @@ class LocalIntegration {
     this.storage = {};
     this.localStorageKey = "macroHero_localStorage";
     this.loadFromLocalStorage();
-    logger.log("[LocalIntegration] âœ“ Initialized with localStorage persistence");
+    logger.log("Initialized with localStorage persistence");
   }
 
   /**
@@ -26,10 +26,10 @@ class LocalIntegration {
       const json = localStorage.getItem(this.localStorageKey);
       if (json) {
         this.storage = JSON.parse(json);
-        logger.log("[LocalIntegration] Loaded from browser localStorage:", this.storage);
+        logger.log("Loaded from browser localStorage:", this.storage);
       }
     } catch (error) {
-      logger.warn("[LocalIntegration] Error loading from localStorage:", error);
+      logger.warn("Error loading from localStorage:", error);
       this.storage = {};
     }
   }
@@ -41,7 +41,7 @@ class LocalIntegration {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(this.storage));
     } catch (error) {
-      logger.warn("[LocalIntegration] Error saving to localStorage:", error);
+      logger.warn("Error saving to localStorage:", error);
     }
   }
 
@@ -52,9 +52,9 @@ class LocalIntegration {
    * @returns {any} Stored value or default
    */
   value(key, defaultValue = null) {
-    logger.log(`[LocalIntegration.value] Getting "${key}"`);
+    logger.log(`Getting "${key}"`);
     const result = this.storage[key] ?? defaultValue;
-    logger.log(`[LocalIntegration.value] âœ“ Got:`, result);
+    logger.log(`Got:`, result);
     return result;
   }
 
@@ -64,7 +64,7 @@ class LocalIntegration {
    * @param {any} value - Value to store
    */
   set(key, value) {
-    logger.log(`[LocalIntegration.set] Setting "${key}" =`, value);
+    logger.log(`Setting "${key}" =`, value);
     this.storage[key] = value;
     this.saveToLocalStorage();
     return value;
@@ -74,7 +74,7 @@ class LocalIntegration {
    * Clear all local storage
    */
   clear() {
-    logger.log("[LocalIntegration.clear] Clearing all storage");
+    logger.log("Clearing all storage");
     this.storage = {};
     localStorage.removeItem(this.localStorageKey);
   }

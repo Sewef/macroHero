@@ -41,7 +41,7 @@ class VariableEngine {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      logger.log('[Engine] Evaluating expression:', expression);
+      logger.log("Evaluating expression");
 
       // Detect if async is needed
       const hasAsync = this._hasAsyncCall(expression);
@@ -53,7 +53,7 @@ class VariableEngine {
 
       return result;
     } catch (error) {
-      logger.error('[Engine] Evaluation error:', error);
+      logger.error('Evaluation error:', error);
       return null;
     }
   }
@@ -167,7 +167,7 @@ class VariableEngine {
         // Emit event for this variable resolution
         eventBus.emit('engine:variableResolved', varName, value);
       } catch (error) {
-        logger.error('[Engine] Error resolving', varName, error);
+        logger.error('Error resolving variable:', varName, error);
         resolved[varName] = null;
       }
     }

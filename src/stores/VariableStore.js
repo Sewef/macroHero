@@ -33,7 +33,7 @@ class VariableStore {
   setConfig(config) {
     this.config = config;
     this.globalVariablesConfig = config.global?.variables || {};
-    logger.log('[VariableStore] Config set');
+    logger.log("Config initialized");
     eventBus.emit('store:configChanged', config);
   }
 
@@ -42,7 +42,7 @@ class VariableStore {
    */
   setGlobalVariablesResolved(resolved) {
     this.globalVariablesResolved = { ...resolved };
-    logger.log('[VariableStore] Global variables resolved:', Object.keys(resolved));
+    logger.log("Global variables resolved");
     eventBus.emit('store:globalVariablesResolved', resolved);
   }
 
@@ -51,7 +51,7 @@ class VariableStore {
    */
   setCurrentPage(pageIndex) {
     if (pageIndex < 0 || pageIndex >= (this.config?.pages || []).length) {
-      logger.warn('[VariableStore] Invalid page index:', pageIndex);
+      logger.warn('Invalid page index:', pageIndex);
       return;
     }
 
@@ -63,7 +63,7 @@ class VariableStore {
       this.pageVariablesResolved[pageIndex] = { ...this.globalVariablesResolved };
     }
 
-    logger.log('[VariableStore] Current page set to:', pageIndex);
+    logger.log('Current page set:', pageIndex);
     eventBus.emit('store:pageChanged', pageIndex, page);
   }
 
@@ -94,7 +94,7 @@ class VariableStore {
       // Global variable
       this.globalVariablesResolved[varName] = value;
       this.modifiedVariables.add(varName);
-      logger.log('[VariableStore] Global variable resolved:', varName, '=', value);
+      logger.log('Global variable resolved:', varName, '=', value);
       eventBus.emit('store:variableResolved', varName, value, 'global');
     } else {
       // Page variable
@@ -103,7 +103,7 @@ class VariableStore {
       }
       this.pageVariablesResolved[targetIndex][varName] = value;
       this.modifiedVariables.add(varName);
-      logger.log('[VariableStore] Page variable resolved:', varName, '=', value, 'page:', targetIndex);
+      logger.log('Page variable resolved:', varName, '=', value);
       eventBus.emit('store:variableResolved', varName, value, 'page', targetIndex);
     }
   }
@@ -182,7 +182,7 @@ class VariableStore {
    */
   markVariableModified(varName) {
     this.modifiedVariables.add(varName);
-    logger.log('[VariableStore] Variable marked as modified:', varName);
+    logger.log('Variable marked as modified:', varName);
   }
 
   /**
@@ -205,7 +205,7 @@ class VariableStore {
     this.pageVariablesConfigs = [];
     this.pageVariablesResolved = [];
     this.modifiedVariables.clear();
-    logger.log('[VariableStore] Cleared');
+    logger.log("Store cleared");
   }
 }
 

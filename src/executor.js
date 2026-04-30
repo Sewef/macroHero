@@ -25,19 +25,19 @@ const logger = createDebugLogger('executor');
  */
 export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null, pageIndex = 0) {
   if (!Array.isArray(commands) || commands.length === 0) {
-    logger.warn("[EXECUTOR] No commands");
+    logger.warn("No commands provided");
     return;
   }
 
   try {
-    logger.log("[EXECUTOR] Button clicked, executing", commands.length, "command(s)");
+    logger.log("Button clicked, executing commands");
 
     if (pageIndex === undefined || pageIndex === null) pageIndex = 0;
     if (!page._modifiedVars) page._modifiedVars = new Set();
 
     // Step 1: Find variables USED in commands
     const usedVars = variableEngine.getVariablesUsedInCommands(commands);
-    logger.log("[EXECUTOR] Variables used in commands:", Array.from(usedVars));
+    logger.log("Variables used in commands");
 
     // Step 2: Resolve ONLY variables that are used and not yet resolved
     const varsToResolveBeforeCmd = new Set();
@@ -48,7 +48,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     }
 
     if (varsToResolveBeforeCmd.size > 0) {
-      logger.log('[EXECUTOR] Pre-resolving', varsToResolveBeforeCmd.size, 'variables');
+      logger.log("Pre-resolving variables");
       const preResolved = await variableEngine.resolveVariables(
         page.variables,
         page._resolved || {},
@@ -66,7 +66,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
 
     // Step 4: Execute commands
     const script = Array.isArray(commands) ? commands.join('\n') : commands;
-    logger.log('[EXECUTOR] Executing script');
+    logger.log("Executing script");
 
     await executionSandbox.executeCommand(script, executionContext);
 
@@ -79,12 +79,12 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       }
     }
 
-    logger.log('[EXECUTOR] Affected variables:', Array.from(affectedVars));
+    logger.log("Affected variables detected");
 
     // Step 6: Re-resolve affected variables and their dependents
     if (affectedVars.size > 0) {
       const allAffected = variableEngine.getDependentVariables(page.variables, affectedVars);
-      logger.log('[EXECUTOR] Re-resolving', allAffected.size, 'variables (including dependents)');
+      logger.log("Re-resolving affected variables");
 
       const postResolved = await variableEngine.resolveVariables(
         page.variables,
@@ -107,9 +107,9 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
 
     page._modifiedVars = new Set();
     eventBus.emit('executor:commandsCompleted', { commands, page, affected: affectedVars });
-    logger.log('[EXECUTOR] Complete');
+    logger.log("Execution complete");
   } catch (error) {
-    logger.error('[EXECUTOR] Button action failed:', error);
+    logger.error('Button action failed:', error);
     eventBus.emit('executor:commandsFailed', { error });
     throw error;
   }
@@ -147,18 +147,18 @@ function createHelperFunctions(page, pageIndex = 0) {
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
-      logger.log('[setValue]', varName, '=', newValue);
+      logger.log('Set value:', varName, '=', newValue);
       
       // Re-resolve dependent variables
       const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
       if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
-        logger.log('[setValue] Re-resolving', dependentVars.size - 1, 'dependent variables');
+        logger.log("Re-resolving dependent variables");
         const onVariableResolved = (depVarName, depValue) => {
           if (depVarName !== varName) {
             page._resolved[depVarName] = depValue;
             updateRenderedValue(depVarName, depValue);
             variableStore.setVariableResolved(depVarName, depValue, pageIndex);
-            logger.log('[setValue] Updated dependent:', depVarName, '=', depValue);
+            logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };
         await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
@@ -194,18 +194,18 @@ function createHelperFunctions(page, pageIndex = 0) {
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
-      logger.log('[addValue]', varName, '+=', delta, '=>', newValue);
+      logger.log('Add value:', varName, '+=', delta, '=>', newValue);
       
       // Re-resolve dependent variables
       const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
       if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
-        logger.log('[addValue] Re-resolving', dependentVars.size - 1, 'dependent variables');
+        logger.log("Re-resolving dependent variables");
         const onVariableResolved = (depVarName, depValue) => {
           if (depVarName !== varName) {
             page._resolved[depVarName] = depValue;
             updateRenderedValue(depVarName, depValue);
             variableStore.setVariableResolved(depVarName, depValue, pageIndex);
-            logger.log('[addValue] Updated dependent:', depVarName, '=', depValue);
+            logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };
         await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
@@ -236,7 +236,7 @@ export async function executeCommands(commands, page) {
     await executeCommand(commands, page);
     return [{ ok: true }];
   } catch (error) {
-    logger.error('[EXECUTOR] Command failed:', error);
+      logger.error('Command failed:', error);
     return [{ ok: false, error: error.message }];
   }
 }

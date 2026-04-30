@@ -26,9 +26,9 @@ export async function getConditions(itemId) {
       if (typeof ext.getConditions === 'function') {
         return await ext.getConditions(itemId);
       }
-      logger.log("[ConditionMarkers] Native extension present but no getItemConditions/getConditions method");
+      logger.log("Native extension present but no getItemConditions/getConditions method");
     } else {
-      logger.log("[ConditionMarkers] Native extension not present, using fallback");
+      logger.log("Native extension not present, using fallback");
     }
 
     // Fallback: scan scene attachments for condition markers
@@ -52,7 +52,7 @@ export async function getConditions(itemId) {
 export async function addCondition(itemId, conditionName, value = null) {
   try {
     if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.addCondition === 'function') {
-      logger.log(`[ConditionMarkers] Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
+      logger.log(`Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
       return await Ext.ConditionMarkers.addCondition(itemId, conditionName, value);
     }
     // Fallback: attempt to use the Condition Markers API (request/response pattern)
@@ -65,7 +65,7 @@ export async function addCondition(itemId, conditionName, value = null) {
       payload.value = value;
     }
 
-    logger.log(`[ConditionMarkers] Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
+    logger.log(`Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
 
     const requestResult = await broadcastRequest(
       API_REQUEST_CHANNEL,
@@ -75,7 +75,7 @@ export async function addCondition(itemId, conditionName, value = null) {
     );
 
     if (requestResult.success) {
-      logger.log(`[ConditionMarkers] API response for add '${conditionName}':`, requestResult.data);
+      logger.log(`API response for add '${conditionName}':`, requestResult.data);
       return requestResult.data;
     } else {
       throw new Error(requestResult.error);
@@ -129,7 +129,7 @@ export async function removeCondition(itemId, conditionName) {
       }, 5000);
     });
 
-    logger.log(`[ConditionMarkers] API response for remove '${conditionName}':`, res);
+    logger.log(`API response for remove '${conditionName}':`, res);
     return res;
   } catch (error) {
     logger.error("Failed to remove condition:", error);
@@ -222,7 +222,7 @@ export async function hasCondition(itemId, conditionName) {
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
-    logger.log(`[ConditionMarkers.getValue] Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
+    logger.log(`Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
     
     let tokenItem = null;
     if (allItems) {
@@ -233,7 +233,7 @@ export async function getValue(tokenId, conditionName, allItems = null) {
     }
     
     if (!tokenItem) {
-      logger.log(`[ConditionMarkers.getValue] Token not found`);
+      logger.log(`Token not found`);
       return null;
     }
     
@@ -247,11 +247,11 @@ export async function getValue(tokenId, conditionName, allItems = null) {
       "keegan.dev.condition-markers/metadata" in item.metadata
     );
     
-    logger.log(`[ConditionMarkers.getValue] Found ${markers.length} condition marker(s) on token`);
+    logger.log(`Found ${markers.length} condition marker(s) on token`);
     
     // For each marker, find TEXT labels attached to it
     for (const marker of markers) {
-      logger.log(`[ConditionMarkers.getValue] Checking marker: ${marker.name} (id: ${marker.id})`);
+      logger.log(`Checking marker: ${marker.name} (id: ${marker.id})`);
       
       const labels = allSceneItems.filter(item =>
         item.attachedTo === marker.id &&
@@ -261,33 +261,33 @@ export async function getValue(tokenId, conditionName, allItems = null) {
         item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
       );
       
-      logger.log(`[ConditionMarkers.getValue] Found ${labels.length} label(s) for condition "${conditionName}"`);
+      logger.log(`Found ${labels.length} label(s) for condition "${conditionName}"`);
       
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
-        logger.log(`[ConditionMarkers.getValue] Label text: "${labelText}"`);
+        logger.log(`Label text: "${labelText}"`);
         const trimmed = labelText && labelText.trim() ? labelText.trim() : null;
         if (!trimmed) {
-          logger.log(`[ConditionMarkers.getValue] Returning: null (empty)`);
+          logger.log(`Returning: null (empty)`);
           return null;
         }
 
         // Simpler numeric parsing: use Number() and ensure it's finite.
         const n = Number(trimmed);
         if (Number.isFinite(n)) {
-          logger.log(`[ConditionMarkers.getValue] Parsed number: ${n}`);
+          logger.log(`Parsed number: ${n}`);
           return n;
         }
 
-        logger.log(`[ConditionMarkers.getValue] Label not numeric, returning null`);
+        logger.log(`Label not numeric, returning null`);
         return null;
       }
     }
     
-    logger.log(`[ConditionMarkers.getValue] No matching label found, returning null`);
+    logger.log(`No matching label found, returning null`);
     return null;
   } catch (error) {
-    logger.error(`[ConditionMarkers.getValue] Error:`, error);
+    logger.error(`Error:`, error);
     return null;
   }
 }

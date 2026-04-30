@@ -10,7 +10,7 @@ import YAML from 'js-yaml';
 
 async function convertJsonToYaml(jsonFilePath) {
   try {
-    console.log(`Converting: ${jsonFilePath}`);
+    console.log(`Converting ${jsonFilePath}`);
 
     // Read JSON file
     const jsonContent = fs.readFileSync(jsonFilePath, 'utf8');
@@ -34,11 +34,11 @@ async function convertJsonToYaml(jsonFilePath) {
     const jsonSize = (fs.statSync(jsonFilePath).size / 1024).toFixed(2);
     const yamlSize = (fs.statSync(outputPath).size / 1024).toFixed(2);
 
-    console.log(`✓ Converted successfully`);
+    console.log(`Converted successfully`);
     console.log(`  Input:  ${jsonFilePath} (${jsonSize} KB)`);
     console.log(`  Output: ${outputPath} (${yamlSize} KB)`);
   } catch (error) {
-    console.error(`✗ Error converting ${jsonFilePath}:`, error.message);
+    console.error(`Error converting ${jsonFilePath}: ${error.message}`);
     process.exit(1);
   }
 }
@@ -47,13 +47,12 @@ async function convertJsonToYaml(jsonFilePath) {
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
-  // Default: convert default.json and Xalithra.json
+  // Default: convert default.json
   const files = [
-    './src/default.json',
-    './src/Xalithra.json'
+    './src/default.json'
   ];
 
-  console.log('No files specified, converting defaults...\n');
+  console.log('No files specified, converting defaults...');
 
   for (const file of files) {
     if (fs.existsSync(file)) {
@@ -69,4 +68,4 @@ if (args.length === 0) {
   }
 }
 
-console.log('\n✓ Conversion complete!');
+console.log('Conversion complete');

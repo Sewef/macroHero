@@ -18,7 +18,7 @@ const logger = createDebugLogger("expressionHelpers");
  * @param {Object} config - Configuration object with gsheet settings
  */
 export function initializeExpressions(config) {
-  logger.log("[expressionHelpers] Initializing integrations...");
+  logger.log("Initializing integrations...");
   initializeIntegrations(config);
   // Cache the context on init; reset async methods so they can be recomputed
   cachedContext = null;

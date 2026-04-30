@@ -21,7 +21,7 @@ async function getPlayerId() {
   try {
     return await OBR.player.getId();
   } catch (error) {
-    logger.error(`[Embers] Failed to get player ID:`, error.message);
+    logger.error(`Failed to get player ID:`, error.message);
     return "unknown";
   }
 }
@@ -104,11 +104,11 @@ class EmbersSequence {
         const casterPos = await getTokenPosition(casterId);
         const targetPos = await getTokenPosition(targetId);
         if (!casterPos) {
-          logger.warn(`[Embers] Caster ${casterId} not found`);
+          logger.warn(`Caster ${casterId} not found`);
           return false;
         }
         if (!targetPos) {
-          logger.warn(`[Embers] Target ${targetId} not found`);
+          logger.warn(`Target ${targetId} not found`);
           return false;
         }
         instruction.effectProperties.source = casterPos;
@@ -147,7 +147,7 @@ class EmbersSequence {
       this.asyncResolvers.push(async () => {
         const position = await getTokenPosition(tokenId);
         if (!position) {
-          logger.warn(`[Embers] Token ${tokenId} not found`);
+          logger.warn(`Token ${tokenId} not found`);
           return false;
         }
         instruction.effectProperties.source = position;
@@ -184,7 +184,7 @@ class EmbersSequence {
       const casterPos = await getTokenPosition(casterId);
       const targetPos = await getTokenPosition(targetId);
       if (!casterPos || !targetPos) {
-        logger.warn(`[Embers] Caster or target not found`);
+        logger.warn(`Caster or target not found`);
         return false;
       }
       instruction.effectProperties.source = casterPos;
@@ -227,7 +227,7 @@ class EmbersSequence {
    */
   then() {
     if (this.currentContext.length === 0) {
-      logger.warn('[Embers] then() called with no previous instruction');
+      logger.warn("[Embers] then() called with no previous instruction");
       return this;
     }
     
@@ -274,7 +274,7 @@ class EmbersSequence {
       }
 
       if (this.instructions.length === 0) {
-        logger.error('[Embers] No instructions to cast');
+        logger.error("[Embers] No instructions to cast");
         return;
       }
 
@@ -282,7 +282,7 @@ class EmbersSequence {
       const playerId = await getPlayerId();
       const message = buildMessage(this.instructions, finalOptions, playerId);
 
-      logger.log(`[Embers] Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
+      logger.log(`Broadcasting to ${finalOptions.destination ?? 'ALL'}:`, 
         JSON.stringify(message, null, 2));
 
       const result = await broadcastMessage(
@@ -292,9 +292,9 @@ class EmbersSequence {
       );
       
       if (result.success) {
-        logger.log(`[Embers] âœ“ Message sent (${this.instructions.length} instruction(s))`);
+        logger.log(`Message sent (${this.instructions.length} instruction(s))`);
       } else {
-        logger.error(`[Embers] Failed to broadcast: ${result.error}`);
+        logger.error(`Failed to broadcast: ${result.error}`);
       }
     } catch (error) {
       logger.error('[Embers] Failed to cast:', error.message);
@@ -304,14 +304,14 @@ class EmbersSequence {
 
 export async function sendInstructions(instructions, options = {}) {
   if (!Array.isArray(instructions) || instructions.length === 0) {
-    logger.error('[Embers] sendInstructions requires a non-empty array');
+    logger.error("[Embers] sendInstructions requires a non-empty array");
     return;
   }
 
   try {
     const playerId = await getPlayerId();
     const message = buildMessage(instructions, options, playerId);
-    logger.log(`[Embers] Broadcasting ${instructions.length} raw instruction(s):`, 
+    logger.log(`Broadcasting ${instructions.length} raw instruction(s):`, 
       JSON.stringify(message, null, 2));
     
     const result = await broadcastMessage(
@@ -321,9 +321,9 @@ export async function sendInstructions(instructions, options = {}) {
     );
     
     if (result.success) {
-      logger.log(`[Embers] âœ“ Message sent`);
+      logger.log(`Message sent`);
     } else {
-      logger.error(`[Embers] Failed to broadcast: ${result.error}`);
+      logger.error(`Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
     logger.error('[Embers] Failed to send instructions:', error.message);

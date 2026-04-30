@@ -17,25 +17,25 @@ export async function getMapIdFromToken(tokenId) {
     const token = tokens[0];
     
     if (!token) {
-      logger.warn(`[sceneHelpers] Token ${tokenId} not found`);
+      logger.warn(`Token ${tokenId} not found`);
       return null;
     }
     
-    logger.log(`[sceneHelpers] Found token:`, { id: token.id, name: token.name, layer: token.layer, position: token.position });
+    logger.log(`Found token:`, { id: token.id, name: token.name, layer: token.layer, position: token.position });
     
     // Get token position (center point)
     const tokenPosition = token.position;
     if (!tokenPosition) {
-      logger.warn(`[sceneHelpers] Token ${tokenId} has no position`);
+      logger.warn(`Token ${tokenId} has no position`);
       return null;
     }
     
     // Get only map items using filter (maps are images on the MAP layer)
     const maps = await OBR.scene.items.getItems((item) => isImage(item) && item.layer === 'MAP');
-    logger.log(`[sceneHelpers] Found ${maps.length} maps in scene`);
+    logger.log(`Found ${maps.length} maps in scene`);
     
     if (maps.length === 0) {
-      logger.warn(`[sceneHelpers] No maps found in scene`);
+      logger.warn(`No maps found in scene`);
       return null;
     }
     
@@ -49,7 +49,7 @@ export async function getMapIdFromToken(tokenId) {
         // Use OBR SDK to get the actual bounds of the map item
         const bounds = await OBR.scene.items.getItemBounds([map.id]);
         
-        logger.log(`[sceneHelpers] Checking map:`, { 
+        logger.log(`Checking map:`, { 
           id: map.id, 
           name: map.name, 
           bounds: bounds,
@@ -61,19 +61,19 @@ export async function getMapIdFromToken(tokenId) {
             tokenPosition.x <= bounds.max.x && 
             tokenPosition.y >= bounds.min.y && 
             tokenPosition.y <= bounds.max.y) {
-          logger.log(`[sceneHelpers] Token ${tokenId} is on map ${map.id} (${map.name})`);
+          logger.log(`Token ${tokenId} is on map ${map.id} (${map.name})`);
           return map.id;
         }
       } catch (error) {
-        logger.warn(`[sceneHelpers] Error getting bounds for map ${map.id}:`, error);
+        logger.warn(`Error getting bounds for map ${map.id}:`, error);
         continue;
       }
     }
     
-    logger.log(`[sceneHelpers] Token ${tokenId} (position: ${tokenPosition.x}, ${tokenPosition.y}) is not on any map`);
+    logger.log(`Token ${tokenId} (position: ${tokenPosition.x}, ${tokenPosition.y}) is not on any map`);
     return null;
   } catch (error) {
-    logger.error(`[sceneHelpers] Error getting map ID for token ${tokenId}:`, error.message);
+    logger.error(`Error getting map ID for token ${tokenId}:`, error.message);
     return null;
   }
 }

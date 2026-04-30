@@ -20,7 +20,7 @@ export async function getTokenAttachments(tokenId, allItems = null) {
   try {
     const items = allItems || await OBR.scene.items.getItems();
     const attachments = items.filter(item => item.attachedTo === tokenId);
-    logger.log(`[TokenAttachments] Found ${attachments.length} attachments for token ${tokenId}`);
+    logger.log(`Found ${attachments.length} attachments for token ${tokenId}`);
     return attachments;
   } catch (error) {
     logger.error("[TokenAttachments] Error fetching attachments:", error);
@@ -89,7 +89,7 @@ export async function setAttachmentVisible(attachmentId, visible) {
         item.visible = visible;
       });
     });
-    logger.log(`[TokenAttachments] Set attachment ${attachmentId} visible to ${visible}`);
+    logger.log(`Set attachment ${attachmentId} visible to ${visible}`);
   } catch (error) {
     logger.error("[TokenAttachments] Error setting visibility:", error);
   }
@@ -107,7 +107,7 @@ export async function setAttachmentsVisible(attachmentIds, visible) {
         item.visible = visible;
       });
     });
-    logger.log(`[TokenAttachments] Set ${attachmentIds.length} attachments visible to ${visible}`);
+    logger.log(`Set ${attachmentIds.length} attachments visible to ${visible}`);
   } catch (error) {
     logger.error("[TokenAttachments] Error setting visibility:", error);
   }

@@ -47,10 +47,10 @@ export async function loadAllEvaluatedVariables() {
   try {
     const json = localStorage.getItem(key);
     evaluatedVariablesCache = json ? JSON.parse(json) : {};
-    logger.log("[STORAGE] Evaluated variables loaded from localStorage", evaluatedVariablesCache);
+    logger.log("Evaluated variables loaded from localStorage");
     return evaluatedVariablesCache;
   } catch (error) {
-    logger.error("[STORAGE] Error loading evaluated variables:", error);
+    logger.error('Error loading evaluated variables:', error);
     evaluatedVariablesCache = {};
     return evaluatedVariablesCache;
   }
@@ -94,7 +94,7 @@ export async function updateEvaluatedVariable(pageIndex, varName, value) {
   // Schedule a batched write
   await scheduleBatchSave();
   
-  logger.log(`[STORAGE] Variable queued: page${pageIndex}.${varName} = ${value}`);
+    logger.log(`Variable queued: page${pageIndex}.${varName}`);
 }
 
 /**
@@ -118,12 +118,12 @@ async function scheduleBatchSave() {
       const json = JSON.stringify(evaluatedVariablesCache);
       localStorage.setItem(key, json);
       const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-      logger.log(`[STORAGE] Batch saved evaluated variables (${sizeKB}KB)`);
+      logger.log(`Batch saved evaluated variables (${sizeKB}KB)`);
       
       // Clear pending changes after successful save
       pendingChanges = {};
     } catch (error) {
-      logger.error("[STORAGE] Error during batch save:", error);
+      logger.error('Error during batch save:', error);
       // Keep pending changes for retry
     }
     
@@ -142,7 +142,7 @@ export async function flushPendingChanges() {
   }
   
   if (Object.keys(pendingChanges).length === 0) {
-    logger.log("[STORAGE] No pending changes to flush");
+    logger.log("No pending changes to flush");
     return;
   }
   
@@ -151,10 +151,10 @@ export async function flushPendingChanges() {
     const json = JSON.stringify(evaluatedVariablesCache);
     localStorage.setItem(key, json);
     const sizeKB = (new Blob([json]).size / 1024).toFixed(2);
-    logger.log(`[STORAGE] Flushed evaluated variables (${sizeKB}KB)`);
+    logger.log(`Flushed evaluated variables (${sizeKB}KB)`);
     pendingChanges = {};
   } catch (error) {
-    logger.error("[STORAGE] Error flushing changes:", error);
+    logger.error('Error flushing changes:', error);
   }
 }
 
@@ -168,9 +168,9 @@ export async function clearAllEvaluatedVariables() {
   try {
     const key = await getRoomScopedEvaluatedVarsKey();
     localStorage.removeItem(key);
-    logger.log("[STORAGE] All evaluated variables cleared");
+    logger.log("All evaluated variables cleared");
   } catch (error) {
-    logger.error("[STORAGE] Error clearing variables:", error);
+    logger.error('Error clearing variables:', error);
   }
 }
 

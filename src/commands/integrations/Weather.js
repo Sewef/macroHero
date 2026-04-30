@@ -40,7 +40,7 @@ export async function setWeather(mapId, config) {
     // Validate weather type (weather-extended includes 3 additional types)
     const validTypes = ["SNOW", "RAIN", "SAND", "FIRE", "CLOUD", "BLOOM", "ENERGYSTORM", "WATER", "CURRENT"];
     if (!validTypes.includes(config.type)) {
-      logger.error(`[Weather] Invalid weather type: ${config.type}`);
+      logger.error(`Invalid weather type: ${config.type}`);
       throw new Error(`Invalid weather type. Use: "SNOW", "RAIN", "SAND", "FIRE", "CLOUD", "BLOOM", "ENERGYSTORM", "WATER", or "CURRENT"`);
     }
 
@@ -59,20 +59,20 @@ export async function setWeather(mapId, config) {
     }
     // If tint is omitted, WeatherActor will use "#ffffff" as fallback via ??
 
-    logger.log(`[Weather] Setting weather on map ${mapId}:`, weatherConfig);
+    logger.log(`Setting weather on map ${mapId}:`, weatherConfig);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           item.metadata[WEATHER_METADATA_KEY] = weatherConfig;
-          logger.log(`[Weather] âœ“ Weather metadata set on map:`, item.name);
+          logger.log(`Weather metadata set on map:`, item.name);
         }
       }
     });
 
-    logger.log(`[Weather] âœ“ Weather set successfully`);
+    logger.log(`Weather set successfully`);
   } catch (error) {
-    logger.error(`[Weather] Error setting weather:`, error.message);
+    logger.error(`Error setting weather:`, error.message);
     throw error;
   }
 }
@@ -89,20 +89,20 @@ export async function removeWeather(mapId) {
       throw new Error("mapId is required");
     }
 
-    logger.log(`[Weather] Removing weather from map ${mapId}`);
+    logger.log(`Removing weather from map ${mapId}`);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           delete item.metadata[WEATHER_METADATA_KEY];
-          logger.log(`[Weather] âœ“ Weather removed from map:`, item.name);
+          logger.log(`Weather removed from map:`, item.name);
         }
       }
     });
 
-    logger.log(`[Weather] âœ“ Weather removed successfully`);
+    logger.log(`Weather removed successfully`);
   } catch (error) {
-    logger.error(`[Weather] Error removing weather:`, error.message);
+    logger.error(`Error removing weather:`, error.message);
     throw error;
   }
 }
@@ -123,21 +123,21 @@ export async function getWeather(mapId) {
     const map = items[0];
 
     if (!map || !isImage(map) || (map.layer !== 'MAP' && map.layer !== 'FOG')) {
-      logger.warn(`[Weather] Item ${mapId} is not a valid map`);
+      logger.warn(`Item ${mapId} is not a valid map`);
       return null;
     }
 
     const config = map.metadata[WEATHER_METADATA_KEY];
     
     if (!config) {
-      logger.log(`[Weather] No weather on map ${mapId}`);
+      logger.log(`No weather on map ${mapId}`);
       return null;
     }
 
-    logger.log(`[Weather] Weather config for map ${mapId}:`, config);
+    logger.log(`Weather config for map ${mapId}:`, config);
     return config;
   } catch (error) {
-    logger.error(`[Weather] Error getting weather:`, error.message);
+    logger.error(`Error getting weather:`, error.message);
     throw error;
   }
 }
@@ -152,7 +152,7 @@ export async function hasWeather(mapId) {
     const config = await getWeather(mapId);
     return config !== null;
   } catch (error) {
-    logger.error(`[Weather] Error checking weather:`, error.message);
+    logger.error(`Error checking weather:`, error.message);
     return false;
   }
 }
@@ -179,12 +179,12 @@ export async function updateWeather(mapId, updates) {
     if (updates.type) {
       const validTypes = ["SNOW", "RAIN", "SAND", "FIRE", "CLOUD", "BLOOM", "ENERGYSTORM", "WATER", "CURRENT"];
       if (!validTypes.includes(updates.type)) {
-        logger.error(`[Weather] Invalid weather type: ${updates.type}`);
+        logger.error(`Invalid weather type: ${updates.type}`);
         throw new Error(`Invalid weather type. Use: "SNOW", "RAIN", "SAND", "FIRE", "CLOUD", "BLOOM", "ENERGYSTORM", "WATER", or "CURRENT"`);
       }
     }
 
-    logger.log(`[Weather] Updating weather on map ${mapId} with:`, updates);
+    logger.log(`Updating weather on map ${mapId} with:`, updates);
 
     // Use the official extension's method: directly modify metadata object
     await OBR.scene.items.updateItems([mapId], (items) => {
@@ -200,17 +200,17 @@ export async function updateWeather(mapId, updates) {
               config.tint = updates.tint === "#ffffff" ? undefined : updates.tint;
             }
             
-            logger.log(`[Weather] âœ“ Weather updated on map:`, item.name, config);
+            logger.log(`Weather updated on map:`, item.name, config);
           } else {
-            logger.warn(`[Weather] No weather on map:`, item.name);
+            logger.warn(`No weather on map:`, item.name);
           }
         }
       }
     });
 
-    logger.log(`[Weather] âœ“ Weather update completed`);
+    logger.log(`Weather update completed`);
   } catch (error) {
-    logger.error(`[Weather] Error updating weather:`, error.message);
+    logger.error(`Error updating weather:`, error.message);
     throw error;
   }
 }

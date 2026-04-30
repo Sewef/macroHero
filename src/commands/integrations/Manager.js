@@ -34,16 +34,16 @@ class IntegrationsManager {
   constructor() {
     this.googleSheetsClient = null;
     this.local = new LocalIntegration();
-    logger.log("[IntegrationsManager] âœ“ Initialized");
+    logger.log("Initialized");
   }
 
   /**
    * Initialize Google Sheets integration
    * @param {Object} config - { apiKey, sheetId }
    */
-  initializeGSheets(config) {
+  initializeGoogleSheets(config) {
     if (!config?.apiKey || !config?.sheetId) {
-      logger.warn("[IntegrationsManager] GSheets config missing apiKey or sheetId");
+      logger.warn("Google Sheets config missing apiKey or sheetId");
       return;
     }
     
@@ -51,7 +51,7 @@ class IntegrationsManager {
       apiKey: config.apiKey,
       sheetId: config.sheetId
     });
-    logger.log("[IntegrationsManager] âœ“ Google Sheets client initialized");
+    logger.log("Google Sheets client initialized");
   }
 
   /**
@@ -260,10 +260,10 @@ export function initializeIntegrations(config) {
   const gsheetConfig = config?.gsheet || config;
   
   if (gsheetConfig?.apiKey && gsheetConfig?.sheetId) {
-    manager.initializeGSheets(gsheetConfig);
+    manager.initializeGoogleSheets(gsheetConfig);
   } else if (config) {
     // Only warn if config was actually provided but incomplete
-    logger.warn("[IntegrationsManager] GSheets config incomplete or missing");
+    logger.warn("GSheets config incomplete or missing");
   }
 }
 

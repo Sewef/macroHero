@@ -23,10 +23,10 @@ export async function getRings(tokenId) {
   try {
     const rings = await getAttachmentsWithMetadata(tokenId, COLORED_RINGS_METADATA_KEY);
     const colors = rings.map(ring => ring.style?.strokeColor).filter(Boolean);
-    logger.log(`[ColoredRings] Found ${colors.length} colored rings on token ${tokenId}`);
+    logger.log(`Found ${colors.length} colored rings on token ${tokenId}`);
     return colors;
   } catch (error) {
-    logger.error(`[ColoredRings] Failed to get rings from token ${tokenId}:`, error.message);
+    logger.error(`Failed to get rings from token ${tokenId}:`, error.message);
     return [];
   }
 }
@@ -46,7 +46,7 @@ export async function hasRing(tokenId, color = null) {
     const normalizedColor = color.toLowerCase();
     return colors.some(c => c.toLowerCase() === normalizedColor);
   } catch (error) {
-    logger.error(`[ColoredRings] Failed to check ring on token ${tokenId}:`, error.message);
+    logger.error(`Failed to check ring on token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -59,11 +59,11 @@ export async function hasRing(tokenId, color = null) {
  */
 export async function addRing(tokenId, color) {
   try {
-    logger.log(`[ColoredRings] Attempting to add ring with color "${color}" to token ${tokenId}`);
+    logger.log(`Attempting to add ring with color "${color}" to token ${tokenId}`);
     
     // Check if ring already exists
     if (await hasRing(tokenId, color)) {
-      logger.warn(`[ColoredRings] Ring with color "${color}" already exists on token ${tokenId}`);
+      logger.warn(`Ring with color "${color}" already exists on token ${tokenId}`);
       return false;
     }
 
@@ -71,7 +71,7 @@ export async function addRing(tokenId, color) {
     const items = await OBR.scene.items.getItems([tokenId]);
     
     if (!items || items.length === 0) {
-      logger.error(`[ColoredRings] Token ${tokenId} not found`);
+      logger.error(`Token ${tokenId} not found`);
       return false;
     }
 
@@ -119,10 +119,10 @@ export async function addRing(tokenId, color) {
       .build();
 
     await OBR.scene.items.addItems([ring]);
-    logger.log(`[ColoredRings] âœ“ Added ring with color "${color}" to token ${tokenId} (scale: ${scale})`);
+    logger.log(`Added ring with color "${color}" to token ${tokenId} (scale: ${scale})`);
     return true;
   } catch (error) {
-    logger.error(`[ColoredRings] Failed to add ring to token ${tokenId}:`, error.message, error);
+    logger.error(`Failed to add ring to token ${tokenId}:`, error.message, error);
     return false;
   }
 }
@@ -157,10 +157,10 @@ async function updateRingScales(tokenId) {
       }
     );
     
-    logger.log(`[ColoredRings] Updated scales for ${rings.length} rings on token ${tokenId}`);
+    logger.log(`Updated scales for ${rings.length} rings on token ${tokenId}`);
     return true;
   } catch (error) {
-    logger.error(`[ColoredRings] Failed to update ring scales for token ${tokenId}:`, error.message);
+    logger.error(`Failed to update ring scales for token ${tokenId}:`, error.message);
     return false;
   }
 }
@@ -178,19 +178,19 @@ export async function removeRing(tokenId, color) {
     const ring = rings.find(r => r.style?.strokeColor?.toLowerCase() === normalizedColor);
     
     if (!ring) {
-      logger.warn(`[ColoredRings] Ring with color "${color}" not found on token ${tokenId}`);
+      logger.warn(`Ring with color "${color}" not found on token ${tokenId}`);
       return false;
     }
 
     await OBR.scene.items.deleteItems([ring.id]);
-    logger.log(`[ColoredRings] Removed ring with color "${color}" from token ${tokenId}`);
+    logger.log(`Removed ring with color "${color}" from token ${tokenId}`);
     
     // Update remaining ring scales to remove gaps
     await updateRingScales(tokenId);
     
     return true;
   } catch (error) {
-    logger.error(`[ColoredRings] Failed to remove ring from token ${tokenId}:`, error.message);
+    logger.error(`Failed to remove ring from token ${tokenId}:`, error.message);
     return false;
   }
 }

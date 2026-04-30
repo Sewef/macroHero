@@ -23,11 +23,11 @@ const AURAS_METADATA_KEY = "com.desain.emanation/metadata";
  */
 export async function hasAura(itemId) {
   try {
-    logger.log(`[Auras.hasAura] Checking auras for item ${itemId}`);
+    logger.log(`Checking auras for item ${itemId}`);
     const items = await OBR.scene.items.getItems([itemId]);
     
     if (items.length === 0) {
-      logger.warn(`[Auras.hasAura] Item not found: ${itemId}`);
+      logger.warn(`Item not found: ${itemId}`);
       return false;
     }
 
@@ -37,10 +37,10 @@ export async function hasAura(itemId) {
       Array.isArray(item.metadata[AURAS_METADATA_KEY].auras) &&
       item.metadata[AURAS_METADATA_KEY].auras.length > 0;
 
-    logger.log(`[Auras.hasAura] Item ${itemId} has auras: ${hasAuras}`);
+    logger.log(`Item ${itemId} has auras: ${hasAuras}`);
     return hasAuras;
   } catch (error) {
-    logger.error(`[Auras.hasAura] Error checking auras for item ${itemId}:`, error);
+    logger.error(`Error checking auras for item ${itemId}:`, error);
     throw error;
   }
 }
@@ -52,21 +52,21 @@ export async function hasAura(itemId) {
  */
 export async function getAuras(itemId) {
   try {
-    logger.log(`[Auras.getAuras] Getting auras for item ${itemId}`);
+    logger.log(`Getting auras for item ${itemId}`);
     const items = await OBR.scene.items.getItems([itemId]);
     
     if (items.length === 0) {
-      logger.warn(`[Auras.getAuras] Item not found: ${itemId}`);
+      logger.warn(`Item not found: ${itemId}`);
       return [];
     }
 
     const item = items[0];
     const auras = item.metadata[AURAS_METADATA_KEY]?.auras || [];
     
-    logger.log(`[Auras.getAuras] Found ${auras.length} aura(s) on item ${itemId}`, auras);
+    logger.log(`Found ${auras.length} aura(s) on item ${itemId}`, auras);
     return auras;
   } catch (error) {
-    logger.error(`[Auras.getAuras] Error getting auras for item ${itemId}:`, error);
+    logger.error(`Error getting auras for item ${itemId}:`, error);
     throw error;
   }
 }
@@ -123,7 +123,7 @@ export async function addAura(itemId, config) {
           message.imageBuildParams = config.imageBuildParams;
         } else if (config.imageUrl) {
           // Auto-detect dimensions and MIME type from URL
-          logger.log(`[Auras.addAura] Auto-detecting parameters for image: ${config.imageUrl}`);
+          logger.log(`Auto-detecting parameters for image: ${config.imageUrl}`);
           const imageBuildParams = await buildImageBuildParams(config.imageUrl, {
             width: config.imageWidth,
             height: config.imageHeight,
@@ -134,7 +134,7 @@ export async function addAura(itemId, config) {
           
           message.style = config.style;
           message.imageBuildParams = imageBuildParams;
-          logger.log(`[Auras.addAura] âœ“ Auto-detected image parameters:`, imageBuildParams);
+          logger.log(`Auto-detected image parameters:`, imageBuildParams);
         } else {
           throw new Error(
             "[Auras.addAura] Image style requires either 'imageUrl' (auto-detect) or 'imageBuildParams' (explicit)"
@@ -177,17 +177,17 @@ export async function addAura(itemId, config) {
       message.layer = config.layer;
     }
 
-    logger.log(`[Auras.addAura] Adding aura to ${message.sources.length} item(s)`, config);
+    logger.log(`Adding aura to ${message.sources.length} item(s)`, config);
 
     const result = await broadcastLocal(AURAS_CHANNEL, message);
     
     if (result.success) {
-      logger.log(`[Auras.addAura] âœ“ Aura creation message sent`);
+      logger.log(`Aura creation message sent`);
     } else {
-      logger.error(`[Auras.addAura] Failed to broadcast: ${result.error}`);
+      logger.error(`Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
-    logger.error(`[Auras.addAura] Error adding aura:`, error);
+    logger.error(`Error adding aura:`, error);
     throw error;
   }
 }
@@ -200,7 +200,7 @@ export async function addAura(itemId, config) {
 export async function removeAura(itemId) {
   try {
     const sources = Array.isArray(itemId) ? itemId : [itemId];
-    logger.log(`[Auras.removeAura] Removing all auras from ${sources.length} item(s)`);
+    logger.log(`Removing all auras from ${sources.length} item(s)`);
 
     const result = await broadcastLocal(
       AURAS_CHANNEL,
@@ -211,12 +211,12 @@ export async function removeAura(itemId) {
     );
 
     if (result.success) {
-      logger.log(`[Auras.removeAura] âœ“ Aura removal message sent`);
+      logger.log(`Aura removal message sent`);
     } else {
-      logger.error(`[Auras.removeAura] Failed to broadcast: ${result.error}`);
+      logger.error(`Failed to broadcast: ${result.error}`);
     }
   } catch (error) {
-    logger.error(`[Auras.removeAura] Error removing auras:`, error);
+    logger.error(`Error removing auras:`, error);
     throw error;
   }
 }

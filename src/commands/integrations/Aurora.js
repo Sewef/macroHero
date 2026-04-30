@@ -110,12 +110,12 @@ export async function setAurora(mapId, config) {
     if (typeof config === 'string') {
       const preset = getPreset(config);
       if (!preset) {
-        logger.error(`[Aurora] Unknown preset: ${config}`);
+        logger.error(`Unknown preset: ${config}`);
         throw new Error(`Unknown preset: ${config}. Available presets: ${Object.keys(AURORA_PRESETS).join(', ')}`);
       }
       // Convert preset (short format) to full format
       configToUse = fromAuroraMetadata(preset);
-      logger.log(`[Aurora] Using preset "${preset.n}":`, configToUse);
+      logger.log(`Using preset "${preset.n}":`, configToUse);
     }
 
     // Build Aurora config with defaults
@@ -158,20 +158,20 @@ export async function setAurora(mapId, config) {
     // Convert to Aurora metadata format
     const auroraMetadata = toAuroraMetadata(fullConfig);
 
-    logger.log(`[Aurora] Setting Aurora on map ${mapId}:`, auroraMetadata);
+    logger.log(`Setting Aurora on map ${mapId}:`, auroraMetadata);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           item.metadata[AURORA_METADATA_KEY] = auroraMetadata;
-          logger.log(`[Aurora] âœ“ Aurora metadata set on map:`, item.name);
+          logger.log(`Aurora metadata set on map:`, item.name);
         }
       }
     });
 
-    logger.log(`[Aurora] âœ“ Aurora set successfully`);
+    logger.log(`Aurora set successfully`);
   } catch (error) {
-    logger.error(`[Aurora] Error setting Aurora:`, error.message);
+    logger.error(`Error setting Aurora:`, error.message);
     throw error;
   }
 }
@@ -188,20 +188,20 @@ export async function removeAurora(mapId) {
       throw new Error("mapId is required");
     }
 
-    logger.log(`[Aurora] Removing Aurora from map ${mapId}`);
+    logger.log(`Removing Aurora from map ${mapId}`);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
         if (isImage(item) && (item.layer === 'MAP' || item.layer === 'FOG')) {
           delete item.metadata[AURORA_METADATA_KEY];
-          logger.log(`[Aurora] âœ“ Aurora removed from map:`, item.name);
+          logger.log(`Aurora removed from map:`, item.name);
         }
       }
     });
 
-    logger.log(`[Aurora] âœ“ Aurora removed successfully`);
+    logger.log(`Aurora removed successfully`);
   } catch (error) {
-    logger.error(`[Aurora] Error removing Aurora:`, error.message);
+    logger.error(`Error removing Aurora:`, error.message);
     throw error;
   }
 }
@@ -222,24 +222,24 @@ export async function getAurora(mapId) {
     const map = items[0];
 
     if (!map || !isImage(map) || (map.layer !== 'MAP' && map.layer !== 'FOG')) {
-      logger.warn(`[Aurora] Item ${mapId} is not a valid map`);
+      logger.warn(`Item ${mapId} is not a valid map`);
       return null;
     }
 
     const metadata = map.metadata[AURORA_METADATA_KEY];
     
     if (!metadata) {
-      logger.log(`[Aurora] No Aurora on map ${mapId}`);
+      logger.log(`No Aurora on map ${mapId}`);
       return null;
     }
 
     // Convert from Aurora metadata format to full property names
     const config = fromAuroraMetadata(metadata);
     
-    logger.log(`[Aurora] Aurora config for map ${mapId}:`, config);
+    logger.log(`Aurora config for map ${mapId}:`, config);
     return config;
   } catch (error) {
-    logger.error(`[Aurora] Error getting Aurora:`, error.message);
+    logger.error(`Error getting Aurora:`, error.message);
     throw error;
   }
 }
@@ -254,7 +254,7 @@ export async function hasAurora(mapId) {
     const config = await getAurora(mapId);
     return config !== null;
   } catch (error) {
-    logger.error(`[Aurora] Error checking Aurora:`, error.message);
+    logger.error(`Error checking Aurora:`, error.message);
     return false;
   }
 }
@@ -312,7 +312,7 @@ export async function updateAurora(mapId, updates) {
     // Convert updates to Aurora metadata format
     const metadataUpdates = toAuroraMetadata(updates);
 
-    logger.log(`[Aurora] Updating Aurora on map ${mapId} with:`, metadataUpdates);
+    logger.log(`Updating Aurora on map ${mapId} with:`, metadataUpdates);
 
     await OBR.scene.items.updateItems([mapId], (items) => {
       for (const item of items) {
@@ -321,17 +321,17 @@ export async function updateAurora(mapId, updates) {
           if (metadata && typeof metadata === 'object') {
             // Update properties directly on the metadata object
             Object.assign(metadata, metadataUpdates);
-            logger.log(`[Aurora] âœ“ Aurora updated on map:`, item.name, metadata);
+            logger.log(`Aurora updated on map:`, item.name, metadata);
           } else {
-            logger.warn(`[Aurora] No Aurora on map:`, item.name);
+            logger.warn(`No Aurora on map:`, item.name);
           }
         }
       }
     });
 
-    logger.log(`[Aurora] âœ“ Aurora update completed`);
+    logger.log(`Aurora update completed`);
   } catch (error) {
-    logger.error(`[Aurora] Error updating Aurora:`, error.message);
+    logger.error(`Error updating Aurora:`, error.message);
     throw error;
   }
 }

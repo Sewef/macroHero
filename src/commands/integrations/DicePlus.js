@@ -76,7 +76,7 @@ export async function isReady(timeoutMs = 1000) {
         if (data.ready === true && data.requestId === requestId) {
           if (timeoutHandle) clearTimeout(timeoutHandle);
           if (unsubscribe) unsubscribe();
-          logger.log("[DicePlus] Ready check confirmed");
+          logger.log("Ready check confirmed");
           resolve(true);
         }
       });
@@ -90,11 +90,11 @@ export async function isReady(timeoutMs = 1000) {
       // Timeout after specified time
       timeoutHandle = setTimeout(() => {
         if (unsubscribe) unsubscribe();
-        logger.warn("[DicePlus] Ready check timeout - DicePlus may not be installed");
+        logger.warn("Ready check timeout - DicePlus may not be installed");
         resolve(false);
       }, timeoutMs);
     } catch (error) {
-      logger.error("[DicePlus] Error checking ready status:", error);
+      logger.error("Error checking ready status:", error);
       if (unsubscribe) unsubscribe();
       resolve(false);
     }
@@ -136,7 +136,7 @@ export async function roll(diceNotation, options = {}) {
           if (resultUnsubscribe) resultUnsubscribe();
           if (errorUnsubscribe) errorUnsubscribe();
 
-          logger.log("[DicePlus] Roll result received:", {
+          logger.log("Roll result received:", {
             notation: diceNotation,
             totalValue: data.result?.totalValue,
             groups: data.result?.groups?.length || 0
@@ -156,7 +156,7 @@ export async function roll(diceNotation, options = {}) {
           if (errorUnsubscribe) errorUnsubscribe();
 
           const errorMsg = data.error || "Unknown DicePlus error";
-          logger.error("[DicePlus] Roll error:", errorMsg);
+          logger.error("Roll error:", errorMsg);
           reject(new Error(`DicePlus error: ${errorMsg}`));
         }
       });
@@ -173,7 +173,7 @@ export async function roll(diceNotation, options = {}) {
         source: EXTENSION_SOURCE
       };
 
-      logger.log("[DicePlus] Sending roll request:", {
+      logger.log("Sending roll request:", {
         notation: diceNotation,
         rollTarget,
         showResults
@@ -193,7 +193,7 @@ export async function roll(diceNotation, options = {}) {
       if (resultUnsubscribe) resultUnsubscribe();
       if (errorUnsubscribe) errorUnsubscribe();
       if (timeoutHandle) clearTimeout(timeoutHandle);
-      logger.error("[DicePlus] Failed to send roll request:", error);
+      logger.error("Failed to send roll request:", error);
       reject(error);
     }
   });
@@ -210,7 +210,7 @@ export async function rollTotal(diceNotation, options = {}) {
     const result = await roll(diceNotation, options);
     return result.totalValue;
   } catch (error) {
-    logger.error("[DicePlus] rollTotal failed:", error.message);
+    logger.error("rollTotal failed:", error.message);
     throw error;
   }
 }
@@ -248,7 +248,7 @@ export async function getRollObject(diceNotation, options = {}) {
  */
 export function getGroupByDescription(rollResult, searchTerm) {
   if (!rollResult?.groups) {
-    logger.warn("[DicePlus] Invalid roll result - no groups");
+    logger.warn("Invalid roll result - no groups");
     return null;
   }
 
@@ -310,7 +310,7 @@ export function formatResult(rollResult) {
  */
 export function onRollResult(callback) {
   if (typeof callback !== 'function') {
-    logger.error("[DicePlus] onRollResult: callback must be a function");
+    logger.error("onRollResult: callback must be a function");
     throw new Error("Callback must be a function");
   }
 
@@ -319,14 +319,14 @@ export function onRollResult(callback) {
       try {
         callback(event.data);
       } catch (error) {
-        logger.error("[DicePlus] Error in onRollResult callback:", error);
+        logger.error("Error in onRollResult callback:", error);
       }
     });
 
-    logger.log("[DicePlus] Roll result listener registered");
+    logger.log("Roll result listener registered");
     return unsubscribe;
   } catch (error) {
-    logger.error("[DicePlus] Failed to register roll result listener:", error);
+    logger.error("Failed to register roll result listener:", error);
     throw error;
   }
 }
@@ -338,7 +338,7 @@ export function onRollResult(callback) {
  */
 export function onRollError(callback) {
   if (typeof callback !== 'function') {
-    logger.error("[DicePlus] onRollError: callback must be a function");
+    logger.error("onRollError: callback must be a function");
     throw new Error("Callback must be a function");
   }
 
@@ -347,14 +347,14 @@ export function onRollError(callback) {
       try {
         callback(event.data);
       } catch (error) {
-        logger.error("[DicePlus] Error in onRollError callback:", error);
+        logger.error("Error in onRollError callback:", error);
       }
     });
 
-    logger.log("[DicePlus] Roll error listener registered");
+    logger.log("Roll error listener registered");
     return unsubscribe;
   } catch (error) {
-    logger.error("[DicePlus] Failed to register roll error listener:", error);
+    logger.error("Failed to register roll error listener:", error);
     throw error;
   }
 }

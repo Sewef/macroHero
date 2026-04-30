@@ -52,7 +52,7 @@ class ExecutionSandbox {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      logger.log('[Sandbox] Executing sync:', expression);
+      logger.log("Executing sync");
 
       const context = this.buildContext(resolvedVars);
       
@@ -73,10 +73,10 @@ class ExecutionSandbox {
       );
       
       const result = evaluator(context);
-      logger.log('[Sandbox] Result:', result);
+      logger.log('Result:', result);
       return result;
     } catch (error) {
-      logger.error('[Sandbox] Sync execution error:', error);
+      logger.error('Sync execution error:', error);
       throw error;
     }
   }
@@ -94,7 +94,7 @@ class ExecutionSandbox {
       if (typeof expression !== 'string') return expression;
       if (!expression.trim()) return expression;
 
-      logger.log('[Sandbox] Executing async:', expression);
+      logger.log("Executing async");
 
       const context = this.buildContext(resolvedVars);
       
@@ -129,10 +129,10 @@ class ExecutionSandbox {
       );
       
       const result = await evaluator(context);
-      logger.log('[Sandbox] Result:', result);
+      logger.log('Result:', result);
       return result;
     } catch (error) {
-      logger.error('[Sandbox] Async execution error:', error);
+      logger.error('Async execution error:', error);
       throw error;
     }
   }
@@ -147,7 +147,7 @@ class ExecutionSandbox {
   async executeCommand(code, context = {}) {
     try {
       const script = Array.isArray(code) ? code.join('\n') : code;
-      logger.log('[Sandbox] Executing command:', script);
+      logger.log("Executing command");
 
       const fullContext = {
         integrations: context.integrations || getExpressionContext(),
@@ -176,7 +176,7 @@ class ExecutionSandbox {
 
       return await executor(fullContext);
     } catch (error) {
-      logger.error('[Sandbox] Command execution error:', error);
+      logger.error('Command execution error:', error);
       throw error;
     }
   }

@@ -19,7 +19,7 @@ const broadcastUnsubs = [];
  */
 function applyTheme(theme) {
   
-  logger.log(`[THEME] Applying ${isLight ? "LIGHT" : "DARK"} mode`);
+  logger.log(`Applied: ${isLight ? "light" : "dark"} theme`);
   
   // Toggle light mode class (handles all color variables via CSS)
   root.classList.toggle('light-mode', isLight);
@@ -44,7 +44,7 @@ window.addEventListener('beforeunload', async () => {
 // Chargement initial
 OBR.onReady(async () => {
   try {
-    logger.log("[MAIN] App loading...");
+    logger.log("Loading application");
 
     // Get and apply current theme
     try {
@@ -53,11 +53,11 @@ OBR.onReady(async () => {
       
       // Listen for theme changes
       OBR.theme.onChange((newTheme) => {
-        logger.log("[THEME] Theme changed to:", newTheme.mode);
+        logger.log("hanged to:", newTheme.mode);
         applyTheme(newTheme);
       });
     } catch (err) {
-      logger.warn("[MAIN] Theme API not available, using dark theme defaults");
+      logger.warn("Theme API not available, using default theme");
     }
 
     const cfg = await loadConfig();
@@ -68,7 +68,7 @@ OBR.onReady(async () => {
     if (apiKey && sheetId) {
       initializeExpressions({ apiKey, sheetId });
     } else {
-      logger.warn("[MAIN] Google Sheets not configured - missing credentials");
+      logger.warn("Google Sheets not configured: missing credentials");
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
@@ -116,23 +116,23 @@ OBR.onReady(async () => {
           }
         }
       } catch (err) {
-        logger.warn('[MAIN] Scene logging skipped or failed:', err);
+        logger.warn('Scene logging skipped or failed:', err);
       }
     })();
 
     // Listen for config changes from the modal
     const configUpdatedUnsub = OBR.broadcast.onMessage("macrohero.config.updated", async (event) => {
-      logger.log("[MAIN] Config updated via broadcast");
+      logger.log("Config updated via broadcast");
 
       // If this is just an UI update (button click, counter change, etc.), skip re-resolution
       if (event.data && event.data.savedFromUI && !event.data.savedFromModal) {
-        logger.log("[MAIN] Skipping re-resolution for UI-only update");
+        logger.log("Skipping re-resolution for UI update");
         return;
       }
 
       // If config was saved from modal, reload the page to ensure everything is fresh
       if (event.data && event.data.savedFromModal) {
-        logger.log("[MAIN] Config saved from modal - reloading page");
+        logger.log("Config saved from modal, reloading page");
         window.location.reload();
         return;
       }
@@ -152,11 +152,11 @@ OBR.onReady(async () => {
           if (cfg) {
             newConfig = cfg;
           } else {
-            logger.warn('[MAIN] No config found in localStorage after config saved');
+            logger.warn("Config not found in localStorage after save");
             return;
           }
         } catch (err) {
-          logger.error('[MAIN] Failed to load config from localStorage after config saved:', err);
+          logger.error('Failed to load config from localStorage:', err);
           return;
         }
       }
@@ -175,7 +175,7 @@ OBR.onReady(async () => {
 
     // Listen for debug mode changes from the config modal
     const debugModesUnsub = OBR.broadcast.onMessage("macrohero.debug.modes", async (event) => {
-      logger.log("[MAIN] Debug modes updated via broadcast:", event.data);
+      logger.log("Debug modes updated via broadcast");
       // localStorage is already updated by the modal, this is just a trigger
       // to let other modules know the debug modes have changed
     });
@@ -188,7 +188,7 @@ OBR.onReady(async () => {
 // Clean up broadcast subscriptions on page unload
 window.addEventListener('beforeunload', () => {
   broadcastUnsubs.forEach(unsub => { try { unsub?.(); } catch (e) { /* ignore */ } });
-  logger.log('[MAIN] Cleaned up broadcast subscriptions');
+  logger.log("Cleaned up broadcast subscriptions");
 });
 
 async function logOBRImageItems() {
@@ -197,9 +197,9 @@ async function logOBRImageItems() {
 
   try {
     const items = await OBR.scene.items.getItems();
-    logger.log("[MAIN] Scene items:", items);
+    logger.log("Scene items loaded");
   } catch (err) {
-    logger.error("[MAIN] Error fetching scene items:", err);
+    logger.error("Error fetching scene items:", err);
   }
 
 }
@@ -207,8 +207,8 @@ async function logOBRImageItems() {
 async function logOBRSceneMetadata() {
   try {
     const metadata = await OBR.scene.getMetadata();
-    logger.log("[MAIN] Scene metadata:", metadata);
+    logger.log("Scene metadata loaded");
   } catch (err) {
-    logger.error("[MAIN] Error fetching scene metadata:", err);
+    logger.error("Error fetching scene metadata:", err);
   }
 }
