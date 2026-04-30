@@ -199,21 +199,20 @@ export async function loadConfig() {
             config = deepClone(localStorageConfig);
         } else {
             // Try to load packaged config files - first YAML (modern format), then JSON (legacy)
+            // In Vite, public files are served at the root during dev and at build output root in production
             const tryPaths = [
-                { base: '/src/default', format: 'YAML' },
-                { base: '/default', format: 'YAML' },
-                { base: '/assets/default', format: 'YAML' }
+                '/default',           // Primary path: public/default.yaml or public/default.json
+                '/public/default',    // Fallback: explicit public path
             ];
             let packaged = null;
             
-            for (const { base, format } of tryPaths) {
+            for (const base of tryPaths) {
                 try {
                     packaged = await loadConfigFile(base);
                     logger.log(`Loaded packaged config from ${base}`);
                     break;
                 } catch (e) {
-                    // Silently try next path
-                    logger.warn(`Could not load config from ${base}`);
+                    logger.debug(`Could not load config from ${base}: ${e.message}`);
                 }
             }
 
@@ -226,7 +225,7 @@ export async function loadConfig() {
                     logger.warn('Failed to persist packaged config to storage', e);
                 }
             } else {
-                logger.warn("Using built-in default config");
+                logger.warn("Using built-in default config (packaged config not found)");
                 config = deepClone(defaultConfig);
             }
         }
