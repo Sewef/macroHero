@@ -1653,7 +1653,6 @@ pages:
         label: Apply Custom Settings
         onclick:
           - |-
-            const mapId = await Scene.getMapIdFromToken(token);
             await Aurora.setAurora(mapId, {
               saturation: saturation,
               lightness: lightness,
@@ -1741,7 +1740,6 @@ pages:
         label: Start Day/Night Cycle
         onclick:
           - |-
-            const mapId = await Scene.getMapIdFromToken(token);
             const cycle = [
               { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },
               { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },

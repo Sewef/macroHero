@@ -50,7 +50,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_pageIndex": 0
     },
     {
       "label": "Conditions",
@@ -2351,7 +2352,6 @@
             "  label: 'BOSS',",
             "  size: 3.0",
             "});",
-            "",
             "// Add HP tracker (value-max variant)",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'value-max',",
@@ -2360,7 +2360,6 @@
             "  max: 100,",
             "  color: 2",
             "});",
-            "",
             "console.log('Created boss with ID:', tokenId);"
           ]
         },
@@ -2381,7 +2380,6 @@
             "  name: 'Character with Trackers',",
             "  size: 1.5",
             "});",
-            "",
             "// Add HP tracker (value-max variant)",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'value-max',",
@@ -2390,7 +2388,6 @@
             "  max: 103,",
             "  color: 2",
             "});",
-            "",
             "// Add Temp HP tracker (value variant)",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'value',",
@@ -2398,7 +2395,6 @@
             "  value: 10,",
             "  color: 5",
             "});",
-            "",
             "// Add Injuries counter",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'counter',",
@@ -2407,7 +2403,6 @@
             "  color: 2,",
             "  inlineMath: false",
             "});",
-            "",
             "// Add unnamed counter",
             "await OwlTrackers.addTracker(tokenId, {",
             "  variant: 'counter',",
@@ -2415,7 +2410,6 @@
             "  color: 8,",
             "  inlineMath: false",
             "});",
-            "",
             "await setValue('createdTokenId', tokenId);",
             "console.log('Created token with multiple trackers:', tokenId);"
           ]
@@ -2428,7 +2422,6 @@
             "  console.error('No token ID available. Create a token first.');",
             "  return;",
             "}",
-            "",
             "// Remove 'Temp HP' tracker",
             "const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');",
             "if (removed) {",
@@ -2744,7 +2737,6 @@
           "type": "button",
           "label": "Apply Custom Settings",
           "onclick": [
-            "const mapId = await Scene.getMapIdFromToken(token);",
             "await Aurora.setAurora(mapId, {",
             "  saturation: saturation,",
             "  lightness: lightness,",
@@ -2882,7 +2874,6 @@
           "type": "button",
           "label": "Start Day/Night Cycle",
           "onclick": [
-            "const mapId = await Scene.getMapIdFromToken(token);",
             "const cycle = [",
             "  { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },",
             "  { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },",
@@ -2890,7 +2881,6 @@
             "  { preset: 'GOLDEN_HOUR', delay: 6000, name: 'Sunset' },",
             "  { preset: 'MIDNIGHT', delay: 8000, name: 'Night' }",
             "];",
-            "",
             "for (const phase of cycle) {",
             "  setTimeout(async () => {",
             "    console.log('Time of Day:', phase.name);",
@@ -2901,7 +2891,6 @@
             "    }",
             "  }, phase.delay);",
             "}",
-            "",
             "console.log('Day/Night cycle started (10 seconds)');"
           ]
         }
@@ -3214,7 +3203,8 @@
           "value": "2d20kh1+5"
         },
         "lastRollResult": {
-          "value": "Roll a dice to see result"
+          "value": "Roll a dice to see result",
+          "expression": "4d6 drop lowest: 15"
         },
         "diceReady": {
           "eval": "DicePlus.isReady()"
@@ -3620,9 +3610,17 @@
             "await Owlbear.notification.show('Operation complete!', 'SUCCESS');"
           ]
         },
-        { "type": "divider" },
-        { "type": "title", "text": "Player API" },
-        { "type": "text", "text": "Live tests — results are logged to the console" },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Player API"
+        },
+        {
+          "type": "text",
+          "text": "Live tests — results are logged to the console"
+        },
         {
           "type": "row",
           "children": [
@@ -3688,8 +3686,13 @@
             }
           ]
         },
-        { "type": "divider" },
-        { "type": "title", "text": "Scene API" },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Scene API"
+        },
         {
           "type": "row",
           "children": [
@@ -3730,8 +3733,13 @@
             }
           ]
         },
-        { "type": "divider" },
-        { "type": "title", "text": "Viewport API" },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Viewport API"
+        },
         {
           "type": "row",
           "children": [
@@ -3750,7 +3758,7 @@
               "onclick": [
                 "const t = await Owlbear.viewport.reset();",
                 "console.log('Viewport reset to:', t);",
-                "await Owlbear.notification.show(`Viewport reset (scale: ${t?.scale ?? '?'})`, 'SUCCESS');" 
+                "await Owlbear.notification.show(`Viewport reset (scale: ${t?.scale ?? '?'})`, 'SUCCESS');"
               ]
             },
             {
@@ -3760,13 +3768,18 @@
                 "const pos = await Owlbear.viewport.getPosition();",
                 "const scale = await Owlbear.viewport.getScale();",
                 "console.log('Viewport position:', pos, 'scale:', scale);",
-                "await Owlbear.notification.show(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`, 'INFO');" 
+                "await Owlbear.notification.show(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`, 'INFO');"
               ]
             }
           ]
         },
-        { "type": "divider" },
-        { "type": "title", "text": "Broadcast API" },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Broadcast API"
+        },
         {
           "type": "row",
           "children": [
@@ -3790,7 +3803,7 @@
               "type": "button",
               "label": "Listen once",
               "onclick": [
-                "await Owlbear.notification.show('Listening for macrohero.test for 5s\u2026', 'INFO');",
+                "await Owlbear.notification.show('Listening for macrohero.test for 5s…', 'INFO');",
                 "const data = await Owlbear.broadcast.once('macrohero.test', { timeoutMs: 5000 });",
                 "console.log('Received:', data);",
                 "await Owlbear.notification.show(`Received: ${JSON.stringify(data)}`, 'SUCCESS');"
@@ -3798,8 +3811,13 @@
             }
           ]
         },
-        { "type": "divider" },
-        { "type": "title", "text": "Image Utilities" },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Image Utilities"
+        },
         {
           "type": "row",
           "children": [
@@ -3820,7 +3838,7 @@
                 "const url = 'https://sewef.github.io/macrohero/logo.png';",
                 "const dims = await Owlbear.image.getDimensions(url);",
                 "console.log('Dimensions:', dims);",
-                "await Owlbear.notification.show(`${dims.width} \u00d7 ${dims.height}px`, 'INFO');"
+                "await Owlbear.notification.show(`${dims.width} × ${dims.height}px`, 'INFO');"
               ]
             },
             {
@@ -3830,12 +3848,14 @@
                 "const url = 'https://sewef.github.io/macrohero/logo.png';",
                 "const params = await Owlbear.image.buildParams(url, { dpi: 72 });",
                 "console.log('imageBuildParams:', params);",
-                "await Owlbear.notification.show(`image: ${params.image.width}\u00d7${params.image.height} | dpi: ${params.grid.dpi}`, 'SUCCESS');"
+                "await Owlbear.notification.show(`image: ${params.image.width}×${params.image.height} | dpi: ${params.grid.dpi}`, 'SUCCESS');"
               ]
             }
           ]
         },
-        { "type": "divider" },
+        {
+          "type": "divider"
+        },
         {
           "type": "title",
           "text": "Full SDK Access"
