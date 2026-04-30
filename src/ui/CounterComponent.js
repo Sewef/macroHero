@@ -131,13 +131,15 @@ export class CounterComponent extends UIComponent {
   updateCounterValue(input, variable, varName) {
     const constrained = this.applyConstraints(input.value);
     
+    // Always sync the input value to respect constraints
+    input.value = constrained;
+    
     if (constrained === this.lastSavedValue) {
       return;
     }
     
     logger.log(`Updated: ${varName} = ${constrained}`);
     
-    input.value = constrained;
     this.lastSavedValue = constrained;
     
     // Set flag BEFORE any async operations or events
