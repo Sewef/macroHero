@@ -82,7 +82,7 @@ pages:
           - type: button
             label: Paralyzed
             onclick:
-              - await ConditionMarkers.addCondition(token, 'Paralyzed');
+              - await ConditionMarkers.addCondition(token, 'Paralysed');
           - type: button
             label: Fainted
             onclick:

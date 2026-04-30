@@ -10,6 +10,113 @@ import { broadcastRequest } from "../shared/sdkHelpers.js";
 // Debug mode constants
 const logger = createDebugLogger("ConditionMarkers");
 
+// API Channel constants
+const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
+const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
+
+// Metadata key constants
+const MARKER_METADATA_KEY = "keegan.dev.condition-markers/metadata";
+const LABEL_METADATA_KEY = "keegan.dev.condition-markers/label";
+
+// Helper functions
+/**
+ * Extract condition name from condition object or string
+ * @param {Object|string} condition - Condition object or string
+ * @returns {string} Condition name
+ */
+function getConditionName(condition) {
+  return condition.name ?? condition;
+}
+
+/**
+ * Send an API request to condition markers service
+ * @param {string} action - Action ('add' or 'remove')
+ * @param {string} tokenId - Token ID
+ * @param {string} conditionName - Condition name
+ * @param {any} value - Optional value for add action
+ * @returns {Promise<any>} API response data
+ */
+async function sendConditionAPIRequest(action, tokenId, conditionName, value = null) {
+  const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const payload = { callId, action, tokenId, condition: conditionName };
+  
+  if (value !== null && value !== undefined) {
+    payload.value = value;
+  }
+
+  const requestResult = await broadcastRequest(
+    API_REQUEST_CHANNEL,
+    API_RESPONSE_CHANNEL,
+    payload,
+    { destination: "LOCAL", timeoutMs: 5000 }
+  );
+
+  if (!requestResult.success) {
+    throw new Error(requestResult.error);
+  }
+
+  return requestResult.data;
+}
+
+/**
+ * Validate token item exists
+ * @param {string} tokenId - Token ID
+ * @param {Array} allItems - Scene items (optional)
+ * @returns {Promise<Object|null>} Token item or null
+ */
+async function getTokenItem(tokenId, allItems = null) {
+  if (allItems) {
+    return allItems.find(item => item.id === tokenId) || null;
+  }
+  const items = await OBR.scene.items.getItems([tokenId]);
+  return items[0] || null;
+}
+
+/**
+ * Get marker images attached to a token
+ * @param {string} tokenId - Token ID
+ * @param {Array} allSceneItems - All scene items
+ * @returns {Array} Marker items
+ */
+function getTokenMarkers(tokenId, allSceneItems) {
+  return allSceneItems.filter(item =>
+    item.attachedTo === tokenId &&
+    item.type === 'IMAGE' &&
+    item.metadata &&
+    MARKER_METADATA_KEY in item.metadata
+  );
+}
+
+/**
+ * Get TEXT labels for a condition from a marker
+ * @param {string} markerId - Marker ID
+ * @param {string} conditionName - Condition name
+ * @param {Array} allSceneItems - All scene items
+ * @returns {Array} Label items
+ */
+function getConditionLabels(markerId, conditionName, allSceneItems) {
+  return allSceneItems.filter(item =>
+    item.attachedTo === markerId &&
+    item.type === 'TEXT' &&
+    item.metadata &&
+    LABEL_METADATA_KEY in item.metadata &&
+    item.metadata[LABEL_METADATA_KEY]?.condition === conditionName
+  );
+}
+
+/**
+ * Parse numeric value from label text
+ * @param {string} labelText - Label text
+ * @returns {number|null} Parsed number or null
+ */
+function parseConditionValue(labelText) {
+  if (!labelText) return null;
+  const trimmed = labelText.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
 
 /**
  * Get conditions applied to an item
@@ -18,20 +125,6 @@ const logger = createDebugLogger("ConditionMarkers");
  */
 export async function getConditions(itemId) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers) {
-      const ext = Ext.ConditionMarkers;
-      if (typeof ext.getItemConditions === 'function') {
-        return await ext.getItemConditions(itemId);
-      }
-      if (typeof ext.getConditions === 'function') {
-        return await ext.getConditions(itemId);
-      }
-      logger.log("Native extension present but no getItemConditions/getConditions method");
-    } else {
-      logger.log("Native extension not present, using fallback");
-    }
-
-    // Fallback: scan scene attachments for condition markers
     const items = await OBR.scene.items.getItems();
     const markers = items.filter(item => item.attachedTo === itemId && item.name && item.name.startsWith("Condition Marker - "));
     return markers.map(m => ({ name: m.name.replace("Condition Marker - ", "") }));
@@ -46,91 +139,32 @@ export async function getConditions(itemId) {
  * @param {string} itemId - Item ID
  * @param {string} conditionName - Condition name (e.g., "poisoned", "stunned")
  * @param {any} value - Optional plain value for the condition (number|string|boolean|null)
- * @returns {Promise<void>}
+ * @returns {Promise<any>} API response data
  */
-
 export async function addCondition(itemId, conditionName, value = null) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.addCondition === 'function') {
-      logger.log(`Using native Ext.ConditionMarkers.addCondition for token ${itemId}, condition '${conditionName}', value=`, value);
-      return await Ext.ConditionMarkers.addCondition(itemId, conditionName, value);
-    }
-    // Fallback: attempt to use the Condition Markers API (request/response pattern)
-    const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
-    const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
-
-    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const payload = { callId, action: 'add', tokenId: itemId, condition: conditionName };
-    if (value !== null && value !== undefined) {
-      payload.value = value;
-    }
-
-    logger.log(`Native API missing, sending API request for token ${itemId}, condition '${conditionName}', value ${value}`);
-
-    const requestResult = await broadcastRequest(
-      API_REQUEST_CHANNEL,
-      API_RESPONSE_CHANNEL,
-      payload,
-      { destination: "LOCAL", timeoutMs: 5000 }
-    );
-
-    if (requestResult.success) {
-      logger.log(`API response for add '${conditionName}':`, requestResult.data);
-      return requestResult.data;
-    } else {
-      throw new Error(requestResult.error);
-    }
+    logger.log(`Adding condition '${conditionName}' to token ${itemId}, value: ${value}`);
+    const result = await sendConditionAPIRequest('add', itemId, conditionName, value);
+    logger.log(`Condition '${conditionName}' added successfully`);
+    return result;
   } catch (error) {
     logger.error("Failed to add condition:", error);
     throw error;
   }
 }
 
-
 /**
  * Remove a condition from an item
  * @param {string} itemId - Item ID
  * @param {string} conditionName - Condition name
- * @returns {Promise<void>}
+ * @returns {Promise<any>} API response data
  */
 export async function removeCondition(itemId, conditionName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.removeCondition === 'function') {
-      return await Ext.ConditionMarkers.removeCondition(itemId, conditionName);
-    }
-    // Fallback: use Condition Markers API request/response
-    const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
-    const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
-
-    const callId = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    const payload = { callId, action: 'remove', tokenId: itemId, condition: conditionName };
-
-    const res = await new Promise((resolve, reject) => {
-      let timeoutId = null;
-      const handler = (evt) => {
-        const data = evt.data;
-        if (!data) return;
-        if (data.callId !== callId) return;
-        if (timeoutId) clearTimeout(timeoutId);
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler:', e); }
-        resolve(data);
-      };
-
-      OBR.broadcast.onMessage(API_RESPONSE_CHANNEL, handler);
-
-      OBR.broadcast.sendMessage(API_REQUEST_CHANNEL, payload, { destination: "LOCAL" }).catch(err => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler on error:', e); }
-        reject(err);
-      });
-
-      timeoutId = setTimeout(() => {
-        try { OBR.broadcast.offMessage(API_RESPONSE_CHANNEL, handler); } catch (e) { logger.warn('[ConditionMarkers] Failed to unsubscribe from handler on timeout:', e); }
-        reject(new Error('ConditionMarkers API timeout'));
-      }, 5000);
-    });
-
-    logger.log(`API response for remove '${conditionName}':`, res);
-    return res;
+    logger.log(`Removing condition '${conditionName}' from token ${itemId}`);
+    const result = await sendConditionAPIRequest('remove', itemId, conditionName);
+    logger.log(`Condition '${conditionName}' removed successfully`);
+    return result;
   } catch (error) {
     logger.error("Failed to remove condition:", error);
     throw error;
@@ -145,13 +179,8 @@ export async function removeCondition(itemId, conditionName) {
  */
 export async function toggleCondition(itemId, conditionName) {
   try {
-    // Prefer native toggle if available
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.toggleCondition === 'function') {
-      return await Ext.ConditionMarkers.toggleCondition(itemId, conditionName);
-    }
-
     const conditions = await getConditions(itemId);
-    const hasCondition = conditions.some(c => c.name === conditionName || c === conditionName);
+    const hasCondition = conditions.some(c => getConditionName(c) === conditionName);
 
     if (hasCondition) {
       await removeCondition(itemId, conditionName);
@@ -171,14 +200,9 @@ export async function toggleCondition(itemId, conditionName) {
  */
 export async function clearAllConditions(itemId) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.clearAllConditions === 'function') {
-      return await Ext.ConditionMarkers.clearAllConditions(itemId);
-    }
-
     const conditions = await getConditions(itemId);
     for (const condition of conditions) {
-      const name = condition.name ?? condition;
-      await removeCondition(itemId, name);
+      await removeCondition(itemId, getConditionName(condition));
     }
   } catch (error) {
     logger.error("Failed to clear conditions:", error);
@@ -194,23 +218,13 @@ export async function clearAllConditions(itemId) {
  */
 export async function hasCondition(itemId, conditionName) {
   try {
-    if (typeof Ext !== 'undefined' && Ext.ConditionMarkers && typeof Ext.ConditionMarkers.hasCondition === 'function') {
-      return await Ext.ConditionMarkers.hasCondition(itemId, conditionName);
-    }
-
     const conditions = await getConditions(itemId);
-    return conditions.some(c => (c.name ? c.name === conditionName : c === conditionName));
+    return conditions.some(c => getConditionName(c) === conditionName);
   } catch (error) {
     logger.error("Failed to check condition:", error);
     throw error;
   }
 }
-
-/**
- * Get available condition types
- * @returns {Promise<Array>} Array of available condition names
- */
-/* Removed helper functions to simplify API surface per request */
 
 /**
  * Get the value (text) of a condition label
@@ -222,72 +236,24 @@ export async function hasCondition(itemId, conditionName) {
  */
 export async function getValue(tokenId, conditionName, allItems = null) {
   try {
-    logger.log(`Called with tokenId: ${tokenId}, conditionName: ${conditionName}`);
-    
-    let tokenItem = null;
-    if (allItems) {
-      tokenItem = allItems.find(item => item.id === tokenId);
-    } else {
-      const items = await OBR.scene.items.getItems([tokenId]);
-      tokenItem = items[0];
-    }
-    
-    if (!tokenItem) {
-      logger.log(`Token not found`);
-      return null;
-    }
-    
+    const tokenItem = await getTokenItem(tokenId, allItems);
+    if (!tokenItem) return null;
+
     const allSceneItems = allItems || await OBR.scene.items.getItems();
-    
-    // Find marker images attached to the token
-    const markers = allSceneItems.filter(item =>
-      item.attachedTo === tokenId &&
-      item.type === 'IMAGE' &&
-      item.metadata &&
-      "keegan.dev.condition-markers/metadata" in item.metadata
-    );
-    
-    logger.log(`Found ${markers.length} condition marker(s) on token`);
-    
-    // For each marker, find TEXT labels attached to it
+    const markers = getTokenMarkers(tokenId, allSceneItems);
+
+    // Check each marker for labels matching the condition
     for (const marker of markers) {
-      logger.log(`Checking marker: ${marker.name} (id: ${marker.id})`);
-      
-      const labels = allSceneItems.filter(item =>
-        item.attachedTo === marker.id &&
-        item.type === 'TEXT' &&
-        item.metadata &&
-        "keegan.dev.condition-markers/label" in item.metadata &&
-        item.metadata["keegan.dev.condition-markers/label"]?.condition === conditionName
-      );
-      
-      logger.log(`Found ${labels.length} label(s) for condition "${conditionName}"`);
-      
+      const labels = getConditionLabels(marker.id, conditionName, allSceneItems);
       if (labels.length > 0) {
         const labelText = labels[0].text?.plainText;
-        logger.log(`Label text: "${labelText}"`);
-        const trimmed = labelText && labelText.trim() ? labelText.trim() : null;
-        if (!trimmed) {
-          logger.log(`Returning: null (empty)`);
-          return null;
-        }
-
-        // Simpler numeric parsing: use Number() and ensure it's finite.
-        const n = Number(trimmed);
-        if (Number.isFinite(n)) {
-          logger.log(`Parsed number: ${n}`);
-          return n;
-        }
-
-        logger.log(`Label not numeric, returning null`);
-        return null;
+        return parseConditionValue(labelText);
       }
     }
-    
-    logger.log(`No matching label found, returning null`);
+
     return null;
   } catch (error) {
-    logger.error(`Error:`, error);
+    logger.error(`Failed to get condition value:`, error);
     return null;
   }
 }
