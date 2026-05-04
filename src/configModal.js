@@ -804,6 +804,32 @@ function renderPageContent(pageIndex) {
           <button type="button" class="btn-small" style="width: auto; padding: 4px 8px; font-size: 0.85em;" onclick="addChildElement(${pageIdx}, ${itemIndex})">+ Item</button>
         </div>`;
       }
+    } else if ((item.type === 'matrix' || item.type === 'Matrix') && item.buttons) {
+      // Render matrix buttons
+      let buttonHtml = '';
+      item.buttons.forEach((btn, btnIndex) => {
+        const btnLabel = btn.label || btn.icon || `Button ${btnIndex + 1}`;
+        const editCall = `editMatrixButton(${pageIdx}, ${itemIndex}, ${btnIndex})`;
+        const deleteCall = `deleteMatrixButton(${pageIdx}, ${itemIndex}, ${btnIndex})`;
+        buttonHtml += `
+        <div class="layout-item" style="margin-left: 20px; opacity: 0.85;">
+          <div class="layout-item-info">
+            <span class="layout-item-type">├─ Matrix Button</span>
+            <span>${btnLabel}</span>
+          </div>
+          <div class="layout-item-actions">
+            <button type="button" class="btn-small" onclick="${editCall}">✎</button>
+            <button type="button" class="btn-small btn-danger" onclick="${deleteCall}">×</button>
+          </div>
+        </div>
+        `;
+      });
+      html += buttonHtml;
+      if (addButton) {
+        html += `<div style="margin-left: 20px; margin-top: 2px;">
+          <button type="button" class="btn-small" style="width: auto; padding: 4px 8px; font-size: 0.85em;" onclick="addMatrixButton(${pageIdx}, ${itemIndex})">+ Button</button>
+        </div>`;
+      }
     }
     return html;
   };
@@ -833,8 +859,8 @@ function renderPageContent(pageIndex) {
       </div>
       `;
       
-      // Show children if it's a container (Row or Stack)
-      if ((item.type === 'row' || item.type === 'Row' || item.type === 'stack' || item.type === 'Stack')) {
+      // Show children if it's a container (Row or Stack) or a Matrix
+      if ((item.type === 'row' || item.type === 'Row' || item.type === 'stack' || item.type === 'Stack' || item.type === 'matrix' || item.type === 'Matrix')) {
         html += renderContainer(item, itemIndex, pageIndex);
       }
     });
@@ -1422,6 +1448,131 @@ window.closeElementModal = function() {
   editingChildParentIndex = null;
 };
 
+// Matrix button management
+let editingMatrixPageIndex = null;
+let editingMatrixElementIndex = null;
+let editingMatrixButtonIndex = null;
+
+window.addMatrixButton = function(pageIndex, matrixElementIndex) {
+  editingMatrixPageIndex = pageIndex;
+  editingMatrixElementIndex = matrixElementIndex;
+  editingMatrixButtonIndex = -1; // -1 means adding new button
+  
+  // Show a simple dialog for matrix button configuration
+  const buttonConfig = {
+    label: '',
+    icon: '🔲',
+    tooltip: '',
+    color: '',
+    borderColor: '',
+    onclick: [],
+    onrightclick: []
+  };
+  
+  editMatrixButtonConfig(buttonConfig, pageIndex, matrixElementIndex, -1);
+};
+
+window.editMatrixButton = function(pageIndex, matrixElementIndex, buttonIndex) {
+  editingMatrixPageIndex = pageIndex;
+  editingMatrixElementIndex = matrixElementIndex;
+  editingMatrixButtonIndex = buttonIndex;
+  
+  const matrix = currentConfig.pages[pageIndex].layout[matrixElementIndex];
+  const buttonConfig = matrix.buttons[buttonIndex] || {};
+  
+  editMatrixButtonConfig(buttonConfig, pageIndex, matrixElementIndex, buttonIndex);
+};
+
+window.deleteMatrixButton = function(pageIndex, matrixElementIndex, buttonIndex) {
+  if (confirm('Delete this matrix button?')) {
+    const matrix = currentConfig.pages[pageIndex].layout[matrixElementIndex];
+    matrix.buttons.splice(buttonIndex, 1);
+    renderPageContent(pageIndex);
+  }
+};
+
+window.editMatrixButtonConfig = function(buttonConfig, pageIndex, matrixElementIndex, buttonIndex) {
+  // Show alert dialog for now - could be enhanced with a proper modal later
+  const isNewButton = buttonIndex === -1;
+  const title = isNewButton ? 'Add Matrix Button' : 'Edit Matrix Button';
+  
+  // Build form HTML (simple version for now)
+  const formHtml = `
+    <div style="padding: 12px; max-width: 400px;">
+      <div style="margin-bottom: 12px;">
+        <label>Label (optional)</label>
+        <input type="text" id="mbtn_label" value="${buttonConfig.label || ''}" style="width: 100%; padding: 4px;" placeholder="Button text">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>Icon (emoji or URL)</label>
+        <input type="text" id="mbtn_icon" value="${buttonConfig.icon || ''}" style="width: 100%; padding: 4px;" placeholder="e.g., 🔥 or https://...">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>Tooltip (optional)</label>
+        <input type="text" id="mbtn_tooltip" value="${buttonConfig.tooltip || ''}" style="width: 100%; padding: 4px;" placeholder="Hover text">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>Background Color (optional)</label>
+        <input type="color" id="mbtn_color" value="${buttonConfig.color || '#ffffff'}" style="width: 100%; padding: 4px;">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>Border Color (optional)</label>
+        <input type="color" id="mbtn_borderColor" value="${buttonConfig.borderColor || '#c8adff'}" style="width: 100%; padding: 4px;">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>onclick Commands (one per line)</label>
+        <textarea id="mbtn_onclick" style="width: 100%; padding: 4px; height: 80px;" placeholder="console.log('clicked');">${(buttonConfig.onclick || []).join('\\n')}</textarea>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label>onrightclick Commands (one per line, optional)</label>
+        <textarea id="mbtn_onrightclick" style="width: 100%; padding: 4px; height: 60px;" placeholder="console.log('right clicked');">${(buttonConfig.onrightclick || []).join('\\n')}</textarea>
+      </div>
+    </div>
+  `;
+  
+  // For now, use the element modal - we could create a dedicated modal later
+  const fieldsContainer = document.getElementById("elementFields");
+  fieldsContainer.innerHTML = formHtml;
+  
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("saveElementBtn").textContent = isNewButton ? "Add Button" : "Save Button";
+  document.getElementById("saveElementBtn").onclick = () => {
+    const newButtonConfig = {
+      label: document.getElementById("mbtn_label").value,
+      icon: document.getElementById("mbtn_icon").value,
+      tooltip: document.getElementById("mbtn_tooltip").value,
+    };
+    
+    const color = document.getElementById("mbtn_color")?.value;
+    if (color && color !== '#ffffff') newButtonConfig.color = color;
+    
+    const borderColor = document.getElementById("mbtn_borderColor")?.value;
+    if (borderColor && borderColor !== '#c8adff') newButtonConfig.borderColor = borderColor;
+    
+    const onclickText = document.getElementById("mbtn_onclick")?.value || '';
+    newButtonConfig.onclick = onclickText.split('\\n').filter(c => c.trim());
+    
+    const onrightclickText = document.getElementById("mbtn_onrightclick")?.value || '';
+    if (onrightclickText.trim()) {
+      newButtonConfig.onrightclick = onrightclickText.split('\\n').filter(c => c.trim());
+    }
+    
+    const matrix = currentConfig.pages[pageIndex].layout[matrixElementIndex];
+    if (!matrix.buttons) matrix.buttons = [];
+    
+    if (isNewButton) {
+      matrix.buttons.push(newButtonConfig);
+    } else {
+      matrix.buttons[buttonIndex] = newButtonConfig;
+    }
+    
+    renderPageContent(pageIndex);
+    closeElementModal();
+  };
+  
+  document.getElementById("elementModal").classList.add("active");
+};
+
 window.updateElementFields = function(existingElement = null) {
   const type = document.getElementById("elementType").value;
   const fieldsContainer = document.getElementById("elementFields");
@@ -1671,6 +1822,50 @@ window.updateElementFields = function(existingElement = null) {
         }
       }, 0);
       break;
+    case 'matrix':
+      html = `
+        <div class="input-group">
+          <label>Columns</label>
+          <input type="number" id="elem_columns" value="${existingElement?.columns || 4}" min="1" max="12" placeholder="4" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Number of columns in the grid</small>
+        </div>
+        <div class="input-group">
+          <label>Button Size</label>
+          <input type="text" id="elem_buttonSize" value="${existingElement?.buttonSize || '40px'}" placeholder="40px" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">e.g. 40px, 50px, 60px (buttons are square)</small>
+        </div>
+        <div class="input-group">
+          <label>Gap</label>
+          <input type="text" id="elem_gap" value="${existingElement?.gap || '4px'}" placeholder="4px" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Space between buttons</small>
+        </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_border" ${existingElement?.border ? 'checked' : ''} />
+            Add Border
+          </label>
+        </div>
+        <div class="input-group">
+          <label>
+            <input type="checkbox" id="elem_customColor" ${existingElement?.color ? 'checked' : ''} />
+            Custom Color
+          </label>
+          <input type="color" id="elem_color" value="${existingElement?.color || '#c8adff'}" ${existingElement?.color ? '' : 'disabled'} style="margin-top: 4px;" />
+          <small style="color: #888; font-size: 0.85em; margin-top: 4px; display: block;">Override the default accent color</small>
+        </div>
+        <p style="color: #c8adff; margin-top: 12px;">Use the "+ Button" button below to add matrix buttons.</p>
+      `;
+      // Add event listener for checkbox to toggle color input
+      setTimeout(() => {
+        const checkbox = document.getElementById('elem_customColor');
+        const colorInput = document.getElementById('elem_color');
+        if (checkbox && colorInput) {
+          addTrackedListener(checkbox, 'change', (e) => {
+            colorInput.disabled = !e.target.checked;
+          });
+        }
+      }, 0);
+      break;
   }
   
   fieldsContainer.innerHTML = html;
@@ -1805,6 +2000,24 @@ window.saveElement = function() {
       const hasCustomColorStack = document.getElementById("elem_customColor")?.checked;
       const colorStack = document.getElementById("elem_color")?.value;
       if (hasCustomColorStack && colorStack) element.color = colorStack;
+      break;
+    case 'matrix':
+      element.columns = parseInt(document.getElementById("elem_columns")?.value || '4');
+      element.buttonSize = document.getElementById("elem_buttonSize")?.value || '40px';
+      element.gap = document.getElementById("elem_gap")?.value || '4px';
+      const hasCustomColorMatrix = document.getElementById("elem_customColor")?.checked;
+      const colorMatrix = document.getElementById("elem_color")?.value;
+      if (hasCustomColorMatrix && colorMatrix) element.color = colorMatrix;
+      const hasBorderMatrix = document.getElementById("elem_border")?.checked;
+      if (hasBorderMatrix) element.border = true;
+      // Initialize with empty buttons array if creating new matrix
+      if (editingElementIndex === null) {
+        element.buttons = [];
+      } else {
+        // Preserve existing buttons when editing matrix
+        const existing = currentConfig.pages[editingPageIndex].layout[editingElementIndex];
+        element.buttons = existing?.buttons || [];
+      }
       break;
   }
   
