@@ -692,7 +692,7 @@ body {
   color: var(--mh-accent);
   padding: 8px;
   margin: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 600;
