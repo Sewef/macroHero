@@ -10,7 +10,7 @@ export class MatrixComponent extends UIComponent {
   render() {
     const matrix = this.createElement("div", "mh-layout-matrix");
     
-    // Apply grid styling
+    // Apply grid styling (dynamic values stay inline)
     const cols = this.item.columns || 4;
     const buttonSize = this.item.buttonSize || "40px";
     const gap = this.item.gap || "4px";
@@ -18,14 +18,10 @@ export class MatrixComponent extends UIComponent {
     matrix.style.display = 'grid';
     matrix.style.gridTemplateColumns = `repeat(${cols}, ${buttonSize})`;
     matrix.style.gap = gap;
-    matrix.style.flex = this.item.flex || '0 1 auto';
-    matrix.style.alignContent = 'start';
-    
+    if (this.item.flex) matrix.style.flex = this.item.flex;
+
     if (this.item.border) {
-      matrix.style.border = '1px solid var(--mh-accent)';
-      matrix.style.borderRadius = '4px';
-      matrix.style.padding = '8px';
-      matrix.style.backgroundColor = 'var(--mh-bg, rgba(0,0,0,0.1))';
+      matrix.classList.add('mh-bordered');
     }
 
     this.applyColor(matrix);
@@ -51,56 +47,32 @@ export class MatrixComponent extends UIComponent {
    */
   createMatrixButton(buttonConfig, index) {
     const btn = this.createElement("button", "mh-matrix-button");
-    
-    // Apply base styles
-    btn.style.width = '100%';
-    btn.style.aspectRatio = '1 / 1';
-    btn.style.padding = '0';
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.justifyContent = 'center';
-    btn.style.flexDirection = 'column';
-    btn.style.gap = '2px';
-    btn.style.fontSize = '12px';
-    btn.style.fontWeight = 'bold';
-    btn.style.cursor = buttonConfig.onclick ? 'pointer' : 'default';
-    btn.style.transition = 'all 0.2s ease';
-    btn.style.position = 'relative';
-    btn.style.overflow = 'hidden';
 
-    // Apply custom color if provided
+    // Apply custom color if provided (dynamic — stays inline)
     if (buttonConfig.color) {
       btn.style.backgroundColor = buttonConfig.color;
-      // Set text color based on background brightness
       btn.style.color = this.getContrastColor(buttonConfig.color);
     }
 
-    // Apply custom border color if provided
+    // Apply custom border color if provided (dynamic — stays inline)
     if (buttonConfig.borderColor) {
-      btn.style.border = `2px solid ${buttonConfig.borderColor}`;
+      btn.style.borderColor = buttonConfig.borderColor;
+      btn.style.borderWidth = '2px';
     } else if (buttonConfig.color) {
-      btn.style.border = `2px solid ${buttonConfig.color}`;
+      btn.style.borderColor = buttonConfig.color;
+      btn.style.borderWidth = '2px';
     }
 
     // Handle icon if provided
     if (buttonConfig.icon) {
       // Check if icon is a URL or text/emoji
       if (buttonConfig.icon.startsWith('http') || buttonConfig.icon.includes('.')) {
-        // It's a URL, create an image
-        const iconImg = document.createElement("img");
+        const iconImg = this.createElement("img", "mh-matrix-icon-img");
         iconImg.src = buttonConfig.icon;
-        iconImg.className = "mh-matrix-icon-img";
-        iconImg.style.width = '24px';
-        iconImg.style.height = '24px';
-        iconImg.style.objectFit = 'contain';
-        iconImg.style.lineHeight = '1';
         btn.appendChild(iconImg);
       } else {
-        // It's text/emoji, create a span
         const icon = this.createElement("span", "mh-matrix-icon");
         icon.textContent = buttonConfig.icon;
-        icon.style.fontSize = '24px';
-        icon.style.lineHeight = '1';
         btn.appendChild(icon);
       }
     }
@@ -110,7 +82,6 @@ export class MatrixComponent extends UIComponent {
       const labelEl = this.createElement("span", "mh-matrix-label");
       
       if (buttonConfig.label.includes('{')) {
-        // Handle expression
         labelEl.textContent = "";
         this.services.renderedExpressionElements.push({ element: labelEl, item: buttonConfig, page: this.page });
         const resolvedVars = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
@@ -121,10 +92,6 @@ export class MatrixComponent extends UIComponent {
         labelEl.textContent = buttonConfig.label;
       }
       
-      labelEl.style.maxWidth = '100%';
-      labelEl.style.wordBreak = 'break-word';
-      labelEl.style.overflow = 'hidden';
-      labelEl.style.textOverflow = 'ellipsis';
       btn.appendChild(labelEl);
     }
 
@@ -142,7 +109,6 @@ export class MatrixComponent extends UIComponent {
       });
     } else {
       btn.disabled = true;
-      btn.style.opacity = '0.5';
     }
 
     // Add right-click handler if onrightclick commands exist
@@ -152,19 +118,6 @@ export class MatrixComponent extends UIComponent {
         await this.executeButtonCommands(btn, buttonConfig, true);
       });
     }
-
-    // Add hover effect
-    btn.addEventListener("mouseenter", () => {
-      if (!btn.disabled) {
-        btn.style.transform = 'scale(1.05)';
-        btn.style.boxShadow = '0 0 8px var(--mh-accent, #0066cc)';
-      }
-    });
-
-    btn.addEventListener("mouseleave", () => {
-      btn.style.transform = 'scale(1)';
-      btn.style.boxShadow = 'none';
-    });
 
     return btn;
   }

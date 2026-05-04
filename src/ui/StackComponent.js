@@ -9,17 +9,11 @@ export class StackComponent extends UIComponent {
   render() {
     const container = this.createElement("div", "mh-layout-stack");
 
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.gap = '8px';
-    container.style.flex = this.item.flex || '1 1 0';
-    container.style.minWidth = '0';
-    container.style.alignItems = 'stretch';
+    // Only override flex when explicitly specified in config
+    if (this.item.flex) container.style.flex = this.item.flex;
 
     if (this.item.border) {
-      container.style.border = '1px solid var(--mh-accent)';
-      container.style.borderRadius = '4px';
-      container.style.padding = '8px';
+      container.classList.add('mh-layout-stack--bordered');
     }
 
     this.applyColor(container);

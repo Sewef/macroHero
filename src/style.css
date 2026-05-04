@@ -310,7 +310,7 @@ body {
 .mh-counter-input:focus,
 .mh-dropdown-select:focus {
   border-color: var(--mh-accent);
-  box-shadow: 0 0 0 3px rgba(90, 159, 255, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mh-accent) 22%, transparent);
   background: rgba(15, 15, 30, 0.95);
 }
 
@@ -687,7 +687,7 @@ body {
    ============================================ */
 
 .mh-layout-button {
-  background: rgba(90, 159, 255, 0.2);
+  background: color-mix(in srgb, var(--mh-accent) 15%, transparent);
   border: 1px solid var(--mh-accent);
   color: var(--mh-accent);
   padding: 8px;
@@ -710,12 +710,13 @@ body {
 }
 
 .mh-layout-button:hover:not(:disabled) {
-  background: rgba(90, 159, 255, 0.35);
-  filter: brightness(1.2);
+  background: color-mix(in srgb, var(--mh-accent) 28%, transparent);
+  filter: brightness(1.15);
 }
 
 .mh-layout-button:active:not(:disabled) {
-  background: rgba(90, 159, 255, 0.45);
+  background: color-mix(in srgb, var(--mh-accent) 40%, transparent);
+  filter: brightness(0.95);
 }
 
 .mh-layout-button:focus-visible:not(:disabled) {
@@ -818,6 +819,86 @@ button:focus-visible {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Stack with border variant */
+.mh-layout-stack--bordered {
+  border: 1px solid var(--mh-accent);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+}
+
+/* ============================================
+   LAYOUT ELEMENTS - MATRIX
+   ============================================ */
+
+.mh-layout-matrix {
+  flex: 0 1 auto;
+  align-content: start;
+}
+
+.mh-layout-matrix.mh-bordered {
+  border: 1px solid var(--mh-accent);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  background: var(--mh-bg);
+}
+
+.mh-matrix-button {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), filter var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--mh-border);
+  border-radius: var(--radius-sm);
+}
+
+.mh-matrix-button:not(:disabled):hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--mh-accent) 60%, transparent);
+  filter: brightness(1.15);
+}
+
+.mh-matrix-button:not(:disabled):active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+  box-shadow: none;
+}
+
+.mh-matrix-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mh-matrix-icon {
+  font-size: 24px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.mh-matrix-icon-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.mh-matrix-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 a {
