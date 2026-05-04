@@ -229,10 +229,10 @@ function readFields(type, existingChildren) {
       if (checked('elem_border')) el.border = true;
       if (checked('elem_customColor')) el.color = v('elem_color');
       if (existingChildren !== null) {
-        el.buttons = existingChildren;
+        el.children = existingChildren;
       } else {
         const initCount = Math.min(200, Math.max(0, parseInt(g('elem_initButtons')?.value || '0') || 0));
-        el.buttons = Array.from({ length: initCount }, () => ({ type: 'matrixButton', label: '', onclick: [] }));
+        el.children = Array.from({ length: initCount }, () => ({ type: 'matrixButton', label: '', onclick: [] }));
       }
       break;
     case 'matrixButton':
@@ -284,7 +284,7 @@ function _renderFields() {
 
 export function openElementModal({ type = 'button', element = null, title = 'Add Element', saveLabel = 'Add Element', onSave, lockType = false }) {
   _onSave = onSave;
-  _existingChildren = element?.children || element?.buttons || null;
+  _existingChildren = element?.children || null;
 
   const modal = document.getElementById('elementModal');
   const typeSelect = document.getElementById('elementType');

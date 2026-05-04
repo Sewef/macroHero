@@ -31,8 +31,8 @@ export class MatrixComponent extends UIComponent {
     this.applyColor(matrix);
 
     // Render buttons
-    if (this.item.buttons && Array.isArray(this.item.buttons)) {
-      this.item.buttons.forEach((buttonConfig, index) => {
+    if (this.item.children && Array.isArray(this.item.children)) {
+      this.item.children.forEach((buttonConfig, index) => {
         const btn = this.createMatrixButton(buttonConfig, index);
         if (btn) {
           matrix.appendChild(btn);

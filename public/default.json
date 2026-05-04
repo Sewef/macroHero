@@ -1587,7 +1587,7 @@
           "gap": "4px",
           "border": true,
           "color": "#9b59b6",
-          "buttons": [
+          "children": [
             {
               "type": "matrixButton",
               "icon": "🔥",
@@ -1727,7 +1727,7 @@
         },
         {
           "type": "text",
-          "text": "✓ matrix: columns, buttonSize, gap, border, color, buttons"
+          "text": "✓ matrix: columns, buttonSize, gap, border, color, children"
         },
         {
           "type": "text",

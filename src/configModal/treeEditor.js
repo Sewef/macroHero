@@ -284,7 +284,7 @@ function _renderLayoutTree(pageIndex) {
   ).join('');
 
   _attachTreeActions(container, pageIndex);
-  _wireMatrixButtonDnd(container, pageIndex);
+  _wireTreeDnd(container, pageIndex);
 }
 
 /**
@@ -300,7 +300,7 @@ function _renderTreeNode(item, path, pageIndex, depth = 0) {
   const isMatrix    = type.toLowerCase() === 'matrix';
   const isMatrixBtn = type.toLowerCase() === 'matrixbutton';
   const label    = isMatrix
-    ? `${item.columns || 4} cols • ${(item.buttons || []).length} btn`
+    ? `${item.columns || 4} cols • ${(item.children || []).length} btn`
     : _nodeLabel(item);
   const isContainer = _isContainer(item);
   const children = _getChildren(item);
@@ -312,7 +312,7 @@ function _renderTreeNode(item, path, pageIndex, depth = 0) {
   const parentLen   = _getParentChildCount(_config.pages[pageIndex].layout, path);
   const canMoveDown = path[path.length - 1] < parentLen - 1;
 
-  const draggable = isMatrixBtn ? 'draggable="true" data-drag-type="matrixButton"' : '';
+  const draggable = 'draggable="true"';
 
   let html = `<div class="tree-node" data-path="${pathStr}" ${draggable} style="padding-left:${indent + 4}px;">
     <div class="tree-node-row">
@@ -362,52 +362,102 @@ function _attachTreeActions(container, pageIndex) {
   });
 }
 
-// ── Matrix button drag-and-drop ───────────────────────────────────────────────
+// ── Drag-and-drop ────────────────────────────────────────────────────────────
 
 let _dndDragPath = null;
 
-function _wireMatrixButtonDnd(container, pageIndex) {
-  const nodes = container.querySelectorAll('[data-drag-type="matrixButton"]');
-  nodes.forEach(node => {
+function _wireTreeDnd(container, pageIndex) {
+  container.querySelectorAll('.tree-node[draggable]').forEach(node => {
+    const path = node.dataset.path.split('.').map(Number);
+
     node.addEventListener('dragstart', e => {
-      _dndDragPath = node.dataset.path.split('.').map(Number);
+      e.stopPropagation();
+      _dndDragPath = path;
       e.dataTransfer.effectAllowed = 'move';
-      node.style.opacity = '0.5';
+      e.dataTransfer.setData('text/plain', node.dataset.path);
+      setTimeout(() => node.classList.add('dnd-dragging'), 0);
     });
+
     node.addEventListener('dragend', () => {
-      node.style.opacity = '';
-      container.querySelectorAll('.dnd-over').forEach(n => n.classList.remove('dnd-over'));
+      node.classList.remove('dnd-dragging');
+      container.querySelectorAll('.dnd-drop-before, .dnd-drop-after')
+        .forEach(el => el.classList.remove('dnd-drop-before', 'dnd-drop-after'));
       _dndDragPath = null;
     });
-    node.addEventListener('dragover', e => {
-      if (!_dndDragPath) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      container.querySelectorAll('.dnd-over').forEach(n => n.classList.remove('dnd-over'));
-      node.classList.add('dnd-over');
-    });
-    node.addEventListener('drop', e => {
-      e.preventDefault();
+
+    const row = node.querySelector(':scope > .tree-node-row');
+    if (!row) return;
+
+    row.addEventListener('dragover', e => {
       if (!_dndDragPath) return;
       const dropPath = node.dataset.path.split('.').map(Number);
-      // Only allow within same matrix (same parent path)
-      const sameParent = _dndDragPath.slice(0, -1).join('.') === dropPath.slice(0, -1).join('.');
-      if (!sameParent) return;
-      const layout = _config.pages[pageIndex].layout;
-      const parent = _getNodeAt(layout, _dndDragPath.slice(0, -1));
-      if (!parent?.buttons) return;
-      const fromIdx = _dndDragPath[_dndDragPath.length - 1];
-      const toIdx   = dropPath[dropPath.length - 1];
-      if (fromIdx === toIdx) return;
-      const [item] = parent.buttons.splice(fromIdx, 1);
-      parent.buttons.splice(toIdx, 0, item);
-      const scrollTop = document.getElementById('layoutTree')?.scrollTop ?? 0;
-      renderPagePanel(pageIndex);
-      const tree = document.getElementById('layoutTree');
-      if (tree) tree.scrollTop = scrollTop;
-      _notify();
+      if (!_isValidDrop(pageIndex, _dndDragPath, dropPath)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      container.querySelectorAll('.dnd-drop-before, .dnd-drop-after')
+        .forEach(el => el.classList.remove('dnd-drop-before', 'dnd-drop-after'));
+      const { top, height } = row.getBoundingClientRect();
+      row.classList.add(e.clientY < top + height / 2 ? 'dnd-drop-before' : 'dnd-drop-after');
+    });
+
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!_dndDragPath) return;
+      const dropPath = node.dataset.path.split('.').map(Number);
+      if (!_isValidDrop(pageIndex, _dndDragPath, dropPath)) return;
+      const { top, height } = row.getBoundingClientRect();
+      _executeDrop(pageIndex, _dndDragPath, dropPath, e.clientY < top + height / 2);
     });
   });
+}
+
+function _isValidDrop(pageIndex, dragPath, dropPath) {
+  const dragStr = dragPath.join('.');
+  const dropStr = dropPath.join('.');
+  if (dragStr === dropStr) return false;
+  if (dropStr.startsWith(dragStr + '.')) return false; // can't drop into own descendant
+
+  const layout = _config.pages[pageIndex].layout;
+  const dragItem = _getNodeAt(layout, dragPath);
+  const isDragMBtn = (dragItem?.type || '').toLowerCase() === 'matrixbutton';
+
+  const dropParentPath = dropPath.slice(0, -1);
+  const dropParent = dropParentPath.length === 0 ? null : _getNodeAt(layout, dropParentPath);
+  const isDropInMatrix = (dropParent?.type || '').toLowerCase() === 'matrix';
+
+  if (isDragMBtn && !isDropInMatrix) return false;
+  if (!isDragMBtn && isDropInMatrix) return false;
+
+  return true;
+}
+
+function _executeDrop(pageIndex, dragPath, dropPath, insertBefore) {
+  const layout = _config.pages[pageIndex].layout;
+  const dragParentArr = _getChildArray(layout, dragPath);
+  const dropParentArr = _getChildArray(layout, dropPath);
+  if (!dragParentArr || !dropParentArr) return;
+
+  const dragIdx = dragPath[dragPath.length - 1];
+  const dropIdx = dropPath[dropPath.length - 1];
+  const isSameArr = dragPath.slice(0, -1).join('.') === dropPath.slice(0, -1).join('.');
+
+  const [item] = dragParentArr.splice(dragIdx, 1);
+
+  let insertIdx;
+  if (isSameArr) {
+    const adj = dragIdx < dropIdx ? dropIdx - 1 : dropIdx;
+    insertIdx = insertBefore ? adj : adj + 1;
+  } else {
+    insertIdx = insertBefore ? dropIdx : dropIdx + 1;
+  }
+  dropParentArr.splice(insertIdx, 0, item);
+
+  const scrollTop = document.getElementById('layoutTree')?.scrollTop ?? 0;
+  renderPagePanel(pageIndex);
+  const tree = document.getElementById('layoutTree');
+  if (tree) tree.scrollTop = scrollTop;
+  _notify();
 }
 
 // ── Node operations ───────────────────────────────────────────────────────────
@@ -525,8 +575,8 @@ function _openElementModal(pageIndex, type, parentPath, parentType) {
         const parent = _getNodeAt(layout, parentPath);
         if (!parent) return;
         if (isMatrix) {
-          if (!parent.buttons) parent.buttons = [];
-          parent.buttons.push(el);
+          if (!parent.children) parent.children = [];
+          parent.children.push(el);
         } else {
           if (!parent.children) parent.children = [];
           parent.children.push(el);
@@ -631,7 +681,7 @@ function _isContainer(item) {
 function _getChildren(item) {
   if (!item) return null;
   const t = (item.type || '').toLowerCase();
-  if (t === 'matrix') return item.buttons || [];
+  if (t === 'matrix') return item.children || [];
   return item.children || null;
 }
 
