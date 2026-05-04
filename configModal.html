@@ -107,7 +107,7 @@
 
     .tab-content { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
     .tab-content.active { display: flex; }
-    #json-tab.active, #gsheets-tab.active, #tokens-tab.active, #debug-tab.active {
+    #json-tab.active, #integrations-tab.active, #tokens-tab.active, #debug-tab.active {
       overflow-y: auto;
       padding: 16px 20px;
     }
@@ -395,6 +395,14 @@
     ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
+    /* ── Integrations ─────────────────────────────────── */
+    .integration-module { margin-bottom: 24px; }
+    .integration-module-header {
+      font-size: 0.95em; font-weight: 600; color: var(--accent);
+      padding-bottom: 8px; margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
     /* ── Debug ────────────────────────────────────────── */
     .debug-category { margin-bottom: 16px; }
     .debug-category-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0; user-select: none; }
@@ -424,7 +432,7 @@
       <div class="tabs">
         <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
         <button type="button" class="tab" data-tab="json">Raw Editor</button>
-        <button type="button" class="tab" data-tab="gsheets">Google Sheets</button>
+        <button type="button" class="tab" data-tab="integrations">Integrations</button>
         <button type="button" class="tab" data-tab="tokens">Token Helper</button>
         <button type="button" class="tab" data-tab="debug">Debug</button>
       </div>
@@ -530,16 +538,22 @@
     </div>
 
     <!-- ── GOOGLE SHEETS ───────────────────────────── -->
-    <div id="gsheets-tab" class="tab-content">
-      <div id="gsheetsError" style="color:var(--red);font-size:0.9em;display:none;margin-bottom:10px;"></div>
-      <div class="input-group">
-        <label for="apiKeyInput">API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="Enter Google API Key" autocomplete="off" />
+    <div id="integrations-tab" class="tab-content">
+
+      <!-- ── Google Sheets ── -->
+      <div class="integration-module">
+        <div class="integration-module-header">Google Sheets</div>
+        <div id="gsheetsError" style="color:var(--red);font-size:0.9em;display:none;margin-bottom:10px;"></div>
+        <div class="input-group">
+          <label for="apiKeyInput">API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="Enter Google API Key" autocomplete="off" />
+        </div>
+        <div class="input-group">
+          <label for="sheetIdInput">Sheet ID</label>
+          <input type="password" id="sheetIdInput" placeholder="Enter Google Sheet ID" autocomplete="off" />
+        </div>
       </div>
-      <div class="input-group">
-        <label for="sheetIdInput">Sheet ID</label>
-        <input type="password" id="sheetIdInput" placeholder="Enter Google Sheet ID" autocomplete="off" />
-      </div>
+
     </div>
 
     <!-- ── TOKEN HELPER ────────────────────────────── -->

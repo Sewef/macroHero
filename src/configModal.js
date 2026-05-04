@@ -14,7 +14,6 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { MODAL_LABEL, loadConfig, saveConfigToLocalStorage } from "./config.js";
-import { saveGoogleSheetsApiKey, saveGoogleSheetsSheetId, getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { createDebugLogger } from "./debugMode.js";
 
 import {
@@ -23,7 +22,6 @@ import {
   getConfigFormat,
   formatConfig,
   parseConfig,
-  maskSensitiveData,
 } from "./configModal/utils.js";
 
 import {
@@ -35,6 +33,7 @@ import {
 import { closeElementModal, saveElement } from "./configModal/elementModal.js";
 import { initDebugModeUI } from "./configModal/debugMode.js";
 import { initTokenHelperUI, refresh as refreshTokenHelper } from "./configModal/tokenHelper.js";
+import { initGoogleSheetsUI, saveGoogleSheetsInputs, validateGoogleSheets } from "./configModal/googleSheets.js";
 
 const logger = createDebugLogger('configModal');
 
@@ -134,27 +133,14 @@ async function _closeModal(data) {
   try { await OBR.modal.close(MODAL_LABEL); } catch (err) { logger.warn('modal.close failed:', err); }
 }
 
-function _scanForGoogleSheets(obj) {
-  if (!obj) return false;
-  if (typeof obj === 'string') return obj.includes('GoogleSheets.');
-  if (typeof obj === 'object') {
-    for (const k of Object.keys(obj)) { if (_scanForGoogleSheets(obj[k])) return true; }
-  }
-  return false;
-}
+
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 OBR.onReady(() => {
   logger.log('=== Config Modal Ready ===');
 
-  const { apiKey, sheetId } = getGoogleSheetsCredentials();
-  const apiKeyInput  = document.getElementById('apiKeyInput');
-  const sheetIdInput = document.getElementById('sheetIdInput');
-  if (apiKey)  apiKeyInput.placeholder  = maskSensitiveData(apiKey);
-  if (sheetId) sheetIdInput.placeholder = maskSensitiveData(sheetId);
-  apiKeyInput.dataset.original  = apiKey  || '';
-  sheetIdInput.dataset.original = sheetId || '';
+  initGoogleSheetsUI();
 
   loadConfig().then(cfg => {
     currentConfig = cfg;
@@ -173,8 +159,6 @@ OBR.onReady(() => {
     });
 
     document.getElementById('saveBtn').onclick = async () => {
-      const apiKey  = apiKeyInput.value.trim()  || apiKeyInput.dataset.original  || '';
-      const sheetId = sheetIdInput.value.trim() || sheetIdInput.dataset.original || '';
       logger.log('Save clicked');
       try {
         let config;
@@ -187,15 +171,14 @@ OBR.onReady(() => {
         const gsErrEl = document.getElementById('gsheetsError');
         if (gsErrEl) gsErrEl.style.display = 'none';
 
-        if (_scanForGoogleSheets(config) && (apiKey.length < 10 || sheetId.length < 10)) {
-          const msg = 'Google Sheets is referenced in the config but API Key or Sheet ID is missing/invalid.';
-          if (gsErrEl) { gsErrEl.textContent = msg; gsErrEl.style.display = 'block'; }
-          switchTab('gsheets');
-          throw new Error(msg);
+        const gsError = validateGoogleSheets(config);
+        if (gsError) {
+          if (gsErrEl) { gsErrEl.textContent = gsError; gsErrEl.style.display = 'block'; }
+          switchTab('integrations');
+          throw new Error(gsError);
         }
 
-        saveGoogleSheetsApiKey(apiKey);
-        saveGoogleSheetsSheetId(sheetId);
+        saveGoogleSheetsInputs();
         await saveConfigToLocalStorage(config);
         logger.log('Config saved to localStorage');
         await _closeModal({ savedFromModal: true, gsheetUpdated: true });
