@@ -128,8 +128,20 @@ export class MatrixComponent extends UIComponent {
       btn.appendChild(labelEl);
     }
 
-    // Set tooltip
-    btn.title = buttonConfig.tooltip || buttonConfig.label || `Button ${index + 1}`;
+    // Set tooltip — supports ${varName} expressions, evaluated lazily on hover
+    const rawTooltip = buttonConfig.tooltip || buttonConfig.label || `Button ${index + 1}`;
+    if (rawTooltip.includes('${')) {
+      btn.title = rawTooltip;
+      this.addEventListener(btn, 'mouseenter', () => {
+        const resolved = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
+        btn.title = rawTooltip.replace(/\$\{([a-zA-Z_]\w*)\}/g, (m, v) => {
+          const val = resolved[v];
+          return val !== undefined ? String(val) : m;
+        });
+      });
+    } else {
+      btn.title = rawTooltip;
+    }
 
     // Add click handler if commands exist
     if (buttonConfig.onclick && Array.isArray(buttonConfig.onclick) && buttonConfig.onclick.length > 0) {

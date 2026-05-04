@@ -1,10 +1,8 @@
 global:
-  title: Default Config for MacroHero
+  title: MacroHero Configuration
   width: 800
   height: 600
   variables:
-    playerName:
-      eval: Local.value('playerName', 'myGlobalVarPlayerName')
     token:
       value: 996ed434-a22c-4510-aa82-9df34820c0be
 pages:
@@ -16,19 +14,20 @@ pages:
       - type: title
         text: Google Sheets Integration
       - type: text
-        text: Read data from Google Sheets (read-only)
+        text: Read data from external Google Sheets. Configure with your sheet name and cell range.
       - type: divider
-      - type: title
-        text: ${sheetValue}
-      - type: text
-        text: ${sheetValue}
       - type: row
         children:
           - type: value
             var: sheetValue
             label: Cell Value
-    _pageIndex: 0
-  - label: Conditions
+      - type: button
+        label: Refresh Data
+        onclick:
+          - |-
+            const value = await GoogleSheets.getValue('Xalithra Général', 'G26:I26');
+            await Owlbear.notification.show('Data refreshed: ' + value, 'SUCCESS');
+  - label: ConditionMarkers
     variables:
       isBandaged:
         eval: ConditionMarkers.hasCondition(token, 'Bandaged')
@@ -38,39 +37,39 @@ pages:
       - type: title
         text: Condition Markers
       - type: text
-        text: Check and read condition markers on tokens
+        text: Apply status conditions to tokens. Conditions persist on the token and can have numeric values.
       - type: divider
       - type: row
         children:
           - type: value
             var: isBandaged
-            label: Has Bandaged?
+            label: Bandaged Status
           - type: value
             var: conditionValue
-            label: Bandaged Value
-      - type: button
-        label: Check Condition
-        onclick:
-          - 'isBandaged ? console.log(''Has Bandaged condition'') : console.log(''No Bandaged condition'');'
+            label: Condition Value
       - type: divider
       - type: title
         text: Manage Conditions
-      - type: button
-        label: Toggle Bandage
-        onclick:
-          - await ConditionMarkers.toggleCondition(token, 'Bandaged');
-      - type: button
-        label: Increment Bandage
-        onclick:
-          - await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);
-      - type: button
-        label: Remove Bandage
-        onclick:
-          - await ConditionMarkers.removeCondition(token, 'Bandaged');
-      - type: button
-        label: Clear All Conditions
-        onclick:
-          - await ConditionMarkers.clearAllConditions(token);
+      - type: row
+        children:
+          - type: button
+            label: Toggle Bandaged
+            onclick:
+              - |-
+                await ConditionMarkers.toggleCondition(token, 'Bandaged');
+                await Owlbear.notification.show('Bandaged condition toggled', 'INFO');
+          - type: button
+            label: Increment Value
+            onclick:
+              - |-
+                await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);
+                await Owlbear.notification.show('Condition value increased', 'INFO');
+          - type: button
+            label: Clear All
+            onclick:
+              - |-
+                await ConditionMarkers.clearAllConditions(token);
+                await Owlbear.notification.show('All conditions cleared', 'WARNING');
       - type: divider
       - type: title
         text: Common Conditions
@@ -79,16 +78,22 @@ pages:
           - type: button
             label: Poisoned
             onclick:
-              - await ConditionMarkers.addCondition(token, 'Poisoned');
+              - |-
+                await ConditionMarkers.addCondition(token, 'Poisoned');
+                await Owlbear.notification.show('Poisoned condition applied', 'WARNING');
           - type: button
             label: Paralyzed
             onclick:
-              - await ConditionMarkers.addCondition(token, 'Paralysed');
+              - |-
+                await ConditionMarkers.addCondition(token, 'Paralysed');
+                await Owlbear.notification.show('Paralyzed condition applied', 'WARNING');
           - type: button
             label: Fainted
             onclick:
-              - await ConditionMarkers.addCondition(token, 'Fainted');
-  - label: Trackers
+              - |-
+                await ConditionMarkers.addCondition(token, 'Fainted');
+                await Owlbear.notification.show('Fainted condition applied', 'ERROR');
+  - label: OwlTrackers
     variables:
       trackerHP:
         eval: OwlTrackers.getValue(token, 'HP')
@@ -98,13 +103,13 @@ pages:
       - type: title
         text: Owl Trackers
       - type: text
-        text: Get and modify tracker values on tokens
+        text: Create and manage numeric trackers on tokens. Useful for HP, resources, cooldowns, and custom counters.
       - type: divider
       - type: row
         children:
           - type: value
             var: trackerHP
-            label: HP
+            label: Current HP
           - type: value
             var: trackerMaxHP
             label: Max HP
@@ -116,34 +121,26 @@ pages:
           - type: button
             label: Heal 10
             onclick:
-              - await OwlTrackers.addValue(token, 'HP', 10);
-          - type: button
-            label: Heal 5
-            onclick:
-              - await OwlTrackers.addValue(token, 'HP', 5);
-          - type: button
-            label: Full Heal
-            onclick:
-              - await OwlTrackers.setValue(token, 'HP', trackerMaxHP);
-      - type: row
-        children:
-          - type: button
-            label: Damage 5
-            onclick:
-              - await OwlTrackers.addValue(token, 'HP', -5);
+              - |-
+                await OwlTrackers.addValue(token, 'HP', 10);
+                await Owlbear.notification.show('Healed 10 HP', 'SUCCESS');
           - type: button
             label: Damage 10
             onclick:
-              - await OwlTrackers.addValue(token, 'HP', -10);
+              - |-
+                await OwlTrackers.addValue(token, 'HP', -10);
+                await Owlbear.notification.error('Took 10 damage');
           - type: button
-            label: Down to 0
+            label: Full Heal
             onclick:
-              - await OwlTrackers.setValue(token, 'HP', 0);
+              - |-
+                await OwlTrackers.setValue(token, 'HP', trackerMaxHP);
+                await Owlbear.notification.show('Fully healed', 'SUCCESS');
       - type: divider
       - type: title
         text: Add Tracker
       - type: button
-        label: Add HP Tracker (50/50)
+        label: Create HP Tracker (50/50)
         onclick:
           - |-
             await OwlTrackers.addTracker(token, {
@@ -153,20 +150,13 @@ pages:
               max: 50,
               color: 2
             });
-      - type: button
-        label: Add Temp HP (10)
-        onclick:
-          - |-
-            await OwlTrackers.addTracker(token, {
-              variant: 'value',
-              name: 'Temp HP',
-              value: 10,
-              color: 5
-            });
+            await Owlbear.notification.show('HP Tracker created', 'SUCCESS');
       - type: button
         label: Remove HP Tracker
         onclick:
-          - await OwlTrackers.removeTracker(token, 'HP');
+          - |-
+            await OwlTrackers.removeTracker(token, 'HP');
+            await Owlbear.notification.show('HP Tracker removed', 'WARNING');
   - label: StatBubbles
     variables:
       bubbleHealth:
@@ -179,7 +169,7 @@ pages:
       - type: title
         text: StatBubbles
       - type: text
-        text: Manage health, AC, and temp HP via StatBubbles extension
+        text: Manage health, AC, and temporary HP using the StatBubbles extension. Displays as bubbles on token.
       - type: divider
       - type: row
         children:
@@ -188,7 +178,7 @@ pages:
             label: Health
           - type: value
             var: bubbleMaxHealth
-            label: Max
+            label: Max Health
           - type: value
             var: bubbleAC
             label: AC
@@ -200,188 +190,126 @@ pages:
           - type: button
             label: Heal 15
             onclick:
-              - await StatBubbles.heal(token, 15);
-          - type: button
-            label: Heal 5
-            onclick:
-              - await StatBubbles.heal(token, 5);
-          - type: button
-            label: Full Heal
-            onclick:
-              - await StatBubbles.setValue(token, 'health', bubbleMaxHealth);
-      - type: row
-        children:
-          - type: button
-            label: Damage 8
-            onclick:
-              - await StatBubbles.damage(token, 8);
+              - |-
+                await StatBubbles.heal(token, 15);
+                await Owlbear.notification.show('Healed 15 HP', 'SUCCESS');
           - type: button
             label: Damage 15
             onclick:
-              - await StatBubbles.damage(token, 15);
+              - |-
+                await StatBubbles.damage(token, 15);
+                await Owlbear.notification.error('Took 15 damage');
           - type: button
-            label: Down to 0
+            label: Full Heal
             onclick:
-              - await StatBubbles.setValue(token, 'health', 0);
+              - |-
+                await StatBubbles.setValue(token, 'health', bubbleMaxHealth);
+                await Owlbear.notification.show('Fully healed', 'SUCCESS');
       - type: divider
       - type: title
-        text: Other Stats
-      - type: row
-        children:
-          - type: button
-            label: Set Temp HP 20
-            onclick:
-              - await StatBubbles.setValue(token, 'temporary health', 20);
-          - type: button
-            label: Remove Temp HP
-            onclick:
-              - await StatBubbles.setValue(token, 'temporary health', 0);
+        text: Armor Class & Temp HP
       - type: row
         children:
           - type: button
             label: AC +2
             onclick:
-              - await StatBubbles.addValue(token, 'armor class', 2);
+              - |-
+                await StatBubbles.addValue(token, 'armor class', 2);
+                await Owlbear.notification.show('AC increased by 2', 'INFO');
           - type: button
-            label: AC -2
-            onclick:
-              - await StatBubbles.addValue(token, 'armor class', -2);
-          - type: button
-            label: Show Health %
+            label: Add Temp HP (20)
             onclick:
               - |-
-                const percentage = await StatBubbles.getHealthPercentage(token);
-                console.log('Health: ' + percentage + '%');
-      - type: divider
-      - type: title
-        text: Combat Example
-      - type: button
-        label: Attack Roll (DC 15, 10 dmg)
-        onclick:
-          - |-
-            const roll = await JustDices.rollSilent('1d20 + ' + bubbleAC);
-            if (roll > 15) {
-              await StatBubbles.damage(token, 10);
-              console.log('Attack hit for 10 damage!');
-            } else {
-              console.log('Attack missed!');
-            }
-  - label: Rings
+                await StatBubbles.setValue(token, 'temporary health', 20);
+                await Owlbear.notification.show('Temporary HP added', 'SUCCESS');
+          - type: button
+            label: Remove Temp HP
+            onclick:
+              - |-
+                await StatBubbles.setValue(token, 'temporary health', 0);
+                await Owlbear.notification.show('Temporary HP removed', 'INFO');
+  - label: ColoredRings
     variables:
-      ringColors:
-        eval: ColoredRings.getRings(token)
       hasBlueRing:
         eval: ColoredRings.hasRing(token, '#1a6aff')
     layout:
       - type: title
         text: Colored Rings
       - type: text
-        text: Add and remove colored status rings on tokens
+        text: Apply colored status rings around tokens for visual status indicators. Multiple rings can stack.
       - type: divider
       - type: row
         children:
           - type: value
             var: hasBlueRing
-            label: Has Blue Ring?
+            label: Has Blue Ring
       - type: divider
       - type: title
-        text: Add Rings
+        text: Add Status Rings
       - type: row
         children:
           - type: button
-            label: Add Blue
+            label: Blue Ring
             onclick:
-              - await ColoredRings.addRing(token, '#1a6aff');
+              - |-
+                await ColoredRings.addRing(token, '#1a6aff');
+                await Owlbear.notification.show('Blue ring added', 'INFO');
           - type: button
-            label: Add Orange
+            label: Red Ring
             onclick:
-              - await ColoredRings.addRing(token, '#ff7433');
+              - |-
+                await ColoredRings.addRing(token, '#ff0000');
+                await Owlbear.notification.show('Red ring added', 'WARNING');
           - type: button
-            label: Add Green
+            label: Green Ring
             onclick:
-              - await ColoredRings.addRing(token, '#00ff00');
+              - |-
+                await ColoredRings.addRing(token, '#00ff00');
+                await Owlbear.notification.show('Green ring added', 'SUCCESS');
       - type: row
         children:
           - type: button
-            label: Add Red
+            label: Yellow Ring
             onclick:
-              - await ColoredRings.addRing(token, '#ff0000');
+              - |-
+                await ColoredRings.addRing(token, '#ffff00');
+                await Owlbear.notification.show('Yellow ring added', 'INFO');
           - type: button
-            label: Add Yellow
+            label: Purple Ring
             onclick:
-              - await ColoredRings.addRing(token, '#ffff00');
+              - |-
+                await ColoredRings.addRing(token, '#ff00ff');
+                await Owlbear.notification.show('Purple ring added', 'INFO');
           - type: button
-            label: Add Purple
+            label: Remove All Rings
             onclick:
-              - await ColoredRings.addRing(token, '#ff00ff');
-      - type: divider
-      - type: title
-        text: Remove Rings
-      - type: row
-        children:
-          - type: button
-            label: Remove Blue
-            onclick:
-              - await ColoredRings.removeRing(token, '#1a6aff');
-          - type: button
-            label: Remove Orange
-            onclick:
-              - await ColoredRings.removeRing(token, '#ff7433');
-          - type: button
-            label: Remove Green
-            onclick:
-              - await ColoredRings.removeRing(token, '#00ff00');
-      - type: button
-        label: Show All Rings
-        onclick:
-          - |-
-            const rings = await ColoredRings.getRings(token);
-            console.log('Current rings:', rings);
+              - |-
+                const rings = await ColoredRings.getRings(token);
+                for (const ring of rings) { await ColoredRings.removeRing(token, ring); }
+                await Owlbear.notification.show('All rings removed', 'INFO');
   - label: PrettySordid
     variables:
       prettyHasInitiative:
         eval: PrettySordid.hasInitiative(token)
       prettyInitiativeCount:
         eval: PrettySordid.getInitiative(token)
-      prettyActive:
-        eval: PrettySordid.isActiveTurn(token)
     layout:
       - type: title
-        text: Pretty Sordid Initiative
+        text: PrettySordid
       - type: text
-        text: Compatibility for the PrettySordid / Pretty Initiative extension — read and modify initiative stored in token metadata.
+        text: Manage combat initiative using PrettySordid extension. Track turn order and active combatants.
       - type: divider
       - type: row
         children:
           - type: value
             var: prettyHasInitiative
-            label: Has Initiative?
+            label: In Combat
           - type: value
             var: prettyInitiativeCount
             label: Initiative
-          - type: value
-            var: prettyActive
-            label: Active?
       - type: divider
       - type: title
         text: Manage Initiative
-      - type: row
-        children:
-          - type: button
-            label: Increment / Assign 1
-            onclick:
-              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) + 1) : await PrettySordid.setInitiative(token, 1);'
-          - type: button
-            label: Decrement
-            onclick:
-              - 'await PrettySordid.hasInitiative(token) ? await PrettySordid.setInitiative(token, await PrettySordid.getInitiative(token) - 1) : null;'
-          - type: button
-            label: Reset to 0
-            onclick:
-              - await PrettySordid.setInitiative(token, 0);
-      - type: divider
-      - type: title
-        text: Quick Set
       - type: row
         children:
           - type: button
@@ -390,33 +318,26 @@ pages:
               - |-
                 const roll = await JustDices.rollSilent('1d20 + 3');
                 await PrettySordid.setInitiative(token, roll);
-                console.log('Initiative set to:', roll);
+                await Owlbear.notification.show('Initiative: ' + roll, 'SUCCESS');
           - type: button
-            label: Set to 20
+            label: Increment
             onclick:
-              - await PrettySordid.setInitiative(token, 20);
+              - |-
+                const current = await PrettySordid.getInitiative(token) || 0;
+                await PrettySordid.setInitiative(token, current + 1);
+                await Owlbear.notification.show('Initiative increased', 'INFO');
           - type: button
-            label: Set to 10
+            label: Clear Initiative
             onclick:
-              - await PrettySordid.setInitiative(token, 10);
-      - type: divider
-      - type: title
-        text: Remove Initiative
-      - type: button
-        label: Remove All Initiative Data
-        onclick:
-          - |-
-            await PrettySordid.removeInitiative(token);
-            console.log('Initiative metadata removed');
+              - |-
+                await PrettySordid.removeInitiative(token);
+                await Owlbear.notification.show('Initiative cleared', 'WARNING');
   - label: JustDices
-    variables:
-      token:
-        value: 996ed434-a22c-4510-aa82-9df34820c0be
     layout:
       - type: title
         text: JustDices
       - type: text
-        text: Roll dice and get results in Owlbear Rodeo
+        text: Roll dice and display results to all players. Supports standard notation like 2d6+3.
       - type: divider
       - type: title
         text: Basic Rolls
@@ -450,307 +371,127 @@ pages:
               - await JustDices.roll('1d4');
       - type: divider
       - type: title
-        text: With Modifiers
-      - type: row
-        children:
-          - type: button
-            label: d20 + 5
-            onclick:
-              - await JustDices.roll('1d20 + 5');
-          - type: button
-            label: 2d6 + 3
-            onclick:
-              - await JustDices.roll('2d6 + 3');
-          - type: button
-            label: 3d6
-            onclick:
-              - await JustDices.roll('3d6');
-      - type: divider
-      - type: title
         text: Damage Rolls
       - type: row
         children:
           - type: button
             label: Greatsword (2d6+4)
             onclick:
-              - await JustDices.roll('2d6 + 4');
+              - 'await JustDices.roll(''Greatsword: 2d6 + 4'');'
           - type: button
             label: Longsword (1d8+3)
             onclick:
-              - await JustDices.roll('1d8 + 3');
+              - 'await JustDices.roll(''Longsword: 1d8 + 3'');'
           - type: button
             label: Fireball (8d6)
             onclick:
-              - await JustDices.roll('8d6');
-      - type: divider
-      - type: title
-        text: Silent Rolls (for logic)
-      - type: button
-        label: Silent Roll + Logic
-        onclick:
-          - |-
-            const roll = await JustDices.rollSilent('1d20');
-            if (roll >= 15) {
-              console.log('Success! (' + roll + ')');
-            } else {
-              console.log('Failure! (' + roll + ')');
-            }
-      - type: button
-        label: Get Roll Object
-        onclick:
-          - |-
-            const rollObj = await JustDices.getRollObjectSilent('1d20 + 5');
-            console.log('Roll object:', rollObj);
-  - label: Local
+              - 'await JustDices.roll(''Fireball: 8d6'');'
+  - label: Local Storage
     variables:
-      inputName:
-        value: Enter name here
+      storageKey:
+        value: myKey
+      storageValue:
+        value: myValue
     layout:
       - type: title
         text: Local Storage
       - type: text
-        text: Store and retrieve values in browser localStorage
+        text: Store and retrieve persistent data in browser localStorage. Useful for custom counters and settings.
       - type: divider
       - type: input
-        var: inputName
-        label: Enter Name
-        placeholder: Type a name...
+        var: storageKey
+        label: Key
+        placeholder: Storage key
+      - type: input
+        var: storageValue
+        label: Value
+        placeholder: Storage value
       - type: row
         children:
           - type: button
-            label: Show Global Name
+            label: Save
             onclick:
-              - 'await JustDices.roll(''Global Player Name: '' + playerName);'
+              - |-
+                await Local.set(storageKey, storageValue);
+                await Owlbear.notification.show('Data saved', 'SUCCESS');
           - type: button
-            label: Show Input Name
+            label: Retrieve
             onclick:
-              - 'await JustDices.roll(''Input Name: '' + inputName);'
-      - type: divider
-      - type: title
-        text: Save & Retrieve
-      - type: button
-        label: Save Input as Player Name
-        onclick:
-          - await Local.set('playerName', inputName);
-      - type: button
-        label: Show Saved Player Name
-        onclick:
-          - 'await JustDices.roll(''Player: '' + await Local.value(''playerName'', ''Unknown''));'
-      - type: button
-        label: List All Keys
-        onclick:
-          - |-
-            const keys = await Local.keys();
-            console.log('Stored keys:', keys);
-      - type: button
-        label: Clear All Storage
-        onclick:
-          - |-
-            await Local.clear();
-            console.log('Local storage cleared');
-      - type: divider
-      - type: title
-        text: Examples
-      - type: button
-        label: Increment Counter
-        onclick:
-          - |-
-            await Local.set('counter', (await Local.value('counter', 0)) + 1);
-            const count = await Local.value('counter', 0);
-            console.log('Counter:', count);
-      - type: button
-        label: Save Last Roll
-        onclick:
-          - |-
-            await Local.set('lastRoll', await JustDices.rollSilent('1d20'));
-            console.log('Saved last roll:', await Local.value('lastRoll', 0));
+              - |-
+                const value = await Local.value(storageKey, 'Not found');
+                await Owlbear.notification.show(storageKey + ': ' + value, 'INFO');
+          - type: button
+            label: Clear All
+            onclick:
+              - |-
+                await Local.clear();
+                await Owlbear.notification.show('Local storage cleared', 'WARNING');
   - label: Weather
-    variables:
-      token:
-        value: 996ed434-a22c-4510-aa82-9df34820c0be
     layout:
       - type: title
         text: Weather Effects
       - type: text
-        text: Add weather effects to maps
+        text: Add atmospheric effects to the scene. Choose from rain, snow, fog, and other weather patterns.
       - type: divider
       - type: title
         text: Weather Types
       - type: row
         children:
           - type: button
-            label: Snow
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'SNOW', speed: 2, density: 3 });
-          - type: button
             label: Rain
             onclick:
               - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'RAIN', speed: 3, density: 4 });
+                await Weather.setWeather('rain');
+                await Owlbear.notification.show('Rain effect applied', 'INFO');
           - type: button
-            label: Sand
+            label: Snow
             onclick:
               - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'SAND', speed: 2, density: 3 });
+                await Weather.setWeather('snow');
+                await Owlbear.notification.show('Snow effect applied', 'INFO');
+          - type: button
+            label: Fog
+            onclick:
+              - |-
+                await Weather.setWeather('fog');
+                await Owlbear.notification.show('Fog effect applied', 'INFO');
       - type: row
         children:
           - type: button
-            label: Fire
+            label: Clear Weather
             onclick:
               - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'FIRE', speed: 1, density: 2 });
-          - type: button
-            label: Cloud
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'CLOUD', speed: 1, density: 3 });
-          - type: button
-            label: Bloom
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'BLOOM', speed: 1, density: 2 });
-      - type: row
-        children:
-          - type: button
-            label: Energy Storm
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'ENERGYSTORM', speed: 2, density: 3 });
-          - type: button
-            label: Water
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'WATER', speed: 1, density: 2 });
-          - type: button
-            label: Current
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.setWeather(mapId, { type: 'CURRENT', speed: 2, density: 3 });
-      - type: divider
-      - type: title
-        text: Weather Tints
-      - type: row
-        children:
-          - type: button
-            label: Blue Tint
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.updateWeather(mapId, { tint: '#88aaff' });
-          - type: button
-            label: Orange Tint
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.updateWeather(mapId, { tint: '#ff8844' });
-          - type: button
-            label: Green Tint
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.updateWeather(mapId, { tint: '#88ff88' });
-      - type: divider
-      - type: title
-        text: Controls
-      - type: row
-        children:
-          - type: button
-            label: Show Config
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                const config = await Weather.getWeather(mapId);
-                console.log('Weather config:', config);
-          - type: button
-            label: Check Weather
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                const has = await Weather.hasWeather(mapId);
-                console.log('Has weather:', has);
-          - type: button
-            label: Remove Weather
-            onclick:
-              - |-
-                const mapId = await Scene.getMapIdFromToken(token);
-                await Weather.removeWeather(mapId);
+                await Weather.clearWeather();
+                await Owlbear.notification.show('Weather cleared', 'INFO');
   - label: Embers
     variables:
       caster:
         value: 996ed434-a22c-4510-aa82-9df34820c0be
-      target:
-        value: target-token-id
     layout:
       - type: title
         text: Embers - Spell Effects
       - type: text
-        text: Visual spell effects using Embers extension with fluent API
+        text: Apply visual effects using Embers. Chain effects together with delays for dramatic spell sequences.
       - type: divider
       - type: title
-        text: Quick Single Effects
-      - type: text
-        text: Simple one-off spell effects
-      - type: row
-        children:
-          - type: button
-            label: Magic Missile
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .projectile('magic_missile', caster, await Token.getSelected(), { copies: 3 })
-                  .cast({ spellName: 'Magic Missile' });
-          - type: button
-            label: Cure Wounds (AOE)
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .aoe('cure_wounds', await Token.getSelected(), { size: 2 })
-                  .cast({ spellName: 'Cure Wounds' });
-          - type: button
-            label: Shield
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .aoe('shield.hit', caster, { size: 2 })
-                  .cast({ spellName: 'Shield' });
+        text: Quick Effects
+      - type: button
+        label: Magic Missile
+        onclick:
+          - |-
+            await Embers.sequence()
+              .projectile('magic_missile', caster, await Token.getSelected(), { copies: 3 })
+              .cast({ spellName: 'Magic Missile' });
+      - type: button
+        label: Fireball Impact
+        onclick:
+          - |-
+            await Embers.sequence()
+              .aoe('fireball.explosion', await Token.getSelected(), { size: 5 })
+              .cast({ spellName: 'Fireball' });
       - type: divider
       - type: title
-        text: Simultaneous Effects
-      - type: text
-        text: Multiple effects playing at the same time (without .then())
-      - type: row
-        children:
-          - type: button
-            label: 2 Projectiles (Simultaneous)
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .projectile('magic_missile', caster, [await Token.getSelected()])
-                  .projectile('fire_bolt', caster, await Token.getSelected())
-                  .cast({ spellName: 'Double Attack' });
-          - type: button
-            label: 2 AOEs (Simultaneous)
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .aoe('shield.complete', caster, { size: 6 })
-                  .aoe('fireball.explosion', await Token.getSelected(), { size: 4 })
-                  .cast({ spellName: 'Blessings' });
-      - type: divider
-      - type: title
-        text: Sequential Effects (with .then())
-      - type: text
-        text: Effects queue up - next waits for previous to finish
+        text: Sequential Effects
       - type: button
         label: Projectile → Impact
         onclick:
@@ -760,1677 +501,593 @@ pages:
               .then()
               .aoe('generic.impact.fire', await Token.getSelected(), { size: 4 })
               .cast({ spellName: 'Missile Impact' });
-      - type: button
-        label: Fireball → Explosion → Knockback
-        onclick:
-          - |-
-            await Embers.sequence()
-              .projectile('fireball.beam', caster, await Token.getSelected())
-              .then()
-              .aoe('fireball.explosion', await Token.getSelected(), { size: 6 })
-              .then()
-              .action('slide', [await Token.getSelected(), { x: await Token.getSelected().x + 100, y: await Token.getSelected().y }, 500])
-              .cast({ spellName: 'Fireball Chain' });
       - type: divider
-      - type: title
-        text: Cone Effects
-      - type: row
-        children:
-          - type: button
-            label: Burning Hands
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .cone('burning_hands', caster, await Token.getSelected(), { size: 6 })
-                  .cast({ spellName: 'Burning Hands' });
-          - type: button
-            label: Cone of Cold
-            onclick:
-              - |-
-                await Embers.sequence()
-                  .cone('cone_of_cold', caster, await Token.getSelected(), { size: 8 })
-                  .cast({ spellName: 'Cone of Cold' });
-      - type: divider
-      - type: title
-        text: Delays
       - type: text
-        text: Add timing delays between effects
-      - type: button
-        label: Arrow (then 300ms delay) → Impact
-        onclick:
-          - |-
-            await Embers.sequence()
-              .projectile('generic.weapon_attacks.ranged.arrow.green', caster, await Token.getSelected())
-              .delay(300)
-              .aoe('generic.impact.fire', await Token.getSelected(), { size: 3 })
-              .cast({ spellName: 'Delayed Impact' });
-      - type: button
-        label: Cast → Projectile → Hit (with delays)
-        onclick:
-          - |-
-            await Embers.sequence()
-              .aoe('moonbeam.intro', caster, { size: 2 })
-              .delay(500)
-              .projectile('magic_missile', caster, await Token.getSelected())
-              .delay(200)
-              .aoe('generic.impact.fire', await Token.getSelected(), { size: 5 })
-              .cast({ spellName: 'Energy Casting' });
-      - type: divider
-      - type: title
-        text: Complex Sequences
-      - type: text
-        text: Showcase fluent API chains
-      - type: button
-        label: Multi-Projectile Barrage
-        onclick:
-          - |-
-            await Embers.sequence()
-              .projectile('magic_missile', caster, await Token.getSelected(), { copies: 2 })
-              .projectile('generic.weapon_attacks.ranged.arrow.white', caster, await Token.getSelected())
-              .then()
-              .aoe('fireball.explosion', await Token.getSelected(), { size: 5 })
-              .then()
-              .aoe('generic.smoke.fumes.grey.1.complete', await Token.getSelected(), { size: 6 })
-              .cast({ 
-                spellName: 'Barrage',
-                destination: 'ALL'
-              });
-      - type: divider
-      - type: title
-        text: Helper Functions
-      - type: text
-        text: Quick one-liners for simple effects
-      - type: row
-        children:
-          - type: button
-            label: castProjectile()
-            onclick:
-              - 'await castProjectile(''magic_missile'', caster, await Token.getSelected(), { copies: 3 });'
-          - type: button
-            label: castAOE()
-            onclick:
-              - 'await castAOE(''bless'', [caster, await Token.getSelected()], { size: 4 });'
-          - type: button
-            label: castCone()
-            onclick:
-              - 'await castCone(''burning_hands'', caster, await Token.getSelected(), { size: 6 });'
-      - type: divider
-      - type: title
-        text: API Reference
-      - type: text
-        text: 'Embers.sequence() Methods:'
-      - type: text
-        text: • .projectile(id, casterId, targetIds, config?) - Projectile effect
-      - type: text
-        text: • .aoe(id, tokenIds, config?) - Area of effect
-      - type: text
-        text: • .cone(id, casterId, targetId, config?) - Cone effect
-      - type: text
-        text: • .action(id, args?, config?) - Gameplay action
-      - type: text
-        text: • .delay(ms) - Delay before next effect
-      - type: text
-        text: • .then() - Sequential execution (wait for previous)
-      - type: text
-        text: • .named(name) - Set spell name
-      - type: text
-        text: • .broadcast(dest) - Set broadcast destination
-      - type: text
-        text: • .cast(options?) - Send to Embers
-  - label: Layout
-    variables:
-      textVar:
-        value: Hello World
-      numberVar:
-        value: 42
-      counterVar:
-        value: 10
-      checkboxVar:
-        value: true
-      inputVar:
-        value: Enter text here
-      dropdownVar:
-        value: Option 1
-      dropdownModeVar:
-        value: normal
+        text: Use .sequence().projectile().aoe().cone().delay().then().cast() for complex effects.
+  - label: Auras
     layout:
       - type: title
-        text: Layout Examples
+        text: Aura Management
       - type: text
-        text: This page demonstrates all available layout types
+        text: Apply visual auras to tokens and items. Useful for spell effects, status indicators, or environmental effects.
       - type: divider
       - type: title
-        text: Display Types
+        text: Add Auras
+      - type: button
+        label: Red Glow
+        onclick:
+          - |-
+            await Auras.addAura(token, { style: 'Glow', color: '#ff0000', animated: true });
+            await Owlbear.notification.show('Red glow aura added', 'INFO');
+      - type: button
+        label: Blue Bubble
+        onclick:
+          - |-
+            await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 2 });
+            await Owlbear.notification.show('Blue bubble aura added', 'INFO');
+      - type: button
+        label: Remove All Auras
+        onclick:
+          - |-
+            await Auras.removeAllAuras(token);
+            await Owlbear.notification.show('All auras removed', 'WARNING');
+  - label: Aurora
+    variables:
+      saturation:
+        value: 100
+      lightness:
+        value: 100
+    layout:
+      - type: title
+        text: Scene Lighting (Aurora)
+      - type: text
+        text: Control time-of-day lighting effects on maps. Adjust color, brightness, and saturation.
+      - type: divider
+      - type: title
+        text: Quick Presets
+      - type: row
+        children:
+          - type: button
+            label: Daylight
+            onclick:
+              - |-
+                await Aurora.applyPreset('daylight');
+                await Owlbear.notification.show('Daylight applied', 'INFO');
+          - type: button
+            label: Dusk
+            onclick:
+              - |-
+                await Aurora.applyPreset('dusk');
+                await Owlbear.notification.show('Dusk applied', 'INFO');
+          - type: button
+            label: Night
+            onclick:
+              - |-
+                await Aurora.applyPreset('night');
+                await Owlbear.notification.show('Night applied', 'INFO');
+  - label: Announcements
+    layout:
+      - type: title
+        text: Room Announcements
+      - type: text
+        text: Display announcements to all players in the room. Supports Markdown formatting.
+      - type: divider
+      - type: button
+        label: Show Announcement
+        onclick:
+          - |-
+            await Announcement.setAnnouncement({ active: true, content: '**Attention!** Important announcement.' });
+            await Owlbear.notification.show('Announcement created', 'SUCCESS');
+      - type: button
+        label: Clear Announcement
+        onclick:
+          - |-
+            await Announcement.removeAnnouncement();
+            await Owlbear.notification.show('Announcement cleared', 'INFO');
+  - label: SDK Helpers
+    layout:
+      - type: title
+        text: Notifications & Feedback
+      - type: text
+        text: Display user feedback messages. Use appropriate variants for context.
+      - type: divider
+      - type: title
+        text: Test Notification Types
+      - type: row
+        children:
+          - type: button
+            label: Info
+            onclick:
+              - await Owlbear.notification.show('This is an info message', 'INFO');
+          - type: button
+            label: Success
+            onclick:
+              - await Owlbear.notification.show('This is a success message', 'SUCCESS');
+          - type: button
+            label: Warning
+            onclick:
+              - await Owlbear.notification.show('This is a warning message', 'WARNING');
+      - type: row
+        children:
+          - type: button
+            label: Error
+            onclick:
+              - await Owlbear.notification.error('This is an error message');
+          - type: button
+            label: Default
+            onclick:
+              - await Owlbear.notification.show('This is a default message', 'DEFAULT');
+  - label: UI Elements
+    variables:
+      displayText:
+        value: Sample Display Text
+      displayNumber:
+        value: 42
+      counterValue:
+        value: 10
+      checkboxValue:
+        value: false
+      inputValue:
+        value: Enter text here
+      dropdownValue:
+        value: Option 1
+      dropdownComplexValue:
+        value: easy
+    layout:
+      - type: title
+        text: UI Elements Reference
+      - type: text
+        text: Complete guide to all available UI components. Each element type is demonstrated below with descriptions and properties.
+      - type: divider
+      - type: title
+        text: 1. Title
+        color: '#3498db'
+      - type: text
+        text: Large heading text for section organization. Supports custom colors via the 'color' property.
+      - type: title
+        text: Example Title with Default Color
+      - type: title
+        text: Example Title with Red Color
+        color: '#e74c3c'
+      - type: divider
+      - type: title
+        text: 2. Text
+        color: '#3498db'
+      - type: text
+        text: Regular paragraph text for descriptions, instructions, or information. Displays with word wrapping.
+      - type: text
+        text: This is example text. You can use it to provide context, instructions, or any informational content to the user. Text elements automatically wrap to fit the container width.
+      - type: divider
+      - type: title
+        text: 3. Value
+        color: '#3498db'
+      - type: text
+        text: Display a variable value with a label. Read-only, useful for showing dynamic information.
       - type: row
         children:
           - type: value
-            var: textVar
+            var: displayText
             label: Text Value
           - type: value
-            var: numberVar
+            var: displayNumber
             label: Number Value
       - type: divider
       - type: title
-        text: Input Types
+        text: 4. Button
+        color: '#3498db'
+      - type: text
+        text: Clickable button that executes commands. Supports optional color, tooltip, and right-click actions.
+      - type: row
+        children:
+          - type: button
+            label: Basic Button
+            onclick:
+              - await Owlbear.notification.show('Basic button clicked');
+          - type: button
+            label: With Tooltip
+            tooltip: This is a helpful tooltip
+            onclick:
+              - await Owlbear.notification.show('Button with tooltip clicked');
+          - type: button
+            label: Red Button
+            color: '#e74c3c'
+            onclick:
+              - await Owlbear.notification.show('Red button clicked');
+      - type: row
+        children:
+          - type: button
+            label: Green Button
+            color: '#27ae60'
+            onclick:
+              - await Owlbear.notification.show('Green button clicked');
+          - type: button
+            label: Blue Button
+            color: '#3498db'
+            onclick:
+              - await Owlbear.notification.show('Blue button clicked', 'INFO');
+      - type: divider
+      - type: title
+        text: Button Right-Click Actions
+        color: '#e74c3c'
+      - type: text
+        text: Buttons support right-click (onrightclick) for alternate actions. Perfect for dual-action buttons like Heal/Damage, Cast/Cancel, etc.
+      - type: text
+        text: 'Try LEFT-clicking and RIGHT-clicking the buttons below to see different behaviors:'
+      - type: row
+        children:
+          - type: button
+            label: Heal / Damage
+            tooltip: 'Left: Heal 15 | Right: Damage 10'
+            color: '#27ae60'
+            onclick:
+              - |-
+                await StatBubbles.heal(token, 15);
+                await Owlbear.notification.show('Healed 15 HP');
+            onrightclick:
+              - |-
+                await StatBubbles.damage(token, 10);
+                await Owlbear.notification.show('Took 10 damage');
+          - type: button
+            label: Cast / Cancel
+            tooltip: 'Left: Cast spell | Right: Cancel'
+            color: '#9b59b6'
+            onclick:
+              - await Owlbear.notification.show('Spell cast!', 'SUCCESS');
+            onrightclick:
+              - await Owlbear.notification.show('Spell cancelled', 'WARNING');
+          - type: button
+            label: Roll / Reroll
+            tooltip: 'Left: Roll d20 | Right: Reroll'
+            color: '#3498db'
+            onclick:
+              - |-
+                const roll = await JustDices.rollSilent('1d20');
+                await Owlbear.notification.show('Rolled: ' + roll, 'INFO');
+            onrightclick:
+              - |-
+                const reroll = await JustDices.rollSilent('1d20');
+                await Owlbear.notification.show('Rerolled: ' + reroll, 'INFO');
+      - type: row
+        children:
+          - type: button
+            label: Add / Remove Condition
+            tooltip: 'Left: Add | Right: Remove'
+            color: '#f39c12'
+            onclick:
+              - |-
+                await ConditionMarkers.addCondition(token, 'Poisoned');
+                await Owlbear.notification.show('Poisoned condition applied', 'WARNING');
+            onrightclick:
+              - |-
+                await ConditionMarkers.removeCondition(token, 'Poisoned');
+                await Owlbear.notification.show('Poisoned removed', 'INFO');
+          - type: button
+            label: Add Ring / Remove Ring
+            tooltip: 'Left: Add blue ring | Right: Remove'
+            color: '#1abc9c'
+            onclick:
+              - |-
+                await ColoredRings.addRing(token, '#1a6aff');
+                await Owlbear.notification.show('Blue ring added', 'INFO');
+            onrightclick:
+              - |-
+                await ColoredRings.removeRing(token, '#1a6aff');
+                await Owlbear.notification.show('Blue ring removed', 'INFO');
+      - type: divider
+      - type: text
+        text: 'Button properties summary:'
+      - type: text
+        text: '• onclick: Array of commands executed on LEFT-click'
+      - type: text
+        text: '• onrightclick: Array of commands executed on RIGHT-click (optional)'
+      - type: text
+        text: '• label: Button text'
+      - type: text
+        text: '• color: Button background color (hex code)'
+      - type: text
+        text: '• tooltip: Hover text for context'
+      - type: divider
+      - type: title
+        text: 5. Counter
+        color: '#3498db'
+      - type: text
+        text: Numeric input with +/- buttons. Configure step size, min/max, and custom colors.
       - type: row
         children:
           - type: counter
-            var: counterVar
-            label: Counter
+            var: counterValue
+            label: Counter (step 1)
+            step: 1
+          - type: counter
+            var: counterValue
+            label: Counter (step 5)
             step: 5
           - type: counter
-            var: numberVar
-            label: Counter (step 1)
+            var: counterValue
+            label: Counter (colored)
+            step: 1
+            color: '#f39c12'
+      - type: divider
+      - type: title
+        text: 6. Checkbox
+        color: '#3498db'
+      - type: text
+        text: Toggle boolean value. Can be displayed inline or in rows. Supports custom colors.
+      - type: row
+        children:
+          - type: checkbox
+            var: checkboxValue
+            label: Basic Checkbox
+          - type: checkbox
+            var: checkboxValue
+            label: Blue Checkbox
+            color: '#3498db'
+          - type: checkbox
+            var: checkboxValue
+            label: Green Checkbox
+            color: '#27ae60'
+      - type: divider
+      - type: title
+        text: 7. Input
+        color: '#3498db'
+      - type: text
+        text: Text input field. Supports placeholder text and optional input validation via onupdate.
       - type: input
-        var: inputVar
+        var: inputValue
         label: Text Input
         placeholder: Type something...
-      - type: checkbox
-        var: checkboxVar
-        label: Checkbox Example
-      - type: row
-        children:
-          - type: dropdown
-            var: dropdownVar
-            label: Dropdown Example
-            options:
-              - Option 1
-              - Option 2
-              - Option 3
-          - type: dropdown
-            var: dropdownModeVar
-            label: Game Mode
-            options:
-              - label: Easy
-                value: easy
-              - label: Normal
-                value: normal
-              - label: Hard
-                value: hard
       - type: divider
       - type: title
-        text: Stack Demo
+        text: 8. Dropdown
+        color: '#3498db'
       - type: text
-        text: Demonstrates the `stack` container.
+        text: Select one value from a list. Supports simple string options or complex objects with labels and values.
+      - type: dropdown
+        var: dropdownValue
+        label: Simple Dropdown
+        options:
+          - Option 1
+          - Option 2
+          - Option 3
+          - Option 4
+      - type: dropdown
+        var: dropdownComplexValue
+        label: Complex Dropdown
+        options:
+          - label: Easy Mode
+            value: easy
+          - label: Normal Mode
+            value: normal
+          - label: Hard Mode
+            value: hard
+      - type: divider
+      - type: title
+        text: 9. Row
+        color: '#3498db'
+      - type: text
+        text: Horizontal container that displays child elements in a row. Auto-distributes space equally.
+      - type: text
+        text: 'Example row with 3 buttons:'
       - type: row
         children:
-          - type: text
-            text: 'This is a row containing a stack:'
+          - type: button
+            label: Button 1
+            onclick:
+              - await Owlbear.notification.show('Button 1 clicked', 'INFO');
+          - type: button
+            label: Button 2
+            onclick:
+              - await Owlbear.notification.show('Button 2 clicked', 'INFO');
+          - type: button
+            label: Button 3
+            onclick:
+              - await Owlbear.notification.show('Button 3 clicked', 'INFO');
+      - type: divider
+      - type: title
+        text: 10. Stack
+        color: '#3498db'
+      - type: text
+        text: Vertical container for stacking elements. Optionally add a border and accent color.
+      - type: row
+        children:
           - type: stack
+            border: false
             children:
-              - type: value
-                var: textVar
-                label: Base Value
+              - type: text
+                text: Stack without border
               - type: button
-                label: Button
+                label: Button in stack
                 onclick:
-                  - await JustDices.roll('1d6');
-              - type: button
-                label: Button
-                onclick:
-                  - await JustDices.roll('1d6');
-      - type: row
-        children:
-          - type: text
-            text: 'This is a row containing a stack with a border:'
-          - type: stack
-            border: true
-            children:
-              - type: value
-                var: textVar
-                label: Base Value
-              - type: button
-                label: Button
-                onclick:
-                  - await JustDices.roll('1d6');
-              - type: button
-                label: Button
-                onclick:
-                  - await JustDices.roll('1d6');
-      - type: divider
-      - type: title
-        text: Button
-      - type: button
-        label: Example Button
-        onclick:
-          - await JustDices.roll('1d20');
-      - type: button
-        label: Button with tooltip
-        tooltip: This is a button with a tooltip
-        onclick:
-          - await JustDices.roll('1d20');
-      - type: button
-        label: Button with color
-        color: '#ff4e4e'
-        onclick:
-          - await JustDices.roll('1d20');
-      - type: divider
-      - type: title
-        text: Title, Checkbox & Counter with Custom Colors
-      - type: title
-        text: Red Title (custom color)
-        color: '#ff4e4e'
-      - type: text
-        text: Titles, checkboxes, and counters can now have custom colors
-      - type: row
-        children:
-          - type: checkbox
-            var: checkboxVar
-            label: Checkbox (default)
-            color: '#5a9fff'
-          - type: checkbox
-            var: checkboxVar
-            label: Checkbox (green)
-            color: '#2ecc71'
-      - type: row
-        children:
-          - type: counter
-            var: counterVar
-            label: Counter (gold)
-            color: '#f39c12'
-          - type: counter
-            var: counterVar
-            label: Counter (purple)
-            color: '#9b59b6'
-      - type: divider
-      - type: title
-        text: onupdate Examples (NEW)
-      - type: text
-        text: All input components can now execute commands when their value changes. Below are examples with logging.
-      - type: row
-        children:
-          - type: checkbox
-            var: checkboxVar
-            label: Checkbox with onupdate
-            color: '#2ecc71'
-            onupdate:
-              - |-
-                console.log('✓ Checkbox changed to:', checkboxVar);
-                const status = checkboxVar ? 'ENABLED' : 'DISABLED';
-                console.log('Status:', status);
-      - type: text
-        text: ☝ Check the console when toggling the checkbox above (executes immediately)
-      - type: divider
-      - type: text
-        text: Counter with debounced onUpdate (executes after 150ms of inactivity)
-      - type: counter
-        var: counterVar
-        label: Counter with onupdate
-        step: 1
-        color: '#f39c12'
-        onupdate:
-          - |-
-            console.log('⏱ Counter value updated to:', counterVar);
-            const isHigh = counterVar > 20;
-            console.log('Value is', isHigh ? 'HIGH (>20)' : 'NORMAL (≤20)');
-      - type: text
-        text: ☝ Modify the counter above - onupdate executes 150ms after you stop changing it
-      - type: divider
-      - type: text
-        text: Input with debounced onupdate (executes after 500ms of inactivity during typing, immediately on blur)
-      - type: input
-        var: inputVar
-        label: Input with onupdate
-        placeholder: Type here and check console...
-        onupdate:
-          - |-
-            console.log('📝 Input value changed to:', inputVar);
-            console.log('Length:', inputVar.length, 'characters');
-      - type: text
-        text: ☝ Type in the input above - onupdate executes 500ms after you stop typing, or immediately when you click away
-      - type: divider
-      - type: text
-        text: Dropdown with onupdate (executes immediately)
-      - type: row
-        children:
-          - type: dropdown
-            var: dropdownModeVar
-            label: Difficulty (with onupdate)
-            color: '#9b59b6'
-            options:
-              - label: Easy
-                value: easy
-              - label: Normal
-                value: normal
-              - label: Hard
-                value: hard
-            onupdate:
-              - |-
-                console.log('🎮 Difficulty changed to:', dropdownModeVar);
-                const multipliers = { easy: 0.5, normal: 1, hard: 1.5 };
-                const mult = multipliers[dropdownModeVar] || 1;
-                console.log('Damage multiplier:', mult);
-      - type: text
-        text: ☝ Change the dropdown selection - onupdate executes immediately
-      - type: divider
-      - type: title
-        text: Stack with Border and Color
-      - type: text
-        text: Stacks can have borders and custom accent colors
-      - type: row
-        children:
+                  - await Owlbear.notification.show('Button in stack clicked', 'INFO');
           - type: stack
             border: true
             color: '#3498db'
             children:
               - type: title
-                text: Blue Stack Border
-              - type: checkbox
-                var: checkboxVar
-                label: Element in stack
-              - type: counter
-                var: counterVar
-                label: Counter in stack
-          - type: stack
-            border: true
-            color: '#e74c3c'
-            children:
-              - type: title
-                text: Red Stack Border
-              - type: checkbox
-                var: checkboxVar
-                label: Another element
+                text: Stack with Border
+              - type: text
+                text: This stack has a blue border and blue accent color.
               - type: button
-                label: Button in stack
-                color: '#e74c3c'
+                label: Styled Button
+                color: '#3498db'
                 onclick:
-                  - await JustDices.roll('1d20');
-  - label: Tests
-    variables:
-      spdCS:
-        value: 15
-        expression: -3
-      floorResult:
-        eval: Math.floor(spdCS / 2)
-      testToken:
-        value: 996ed434-a22c-4510-aa82-9df34820c0be
-      mapIdFromToken:
-        eval: Scene.getMapIdFromToken(testToken)
-      dropdownOptions:
-        value:
-          - Option A
-          - Option B
-          - Option C
-          - Option D
-      selectedOption:
-        value: Option A
-    layout:
+                  - await Owlbear.notification.show('Styled button clicked', 'INFO');
+      - type: divider
       - type: title
-        text: Testing Area
+        text: 11. Matrix
+        color: '#3498db'
       - type: text
-        text: Use this page for testing new features and commands.
-      - type: row
+        text: Grid of square buttons in a specified number of columns. Perfect for spell bars or inventory layouts.
+      - type: text
+        text: 'Example: 4-column spell bar'
+      - type: matrix
+        columns: 4
+        buttonSize: 50px
+        gap: 4px
+        border: true
+        color: '#9b59b6'
         children:
-          - type: value
-            var: spdCS
-            label: spdCS
-          - type: value
-            var: floorResult
-            label: floor({spdCS}/2)
-      - type: button
-        label: Show floor result
-        onclick:
-          - 'await JustDices.roll(''floorResult: '' + floorResult);'
-      - type: button
-        label: Test Roll
-        onclick:
-          - await JustDices.roll('1d10');
-      - type: button
-        label: Test Roll2
-        onclick:
-          - await JustDices.roll('1d10');
-      - type: button
-        label: Test with spdCS
-        onclick:
-          - await JustDices.roll('1d10 + ' + spdCS);
-      - type: button
-        label: Test Async
-        onclick:
-          - |-
-            result = await JustDices.roll('1d20');
-            message = result > 10 ? 'Effect' : 'No Effect';
-            message += result == 20 ? ' (Critical)' : '';
-            console.log(`Result: ${result} - ${message}`);
-      - type: button
-        label: Multi-line Script Example
-        onclick:
-          - |-
-            const healAmount = 15;
-            const currentHP = trackerHP;
-            const maxHP = trackerMaxHP;
-            const newHP = min(currentHP + healAmount, maxHP);
-            await OwlTrackers.setValue(token, 'HP', newHP);
-            console.log(`Healed ${newHP - currentHP} HP`);
-      - type: button
-        label: Conditional Logic Example
-        onclick:
-          - |-
-            const roll = await JustDices.roll('1d20');
-            if (roll >= 15) {
-              await addValue('spdCS', 2);
-              console.log('Success! +2 speed');
-            } else if (roll >= 10) {
-              await addValue('spdCS', 1);
-              console.log('Partial success! +1 speed');
-            } else {
-              console.log('Failure!');
-            }
-      - type: button
-        label: Loop Example
-        onclick:
-          - |-
-            for (let i = 0; i < 3; i++) {
-              const roll = await JustDices.roll('1d6');
-              console.log(`Roll ${i + 1}: ${roll}`);
-            }
-      - type: divider
+          - type: matrixButton
+            icon: 🔥
+            label: Fire
+            tooltip: Cast fireball
+            onclick:
+              - await Owlbear.notification.show('Fire spell cast', 'INFO');
+          - type: matrixButton
+            icon: ❄️
+            label: Ice
+            tooltip: Cast freeze
+            onclick:
+              - await Owlbear.notification.show('Ice spell cast', 'INFO');
+          - type: matrixButton
+            icon: ⚡
+            label: Lightning
+            tooltip: Cast lightning bolt
+            onclick:
+              - await Owlbear.notification.show('Lightning spell cast', 'INFO');
+          - type: matrixButton
+            icon: 🌿
+            label: Nature
+            tooltip: Cast nature magic
+            onclick:
+              - await Owlbear.notification.show('Nature spell cast', 'INFO');
+          - type: matrixButton
+            icon: ⚔️
+            label: Sword
+            tooltip: Melee attack
+            onclick:
+              - await Owlbear.notification.show('Sword attack executed', 'INFO');
+          - type: matrixButton
+            icon: 🛡️
+            label: Shield
+            tooltip: Defensive stance
+            onclick:
+              - await Owlbear.notification.show('Shield raised', 'INFO');
+          - type: matrixButton
+            icon: 💚
+            label: Heal
+            tooltip: Restore health
+            onclick:
+              - await Owlbear.notification.show('Healing spell cast', 'SUCCESS');
+          - type: matrixButton
+            icon: 💠
+            label: Special
+            tooltip: Use special ability
+            onclick:
+              - await Owlbear.notification.show('Special ability activated', 'INFO');
+      - type: text
+        text: 'Matrix properties: columns (number), buttonSize (pixels), gap (spacing), border (true/false), color (accent color).'
       - type: title
-        text: Dropdown with Array
-      - type: dropdown
-        var: selectedOption
-        label: Select from Array
-        optionsVar: dropdownOptions
-      - type: row
+        text: Matrix Button Styles
+        color: '#9b59b6'
+      - type: text
+        text: 'Each matrixButton supports: icon (emoji or image URL), label (optional), color, borderColor, tooltip, onclick, onrightclick.'
+      - type: text
+        text: Icon only (no label), label only (no icon), or both. Icon can be an emoji or a URL pointing to an image.
+      - type: matrix
+        columns: 4
+        buttonSize: 56px
+        gap: 6px
+        border: true
+        color: '#9b59b6'
         children:
-          - type: value
-            var: selectedOption
-            label: Selected Value
+          - type: matrixButton
+            icon: 🔥
+            label: Fire
+            tooltip: Icon + label
+            color: '#c0392b'
+            onclick:
+              - await Owlbear.notification.show('Icon + label button', 'INFO');
+          - type: matrixButton
+            icon: ⚡
+            tooltip: Icon only (no label)
+            color: '#f39c12'
+            onclick:
+              - await Owlbear.notification.show('Icon-only button', 'INFO');
+          - type: matrixButton
+            label: Text
+            tooltip: Label only (no icon)
+            color: '#2980b9'
+            onclick:
+              - await Owlbear.notification.show('Label-only button', 'INFO');
+          - type: matrixButton
+            icon: https://www.google.com/favicon.ico
+            label: URL
+            tooltip: Icon from URL
+            onclick:
+              - await Owlbear.notification.show('URL icon button', 'INFO');
+          - type: matrixButton
+            icon: 🛡️
+            tooltip: Custom border color
+            color: '#1a1a2e'
+            borderColor: '#e74c3c'
+            onclick:
+              - await Owlbear.notification.show('Custom border button', 'INFO');
+          - type: matrixButton
+            icon: 💀
+            label: R-Click
+            tooltip: 'Left: attack | Right: cancel'
+            color: '#6c3483'
+            onclick:
+              - await Owlbear.notification.show('Left click!', 'SUCCESS');
+            onrightclick:
+              - await Owlbear.notification.show('Right click!', 'WARNING');
+          - type: matrixButton
+            icon: ⬜
+            tooltip: No action — disabled
+            onclick:
+              - ''
+          - type: matrixButton
+            label: No color
+            tooltip: Uses default theme color
+            onclick:
+              - await Owlbear.notification.show('Default-colored button', 'INFO');
+      - type: text
+        text: 'matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick.'
+      - type: text
+        text: • icon only → large icon, no label beneath
+      - type: text
+        text: • label only → text centered in the button
+      - type: text
+        text: • icon + label → icon above, label below
+      - type: text
+        text: • icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot.
+      - type: text
+        text: • color → button background; borderColor → overrides the border independently
+      - type: text
+        text: • onrightclick → alternate action on right-click (same as regular buttons)
+      - type: text
+        text: • empty onclick [] → button is rendered disabled at 50% opacity
       - type: divider
       - type: title
-        text: Scene Helpers Tests
+        text: 12. Divider
+        color: '#3498db'
       - type: text
-        text: Test scene helper functions
-      - type: row
-        children:
-          - type: value
-            var: mapIdFromToken
-            label: Map ID
-      - type: button
-        label: Get Map ID from Token
-        onclick:
-          - |-
-            mapId = await Scene.getMapIdFromToken(testToken);
-            console.log('Map ID: ' + (mapId || 'Not on a map'));
-      - type: button
-        label: Get Closest Token Id
-        onclick:
-          - |-
-            tokenId = await Token.getClosest(testToken, { layers: ['CHARACTER', 'MOUNT'], excludeOverlapping: true });
-            console.log('Closest Token Id: ' + (tokenId || 'No token found'));
-  - label: Tokens
-    variables:
-      tokenUrl:
-        value: https://docs.owlbear.rodeo/img/logo.svg
-      tokenName:
-        value: New Token
-      tokenX:
-        value: 500
-      tokenY:
-        value: 500
-      tokenSize:
-        value: 1
-      gridX:
-        value: 5
-      gridY:
-        value: 5
-      createdTokenId:
-        value: ''
-    layout:
-      - type: title
-        text: Token Creation
-      - type: text
-        text: Create tokens on the scene using tokenHelpers
+        text: Visual separator line. Used to organize sections without any additional properties.
       - type: divider
       - type: title
-        text: Simple Token Creation
-      - type: input
-        var: tokenUrl
-        label: Token Image URL
-      - type: input
-        var: tokenName
-        label: Token Name
-      - type: row
-        children:
-          - type: input
-            var: tokenX
-            label: Position X
-          - type: input
-            var: tokenY
-            label: Position Y
-      - type: input
-        var: tokenSize
-        label: Token Size (grid cells)
-      - type: button
-        label: Create Token
-        onclick:
-          - |-
-            const tokenId = await Token.create({
-              url: tokenUrl,
-              position: { x: tokenX, y: tokenY },
-              size: tokenSize,
-              label: tokenName
-            });
-            await setValue('createdTokenId', tokenId);
-      - type: value
-        var: createdTokenId
-        label: Created Token ID
-      - type: divider
-      - type: title
-        text: Grid-Based Token Creation
-      - type: row
-        children:
-          - type: input
-            var: gridX
-            label: Grid X
-          - type: input
-            var: gridY
-            label: Grid Y
-      - type: button
-        label: Create Token at Grid Position
-        onclick:
-          - |-
-            const tokenId = await Token.create({
-              url: tokenUrl,
-              position: { x: gridX, y: gridY },
-              gridPosition: true,
-              name: tokenName,
-              size: tokenSize
-            });
-            await setValue('createdTokenId', tokenId);
-      - type: divider
-      - type: title
-        text: Quick Examples
-      - type: button
-        label: Create Demo Hero (1.5 cells)
-        onclick:
-          - |-
-            await Token.create({
-              url: 'SELECT',
-              name: 'Hero',
-              position: { x: 300, y: 300 },
-              size: 1.5,
-              layer: 'MOUNT',
-            });
-      - type: button
-        label: Create 3 Enemies (1 cell each)
-        onclick:
-          - |-
-            const enemyPositions = [
-              { x: 600, y: 400 },
-              { x: 800, y: 400 },
-              { x: 700, y: 600 }
-            ];
-            const tokens = enemyPositions.map((pos, i) => ({
-              url: 'EMPTY',
-              size: 1.0,
-              position: pos,
-              name: `Enemy ${i + 1}`,
-              label: `E${i + 1}`
-            }));
-            await Token.createMany(tokens);
-      - type: button
-        label: Create Boss (3 cells) with HP & Metadata
-        onclick:
-          - |-
-            const tokenId = await Token.create({
-              url: 'https://sewef.github.io/justDices/JustDices.png',
-              position: { x: 500, y: 500 },
-              name: 'Boss',
-              label: 'BOSS',
-              size: 3.0
-            });
-            // Add HP tracker (value-max variant)
-            await OwlTrackers.addTracker(tokenId, {
-              variant: 'value-max',
-              name: 'HP',
-              value: 100,
-              max: 100,
-              color: 2
-            });
-            console.log('Created boss with ID:', tokenId);
-      - type: divider
-      - type: title
-        text: Tracker Management Examples
-      - type: button
-        label: Create Token with Multiple Trackers
-        onclick:
-          - |-
-            const tokenId = await Token.create({
-              url: 'https://sewef.github.io/ptu/img/logo64.png',
-              position: { x: 400, y: 400 },
-              name: 'Character with Trackers',
-              size: 1.5
-            });
-            // Add HP tracker (value-max variant)
-            await OwlTrackers.addTracker(tokenId, {
-              variant: 'value-max',
-              name: 'HP',
-              value: 103,
-              max: 103,
-              color: 2
-            });
-            // Add Temp HP tracker (value variant)
-            await OwlTrackers.addTracker(tokenId, {
-              variant: 'value',
-              name: 'Add HP',
-              value: 10,
-              color: 5
-            });
-            // Add Injuries counter
-            await OwlTrackers.addTracker(tokenId, {
-              variant: 'counter',
-              name: 'Injuries',
-              value: 5,
-              color: 2,
-              inlineMath: false
-            });
-            // Add unnamed counter
-            await OwlTrackers.addTracker(tokenId, {
-              variant: 'counter',
-              value: 0,
-              color: 8,
-              inlineMath: false
-            });
-            await setValue('createdTokenId', tokenId);
-            console.log('Created token with multiple trackers:', tokenId);
-      - type: button
-        label: Remove 'Temp HP' Tracker
-        onclick:
-          - |-
-            if (!createdTokenId) {
-              console.error('No token ID available. Create a token first.');
-              return;
-            }
-            // Remove 'Temp HP' tracker
-            const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');
-            if (removed) {
-              console.log('Removed Temp HP tracker from token');
-            } else {
-              console.log('Temp HP tracker not found');
-            }
-  - label: Aurora
-    variables:
-      mapId:
-        eval: Scene.getMapIdFromToken(token)
-      auroraConfig:
-        eval: Aurora.getAurora(mapId)
-      hasAurora:
-        eval: Aurora.hasAurora(mapId)
-      saturation:
-        value: 100
-      lightness:
-        value: 100
-      hue:
-        value: 0
-      opacity:
-        value: 40
-      blendMode:
-        value: 3
-      feather:
-        value: 0
-    layout:
-      - type: title
-        text: Aurora Integration
+        text: Summary of Properties
       - type: text
-        text: Control time-of-day lighting effects on maps
-      - type: divider
-      - type: title
-        text: Current Status
-      - type: row
-        children:
-          - type: value
-            var: hasAurora
-            label: Aurora Active?
-          - type: value
-            var: mapId
-            label: Map ID
-      - type: row
-        children:
-          - type: button
-            label: Show Full Config
-            onclick:
-              - |-
-                const myConfig = await Aurora.getAurora(mapId);
-                if (myConfig) {
-                  console.log('Aurora Config:', JSON.stringify(myConfig, null, 2));
-                } else {
-                  console.log('No Aurora configuration active');
-                }
-      - type: divider
-      - type: title
-        text: Presets
+        text: '✓ title: text, color'
       - type: text
-        text: Apply predefined lighting presets
-      - type: row
-        children:
-          - type: button
-            label: Midnight
-            onclick:
-              - await Aurora.setAurora(mapId, 'MIDNIGHT');
-          - type: button
-            label: Golden Hour
-            onclick:
-              - await Aurora.setAurora(mapId, 'GOLDEN_HOUR');
-      - type: row
-        children:
-          - type: button
-            label: Pre-Dawn
-            onclick:
-              - await Aurora.setAurora(mapId, 'PRE_DAWN');
-          - type: button
-            label: Blood Moon
-            onclick:
-              - await Aurora.setAurora(mapId, 'BLOOD_MOON');
-      - type: divider
-      - type: title
-        text: Quick Presets
+        text: '✓ text: text'
       - type: text
-        text: Common lighting scenarios
-      - type: row
-        children:
-          - type: button
-            label: Normal Light
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 100,
-                  lightness: 100,
-                  hue: 0,
-                  opacity: 0,
-                  enabled: true,
-                  name: 'Normal Light'
-                });
-          - type: button
-            label: Night Time
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 60,
-                  lightness: 60,
-                  hue: 180,
-                  opacity: 30,
-                  enabled: true,
-                  blendMode: 3,
-                  name: 'Night Time'
-                });
-          - type: button
-            label: Sunset
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 130,
-                  lightness: 110,
-                  hue: 25,
-                  opacity: 25,
-                  enabled: true,
-                  blendMode: 2,
-                  name: 'Sunset'
-                });
-      - type: row
-        children:
-          - type: button
-            label: Dark Cave
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 40,
-                  lightness: 40,
-                  hue: 0,
-                  opacity: 50,
-                  enabled: true,
-                  blendMode: 0,
-                  name: 'Dark Cave'
-                });
-          - type: button
-            label: Desert Heat
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 150,
-                  lightness: 120,
-                  hue: -30,
-                  opacity: 20,
-                  enabled: true,
-                  blendMode: 2,
-                  name: 'Desert Heat'
-                });
-          - type: button
-            label: Mystic Forest
-            onclick:
-              - |-
-                await Aurora.setAurora(mapId, {
-                  saturation: 70,
-                  lightness: 90,
-                  hue: 120,
-                  opacity: 25,
-                  enabled: true,
-                  blendMode: 3,
-                  name: 'Mystic Forest'
-                });
-      - type: divider
-      - type: title
-        text: Custom Configuration
+        text: '✓ value: var, label'
       - type: text
-        text: Adjust individual properties
-      - type: row
-        children:
-          - type: counter
-            var: saturation
-            label: Saturation (0-200)
-            step: 10
-          - type: counter
-            var: lightness
-            label: Lightness (0-200)
-            step: 10
-      - type: row
-        children:
-          - type: counter
-            var: hue
-            label: Hue (-180 to 180)
-            step: 15
-          - type: counter
-            var: opacity
-            label: Opacity (0-100)
-            step: 5
-      - type: row
-        children:
-          - type: counter
-            var: blendMode
-            label: Blend Mode (0-3)
-            step: 1
-          - type: counter
-            var: feather
-            label: Feather (0-100)
-            step: 10
-      - type: button
-        label: Apply Custom Settings
-        onclick:
-          - |-
-            await Aurora.setAurora(mapId, {
-              saturation: saturation,
-              lightness: lightness,
-              hue: hue,
-              opacity: opacity,
-              enabled: true,
-              blendMode: blendMode,
-              feather: feather,
-              name: 'Custom'
-            });
-      - type: divider
-      - type: title
-        text: Update Properties
+        text: '✓ button: label, onclick, tooltip, color, onrightclick'
       - type: text
-        text: Modify existing Aurora configuration
-      - type: row
-        children:
-          - type: button
-            label: Update Opacity
-            onclick:
-              - 'await Aurora.updateAurora(mapId, { opacity: opacity });'
-          - type: button
-            label: Update Hue
-            onclick:
-              - 'await Aurora.updateAurora(mapId, { hue: hue });'
-          - type: button
-            label: Enable
-            onclick:
-              - 'await Aurora.updateAurora(mapId, { enabled: true });'
-      - type: row
-        children:
-          - type: button
-            label: Disable
-            onclick:
-              - 'await Aurora.updateAurora(mapId, { enabled: false });'
-          - type: button
-            label: Brighten (+20 sat, -10 light)
-            onclick:
-              - |-
-                const current = await Aurora.getAurora(mapId);
-                if (current) {
-                  await Aurora.updateAurora(mapId, {
-                    saturation: current.saturation + 20,
-                    lightness: current.lightness - 10
-                  });
-                }
-          - type: button
-            label: Darken (-20 sat, +10 light)
-            onclick:
-              - |-
-                const current = await Aurora.getAurora(mapId);
-                if (current) {
-                  await Aurora.updateAurora(mapId, {
-                    saturation: current.saturation - 20,
-                    lightness: current.lightness + 10
-                  });
-                }
-      - type: divider
-      - type: title
-        text: Controls
-      - type: row
-        children:
-          - type: button
-            label: Show Config
-            onclick:
-              - |-
-                const currentConfig = await Aurora.getAurora(mapId);
-                console.log('Aurora Config:', currentConfig);
-          - type: button
-            label: List Presets
-            onclick:
-              - |-
-                const presets = Aurora.getPresets();
-                console.log('Available Presets:', presets);
-          - type: button
-            label: Remove Aurora
-            onclick:
-              - await Aurora.removeAurora(mapId);
-      - type: divider
-      - type: title
-        text: Time of Day Cycle
+        text: '✓ counter: var, label, step, color, onupdate'
       - type: text
-        text: Simulate a day/night cycle
-      - type: button
-        label: Start Day/Night Cycle
-        onclick:
-          - |-
-            const cycle = [
-              { preset: 'PRE_DAWN', delay: 0, name: 'Pre-Dawn' },
-              { preset: 'GOLDEN_HOUR', delay: 2000, name: 'Sunrise' },
-              { config: { saturation: 100, lightness: 100, hue: 0, opacity: 0, enabled: true }, delay: 4000, name: 'Day' },
-              { preset: 'GOLDEN_HOUR', delay: 6000, name: 'Sunset' },
-              { preset: 'MIDNIGHT', delay: 8000, name: 'Night' }
-            ];
-            for (const phase of cycle) {
-              setTimeout(async () => {
-                console.log('Time of Day:', phase.name);
-                if (phase.preset) {
-                  await Aurora.setAurora(mapId, phase.preset);
-                } else {
-                  await Aurora.setAurora(mapId, phase.config);
-                }
-              }, phase.delay);
-            }
-            console.log('Day/Night cycle started (10 seconds)');
-  - label: Announcement
-    variables:
-      announcementData:
-        eval: Announcement.getAnnouncement()
-    layout:
-      - type: title
-        text: Announcement System
+        text: '✓ checkbox: var, label, color, onupdate'
       - type: text
-        text: Room-level announcements with Markdown support (dev.sharkbrain.announcement)
-      - type: divider
-      - type: title
-        text: Current Status
-      - type: button
-        label: Show Full Status
-        onclick:
-          - |-
-            const announcement = await Announcement.getAnnouncement();
-            if (announcement) {
-              console.log('Announcement Status:', announcement);
-              console.log('Active:', announcement.active);
-              console.log('Content:', announcement.content);
-            } else {
-              console.log('No announcement configured');
-            }
-      - type: divider
-      - type: title
-        text: Custom Announcement
+        text: '✓ input: var, label, placeholder, onupdate'
       - type: text
-        text: Create custom announcement with Markdown
-      - type: button
-        label: Create Test Announcement
-        onclick:
-          - |-
-            const content = '# Test Announcement\n\nThis is a **bold** test with *italic* text.\n\n- Item 1\n- Item 2\n- Item 3';
-            await Announcement.setAnnouncement(content, true);
-      - type: button
-        label: Create Inventory Notice
-        onclick:
-          - |-
-            const content = '## Important Notice\n\nPlease check your inventory before the next encounter.\n\n### Items to Bring:\n1. Healing potions\n2. Rope\n3. Torches';
-            await Announcement.setAnnouncement(content, true);
-      - type: divider
-      - type: title
-        text: Visibility Controls
+        text: '✓ dropdown: var, label, options, onupdate'
       - type: text
-        text: Show/hide announcements
-      - type: row
-        children:
-          - type: button
-            label: Show
-            onclick:
-              - await Announcement.showAnnouncement();
-          - type: button
-            label: Hide
-            onclick:
-              - await Announcement.hideAnnouncement();
-          - type: button
-            label: Toggle
-            onclick:
-              - |-
-                const newState = await Announcement.toggleAnnouncement();
-                console.log('Announcement now:', newState ? 'visible' : 'hidden');
-      - type: divider
-      - type: title
-        text: Update Operations
+        text: '✓ row: children (array of elements)'
       - type: text
-        text: Modify existing announcement
-      - type: button
-        label: Update Content Only
-        onclick:
-          - await Announcement.updateContent('# Updated Content\n\nThis announcement has been updated!');
-      - type: button
-        label: Update Active Only
-        onclick:
-          - 'await Announcement.updateAnnouncement({ active: false });'
-      - type: button
-        label: Update Both
-        onclick:
-          - |-
-            await Announcement.updateAnnouncement({
-              content: '## Updated via Object\n\nBoth content and state updated.',
-              active: true
-            });
-      - type: divider
-      - type: title
-        text: Management
-      - type: button
-        label: Remove Announcement Metadata
-        onclick:
-          - |-
-            await Announcement.removeAnnouncementMetadata();
-            console.log('Announcement removed');
-  - label: Auras
-    layout:
-      - type: title
-        text: Auras and Emanations
+        text: '✓ stack: children, border, color'
       - type: text
-        text: Manage auras on tokens and items (select a token first)
-      - type: divider
-      - type: title
-        text: Status
-      - type: button
-        label: Check Status
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            const hasAuras = await Auras.hasAura(item);
-            const auras = await Auras.getAuras(item);
-            console.log('Selected Item:', item);
-            console.log('Has Auras:', hasAuras);
-            console.log('Aura Count:', auras.length);
-      - type: divider
-      - type: title
-        text: Add Aura
+        text: '✓ matrix: columns, buttonSize, gap, border, color, children'
       - type: text
-        text: Create a new aura on the selected item
-      - type: button
-        label: Add Red Glow Aura
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            await Auras.addAura(item, {
-              style: 'Glow',
-              color: '#FF0000',
-              size: 5
-            });
-            console.log('✓ Red Glow Aura added');
-      - type: button
-        label: Add Green Bubble Aura
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            await Auras.addAura(item, {
-              style: 'Bubble',
-              color: '#00FF00',
-              size: 3
-            });
-            console.log('✓ Green Bubble Aura added');
-      - type: button
-        label: Add Blue Range Aura
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            await Auras.addAura(item, {
-              style: 'Range',
-              color: '#0000FF',
-              size: 8
-            });
-            console.log('✓ Blue Range Aura added');
-      - type: button
-        label: Add Image Aura (Simple)
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            await Auras.addAura(item, {
-              style: 'Image',
-              size: 5,
-              imageUrl: 'https://sewef.github.io/macrohero/logo.png'
-            });
-            console.log('✓ Image Aura added (auto-detected dimensions)');
-      - type: button
-        label: Add Image Aura (Advanced)
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            const imageBuildParams = await Owlbear.image.buildParams('https://sewef.github.io/macrohero/logo.png', { dpi: 72 });
-            await Auras.addAura(item, {
-              style: 'Image',
-              size: 5,
-              imageBuildParams: imageBuildParams
-            });
-            console.log('✓ Image Aura added (custom parameters)');
-      - type: divider
-      - type: title
-        text: Remove Aura
-      - type: text
-        text: Remove all auras from the selected item
-      - type: button
-        label: Remove All Auras
-        onclick:
-          - |-
-            const item = await Token.getSelected();
-            if (!item) return console.warn('No item selected');
-            const hasBefore = await Auras.hasAura(item);
-            if (!hasBefore) return console.warn('No auras to remove');
-            await Auras.removeAura(item);
-            console.log('✓ All auras removed');
-      - type: title
-        text: Notes
-      - type: text
-        text: 'Available styles: Glow, Bubble, Range, Solid, Simple, Distort, Spirits, Custom, and Image. For Image auras, use imageUrl for auto-detection or Owlbear.image utilities for full control.'
-  - label: DicePlus
-    variables:
-      diceNotation:
-        value: 2d20kh1+5
-      lastRollResult:
-        value: 'D20: 12'
-        expression: 'D20: 12'
-      diceReady:
-        eval: DicePlus.isReady()
-    layout:
-      - type: title
-        text: DicePlus Integration
-      - type: text
-        text: Advanced dice rolling with DicePlus extension (Owlbear Rodeo)
-      - type: divider
-      - type: title
-        text: Status
-      - type: row
-        children:
-          - type: value
-            var: diceReady
-            label: DicePlus Ready?
-      - type: text
-        text: 'Last Roll: ${lastRollResult}'
-      - type: divider
-      - type: title
-        text: Basic Rolls
-      - type: row
-        children:
-          - type: button
-            label: Roll d20
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('1d20');
-                await setValue('lastRollResult', 'D20: ' + result);
-          - type: button
-            label: 2d6+3
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('2d6+3');
-                await setValue('lastRollResult', '2d6+3: ' + result);
-          - type: button
-            label: 3d6
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('3d6');
-                await setValue('lastRollResult', '3d6: ' + result);
-      - type: divider
-      - type: title
-        text: Advantage / Disadvantage
-      - type: row
-        children:
-          - type: button
-            label: Advantage (+5)
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('2d20kh1+5');
-                await setValue('lastRollResult', 'Advantage (+5): ' + result);
-          - type: button
-            label: Disadvantage (-2)
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('2d20kl1-2');
-                await setValue('lastRollResult', 'Disadvantage (-2): ' + result);
-      - type: row
-        children:
-          - type: button
-            label: 4d6 Drop Lowest
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('4d6dl1');
-                await setValue('lastRollResult', '4d6 drop lowest: ' + result);
-      - type: divider
-      - type: title
-        text: Damage Rolls
-      - type: row
-        children:
-          - type: button
-            label: Greatsword
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('2d6 + 4');
-                await setValue('lastRollResult', 'Greatsword (2d6+4): ' + result);
-          - type: button
-            label: Longsword
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('1d8 + 3');
-                await setValue('lastRollResult', 'Longsword (1d8+3): ' + result);
-          - type: button
-            label: Scimitar
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('2d8 + 5');
-                await setValue('lastRollResult', 'Scimitar (2d8+5): ' + result);
-      - type: row
-        children:
-          - type: button
-            label: Fireball
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('8d6');
-                await setValue('lastRollResult', 'Fireball (8d6): ' + result);
-          - type: button
-            label: Meteor Storm
-            onclick:
-              - |-
-                const result = await DicePlus.rollTotal('10d6');
-                await setValue('lastRollResult', 'Meteor Storm (10d6): ' + result);
-      - type: divider
-      - type: title
-        text: Custom Notation
-      - type: input
-        var: diceNotation
-        label: Dice Notation
-        placeholder: e.g., 2d20kh1+5, 4d6dl1, 3d6!e
-      - type: button
-        label: Roll Custom
-        onclick:
-          - |-
-            try {
-              const result = await DicePlus.getRollObject(diceNotation);
-              const total = result.totalValue;
-              await setValue('lastRollResult', diceNotation + ' = ' + total);
-              console.log('Full result:', result);
-            } catch (error) {
-              await setValue('lastRollResult', 'Error: ' + error.message);
-            }
-      - type: divider
-      - type: title
-        text: Roll Results
-      - type: button
-        label: Roll with Description
-        onclick:
-          - |-
-            const result = await DicePlus.getRollObject('3d6{Red} # Fire + 2d6{White} # Ice');
-            console.log('Full roll object:', result);
-            if (result.groups) {
-              result.groups.forEach(group => {
-                console.log(`${group.description}: ${group.total}`);
-              });
-            }
-      - type: button
-        label: Show Roll Details
-        onclick:
-          - |-
-            const result = await DicePlus.getRollObject('4d6');
-            console.log('Roll result:', result);
-            console.log('Total:', result.totalValue);
-            console.log('Dice count:', result.groups?.[0]?.dice?.length || 0);
-      - type: divider
-      - type: title
-        text: Advanced Examples
-      - type: button
-        label: Roll with Notification
-        onclick:
-          - |-
-            const roll = await DicePlus.rollTotal('1d20 + 5');
-            if (roll >= 15) {
-              await Owlbear.notification.show(`Critical Success! (${roll})`, 'SUCCESS');
-            } else if (roll >= 10) {
-              await Owlbear.notification.show(`Success! (${roll})`);
-            } else {
-              await Owlbear.notification.show(`Failed! (${roll})`, 'WARNING');
-            }
-      - type: button
-        label: Attack Roll Sequence
-        onclick:
-          - |-
-            const atkRoll = await DicePlus.rollTotal('1d20 + 7');
-            const dmgRoll = await DicePlus.rollTotal('2d8 + 5');
-            console.log(`Attack: ${atkRoll} vs DC 14`);
-            if (atkRoll >= 14) {
-              console.log(`HIT! Damage: ${dmgRoll}`);
-              await setValue('lastRollResult', `Hit! Attack: ${atkRoll}, Damage: ${dmgRoll}`);
-            } else {
-              console.log('MISS!');
-              await setValue('lastRollResult', `Miss! Attack: ${atkRoll}`);
-            }
-  - label: SDK Helpers
-    variables:
-      message:
-        value: Task completed successfully!
-      variant:
-        value: DEFAULT
-    layout:
-      - type: title
-        text: SDK Helpers & Notifications
-      - type: text
-        text: Use centralized SDK wrapper for OBR notifications with consistent syntax
-      - type: divider
-      - type: title
-        text: Quick Notification
-      - type: text
-        text: Owlbear.notification.show(message, variant)
-      - type: row
-        children:
-          - type: input
-            var: message
-            label: Message
-            placeholder: Enter notification message
-          - type: dropdown
-            var: variant
-            label: Variant
-            options:
-              - DEFAULT
-              - INFO
-              - SUCCESS
-              - WARNING
-              - ERROR
-      - type: button
-        label: Send Notification
-        onclick:
-          - |-
-            const id = await Owlbear.notification.show(message, variant);
-            console.log('Notification ID:', id);
-      - type: divider
-      - type: title
-        text: Variant Examples
-      - type: text
-        text: Pre-configured notification types
-      - type: row
-        children:
-          - type: button
-            label: Success
-            onclick:
-              - await Owlbear.notification.show('Operation completed successfully!', 'SUCCESS');
-          - type: button
-            label: Warning
-            onclick:
-              - await Owlbear.notification.show('This is a warning!', 'WARNING');
-          - type: button
-            label: Error
-            onclick:
-              - await Owlbear.notification.show('An error occurred!', 'ERROR');
-      - type: divider
-      - type: title
-        text: Practical Examples
-      - type: button
-        label: Roll-Based Notification
-        onclick:
-          - |-
-            const roll = await JustDices.rollSilent('1d20');
-            if (roll >= 15) {
-              await Owlbear.notification.show(`Critical Success! (${roll})`, 'SUCCESS');
-            } else if (roll >= 10) {
-              await Owlbear.notification.show(`Success! (${roll})`);
-            } else {
-              await Owlbear.notification.show(`Failed! (${roll})`, 'WARNING');
-            }
-      - type: button
-        label: Token Selection Check
-        onclick:
-          - |-
-            const selectedToken = await Token.getSelected();
-            if (!selectedToken) {
-              await Owlbear.notification.show('No token selected!', 'ERROR');
-            } else {
-              await Owlbear.notification.show('Token selected and ready!', 'SUCCESS');
-            }
-      - type: button
-        label: Sequential Notifications
-        onclick:
-          - |-
-            await Owlbear.notification.show('Starting operation...');
-            await new Promise(r => setTimeout(r, 1000));
-            await Owlbear.notification.show('Operation complete!', 'SUCCESS');
-      - type: divider
-      - type: title
-        text: Player API
-      - type: text
-        text: Live tests — results are logged to the console
-      - type: row
-        children:
-          - type: button
-            label: Get Name
-            onclick:
-              - |-
-                const name = await Owlbear.player.getName();
-                console.log('Player name:', name);
-                await Owlbear.notification.show(`Name: ${name}`, 'INFO');
-          - type: button
-            label: Get Role
-            onclick:
-              - |-
-                const role = await Owlbear.player.getRole();
-                console.log('Player role:', role);
-                await Owlbear.notification.show(`Role: ${role}`, 'INFO');
-          - type: button
-            label: Get Color
-            onclick:
-              - |-
-                const color = await Owlbear.player.getColor();
-                console.log('Player color:', color);
-                await Owlbear.notification.show(`Color: ${color}`, 'INFO');
-      - type: row
-        children:
-          - type: button
-            label: Get ID
-            onclick:
-              - |-
-                const id = await Owlbear.player.getId();
-                console.log('Player ID:', id);
-                await Owlbear.notification.show(`ID: ${id}`, 'INFO');
-          - type: button
-            label: Get Selection
-            onclick:
-              - |-
-                const sel = await Owlbear.player.getSelection();
-                const count = sel ? sel.length : 0;
-                console.log('Selected items:', sel);
-                await Owlbear.notification.show(`${count} item(s) selected`, 'INFO');
-          - type: button
-            label: Get Metadata
-            onclick:
-              - |-
-                const meta = await Owlbear.player.getMetadata();
-                console.log('Player metadata:', meta);
-                await Owlbear.notification.show(`Metadata keys: ${Object.keys(meta || {}).join(', ') || '(none)'}`, 'INFO');
-      - type: divider
-      - type: title
-        text: Scene API
-      - type: row
-        children:
-          - type: button
-            label: Count All Items
-            onclick:
-              - |-
-                const items = await Owlbear.scene.items.getItems();
-                console.log('Scene items:', items);
-                await Owlbear.notification.show(`${items.length} item(s) on scene`, 'INFO');
-          - type: button
-            label: Selected Items
-            onclick:
-              - |-
-                const sel = await Owlbear.player.getSelection();
-                if (!sel || sel.length === 0) {
-                  await Owlbear.notification.show('No items selected', 'WARNING');
-                } else {
-                  const items = await Owlbear.scene.items.getItems(sel);
-                  console.log('Selected items:', items);
-                  const names = items.map(i => i.name || i.id).join(', ');
-                  await Owlbear.notification.show(`Selected: ${names}`, 'INFO');
-                }
-          - type: button
-            label: Scene Ready?
-            onclick:
-              - |-
-                const ready = await Owlbear.scene.isReady();
-                console.log('Scene ready:', ready);
-                await (ready
-                  ? Owlbear.notification.success('Scene is ready')
-                  : Owlbear.notification.show('Scene not ready'), 'WARNING');
-      - type: divider
-      - type: title
-        text: Viewport API
-      - type: row
-        children:
-          - type: button
-            label: Get Scale
-            onclick:
-              - |-
-                const scale = await Owlbear.viewport.getScale();
-                console.log('Viewport scale:', scale);
-                await Owlbear.notification.show(`Scale: ${Math.round(scale * 100)}%`, 'INFO');
-          - type: button
-            label: Reset Viewport
-            onclick:
-              - |-
-                const t = await Owlbear.viewport.reset();
-                console.log('Viewport reset to:', t);
-                await Owlbear.notification.show(`Viewport reset (scale: ${t?.scale ?? '?'})`, 'SUCCESS');
-          - type: button
-            label: Get Position + Scale
-            onclick:
-              - |-
-                const pos = await Owlbear.viewport.getPosition();
-                const scale = await Owlbear.viewport.getScale();
-                console.log('Viewport position:', pos, 'scale:', scale);
-                await Owlbear.notification.show(`x:${Math.round(pos.x)} y:${Math.round(pos.y)} scale:${scale.toFixed(2)}`, 'INFO');
-      - type: divider
-      - type: title
-        text: Broadcast API
-      - type: row
-        children:
-          - type: button
-            label: Send LOCAL
-            onclick:
-              - |-
-                await Owlbear.broadcast.sendLocal('macrohero.test', { msg: 'hello local', ts: Date.now() });
-                await Owlbear.notification.show('LOCAL broadcast sent (open console to see)', 'SUCCESS');
-          - type: button
-            label: Send ROOM
-            onclick:
-              - |-
-                await Owlbear.broadcast.sendToRoom('macrohero.test', { msg: 'hello room', ts: Date.now() });
-                await Owlbear.notification.show('ROOM broadcast sent', 'SUCCESS');
-          - type: button
-            label: Listen once
-            onclick:
-              - |-
-                await Owlbear.notification.show('Listening for macrohero.test for 5s…', 'INFO');
-                const data = await Owlbear.broadcast.once('macrohero.test', { timeoutMs: 5000 });
-                console.log('Received:', data);
-                await Owlbear.notification.show(`Received: ${JSON.stringify(data)}`, 'SUCCESS');
-      - type: divider
-      - type: title
-        text: Image Utilities
-      - type: row
-        children:
-          - type: button
-            label: Detect MIME
-            onclick:
-              - |-
-                const url = 'https://sewef.github.io/macrohero/logo.png';
-                const mime = Owlbear.image.detectMimeType(url);
-                console.log('MIME:', mime);
-                await Owlbear.notification.show(`MIME: ${mime}`, 'INFO');
-          - type: button
-            label: Get Dimensions
-            onclick:
-              - |-
-                const url = 'https://sewef.github.io/macrohero/logo.png';
-                const dims = await Owlbear.image.getDimensions(url);
-                console.log('Dimensions:', dims);
-                await Owlbear.notification.show(`${dims.width} × ${dims.height}px`, 'INFO');
-          - type: button
-            label: Build Params
-            onclick:
-              - |-
-                const url = 'https://sewef.github.io/macrohero/logo.png';
-                const params = await Owlbear.image.buildParams(url, { dpi: 72 });
-                console.log('imageBuildParams:', params);
-                await Owlbear.notification.show(`image: ${params.image.width}×${params.image.height} | dpi: ${params.grid.dpi}`, 'SUCCESS');
-      - type: divider
-      - type: title
-        text: Full SDK Access
-      - type: text
-        text: Owlbear is a transparent proxy over the OBR SDK — every Owlbear.x maps directly to OBR.x.
-      - type: text
-        text: Owlbear.scene.items.getItems()  →  OBR.scene.items.getItems()
-      - type: text
-        text: 'Owlbear.broadcast.sendMessage(id, data, { destination: "ROOM" })'
-      - type: text
-        text: Owlbear.player.getName()
-      - type: text
-        text: Owlbear.viewport.reset()  →  reset to default view
-      - type: divider
-      - type: title
-        text: Notification Methods
-      - type: text
-        text: • Owlbear.notification.show(msg, variant?) → standard SDK call
-      - type: text
-        text: '• Owlbear.notification.success(msg) → variant: SUCCESS'
-      - type: text
-        text: '• Owlbear.notification.warning(msg) → variant: WARNING'
-      - type: text
-        text: '• Owlbear.notification.error(msg) → variant: ERROR'
-      - type: text
-        text: '• Owlbear.notification.info(msg) → variant: INFO'
-      - type: divider
-      - type: title
-        text: Image Utilities (Owlbear.image.*)
-      - type: text
-        text: • Owlbear.image.buildParams(url, opts?) → { image, grid } for Auras API
-      - type: text
-        text: • Owlbear.image.buildContent(url, opts?) → image content object
-      - type: text
-        text: • Owlbear.image.buildGrid(opts?) → grid object
-      - type: text
-        text: • Owlbear.image.getDimensions(url) → { width, height }
-      - type: text
-        text: • Owlbear.image.detectMimeType(url) → mime string
-      - type: divider
-      - type: title
-        text: Notification Variants
-      - type: text
-        text: DEFAULT - Standard notification (gray)
-      - type: text
-        text: INFO - Informational (blue)
-      - type: text
-        text: SUCCESS - Success state (green)
-      - type: text
-        text: WARNING - Warning state (orange)
-      - type: text
-        text: ERROR - Error state (red)
+        text: '✓ divider: (no properties)'

@@ -24,14 +24,28 @@ export class ButtonComponent extends UIComponent {
     }
 
     // Add command handler if onclick commands exist
-    if (this.item.onclick && Array.isArray(this.item.onclick) && this.item.onclick.length > 0) {
+    const hasOnclick = this.item.onclick && Array.isArray(this.item.onclick) && this.item.onclick.length > 0;
+    if (hasOnclick) {
       this.addEventListener(btn, "click", async () => {
         await this.executeCommands(btn);
       });
-      btn.title = this.item.tooltip || this.item.label || "Button";
     } else {
       btn.disabled = true;
-      btn.title = this.item.tooltip || this.item.label || "No commands defined";
+    }
+
+    // Set tooltip — supports ${varName} expressions, evaluated lazily on hover
+    const rawTooltip = this.item.tooltip || this.item.label || (hasOnclick ? "Button" : "No commands defined");
+    if (rawTooltip.includes('${')) {
+      btn.title = rawTooltip;
+      this.addEventListener(btn, 'mouseenter', () => {
+        const resolved = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
+        btn.title = rawTooltip.replace(/\$\{([a-zA-Z_]\w*)\}/g, (m, v) => {
+          const val = resolved[v];
+          return val !== undefined ? String(val) : m;
+        });
+      });
+    } else {
+      btn.title = rawTooltip;
     }
 
     // Add right-click handler if onrightclick commands exist

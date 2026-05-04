@@ -1219,6 +1219,38 @@
         },
         {
           "type": "title",
+          "text": "Dynamic Tooltips",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "Tooltips support ${varName} expressions evaluated at hover time — always up to date. Try incrementing the counter, then hover the button."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "var": "counterValue",
+              "label": "Counter",
+              "step": 1
+            },
+            {
+              "type": "button",
+              "label": "Hover me",
+              "tooltip": "Counter is currently: ${counterValue}",
+              "color": "#e67e22",
+              "onclick": [
+                "await Owlbear.notification.show('Counter value: ' + counterValue, 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
           "text": "Button Right-Click Actions",
           "color": "#e74c3c"
         },
@@ -1333,7 +1365,7 @@
         },
         {
           "type": "text",
-          "text": "• tooltip: Hover text for context"
+          "text": "• tooltip: Hover text — supports ${varName} expressions evaluated at hover time"
         },
         {
           "type": "divider"
@@ -1665,6 +1697,135 @@
         {
           "type": "text",
           "text": "Matrix properties: columns (number), buttonSize (pixels), gap (spacing), border (true/false), color (accent color)."
+        },
+        {
+          "type": "title",
+          "text": "Matrix Button Styles",
+          "color": "#9b59b6"
+        },
+        {
+          "type": "text",
+          "text": "Each matrixButton supports: icon (emoji or image URL), label (optional), color, borderColor, tooltip, onclick, onrightclick."
+        },
+        {
+          "type": "text",
+          "text": "Icon only (no label), label only (no icon), or both. Icon can be an emoji or a URL pointing to an image."
+        },
+        {
+          "type": "matrix",
+          "columns": 4,
+          "buttonSize": "56px",
+          "gap": "6px",
+          "border": true,
+          "color": "#9b59b6",
+          "children": [
+            {
+              "type": "matrixButton",
+              "icon": "🔥",
+              "label": "Fire",
+              "tooltip": "Icon + label",
+              "color": "#c0392b",
+              "onclick": [
+                "await Owlbear.notification.show('Icon + label button', 'INFO');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "icon": "⚡",
+              "tooltip": "Icon only (no label)",
+              "color": "#f39c12",
+              "onclick": [
+                "await Owlbear.notification.show('Icon-only button', 'INFO');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "label": "Text",
+              "tooltip": "Label only (no icon)",
+              "color": "#2980b9",
+              "onclick": [
+                "await Owlbear.notification.show('Label-only button', 'INFO');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "icon": "https://www.google.com/favicon.ico",
+              "label": "URL",
+              "tooltip": "Icon from URL",
+              "onclick": [
+                "await Owlbear.notification.show('URL icon button', 'INFO');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "icon": "🛡️",
+              "tooltip": "Custom border color",
+              "color": "#1a1a2e",
+              "borderColor": "#e74c3c",
+              "onclick": [
+                "await Owlbear.notification.show('Custom border button', 'INFO');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "icon": "💀",
+              "label": "R-Click",
+              "tooltip": "Left: attack | Right: cancel",
+              "color": "#6c3483",
+              "onclick": [
+                "await Owlbear.notification.show('Left click!', 'SUCCESS');"
+              ],
+              "onrightclick": [
+                "await Owlbear.notification.show('Right click!', 'WARNING');"
+              ]
+            },
+            {
+              "type": "matrixButton",
+              "icon": "⬜",
+              "tooltip": "No action — disabled",
+              "onclick": []
+            },
+            {
+              "type": "matrixButton",
+              "label": "No color",
+              "tooltip": "Uses default theme color",
+              "onclick": [
+                "await Owlbear.notification.show('Default-colored button', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick."
+        },
+        {
+          "type": "text",
+          "text": "• icon only → large icon, no label beneath"
+        },
+        {
+          "type": "text",
+          "text": "• label only → text centered in the button"
+        },
+        {
+          "type": "text",
+          "text": "• icon + label → icon above, label below"
+        },
+        {
+          "type": "text",
+          "text": "• icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot."
+        },
+        {
+          "type": "text",
+          "text": "• color → button background; borderColor → overrides the border independently"
+        },
+        {
+          "type": "text",
+          "text": "• onrightclick → alternate action on right-click (same as regular buttons)"
+        },
+        {
+          "type": "text",
+          "text": "• empty onclick [] → button is rendered disabled at 50% opacity"
         },
         {
           "type": "divider"
