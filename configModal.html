@@ -1,890 +1,432 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" class="mh-dark">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Macro Hero Config</title>
-
   <style>
+    /* ── CSS Variables ────────────────────────────────── */
     :root {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      font-weight: 400;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
       font-synthesis: none;
-      text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      font-size: 14px;
 
-      /* Default DARK theme colors */
-      --mh-bg: rgba(10, 10, 15, 0.8);
-      --mh-surface: rgba(20, 20, 30, 0.9);
-      --mh-panel: rgba(30, 30, 45, 0.85);
-      --mh-panel-hover: rgba(40, 40, 60, 0.9);
-      --mh-border: #3d4a5f;
-      --mh-border-light: #4a5570;
-      --mh-text: #e8e8f0;
-      --mh-text-secondary: #9a9aaa;
-      --mh-text-label: #8a8a9a;
-      --mh-accent: #c8adff;
-      --mh-accent-hover: #bb99ff;
-      --mh-error: #ff6b6b;
-      
-      --spacing-xs: 4px;
-      --spacing-sm: 8px;
-      --spacing-md: 12px;
-      --spacing-lg: 16px;
-      --spacing-xl: 24px;
-      
-      --radius-sm: 4px;
-      --radius-md: 6px;
+      --bg:         #0d0d14;
+      --surface:    #141420;
+      --panel:      #1a1a28;
+      --panel2:     #202030;
+      --border:     #2e3050;
+      --border2:    #3a3d60;
+      --text:       #dde0f0;
+      --text2:      #8890b0;
+      --text3:      #5560808;
+      --accent:     #a78bfa;
+      --accent-dim: #7c65c2;
+      --accent-bg:  rgba(167,139,250,0.12);
+      --red:        #f87171;
+      --green:      #4ade80;
+      --amber:      #fbbf24;
+      --blue:       #60a5fa;
+      --cyan:       #22d3ee;
+      --teal:       #2dd4bf;
+      --indigo:     #818cf8;
+      --pink:       #f472b6;
+      --purple:     #c084fc;
+      --orange:     #fb923c;
+      --gray:       #6b7280;
+
+      --radius: 5px;
       --radius-lg: 8px;
-      
-      --transition-fast: 0.15s ease;
-      --transition-normal: 0.2s ease;
-      
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --transition: 0.15s ease;
     }
 
-    /* LIGHT MODE */
     html.mh-light {
-      --mh-bg: rgba(245, 245, 250, 0.95);
-      --mh-surface: rgba(255, 255, 255, 0.95);
-      --mh-panel: rgba(240, 240, 248, 0.9);
-      --mh-panel-hover: rgba(235, 235, 245, 0.95);
-      --mh-border: #d0d0e0;
-      --mh-border-light: #e0e0f0;
-      --mh-text: #1a1a2e;
-      --mh-text-secondary: #505070;
-      --mh-text-label: #707090;
-      
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
-      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
-      --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.16);
+      --bg:      #f4f4f8;
+      --surface: #ffffff;
+      --panel:   #eeeef6;
+      --panel2:  #e4e4f0;
+      --border:  #c8c8e0;
+      --border2: #b0b0d0;
+      --text:    #1a1a2e;
+      --text2:   #505070;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html, body {
-      height: 100%;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
 
     body {
-      background: var(--mh-bg);
-      color: var(--mh-text);
-      margin: 0;
-      padding: 0;
-      font-family: inherit;
-      min-width: 320px;
-      box-sizing: border-box;
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       height: 100vh;
-      width: 100vw;
+      overflow: hidden;
     }
 
-    h2 {
-      margin: 0 0 16px 0;
-      font-size: 1.5em;
-      font-weight: 600;
-      color: #c8adff;
-    }
-
-    /* h3 is only used for section headers, keep minimal styling */
-    h3 {
-      margin: 16px 0 8px 0;
-      font-size: 1.1em;
-      font-weight: 600;
-      color: #c8adff;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      border-bottom: 2px solid #444;
-    }
-
+    /* ── Topbar ───────────────────────────────────────── */
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 8px;
-      position: sticky;
-      top: 0;
-      background: #1f1f1f;
-      z-index: 9999;
-      pointer-events: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      padding: 16px 24px 8px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px 0;
+      flex-shrink: 0;
+      z-index: 100;
     }
+    .topbar-left { display: flex; flex-direction: column; gap: 4px; }
+    .topbar h2 { margin: 0; font-size: 1.1em; font-weight: 700; color: var(--accent); }
 
-    .topbar-left {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    /* .topbar .tab not needed, .tab already styled */
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
+    .tabs { display: flex; gap: 2px; margin-bottom: -1px; }
     .tab {
-      background: none;
-      border: none;
+      background: none; border: none;
       border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      padding: 8px 16px;
+      padding: 6px 14px;
       cursor: pointer;
-      color: #aaa;
-      font-size: 1em;
-      transition: all 0.2s;
+      color: var(--text2);
+      font-size: 0.9em;
+      transition: var(--transition);
+      font-family: inherit;
     }
+    .tab:hover { color: var(--accent); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    .tab:hover {
-      color: #c8adff;
-    }
+    .header-actions { display: flex; gap: 8px; align-items: center; padding-bottom: 10px; }
 
-    .tab.active {
-      color: #c8adff;
-      border-bottom-color: #c8adff;
-    }
-
-    .tab-content {
-      display: none;
-      /* Let the tab content expand into the modal body instead of being its own scroller */
-      overflow: visible;
-      /* Do not force inner flex sizing so pages can grow naturally */
-      flex: none;
-    }
-
-    /* Make form and tab content occupy available space so internal scrolling works */
+    /* ── Main form ────────────────────────────────────── */
     #configForm {
       display: flex;
       flex-direction: column;
-      flex: 1 1 auto;
+      flex: 1;
       min-height: 0;
       overflow: hidden;
-      padding: 16px;
-      box-sizing: border-box;
     }
 
-    /* Ensure editor container can expand into the modal body (no inner scrolling) */
-    .editor-container { display: block; width: 100%; overflow: visible; padding-right: 8px; }
-
-    .tab-content.active {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
+    .tab-content { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+    .tab-content.active { display: flex; }
+    #json-tab.active, #gsheets-tab.active, #tokens-tab.active, #debug-tab.active {
       overflow-y: auto;
+      padding: 16px 20px;
     }
 
-    /* Editor tab has special layout, no scrolling */
-    #editor-tab.active {
+    /* ── Editor layout: sidebar + main ───────────────── */
+    .editor-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .editor-sidebar {
+      flex: 0 0 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
     }
 
-    .input-group {
-      margin-bottom: 12px;
-    }
-
-    .debug-category {
-      margin-bottom: 20px;
-    }
-
-    .debug-category-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 0;
-      margin-bottom: 10px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .debug-category-title {
-      font-size: 0.95em;
-      font-weight: 600;
-      color: #c8adff;
+    .sidebar-body {
       flex: 1;
-    }
-
-    .debug-category-checkbox {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: #c8adff;
-    }
-
-    .debug-category-modules {
+      overflow-y: auto;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-left: 26px;
-      padding-left: 12px;
-      border-left: 2px solid #444;
+      gap: 12px;
     }
 
-    .debug-module-item {
+    .sidebar-section {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .sidebar-section:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 0.75em;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    /* Collapsible */
+    .collapsible-toggle {
+      background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; width: 100%; gap: 6px;
+      padding: 4px 0; color: inherit;
+    }
+    .collapsible-arrow { color: var(--accent); transition: transform 0.2s; font-size: 0.8em; }
+    .collapsible-arrow.open { transform: rotate(90deg); }
+    .collapsible-body { overflow: hidden; }
+    .collapsible-body.hidden { display: none; }
+
+    /* Pages list */
+    .pages-list { display: flex; flex-direction: column; gap: 4px; }
+    .page-item-sidebar {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 4px;
+      gap: 6px;
+      padding: 7px 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: var(--transition);
     }
+    .page-item-sidebar:hover { border-color: var(--border2); background: var(--panel2); }
+    .page-item-sidebar.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+    .page-item-sidebar-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em; }
+    .page-item-sidebar-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
+    .page-item-sidebar:hover .page-item-sidebar-actions { opacity: 1; }
 
-    .debug-module-item:hover {
-      border-color: #c8adff;
-      background: #333;
+    /* Variable items */
+    .var-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      font-size: 0.85em;
     }
+    .var-key { color: var(--accent); font-weight: 600; min-width: 80px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .var-val { flex: 1; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .var-actions { display: flex; gap: 2px; }
 
-    .debug-module-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: #c8adff;
-      pointer-events: none;
-    }
-
-    .debug-module-label {
+    /* ── Main editor panel ───────────────────────────── */
+    .editor-main {
       flex: 1;
-      cursor: pointer;
-      user-select: none;
-      font-size: 0.95em;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
 
+    .page-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .page-panel-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .page-section {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      min-height: 0;
+    }
+    .page-section:last-child { flex: 1; border-bottom: none; }
+
+    .page-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── Tree ─────────────────────────────────────────── */
+    .tree-container {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.9em;
+    }
+
+    .tree-node { position: relative; }
+
+    .tree-node-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: var(--radius);
+      transition: background var(--transition);
+    }
+    .tree-node-row:hover { background: var(--panel2); }
+
+    .tree-node-type {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 3px;
+      font-size: 0.72em;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #000;
+    }
+    /* type badge colors */
+    .badge-purple  { background: var(--purple);  }
+    .badge-blue    { background: var(--blue);    }
+    .badge-green   { background: var(--green);   }
+    .badge-orange  { background: var(--orange);  }
+    .badge-cyan    { background: var(--cyan);     }
+    .badge-teal    { background: var(--teal);    }
+    .badge-pink    { background: var(--pink);    }
+    .badge-gray    { background: var(--gray); color: #fff; }
+    .badge-indigo  { background: var(--indigo);  }
+    .badge-amber   { background: var(--amber);   }
+
+    .tree-node-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
+    .tree-node-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+    .tree-node-row:hover .tree-node-actions { opacity: 1; }
+
+    .tree-children { border-left: 1.5px solid var(--border2); margin-left: 16px; }
+    .tree-children-empty { padding: 4px 0; }
+    .tree-empty { color: var(--text2); font-style: italic; font-size: 0.85em; }
+    .tree-indent-guide { display: none; }
+
+    /* ── Buttons ──────────────────────────────────────── */
+    button {
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.9em;
+      padding: 6px 14px;
+      font-family: inherit;
+      transition: var(--transition);
+      color: var(--text);
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    button:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    #saveBtn { border-color: var(--accent); color: var(--accent); }
+    #saveBtn:hover { background: var(--accent); color: #000; }
+
+    .btn-small { padding: 3px 10px; font-size: 0.8em; }
+    .btn-icon  { padding: 2px 6px; font-size: 0.8em; border-radius: 3px; }
+    .btn-add   { border-style: dashed; color: var(--accent); border-color: var(--accent-dim); }
+    .btn-add:hover { background: var(--accent-bg); }
+    .btn-danger { border-color: var(--red); color: var(--red); }
+    .btn-danger:hover { background: var(--red); color: #000; }
+
+    /* ── Form elements ────────────────────────────────── */
+    .input-group { margin-bottom: 10px; }
+    .input-group:last-child { margin-bottom: 0; }
     label {
       display: block;
       margin-bottom: 4px;
-      font-size: 0.9em;
-      color: #aaa;
+      font-size: 0.78em;
+      color: var(--text2);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
 
     input[type="text"],
     input[type="password"],
-    input[type="number"] {
-      width: 100%;
-      padding: 6px 8px;
-      background: #2a2a2a;
-      color: #eee;
-      border: 1px solid #555;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-family: inherit;
-      font-size: 1em;
-      height: 32px;
-      outline-offset: 2px;
-      transition: border-color 0.2s;
-    }
-
-    input[type="text"]:focus,
-    input[type="password"]:focus,
-    input[type="number"]:focus {
-      border-color: #bb99ff;
-      outline: none;
-    }
-
+    input[type="number"],
+    select,
     textarea {
       width: 100%;
-      min-height: 120px;
-      background: #2a2a2a;
-      color: #eee;
-      border: 1px solid #555;
-      border-radius: 4px;
-      font-family: monospace;
+      padding: 5px 8px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      font-family: inherit;
       font-size: 0.9em;
-      padding: 8px;
-      box-sizing: border-box;
-      resize: vertical;
-      outline-offset: 2px;
-      transition: border-color 0.2s;
     }
-
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus,
+    select:focus,
     textarea:focus {
-      border-color: #bb99ff;
       outline: none;
+      border-color: var(--accent);
     }
+    textarea { min-height: 100px; resize: vertical; font-family: monospace; }
+    input[type="color"] { padding: 2px; height: 32px; cursor: pointer; }
+    small { color: var(--text2); font-size: 0.8em; }
 
-    .page-item {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 4px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-
-    .page-header {
-      cursor: move;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .page-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Collapsible sections */
-    .collapsible-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 4px;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.2s;
-      margin-bottom: 12px;
-    }
-
-    .collapsible-header:hover {
-      background: #333;
-      border-color: #555;
-    }
-
-    .collapsible-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      transition: transform 0.2s ease;
-      color: #c8adff;
-      flex-shrink: 0;
-    }
-
-    .collapsible-icon.collapsed {
-      transform: rotate(-90deg);
-    }
-
-    .collapsible-content {
-      max-height: 1000px;
-      overflow: hidden;
-      /* transition: max-height 0.3s ease, opacity 0.2s ease; */
-      opacity: 1;
-      margin-bottom: 16px;
-    }
-
-    .collapsible-content.collapsed {
-      max-height: 0;
-      opacity: 0;
-      margin-bottom: 0;
-    }
-
-    .collapse-btn {
-      background: none;
-      border: none;
-      color: #c8adff;
-      font-size: 1.2em;
-      cursor: pointer;
-      padding: 0 8px;
-      /* transition: transform 0.2s; */
-    }
-
-    .collapse-btn.collapsed {
-      transform: rotate(-90deg);
-    }
-
-    .page-content {
-      display: block;
-    }
-
-    .page-content.collapsed {
-      display: none;
-    }
-
-    .layout-items {
-      margin-top: 12px;
-      padding-left: 12px;
-      border-left: 2px solid #444;
-    }
-
-    .variable-item {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 4px;
-      padding: 8px;
-      margin-bottom: 6px;
-      display: flex;
-      gap: 12px;
-    }
-
-    .variable-key {
-      font-weight: 600;
-      color: #c8adff;
-      min-width: 120px;
-    }
-
-    .variable-value {
-      flex: 1;
-      color: #bbb;
-      font-size: 0.9em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .variable-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .layout-item {
-      background: #333;
-      border: 1px solid #555;
-      border-radius: 4px;
-      padding: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: move;
-    }
-
-    .layout-item.row-container {
-      cursor: default;
-      border-color: #c8adff;
-      background: #2a2a2a;
-    }
-
-    .layout-item.stack-container {
-      cursor: default;
-      border-color: #c8adff;
-      background: #2a2a2a;
-    }
-
-    .row-children {
-      margin-left: 24px;
-      margin-bottom: 8px;
-      padding-left: 12px;
-      border-left: 2px solid #c8adff;
-      min-height: 20px;
-    }
-
-    .stack-children {
-      margin-left: 24px;
-      margin-bottom: 8px;
-      padding-left: 12px;
-      border-left: 2px solid #c8adff;
-      min-height: 20px;
-    }
-
-    .row-children .layout-item {
-      background: #3a3a3a;
-    }
-
-    .stack-children .layout-item {
-      background: #3a3a3a;
-    }
-
-    .row-drop-zone {
-      background: #2a2a2a;
-      border: 2px dashed #555;
-      border-radius: 4px;
-      padding: 12px;
-      text-align: center;
-      color: #888;
-      font-size: 0.9em;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .row-drop-zone.drag-over {
-      background: #333;
-      border-color: #c8adff;
-      color: #c8adff;
-    }
-
-    .layout-item.dragging {
-      opacity: 0.5;
-    }
-
-    .page-item.drag-over {
-      border-color: #c8adff;
-      background: #333;
-    }
-
-    .drop-indicator {
-      height: 3px;
-      background: #c8adff;
-      margin: 4px 0;
-      border-radius: 2px;
-      box-shadow: 0 0 8px #c8adff;
-      transition: all 0.2s;
-    }
-
-    .layout-item-info {
-      flex: 1;
-    }
-
-    .layout-item-type {
-      display: inline-block;
-      background: #c8adff;
-      color: #000;
-      padding: 2px 8px;
-      border-radius: 3px;
-      font-size: 0.75em;
-      font-weight: 600;
-      margin-right: 8px;
-    }
-
-    .layout-item-actions {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .drag-handle {
-      cursor: move;
-      color: #888;
-      padding: 0 4px;
-      font-size: 1.2em;
-      user-select: none;
-    }
-
-    .drag-handle:hover {
-      color: #c8adff;
-    }
-
+    /* ── Modal overlay ────────────────────────────────── */
     .modal {
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
       z-index: 1000;
       align-items: center;
       justify-content: center;
     }
-
-    .modal.active {
-      display: flex;
-    }
-
+    .modal.active { display: flex; }
     .modal-content {
-      background: #2a2a2a;
-      border: 1px solid #555;
-      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-lg);
       padding: 20px;
-      max-width: 500px;
-      width: 90%;
-      max-height: 80vh;
+      max-width: 520px;
+      width: 95%;
+      max-height: 85vh;
       overflow-y: auto;
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
     }
+    .modal-header h3 { margin: 0; color: var(--accent); font-size: 1em; }
+    .close-modal { background: none; border: none; color: var(--text2); font-size: 1.4em; cursor: pointer; padding: 0; width: 28px; height: 28px; }
+    .close-modal:hover { color: var(--text); }
+    .buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
 
-    /* .modal-title uses same style as h3, so h3 covers it */
+    /* ── Scrollbars ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
-    .close-modal {
-      background: none;
-      border: none;
-      color: #aaa;
-      font-size: 1.5em;
-      cursor: pointer;
-      padding: 0;
-      width: 32px;
-      height: 32px;
-    }
+    /* ── Debug ────────────────────────────────────────── */
+    .debug-category { margin-bottom: 16px; }
+    .debug-category-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0; user-select: none; }
+    .debug-category-title { font-size: 0.9em; font-weight: 600; color: var(--accent); flex: 1; }
+    .debug-category-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+    .debug-category-modules { display: flex; flex-direction: column; gap: 4px; margin-left: 24px; padding-left: 10px; border-left: 2px solid var(--border); }
+    .debug-module-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition); }
+    .debug-module-item:hover { border-color: var(--accent); }
+    .debug-module-label { flex: 1; font-size: 0.88em; cursor: pointer; user-select: none; }
 
-    .close-modal:hover {
-      color: #fff;
-    }
+    /* ── Token helper ─────────────────────────────────── */
+    .variable-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; margin-bottom: 6px; display: flex; gap: 10px; /*align-items: center;*/ }
+    .layout-item-type { display: inline-block; background: var(--accent); color: #000; padding: 1px 7px; border-radius: 3px; font-size: 0.72em; font-weight: 700; flex-shrink: 0; }
+    .page-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; }
 
-    select {
-      width: 100%;
-      padding: 6px 8px;
-      background: #2a2a2a;
-      color: #eee;
-      border: 1px solid #555;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 1em;
-      height: 32px;
-    }
-
-    .btn-small {
-      padding: 4px 12px;
-      font-size: 0.85em;
-      height: auto;
-    }
-
-    .btn-danger {
-      border-color: #ff4444;
-      color: #ff4444;
-    }
-
-    .btn-danger:hover {
-      background-color: #ff4444;
-      color: #000;
-    }
-
-    .btn-add {
-      width: 100%;
-      margin-top: 8px;
-      border-style: dashed;
-      color: #c8adff;
-    }
-
-    .buttons {
-      margin-top: 16px;
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      border-top: 1px solid #444;
-      padding-top: 16px;
-    }
-
-    button {
-      background: none;
-      border: 1px solid #555;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1em;
-      padding: 8px 16px;
-      height: auto;
-      font-family: inherit;
-      transition: all 0.2s;
-      box-sizing: border-box;
-      color: #eee;
-      font-weight: 500;
-    }
-
-    button:hover {
-      border-color: #bb99ff;
-      background-color: #e6f0ff;
-      color: #000;
-    }
-
-    button:focus,
-    button:focus-visible {
-      outline: 2px solid #bb99ff;
-      outline-offset: 2px;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    #saveBtn {
-      border-color: #c8adff;
-      color: #c8adff;
-    }
-
-    #saveBtn:hover {
-      background-color: #c8adff;
-      border-color: #c8adff;
-      color: #000;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    /* ============================================
-       TWO-PANEL EDITOR LAYOUT
-       ============================================ */
-    .editor-layout {
-      display: flex;
-      gap: 16px;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .editor-sidebar {
-      flex: 0 0 300px;
-      background: #1f1f1f;
-      border: 1px solid #333;
-      border-radius: 4px;
-      padding: 12px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .sidebar-section {
-      border-bottom: 1px solid #333;
-      padding-bottom: 12px;
-    }
-
-    .sidebar-section:last-child {
-      border-bottom: none;
-    }
-
-    .pages-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .page-item-sidebar {
-      padding: 10px 12px;
-      background: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 4px;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.2s;
-      font-size: 0.9em;
-      color: #ddd;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .page-item-sidebar:hover {
-      background: #333;
-      border-color: #555;
-    }
-
-    .page-item-sidebar.active {
-      background: #c8adff;
-      color: #000;
-      border-color: #c8adff;
-      font-weight: 600;
-    }
-
-    .page-item-sidebar-name {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .page-item-sidebar-actions {
-      display: flex;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .page-item-sidebar:hover .page-item-sidebar-actions {
-      opacity: 1;
-    }
-
-    .page-item-sidebar-actions button {
-      padding: 2px 6px;
-      font-size: 0.75em;
-      height: auto;
-      margin: 0;
-    }
-
-    .editor-main {
-      flex: 1;
-      background: #1f1f1f;
-      border: 1px solid #333;
-      border-radius: 4px;
-      padding: 12px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .page-editor {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .page-editor-header {
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #333;
-    }
-
-    .page-editor-header h3 {
-      margin: 0 0 8px 0;
-      color: #c8adff;
-    }
-
-    .page-variables-container {
-      max-height: 150px;
-      overflow-y: auto;
-      margin-bottom: 16px;
-    }
-
-    .page-elements-container {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .page-elements-container h4 {
-      margin: 0 0 8px 0;
-      color: #c8adff;
-      font-size: 0.9em;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .page-elements-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .page-actions-footer {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #333;
-    }
-
-    .page-actions-footer button {
-      flex: 1;
-    }
+    /* ── Row helper ───────────────────────────────────── */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   </style>
   <script src="/src/configModal.js" type="module"></script>
 </head>
 
 <body>
+  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
-      <h2 style="margin:0;">Configuration Macro Hero</h2>
-      <div class="tabs" style="margin-top:8px;">
+      <h2>Macro Hero — Configuration</h2>
+      <div class="tabs">
         <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
         <button type="button" class="tab" data-tab="json">Raw Editor</button>
         <button type="button" class="tab" data-tab="gsheets">Google Sheets</button>
         <button type="button" class="tab" data-tab="tokens">Token Helper</button>
-        <button type="button" class="tab" data-tab="debug">Debug Mode</button>
+        <button type="button" class="tab" data-tab="debug">Debug</button>
       </div>
     </div>
     <div class="header-actions">
@@ -893,101 +435,103 @@
     </div>
   </div>
 
-  <form id="configForm">
-    <!-- Visual Editor Tab -->
+  <form id="configForm" onsubmit="return false;">
+
+    <!-- ── VISUAL EDITOR ───────────────────────────── -->
     <div id="editor-tab" class="tab-content active">
       <div class="editor-layout">
-        <!-- Left Sidebar: Global Settings & Page List -->
+
+        <!-- Sidebar -->
         <div class="editor-sidebar">
-          <div class="sidebar-section">
-            <div class="collapsible-header" onclick="window.toggleGlobalSettings()">
-              <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">
-                <span class="collapsible-icon collapsed" id="settingsIcon">▼</span>Global Settings
-              </h4>
-            </div>
-            
-            <div class="collapsible-content collapsed" id="globalSettingsContent">
-              <div class="input-group">
-                <label for="globalTitle">Title</label>
-                <input type="text" id="globalTitle" placeholder="Macro Hero" />
-              </div>
-              
-              <div style="display: flex; gap: 8px;">
-                <div class="input-group" style="flex: 1;">
-                  <label for="globalWidth">Width</label>
-                  <input type="number" id="globalWidth" placeholder="600" />
+          <div class="sidebar-body">
+
+            <!-- Global Settings -->
+            <div class="sidebar-section">
+              <button type="button" class="collapsible-toggle" id="toggleSettings">
+                <span class="collapsible-arrow" id="arrowSettings">▶</span>
+                <span class="section-title">Global Settings</span>
+              </button>
+              <div class="collapsible-body hidden" id="bodySettings">
+                <div class="input-group" style="margin-top:8px;">
+                  <label for="globalTitle">Title</label>
+                  <input type="text" id="globalTitle" placeholder="Macro Hero" />
                 </div>
-                <div class="input-group" style="flex: 1;">
-                  <label for="globalHeight">Height</label>
-                  <input type="number" id="globalHeight" placeholder="600" />
+                <div class="row-2">
+                  <div class="input-group">
+                    <label for="globalWidth">Width</label>
+                    <input type="number" id="globalWidth" placeholder="600" />
+                  </div>
+                  <div class="input-group">
+                    <label for="globalHeight">Height</label>
+                    <input type="number" id="globalHeight" placeholder="600" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="sidebar-section">
-            <div class="collapsible-header" onclick="window.toggleGlobalVariables()">
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">
-                  <span class="collapsible-icon collapsed" id="variablesIcon">▼</span>Global Variables
-                </h4>
-                <button type="button" class="btn-small" id="addGlobalVariableBtn" style="padding: 2px 8px; font-size: 0.8em;">+</button>
+            <!-- Global Variables -->
+            <div class="sidebar-section">
+              <div class="section-header">
+                <button type="button" class="collapsible-toggle" id="toggleGlobalVars" style="flex:1;">
+                  <span class="collapsible-arrow" id="arrowGlobalVars">▶</span>
+                  <span class="section-title">Global Variables</span>
+                </button>
+                <button type="button" class="btn-icon btn-add" id="addGlobalVariableBtn" title="Add variable">＋</button>
+              </div>
+              <div class="collapsible-body hidden" id="bodyGlobalVars">
+                <div id="globalVariablesList" style="margin-top:4px;">
+                  <div class="tree-empty">No global variables</div>
+                </div>
               </div>
             </div>
-            <div class="collapsible-content collapsed" id="globalVariablesContent">
-              <div id="globalVariablesList">
-                <div style="color: #666; font-size: 0.85em;">No variables</div>
+
+            <!-- Pages -->
+            <div class="sidebar-section">
+              <div class="section-header">
+                <span class="section-title">Pages</span>
+                <button type="button" class="btn-icon btn-add" id="addPageBtn" title="Add page">＋</button>
+              </div>
+              <div id="pagesListSidebar" class="pages-list">
+                <div class="tree-empty">No pages</div>
               </div>
             </div>
-          </div>
 
-          <div class="sidebar-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-              <h4 style="margin: 0; font-size: 0.95em; color: #c8adff; text-transform: uppercase; letter-spacing: 0.5px;">Pages</h4>
-              <button type="button" class="btn-small" id="addPageBtn" style="padding: 2px 8px; font-size: 0.8em;">+</button>
-            </div>
-            <div id="pagesListSidebar" class="pages-list">
-              <div style="color: #666; font-size: 0.85em; text-align: center; padding: 12px;">No pages</div>
-            </div>
-          </div>
-        </div>
+          </div><!-- /.sidebar-body -->
+        </div><!-- /.editor-sidebar -->
 
-        <!-- Right Panel: Page Editor -->
+        <!-- Main panel -->
         <div class="editor-main">
-          <div id="pageEditorContainer" class="page-editor">
-            <div style="text-align: center; color: #888; padding: 40px;">
-              <p>Select or create a page to edit</p>
-            </div>
+          <div id="pageEditorContainer" style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text2);">
+            <p>Select or create a page to edit</p>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- JSON Editor Tab -->
+      </div><!-- /.editor-layout -->
+    </div><!-- /#editor-tab -->
+
+    <!-- ── RAW EDITOR ──────────────────────────────── -->
     <div id="json-tab" class="tab-content">
       <div class="input-group">
-        <label>Configuration Format</label>
-        <div style="display: flex; gap: 16px; margin-bottom: 12px;">
-          <label style="display: flex; align-items: center; gap: 6px;">
-            <input type="radio" name="cfgFormat" value="json" id="formatJson" checked />
-            JSON
+        <label>Format</label>
+        <div style="display:flex;gap:16px;margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;">
+            <input type="radio" name="cfgFormat" value="json" id="formatJson" checked /> JSON
           </label>
-          <label style="display: flex; align-items: center; gap: 6px;">
-            <input type="radio" name="cfgFormat" value="yaml" id="formatYaml" />
-            YAML
+          <label style="display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;">
+            <input type="radio" name="cfgFormat" value="yaml" id="formatYaml" /> YAML
           </label>
         </div>
       </div>
       <div class="input-group">
-        <label for="cfgArea"><span id="cfgLabel">Raw JSON Configuration</span></label>
-        <textarea id="cfgArea" style="min-height: 400px; font-family: monospace;"></textarea>
+        <label><span id="cfgLabel">Raw JSON Configuration</span></label>
+        <textarea id="cfgArea" style="min-height:420px;"></textarea>
       </div>
       <button type="button" id="syncFromJson">Sync to Visual Editor</button>
     </div>
 
-    <!-- Google Sheets Tab -->
+    <!-- ── GOOGLE SHEETS ───────────────────────────── -->
     <div id="gsheets-tab" class="tab-content">
-      <div id="gsheetsError" style="color: #ff4e4e; font-size: 0.95em; display: none; margin-bottom: 8px;"></div>
+      <div id="gsheetsError" style="color:var(--red);font-size:0.9em;display:none;margin-bottom:10px;"></div>
       <div class="input-group">
         <label for="apiKeyInput">API Key</label>
         <input type="password" id="apiKeyInput" placeholder="Enter Google API Key" autocomplete="off" />
@@ -998,44 +542,42 @@
       </div>
     </div>
 
-    <!-- Token Helper Tab -->
+    <!-- ── TOKEN HELPER ────────────────────────────── -->
     <div id="tokens-tab" class="tab-content">
-      <div class="input-group" style="display:flex; gap:8px; align-items:center;">
-        <input type="text" id="tokensSearch" placeholder="Search tokens by name, id, or text..." style="flex:1;" />
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <input type="text" id="tokensSearch" placeholder="Search by name, id, type…" style="flex:1;" />
         <select id="tokensFilter" style="width:140px;">
           <option value="all">Creator: All</option>
           <option value="me">Creator: Me</option>
         </select>
         <button type="button" id="tokensRefresh">Refresh</button>
       </div>
-      <div id="tokensList" style="margin-top:12px; overflow:auto; max-height:60vh;"></div>
-      <div id="tokensStatus" style="color:#888; font-size:0.9em; margin-top:8px;"></div>
+      <div id="tokensList" style="overflow:auto;max-height:62vh;"></div>
+      <div id="tokensStatus" style="color:var(--text2);font-size:0.85em;margin-top:8px;"></div>
     </div>
 
-    <!-- Debug Mode Tab -->
+    <!-- ── DEBUG ───────────────────────────────────── -->
     <div id="debug-tab" class="tab-content">
-      <h3>Integration Module Debug Modes</h3>
-      <p style="color: #888; font-size: 0.9em; margin-bottom: 16px;">Enable debug mode for specific modules. These settings are stored locally and not saved to config.json.</p>
-      
-      <div id="debugModulesContainer" style="display: flex; flex-direction: column; gap: 12px;">
-        <!-- Debug checkboxes will be inserted here -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <h3 style="color:var(--accent);margin:0;">Integration Module Debug Modes</h3>
+        <button type="button" class="btn-small" id="debugToggleAllBtn">Enable All</button>
       </div>
+      <p style="color:var(--text2);font-size:0.88em;margin-bottom:16px;">Settings stored locally, not in config.</p>
+      <div id="debugModulesContainer"></div>
     </div>
 
-    <!-- Actions are in top header -->
   </form>
 
-  <!-- Element Editor Modal -->
-  <div id="elementModal" class="modal">
+  <!-- ── Element Editor Modal ────────────────────── -->
+  <div id="elementModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title" id="modalTitle">Add Element</h3>
+        <h3 id="modalTitle">Add Element</h3>
         <button type="button" class="close-modal" onclick="closeElementModal()">×</button>
       </div>
-      
       <div class="input-group">
         <label for="elementType">Element Type</label>
-        <select id="elementType" onchange="updateElementFields()">
+        <select id="elementType">
           <option value="button">Button</option>
           <option value="value">Value Display</option>
           <option value="input">Text Input</option>
@@ -1043,21 +585,33 @@
           <option value="checkbox">Checkbox</option>
           <option value="dropdown">Dropdown</option>
           <option value="title">Title</option>
-          <option value="text">Text/Description</option>
+          <option value="text">Text / Description</option>
           <option value="divider">Divider</option>
           <option value="row">Row (Container)</option>
           <option value="stack">Stack (Vertical container)</option>
           <option value="matrix">Matrix (Grid of buttons)</option>
         </select>
       </div>
-
       <div id="elementFields"></div>
-
       <div class="buttons">
         <button type="button" onclick="closeElementModal()">Cancel</button>
-        <button type="button" onclick="saveElement()" id="saveElementBtn">Add Element</button>
+        <button type="button" id="saveElementBtn" onclick="saveElement()">Add Element</button>
       </div>
     </div>
   </div>
+
+  <!-- Collapsible toggle script (no module needed) -->
+  <script>
+    function _toggleSection(arrowId, bodyId) {
+      const arrow = document.getElementById(arrowId);
+      const body  = document.getElementById(bodyId);
+      if (!arrow || !body) return;
+      const open = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', open);
+      arrow.classList.toggle('open', !open);
+    }
+    document.getElementById('toggleSettings').onclick    = () => _toggleSection('arrowSettings', 'bodySettings');
+    document.getElementById('toggleGlobalVars').onclick  = () => _toggleSection('arrowGlobalVars', 'bodyGlobalVars');
+  </script>
 </body>
 </html>

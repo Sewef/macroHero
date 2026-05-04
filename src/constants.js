@@ -8,7 +8,7 @@
  */
 export const ASYNC_INTEGRATION_NAMES = [
   'GoogleSheets', 'OwlTrackers', 'ConditionMarkers', 'StatBubbles',
-  'ColoredRings', 'PrettySordid', 'Local', 'Embers', 'JustDices', 'Weather',
+  'ColoredRings', 'PrettySordid', 'Embers', 'JustDices', 'Weather',
   'Aurora', 'Announcement', 'Auras', 'Owlbear', 'Token', 'Scene'
 ];
 
