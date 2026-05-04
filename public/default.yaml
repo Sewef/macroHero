@@ -19,14 +19,15 @@ pages:
         text: Read data from Google Sheets (read-only)
       - type: divider
       - type: title
-        text: '{sheetValue}'
+        text: ${sheetValue}
       - type: text
-        text: '{sheetValue}'
+        text: ${sheetValue}
       - type: row
         children:
           - type: value
             var: sheetValue
             label: Cell Value
+    _pageIndex: 0
   - label: Conditions
     variables:
       isBandaged:
@@ -1378,7 +1379,6 @@ pages:
               label: 'BOSS',
               size: 3.0
             });
-
             // Add HP tracker (value-max variant)
             await OwlTrackers.addTracker(tokenId, {
               variant: 'value-max',
@@ -1387,7 +1387,6 @@ pages:
               max: 100,
               color: 2
             });
-
             console.log('Created boss with ID:', tokenId);
       - type: divider
       - type: title
@@ -1402,7 +1401,6 @@ pages:
               name: 'Character with Trackers',
               size: 1.5
             });
-
             // Add HP tracker (value-max variant)
             await OwlTrackers.addTracker(tokenId, {
               variant: 'value-max',
@@ -1411,7 +1409,6 @@ pages:
               max: 103,
               color: 2
             });
-
             // Add Temp HP tracker (value variant)
             await OwlTrackers.addTracker(tokenId, {
               variant: 'value',
@@ -1419,7 +1416,6 @@ pages:
               value: 10,
               color: 5
             });
-
             // Add Injuries counter
             await OwlTrackers.addTracker(tokenId, {
               variant: 'counter',
@@ -1428,7 +1424,6 @@ pages:
               color: 2,
               inlineMath: false
             });
-
             // Add unnamed counter
             await OwlTrackers.addTracker(tokenId, {
               variant: 'counter',
@@ -1436,7 +1431,6 @@ pages:
               color: 8,
               inlineMath: false
             });
-
             await setValue('createdTokenId', tokenId);
             console.log('Created token with multiple trackers:', tokenId);
       - type: button
@@ -1447,7 +1441,6 @@ pages:
               console.error('No token ID available. Create a token first.');
               return;
             }
-
             // Remove 'Temp HP' tracker
             const removed = await OwlTrackers.removeTracker(createdTokenId, 'Temp HP');
             if (removed) {
@@ -1747,7 +1740,6 @@ pages:
               { preset: 'GOLDEN_HOUR', delay: 6000, name: 'Sunset' },
               { preset: 'MIDNIGHT', delay: 8000, name: 'Night' }
             ];
-
             for (const phase of cycle) {
               setTimeout(async () => {
                 console.log('Time of Day:', phase.name);
@@ -1758,7 +1750,6 @@ pages:
                 }
               }, phase.delay);
             }
-
             console.log('Day/Night cycle started (10 seconds)');
   - label: Announcement
     variables:
@@ -1962,7 +1953,8 @@ pages:
       diceNotation:
         value: 2d20kh1+5
       lastRollResult:
-        value: Roll a dice to see result
+        value: 'D20: 12'
+        expression: 'D20: 12'
       diceReady:
         eval: DicePlus.isReady()
     layout:
@@ -1979,7 +1971,7 @@ pages:
             var: diceReady
             label: DicePlus Ready?
       - type: text
-        text: 'Last Roll: {lastRollResult}'
+        text: 'Last Roll: ${lastRollResult}'
       - type: divider
       - type: title
         text: Basic Rolls

@@ -34,11 +34,11 @@
         },
         {
           "type": "title",
-          "text": "{sheetValue}"
+          "text": "${sheetValue}"
         },
         {
           "type": "text",
-          "text": "{sheetValue}"
+          "text": "${sheetValue}"
         },
         {
           "type": "row",
@@ -3238,7 +3238,7 @@
         },
         {
           "type": "text",
-          "text": "Last Roll: {lastRollResult}"
+          "text": "Last Roll: ${lastRollResult}"
         },
         {
           "type": "divider"

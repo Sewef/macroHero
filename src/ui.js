@@ -304,64 +304,33 @@ export function updateRenderedValue(varName, value) {
  * Simple variable substitution for plain text with {variable} placeholders
  * Does NOT evaluate expressions - just replaces {variable} with resolved values
  */
-function substituteVariablesSimple(text, variables) {
-  return text.replace(/{([a-zA-Z_]\w*)}/g, (match, varName) => {
-    return variables[varName] !== undefined ? String(variables[varName]) : match;
-  });
-}
-
 /**
- * Evaluate item text - only evaluates expressions explicitly wrapped in {}
+ * Evaluate item text - supports ${variable} and ${expression} syntax
  * @param {Object} item - Layout item with label, text, or content property
  * @param {Object} resolvedVars - Resolved variables for evaluation
  * @returns {Promise<string>} Evaluated text
  */
 async function evaluateItemText(item, resolvedVars) {
-  // Get the text content to process
   let text = item.label ?? item.content ?? item.text ?? "";
   
   if (!text) return "";
   
-  // If the entire text is wrapped in braces like {expression}, extract and evaluate
-  if (typeof text === 'string' && text.match(/^\{.+\}$/)) {
-    const innerExpr = text.slice(1, -1); // Remove outer braces
-    
-    // Check if innerExpr is a simple variable reference (just a word)
-    if (/^\w+$/.test(innerExpr)) {
-      const value = resolvedVars[innerExpr];
-      if (value !== undefined) {
-        return (value === null) ? "" : String(value);
-      }
-      // If variable is not yet resolved, return placeholder instead of trying to evaluate
-      return `{${innerExpr}}`;
-    }
-    
+  // If entire text is ${expression}, try to evaluate as expression
+  const match = text.match(/^\$\{(.+)\}$/);
+  if (match) {
     try {
-      const res = await evaluateExpression(innerExpr, resolvedVars);
+      const res = await evaluateExpression(match[1], resolvedVars);
       return (res === null || res === undefined) ? "" : String(res);
     } catch (err) {
-      // Fall back to simple substitution if expression evaluation fails
-      return substituteVariablesSimple(text, resolvedVars);
+      // Fall through to variable substitution if expression fails
     }
   }
   
-  // Priority 4: If text contains {variable} placeholders, do simple substitution only
-  if (typeof text === 'string' && text.includes('{')) {
-    return substituteVariablesSimple(text, resolvedVars);
-  }
-  
-  // Priority 5: Plain text without any special markers - return as-is
-  return String(text);
-}
-
-/**
- * Check if an item's text should be dynamically evaluated
- * Only true if: label, text, or content contains {placeholder}
- */
-function shouldEvaluateDynamically(item) {
-  // Check if label, text, or content contains {variable} placeholders
-  const textToCheck = item.label || item.text || item.content || '';
-  return textToCheck.includes('{');
+  // Substitute ${variable} placeholders
+  return text.replace(/\$\{([a-zA-Z_]\w*)\}/g, (match, varName) => {
+    const value = resolvedVars[varName];
+    return value !== undefined ? String(value) : match;
+  });
 }
 
 /**
@@ -372,17 +341,12 @@ function shouldEvaluateDynamically(item) {
  * @returns {boolean} True if element was registered for dynamic updates
  */
 function evaluateAndSetElementText(element, item, page) {
-  // Only register for dynamic updates if the item actually has dynamic content
-  const textToCheck = item.label || item.text || item.content || '';
-  const hasPlaceholders = textToCheck.includes('{');
-  
-  if (!hasPlaceholders) {
-    return false;
-  }
+  const text = item.label || item.text || item.content || '';
+  if (!text.includes('${')) return false;
   
   element.textContent = "";
   renderedExpressionElements.push({ element, item, page });
-  const resolvedVars = { ...globalVariables, ...(page? (page._resolved || {}) : {}) };
+  const resolvedVars = { ...globalVariables, ...(page?._resolved || {}) };
   evaluateItemText(item, resolvedVars)
     .then(res => { element.textContent = res; })
     .catch(err => { logger.error('Error evaluating element text:', err); });
