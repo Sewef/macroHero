@@ -3962,6 +3962,531 @@
           "text": "ERROR - Error state (red)"
         }
       ]
+    },
+    {
+      "label": "Matrix Example",
+      "variables": {
+        "spellCooldown1": {
+          "value": 0
+        },
+        "spellCooldown2": {
+          "value": 0
+        }
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Matrix Component - Spell Bar"
+        },
+        {
+          "type": "text",
+          "text": "A grid of small square buttons configured like an MMO spell bar"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "4-Column Spell Bar"
+        },
+        {
+          "type": "matrix",
+          "columns": 4,
+          "buttonSize": "50px",
+          "gap": "4px",
+          "border": true,
+          "buttons": [
+            {
+              "label": "Spell 1",
+              "icon": "🔥",
+              "tooltip": "Fire Spell - Deals 1d6 damage",
+              "borderColor": "#ff4444",
+              "onclick": [
+                "await JustDices.roll('1d6 + 2');"
+              ]
+            },
+            {
+              "label": "Spell 2",
+              "icon": "❄️",
+              "tooltip": "Ice Spell - Freeze enemy",
+              "color": "#ccccff",
+              "borderColor": "#4444ff",
+              "onclick": [
+                "await JustDices.roll('1d8');"
+              ]
+            },
+            {
+              "label": "Heal",
+              "icon": "💚",
+              "tooltip": "Healing Touch - Restore 2d4+2",
+              "color": "#ccffcc",
+              "borderColor": "#44cc44",
+              "onclick": [
+                "await JustDices.roll('2d4 + 2');"
+              ]
+            },
+            {
+              "label": "Buff",
+              "icon": "⭐",
+              "tooltip": "Protective Buff - +2 AC",
+              "color": "#ffffcc",
+              "borderColor": "#cccc44",
+              "onclick": [
+                "console.log('Buff applied!');"
+              ]
+            },
+            {
+              "label": "Lightning",
+              "icon": "⚡",
+              "tooltip": "Bolt of Lightning - 2d10",
+              "color": "#ffddaa",
+              "borderColor": "#ff8800",
+              "onclick": [
+                "await JustDices.roll('2d10');"
+              ]
+            },
+            {
+              "label": "Teleport",
+              "icon": "✨",
+              "tooltip": "Dimension Shift",
+              "color": "#ddccff",
+              "borderColor": "#9944ff",
+              "onclick": [
+                "await Owlbear.notification.show('Teleported!', 'SUCCESS');"
+              ]
+            },
+            {
+              "label": "Shield",
+              "icon": "🛡️",
+              "tooltip": "Barrier - Temporary HP",
+              "color": "#ccffff",
+              "borderColor": "#44cccc",
+              "onclick": [
+                "console.log('Shield spell cast!');"
+              ]
+            },
+            {
+              "label": "Retreat",
+              "icon": "🏃",
+              "tooltip": "Flee from battle",
+              "color": "#ffccff",
+              "borderColor": "#cc44cc",
+              "onclick": [
+                "console.log('Retreating...');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "6-Column Inventory Bar"
+        },
+        {
+          "type": "matrix",
+          "columns": 6,
+          "buttonSize": "40px",
+          "gap": "3px",
+          "border": false,
+          "buttons": [
+            {
+              "icon": "🗡️",
+              "tooltip": "Longsword +1"
+            },
+            {
+              "icon": "🛡️",
+              "tooltip": "Shield (Heavy)"
+            },
+            {
+              "icon": "🪶",
+              "tooltip": "Arrow x24"
+            },
+            {
+              "icon": "🧪",
+              "tooltip": "Healing Potion (2)"
+            },
+            {
+              "icon": "📜",
+              "tooltip": "Scroll of Fireball"
+            },
+            {
+              "icon": "👑",
+              "tooltip": "Amulet of Protection"
+            },
+            {
+              "icon": "🔑",
+              "tooltip": "Golden Key"
+            },
+            {
+              "icon": "📖",
+              "tooltip": "Spellbook"
+            },
+            {
+              "icon": "💍",
+              "tooltip": "Ring of Invisibility"
+            },
+            {
+              "icon": "🧲",
+              "tooltip": "Magnet Stone"
+            },
+            {
+              "icon": "🪨",
+              "tooltip": "Gemstone x3"
+            },
+            {
+              "icon": "🪙",
+              "tooltip": "Gold Coins (150)"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Status Bars (2x4 Grid)"
+        },
+        {
+          "type": "matrix",
+          "columns": 2,
+          "buttonSize": "60px",
+          "gap": "8px",
+          "border": true,
+          "color": "#e74c3c",
+          "buttons": [
+            {
+              "label": "HP",
+              "icon": "❤️",
+              "tooltip": "Health Points"
+            },
+            {
+              "label": "MP",
+              "icon": "💙",
+              "tooltip": "Mana Points"
+            },
+            {
+              "label": "XP",
+              "icon": "⭐",
+              "tooltip": "Experience"
+            },
+            {
+              "label": "STA",
+              "icon": "💨",
+              "tooltip": "Stamina"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Configuration Options"
+        },
+        {
+          "type": "text",
+          "text": "• columns: number of columns (default: 4)"
+        },
+        {
+          "type": "text",
+          "text": "• buttonSize: size in pixels (default: 40px) - buttons are square"
+        },
+        {
+          "type": "text",
+          "text": "• gap: spacing between buttons (default: 4px)"
+        },
+        {
+          "type": "text",
+          "text": "• border: true/false for border and background"
+        },
+        {
+          "type": "text",
+          "text": "• color: accent color for border and effects"
+        },
+        {
+          "type": "text",
+          "text": "• buttons: array of button objects"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Button Properties"
+        },
+        {
+          "type": "text",
+          "text": "• label: text displayed below icon"
+        },
+        {
+          "type": "text",
+          "text": "• icon: emoji or symbol (recommended)"
+        },
+        {
+          "type": "text",
+          "text": "• tooltip: hover text"
+        },
+        {
+          "type": "text",
+          "text": "• color: button background color"
+        },
+        {
+          "type": "text",
+          "text": "• borderColor: individual border color for this button (overrides matrix color)"
+        },
+        {
+          "type": "text",
+          "text": "• onclick: array of commands to execute"
+        },
+        {
+          "type": "text",
+          "text": "• onrightclick: array of commands for right-click (optional)"
+        }
+      ]
+    },
+    {
+      "label": "Matrix with URL Icons",
+      "layout": [
+        {
+          "type": "title",
+          "text": "Icons from URLs"
+        },
+        {
+          "type": "text",
+          "text": "Matrix buttons can use emoji/text icons OR image URLs"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Image URLs Example"
+        },
+        {
+          "type": "matrix",
+          "columns": 4,
+          "buttonSize": "60px",
+          "gap": "4px",
+          "border": true,
+          "color": "#0066cc",
+          "buttons": [
+            {
+              "label": "GitHub",
+              "icon": "https://github.com/fluidicon.png",
+              "tooltip": "Visit GitHub",
+              "onclick": [
+                "console.log('GitHub logo clicked');"
+              ]
+            },
+            {
+              "label": "Browser",
+              "icon": "https://www.google.com/favicon.ico",
+              "tooltip": "Browser icon",
+              "onclick": [
+                "console.log('Browser icon clicked');"
+              ]
+            },
+            {
+              "label": "Settings",
+              "icon": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M12 8c2.21 0 4 1.79 4 4s-1.79 4-4 4-4-1.79-4-4 1.79-4 4-4m0-2C9.34 6 7 8.34 7 12s2.34 6 5 6 5-2.34 5-6-2.34-6-5-6zm9-2.5h-1.26c-.14-.75-.4-1.46-.76-2.1l.89-.89c.39-.39.39-1.02 0-1.41l-1.41-1.41c-.39-.39-1.02-.39-1.41 0l-.89.89c-.64-.36-1.35-.62-2.1-.76V2c0-.55-.45-1-1-1h-2c-.55 0-1 .45-1 1v1.26c-.75.14-1.46.4-2.1.76l-.89-.89c-.39-.39-1.02-.39-1.41 0L2.46 4.58c-.39.39-.39 1.02 0 1.41l.89.89C3.4 7.54 3.14 8.25 3 9H1.74c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h1.26c.14.75.4 1.46.76 2.1l-.89.89c-.39.39-.39 1.02 0 1.41l1.41 1.41c.39.39 1.02.39 1.41 0l.89-.89c.64.36 1.35.62 2.1.76V21c0 .55.45 1 1 1h2c.55 0 1-.45 1-1v-1.26c.75-.14 1.46-.4 2.1-.76l.89.89c.39.39 1.02.39 1.41 0l1.41-1.41c.39-.39.39-1.02 0-1.41l-.89-.89c.36-.64.62-1.35.76-2.1H21c.55 0 1-.45 1-1v-2c0-.55-.45-1-1-1z'/%3E%3C/svg%3E",
+              "tooltip": "Settings icon (SVG data)",
+              "color": "#f0f0f0",
+              "borderColor": "#cccccc",
+              "onclick": [
+                "console.log('Settings clicked');"
+              ]
+            },
+            {
+              "label": "Emoji",
+              "icon": "🎮",
+              "tooltip": "Emoji icon still works",
+              "color": "#fff0cc",
+              "borderColor": "#ffcc00",
+              "onclick": [
+                "console.log('Emoji icon clicked');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Icon Source Options"
+        },
+        {
+          "type": "text",
+          "text": "✓ External URLs: https://example.com/icon.png"
+        },
+        {
+          "type": "text",
+          "text": "✓ Relative paths: /images/icon.png"
+        },
+        {
+          "type": "text",
+          "text": "✓ Data URLs: data:image/svg+xml,..."
+        },
+        {
+          "type": "text",
+          "text": "✓ Base64: data:image/png;base64,..."
+        },
+        {
+          "type": "text",
+          "text": "✓ Emoji/Text: Still works as before (no URL detection)"
+        }
+      ]
+    },
+    {
+      "label": "Right-Click Example",
+      "layout": [
+        {
+          "type": "title",
+          "text": "Right-Click Handlers"
+        },
+        {
+          "type": "text",
+          "text": "Left-click and right-click can execute different commands on both Button and Matrix components"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Normal Buttons with Right-Click"
+        },
+        {
+          "type": "text",
+          "text": "Try left-clicking and right-clicking the buttons below"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Heal / Damage",
+              "tooltip": "Left: Heal 10 HP | Right: Damage 5 HP",
+              "onclick": [
+                "await JustDices.roll('/say Healed 10 HP');"
+              ],
+              "onrightclick": [
+                "await JustDices.roll('/say Took 5 damage');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Buff / Debuff",
+              "tooltip": "Left: +2 AC | Right: -2 AC",
+              "onclick": [
+                "await JustDices.roll('/say AC +2 (Buff applied)');"
+              ],
+              "onrightclick": [
+                "await JustDices.roll('/say AC -2 (Debuff applied)');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Matrix with Right-Click Actions"
+        },
+        {
+          "type": "text",
+          "text": "Each matrix button can have different left-click and right-click behaviors"
+        },
+        {
+          "type": "matrix",
+          "columns": 4,
+          "buttonSize": "50px",
+          "gap": "4px",
+          "border": true,
+          "color": "#0066cc",
+          "buttons": [
+            {
+              "label": "Cast",
+              "icon": "🔥",
+              "tooltip": "Left: Cast | Right: Cancel",
+              "color": "#ffcccc",
+              "borderColor": "#ff4444",
+              "onclick": [
+                "await JustDices.roll('/say Spell cast! 2d6 damage');"
+              ],
+              "onrightclick": [
+                "await JustDices.roll('/say Spell cancelled!');"
+              ]
+            },
+            {
+              "label": "Move",
+              "icon": "🏃",
+              "tooltip": "Left: Move | Right: Sprint",
+              "color": "#ccffcc",
+              "borderColor": "#44cc44",
+              "onclick": [
+                "await JustDices.roll('/say Moving normally...');"
+              ],
+              "onrightclick": [
+                "await JustDices.roll('/say Sprinting!');"
+              ]
+            },
+            {
+              "label": "Attack",
+              "icon": "⚔️",
+              "tooltip": "Left: Normal | Right: Power Attack",
+              "color": "#ffccff",
+              "borderColor": "#cc44cc",
+              "onclick": [
+                "const roll = await JustDices.rollSilent('1d20 + 2');",
+                "console.log('Normal attack: ' + roll);"
+              ],
+              "onrightclick": [
+                "const roll = await JustDices.rollSilent('1d20 - 2');",
+                "console.log('Power attack: ' + roll);"
+              ]
+            },
+            {
+              "label": "Retreat",
+              "icon": "🏃‍♂️",
+              "tooltip": "Left: Flee | Right: Stand Ground",
+              "color": "#ccffff",
+              "borderColor": "#44cccc",
+              "onclick": [
+                "console.log('Fleeing from battle!');"
+              ],
+              "onrightclick": [
+                "console.log('Standing your ground!');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Right-Click Usage Tips"
+        },
+        {
+          "type": "text",
+          "text": "✓ Both Button and Matrix components support onrightclick"
+        },
+        {
+          "type": "text",
+          "text": "✓ Right-click prevents the browser context menu"
+        },
+        {
+          "type": "text",
+          "text": "✓ onrightclick works exactly like onclick - same command format"
+        },
+        {
+          "type": "text",
+          "text": "✓ Perfect for alternate actions: Heal/Damage, Cast/Cancel, etc."
+        }
+      ]
     }
   ]
 }

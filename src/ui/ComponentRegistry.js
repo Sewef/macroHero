@@ -13,6 +13,7 @@ import { RowComponent } from "./RowComponent.js";
 import { StackComponent } from "./StackComponent.js";
 import { ValueComponent } from "./ValueComponent.js";
 import { DropdownComponent } from "./DropdownComponent.js";
+import { MatrixComponent } from "./MatrixComponent.js";
 
 export class ComponentRegistry {
   static #registry = {
@@ -26,6 +27,7 @@ export class ComponentRegistry {
     stack: StackComponent,
     value: ValueComponent,
     dropdown: DropdownComponent,
+    matrix: MatrixComponent,
   };
 
   /**
