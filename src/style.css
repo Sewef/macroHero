@@ -273,8 +273,8 @@ body {
   margin: 0;
   /* background: var(--mh-panel);
   border: 1px solid var(--mh-border);
-  border-radius: var(--radius-md); */
-  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm); */
   flex: 1 1 0;
   min-width: 0;
   align-items: stretch;
@@ -478,7 +478,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-md);
@@ -591,7 +591,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-md);
