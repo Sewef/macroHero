@@ -105,15 +105,37 @@ function buildFields(type, el) {
       ${colorRow(e.color)}
       <p style="color:#c8adff;margin-top:12px;">Stack is a container. Add elements from the tree.</p>`;
 
-    case 'matrix': return `
-      <div class="input-group"><label>Columns</label><input type="number" id="elem_columns" value="${e.columns || 4}" min="1" max="12" /></div>
-      <div class="input-group"><label>Button Size</label><input type="text" id="elem_buttonSize" value="${e.buttonSize || '40px'}" placeholder="40px" /></div>
-      <div class="input-group"><label>Gap</label><input type="text" id="elem_gap" value="${e.gap || '4px'}" placeholder="4px" /></div>
-      <div class="input-group">
-        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
-      </div>
-      ${colorRow(e.color)}
-      <p style="color:#c8adff;margin-top:12px;">Add buttons from the tree.</p>`;
+    case 'matrix': {
+      const isNew = !el;
+      const sizePresets = ['28px','40px','56px','72px'];
+      const gapPresets  = [['2px','Tight'],['4px','Normal'],['8px','Loose']];
+      return `
+        <div class="input-group"><label>Columns</label><input type="number" id="elem_columns" value="${e.columns || 4}" min="1" max="12" /></div>
+        <div class="input-group">
+          <label>Button Size</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+            ${sizePresets.map(v => `<button type="button" class="btn-small btn-preset${(e.buttonSize||'40px')===v?' btn-preset-active':''}" data-target="elem_buttonSize" data-value="${v}">${v}</button>`).join('')}
+          </div>
+          <input type="text" id="elem_buttonSize" value="${e.buttonSize || '40px'}" placeholder="40px" />
+        </div>
+        <div class="input-group">
+          <label>Gap</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+            ${gapPresets.map(([v,l]) => `<button type="button" class="btn-small btn-preset${(e.gap||'4px')===v?' btn-preset-active':''}" data-target="elem_gap" data-value="${v}">${l}</button>`).join('')}
+          </div>
+          <input type="text" id="elem_gap" value="${e.gap || '4px'}" placeholder="4px" />
+        </div>
+        <div class="input-group">
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
+        </div>
+        ${colorRow(e.color)}
+        ${isNew ? `
+        <div class="input-group" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border,#333);">
+          <label>Initialize with N buttons</label>
+          <input type="number" id="elem_initButtons" value="0" min="0" max="200" />
+          <small style="color:#888;font-size:0.85em;margin-top:4px;display:block;">Creates empty buttons — configure them in the tree.</small>
+        </div>` : '<p style="color:#c8adff;margin-top:12px;">Add buttons from the tree.</p>'}`;
+    }
 
     case 'matrixButton': {
       const onclickText  = dedentCommandList(e.onclick || []).join('\n');
@@ -206,7 +228,12 @@ function readFields(type, existingChildren) {
       el.gap = v('elem_gap') || '4px';
       if (checked('elem_border')) el.border = true;
       if (checked('elem_customColor')) el.color = v('elem_color');
-      el.buttons = existingChildren || [];
+      if (existingChildren !== null) {
+        el.buttons = existingChildren;
+      } else {
+        const initCount = Math.min(200, Math.max(0, parseInt(g('elem_initButtons')?.value || '0') || 0));
+        el.buttons = Array.from({ length: initCount }, () => ({ type: 'matrixButton', label: '', onclick: [] }));
+      }
       break;
     case 'matrixButton':
       el.label   = v('mbtn_label');
@@ -230,6 +257,21 @@ function _wireColorToggle(checkboxId, colorId) {
   const cb = document.getElementById(checkboxId);
   const ci = document.getElementById(colorId);
   if (cb && ci) addTrackedListener(cb, 'change', e => { ci.disabled = !e.target.checked; });
+}
+
+function _wirePresetButtons() {
+  document.querySelectorAll('.btn-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const value    = btn.dataset.value;
+      const input    = document.getElementById(targetId);
+      if (input) {
+        input.value = value;
+        document.querySelectorAll(`.btn-preset[data-target="${targetId}"]`).forEach(b => b.classList.remove('btn-preset-active'));
+        btn.classList.add('btn-preset-active');
+      }
+    });
+  });
 }
 
 function _renderFields() {
@@ -256,6 +298,7 @@ export function openElementModal({ type = 'button', element = null, title = 'Add
   _wireColorToggle('elem_customColor', 'elem_color');
   _wireColorToggle('mbtn_hasColor', 'mbtn_color');
   _wireColorToggle('mbtn_hasBorderColor', 'mbtn_borderColor');
+  _wirePresetButtons();
 
   // Re-render when type changes (only when not locked)
   if (!lockType) {
@@ -265,6 +308,7 @@ export function openElementModal({ type = 'button', element = null, title = 'Add
       _wireColorToggle('elem_customColor', 'elem_color');
       _wireColorToggle('mbtn_hasColor', 'mbtn_color');
       _wireColorToggle('mbtn_hasBorderColor', 'mbtn_borderColor');
+      _wirePresetButtons();
     };
   }
 

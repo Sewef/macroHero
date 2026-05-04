@@ -1589,6 +1589,7 @@
           "color": "#9b59b6",
           "buttons": [
             {
+              "type": "matrixButton",
               "icon": "🔥",
               "label": "Fire",
               "tooltip": "Cast fireball",
@@ -1597,6 +1598,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "❄️",
               "label": "Ice",
               "tooltip": "Cast freeze",
@@ -1605,6 +1607,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "⚡",
               "label": "Lightning",
               "tooltip": "Cast lightning bolt",
@@ -1613,6 +1616,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "🌿",
               "label": "Nature",
               "tooltip": "Cast nature magic",
@@ -1621,6 +1625,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "⚔️",
               "label": "Sword",
               "tooltip": "Melee attack",
@@ -1629,6 +1634,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "🛡️",
               "label": "Shield",
               "tooltip": "Defensive stance",
@@ -1637,6 +1643,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "💚",
               "label": "Heal",
               "tooltip": "Restore health",
@@ -1645,6 +1652,7 @@
               ]
             },
             {
+              "type": "matrixButton",
               "icon": "💠",
               "label": "Special",
               "tooltip": "Use special ability",

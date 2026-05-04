@@ -284,6 +284,7 @@ function _renderLayoutTree(pageIndex) {
   ).join('');
 
   _attachTreeActions(container, pageIndex);
+  _wireMatrixButtonDnd(container, pageIndex);
 }
 
 /**
@@ -296,7 +297,11 @@ function _renderLayoutTree(pageIndex) {
 function _renderTreeNode(item, path, pageIndex, depth = 0) {
   const pathStr  = path.join('.');
   const type     = item.type || '?';
-  const label    = _nodeLabel(item);
+  const isMatrix    = type.toLowerCase() === 'matrix';
+  const isMatrixBtn = type.toLowerCase() === 'matrixbutton';
+  const label    = isMatrix
+    ? `${item.columns || 4} cols • ${(item.buttons || []).length} btn`
+    : _nodeLabel(item);
   const isContainer = _isContainer(item);
   const children = _getChildren(item);
   const isLast   = false; // handled by CSS
@@ -307,7 +312,9 @@ function _renderTreeNode(item, path, pageIndex, depth = 0) {
   const parentLen   = _getParentChildCount(_config.pages[pageIndex].layout, path);
   const canMoveDown = path[path.length - 1] < parentLen - 1;
 
-  let html = `<div class="tree-node" data-path="${pathStr}" style="padding-left:${indent + 4}px;">
+  const draggable = isMatrixBtn ? 'draggable="true" data-drag-type="matrixButton"' : '';
+
+  let html = `<div class="tree-node" data-path="${pathStr}" ${draggable} style="padding-left:${indent + 4}px;">
     <div class="tree-node-row">
       ${depth > 0 ? `<span class="tree-indent-guide"></span>` : ''}
       <span class="tree-node-type badge-${_typeColor(type)}">${type}</span>
@@ -351,6 +358,54 @@ function _attachTreeActions(container, pageIndex) {
         case 'moveUp':     _moveNode(pageIndex, path, -1); break;
         case 'moveDown':   _moveNode(pageIndex, path,  1); break;
       }
+    });
+  });
+}
+
+// ── Matrix button drag-and-drop ───────────────────────────────────────────────
+
+let _dndDragPath = null;
+
+function _wireMatrixButtonDnd(container, pageIndex) {
+  const nodes = container.querySelectorAll('[data-drag-type="matrixButton"]');
+  nodes.forEach(node => {
+    node.addEventListener('dragstart', e => {
+      _dndDragPath = node.dataset.path.split('.').map(Number);
+      e.dataTransfer.effectAllowed = 'move';
+      node.style.opacity = '0.5';
+    });
+    node.addEventListener('dragend', () => {
+      node.style.opacity = '';
+      container.querySelectorAll('.dnd-over').forEach(n => n.classList.remove('dnd-over'));
+      _dndDragPath = null;
+    });
+    node.addEventListener('dragover', e => {
+      if (!_dndDragPath) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      container.querySelectorAll('.dnd-over').forEach(n => n.classList.remove('dnd-over'));
+      node.classList.add('dnd-over');
+    });
+    node.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!_dndDragPath) return;
+      const dropPath = node.dataset.path.split('.').map(Number);
+      // Only allow within same matrix (same parent path)
+      const sameParent = _dndDragPath.slice(0, -1).join('.') === dropPath.slice(0, -1).join('.');
+      if (!sameParent) return;
+      const layout = _config.pages[pageIndex].layout;
+      const parent = _getNodeAt(layout, _dndDragPath.slice(0, -1));
+      if (!parent?.buttons) return;
+      const fromIdx = _dndDragPath[_dndDragPath.length - 1];
+      const toIdx   = dropPath[dropPath.length - 1];
+      if (fromIdx === toIdx) return;
+      const [item] = parent.buttons.splice(fromIdx, 1);
+      parent.buttons.splice(toIdx, 0, item);
+      const scrollTop = document.getElementById('layoutTree')?.scrollTop ?? 0;
+      renderPagePanel(pageIndex);
+      const tree = document.getElementById('layoutTree');
+      if (tree) tree.scrollTop = scrollTop;
+      _notify();
     });
   });
 }
