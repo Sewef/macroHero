@@ -54,7 +54,7 @@ export class ValueComponent extends UIComponent {
       valueDiv.appendChild(contentEl);
     }
 
-    this.services.renderedValueElements[this.item.var] = valueDiv;
+    this.registerElement(this.item.var, valueDiv);
     return valueDiv;
   }
 

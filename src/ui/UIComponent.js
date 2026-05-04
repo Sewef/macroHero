@@ -110,6 +110,113 @@ export class UIComponent {
   }
 
   /**
+   * Apply a tooltip to an element.
+   * - Plain text / ${expr} → native title attribute (lazy-evaluated on mouseenter)
+   * - HTML (contains '<') → custom #mh-tooltip div positioned near the cursor
+   *
+   * @param {HTMLElement} element - Target element
+   * @param {string} rawTooltip - Tooltip string (may contain ${vars} or HTML tags)
+   * @param {Function} getResolved - () => resolved vars object, called at hover time
+   */
+  static applyTooltip(element, rawTooltip, getResolved) {
+    if (!rawTooltip) return;
+
+    const isHtml = rawTooltip.includes('<');
+
+    const evaluate = () => {
+      if (!rawTooltip.includes('${')) return rawTooltip;
+      const resolved = getResolved();
+      return rawTooltip.replace(/\$\{([a-zA-Z_]\w*)\}/g, (m, v) => {
+        const val = resolved[v];
+        return val !== undefined ? String(val) : m;
+      });
+    };
+
+    if (!isHtml) {
+      // Plain text — use native title, evaluated lazily
+      element.title = rawTooltip;
+      if (rawTooltip.includes('${')) {
+        element.addEventListener('mouseenter', () => { element.title = evaluate(); });
+      }
+      return;
+    }
+
+    // HTML tooltip — use shared #mh-tooltip div
+    let tooltipEl = document.getElementById('mh-tooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'mh-tooltip';
+      tooltipEl.style.cssText = [
+        'position:fixed',
+        'z-index:99999',
+        'max-width:280px',
+        'padding:6px 10px',
+        'border-radius:6px',
+        'font-size:12px',
+        'line-height:1.5',
+        'pointer-events:none',
+        'display:none',
+        'background:var(--mh-bg-secondary,#1e1e2e)',
+        'color:var(--mh-text,#cdd6f4)',
+        'border:1px solid var(--mh-accent,#89b4fa)',
+        'box-shadow:0 4px 12px rgba(0,0,0,0.5)',
+      ].join(';');
+      document.body.appendChild(tooltipEl);
+    }
+
+    element.addEventListener('mouseenter', (e) => {
+      tooltipEl.innerHTML = evaluate();
+      tooltipEl.style.display = 'block';
+      UIComponent._positionTooltip(tooltipEl, e);
+    });
+    element.addEventListener('mousemove', (e) => {
+      UIComponent._positionTooltip(tooltipEl, e);
+    });
+    element.addEventListener('mouseleave', () => {
+      tooltipEl.style.display = 'none';
+    });
+  }
+
+  static _positionTooltip(el, e) {
+    const margin = 10;
+    const tw = el.offsetWidth  || 200;
+    const th = el.offsetHeight || 60;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let x = e.clientX + margin;
+    let y = e.clientY + margin;
+    if (x + tw > vw - margin) x = e.clientX - tw - margin;
+    if (y + th > vh - margin) y = e.clientY - th - margin;
+    el.style.left = `${Math.max(margin, x)}px`;
+    el.style.top  = `${Math.max(margin, y)}px`;
+  }
+
+  /**
+   * Register a container element for a variable in the shared renderedValueElements map.
+   * Supports multiple elements per variable (array) so that duplicate vars on the same
+   * page all receive external updates correctly.
+   * @param {string} varName - Variable name
+   * @param {HTMLElement} container - The container element to register
+   */
+  registerElement(varName, container) {
+    const map = this.services.renderedValueElements;
+    if (!Array.isArray(map[varName])) map[varName] = [];
+    map[varName].push(container);
+  }
+
+  /**
+   * Register a checkbox input element for a variable in the shared renderedCheckboxElements map.
+   * Supports multiple checkboxes per variable (array).
+   * @param {string} varName - Variable name
+   * @param {HTMLElement} checkboxInput - The <input type="checkbox"> element to register
+   */
+  registerCheckboxElement(varName, checkboxInput) {
+    const map = this.services.renderedCheckboxElements;
+    if (!Array.isArray(map[varName])) map[varName] = [];
+    map[varName].push(checkboxInput);
+  }
+
+  /**
    * Create a debounced version of a function
    * @param {Function} func - Function to debounce
    * @param {number} delayMs - Delay in milliseconds (default 500ms for UI updates)

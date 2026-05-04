@@ -245,8 +245,11 @@ async function renderPageContent(page) {
  * Update a rendered value element when its variable resolves
  */
 export function updateRenderedValue(varName, value) {
-  const element = renderedValueElements[varName];
-  if (element) {
+  const entry = renderedValueElements[varName];
+  // Support both single element (legacy) and array (for multiple counters sharing a variable)
+  const elements = Array.isArray(entry) ? entry : (entry ? [entry] : []);
+
+  for (const element of elements) {
     // Update value display
     const contentDiv = element.querySelector(".mh-value-content");
     if (contentDiv) {
@@ -257,7 +260,6 @@ export function updateRenderedValue(varName, value) {
     // Update counter input if this is a counter
     const counterInput = element.querySelector(".mh-counter-input");
     if (counterInput) {
-      // Update the displayed value
       counterInput.value = value ?? 0;
     }
 
@@ -266,11 +268,18 @@ export function updateRenderedValue(varName, value) {
     if (inputField) {
       inputField.value = value ?? "";
     }
+
+    // Update dropdown select if this is a dropdown
+    const selectField = element.querySelector(".mh-dropdown-select");
+    if (selectField) {
+      selectField.value = value ?? "";
+    }
   }
 
-  // Update checkbox if this variable has one
-  const checkbox = renderedCheckboxElements[varName];
-  if (checkbox) {
+  // Update checkboxes for this variable (supports multiple sharing the same variable)
+  const checkboxEntry = renderedCheckboxElements[varName];
+  const checkboxes = Array.isArray(checkboxEntry) ? checkboxEntry : (checkboxEntry ? [checkboxEntry] : []);
+  for (const checkbox of checkboxes) {
     checkbox.checked = Boolean(value);
   }
 

@@ -96,7 +96,8 @@ export class CounterComponent extends UIComponent {
     container.appendChild(label);
     container.appendChild(controls);
 
-    this.services.renderedValueElements[this.item.var] = container;
+    this.container = container;
+    this.registerElement(this.item.var, container);
 
     // Listen for external changes
     this.setupExternalChangeListener();
@@ -219,11 +220,13 @@ export class CounterComponent extends UIComponent {
    * Setup listener for external changes to this variable
    */
   setupExternalChangeListener() {
+    const myContainer = this.container; // capture own container — not the shared map entry
+
     this.unsubscribe = EventBus.on('store:variableResolved', (varName, value) => {
       if (varName === this.item.var && !this.isUpdatingCounter) {
         logger.log(`External change: ${varName} = ${value}`);
         const constrained = this.applyConstraints(value);
-        const input = this.services.renderedValueElements[this.item.var]?.querySelector('.mh-counter-input');
+        const input = myContainer.querySelector('.mh-counter-input');
         if (input) {
           input.value = constrained;
         }
@@ -236,10 +239,9 @@ export class CounterComponent extends UIComponent {
       }
     });
 
-    // Clean up listener when element is removed from DOM
+    // Clean up listener when OUR container is removed from DOM
     this.observer = new MutationObserver(() => {
-      const container = this.services.renderedValueElements[this.item.var];
-      if (container && !document.contains(container)) {
+      if (!document.contains(myContainer)) {
         this.cleanup();
       }
     });
@@ -252,15 +254,26 @@ export class CounterComponent extends UIComponent {
   cleanup() {
     if (this.unsubscribe) {
       this.unsubscribe();
+      this.unsubscribe = null;
     }
     if (this.observer) {
       this.observer.disconnect();
+      this.observer = null;
     }
     if (this.saveTimer) {
       clearTimeout(this.saveTimer);
+      this.saveTimer = null;
     }
     if (this.onUpdateDebounced) {
       this.onUpdateDebounced.cancel();
+    }
+    // Remove own container from the shared array
+    if (this.container) {
+      const elements = this.services.renderedValueElements[this.item.var];
+      if (Array.isArray(elements)) {
+        const idx = elements.indexOf(this.container);
+        if (idx !== -1) elements.splice(idx, 1);
+      }
     }
   }
 }

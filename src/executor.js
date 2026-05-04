@@ -140,9 +140,11 @@ function createHelperFunctions(page, pageIndex = 0) {
       // Update page._resolved immediately - this is the source of truth for UI
       page._resolved[varName] = newValue;
 
-      // Update resolved value and emit event (ui.js listeners will handle UI updates)
+      // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
       variableStore.setVariableResolved(varName, newValue, pageIndex);
       variableStore.markVariableModified(varName);
+      eventBus.emit('store:variableResolved', varName, newValue, pageIndex);
+      updateRenderedValue(varName, newValue);
 
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
@@ -158,6 +160,7 @@ function createHelperFunctions(page, pageIndex = 0) {
             page._resolved[depVarName] = depValue;
             updateRenderedValue(depVarName, depValue);
             variableStore.setVariableResolved(depVarName, depValue, pageIndex);
+            eventBus.emit('store:variableResolved', depVarName, depValue, pageIndex);
             logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };
@@ -187,9 +190,11 @@ function createHelperFunctions(page, pageIndex = 0) {
       // Update page._resolved immediately - this is the source of truth for UI
       page._resolved[varName] = newValue;
 
-      // Update resolved value and emit event (ui.js listeners will handle UI updates)
+      // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
       variableStore.setVariableResolved(varName, newValue, pageIndex);
       variableStore.markVariableModified(varName);
+      eventBus.emit('store:variableResolved', varName, newValue, pageIndex);
+      updateRenderedValue(varName, newValue);
 
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
@@ -205,6 +210,7 @@ function createHelperFunctions(page, pageIndex = 0) {
             page._resolved[depVarName] = depValue;
             updateRenderedValue(depVarName, depValue);
             variableStore.setVariableResolved(depVarName, depValue, pageIndex);
+            eventBus.emit('store:variableResolved', depVarName, depValue, pageIndex);
             logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };

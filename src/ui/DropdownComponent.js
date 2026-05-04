@@ -53,7 +53,7 @@ export class DropdownComponent extends UIComponent {
     const currentValue = this.getResolvedValue(this.item.var, variable.value ?? '');
     select.value = currentValue;
 
-    this.services.renderedValueElements[this.item.var] = container;
+    this.registerElement(this.item.var, container);
 
     // Handle changes
     this.addEventListener(select, "change", async () => {

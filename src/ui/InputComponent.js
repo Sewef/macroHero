@@ -41,7 +41,7 @@ export class InputComponent extends UIComponent {
     const currentValue = this.getResolvedValue(this.item.var, variable.value ?? variable.eval ?? "");
     input.value = currentValue;
 
-    this.services.renderedValueElements[this.item.var] = container;
+    this.registerElement(this.item.var, container);
 
     // Handle value changes
     this.addEventListener(input, "blur", () => {

@@ -25,8 +25,8 @@ export class CheckboxComponent extends UIComponent {
     checkbox.type = "checkbox";
     checkbox.className = "mh-checkbox-field";
     
-    this.services.renderedCheckboxElements[this.item.var] = checkbox;
-    
+    this.registerCheckboxElement(this.item.var, checkbox);
+
     const currentValue = this.getResolvedValue(this.item.var, variable.value ?? false);
     checkbox.checked = Boolean(currentValue);
     

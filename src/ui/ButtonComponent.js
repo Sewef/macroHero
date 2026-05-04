@@ -33,20 +33,12 @@ export class ButtonComponent extends UIComponent {
       btn.disabled = true;
     }
 
-    // Set tooltip — supports ${varName} expressions, evaluated lazily on hover
-    const rawTooltip = this.item.tooltip || this.item.label || (hasOnclick ? "Button" : "No commands defined");
-    if (rawTooltip.includes('${')) {
-      btn.title = rawTooltip;
-      this.addEventListener(btn, 'mouseenter', () => {
-        const resolved = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
-        btn.title = rawTooltip.replace(/\$\{([a-zA-Z_]\w*)\}/g, (m, v) => {
-          const val = resolved[v];
-          return val !== undefined ? String(val) : m;
-        });
-      });
-    } else {
-      btn.title = rawTooltip;
-    }
+    // Set tooltip — plain text, ${vars}, or HTML (see UIComponent.applyTooltip)
+    UIComponent.applyTooltip(
+      btn,
+      this.item.tooltip || this.item.label || (hasOnclick ? 'Button' : 'No commands defined'),
+      () => ({ ...this.services.globalVariables, ...(this.page?._resolved || {}) })
+    );
 
     // Add right-click handler if onrightclick commands exist
     if (this.item.onrightclick && Array.isArray(this.item.onrightclick) && this.item.onrightclick.length > 0) {

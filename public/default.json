@@ -1224,7 +1224,7 @@
         },
         {
           "type": "text",
-          "text": "Tooltips support ${varName} expressions evaluated at hover time — always up to date. Try incrementing the counter, then hover the button."
+          "text": "Tooltips support ${varName} expressions (plain text) and full HTML markup. Hover the buttons below."
         },
         {
           "type": "row",
@@ -1237,11 +1237,24 @@
             },
             {
               "type": "button",
-              "label": "Hover me",
+              "label": "Plain tooltip",
               "tooltip": "Counter is currently: ${counterValue}",
               "color": "#e67e22",
               "onclick": [
                 "await Owlbear.notification.show('Counter value: ' + counterValue, 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "HTML tooltip",
+              "tooltip": "<b style='color:#f9e2af'>Counter:</b> ${counterValue}<br><hr style='margin:4px 0;border-color:#45475a'><span style='color:#a6e3a1'>Left-click</span> to confirm<br><span style='color:#f38ba8'>Right-click</span> to reset",
+              "color": "#6c3483",
+              "onclick": [
+                "await Owlbear.notification.show('Confirmed! Counter = ' + counterValue, 'SUCCESS');"
+              ],
+              "onrightclick": [
+                "await setValue('counterValue', 0);",
+                "await Owlbear.notification.show('Counter reset', 'WARNING');"
               ]
             }
           ]
