@@ -18,6 +18,8 @@ const broadcastUnsubs = [];
  * Respects the user's theme preference and updates colors dynamically
  */
 function applyTheme(theme) {
+  const isLight = theme.mode === 'LIGHT';
+  const root = document.documentElement;
   
   logger.log(`Applied: ${isLight ? "light" : "dark"} theme`);
   
