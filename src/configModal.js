@@ -35,7 +35,7 @@ function cleanupAllListeners() {
     }
   });
   activeListeners = [];
-  logger.log("Cleaned up ' + activeListeners.length + ' event listeners");
+  logger.log("Cleaned up " + activeListeners.length + " event listeners");
 }
 
 let currentConfig = null;
