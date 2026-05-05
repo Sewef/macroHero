@@ -2719,7 +2719,41 @@
         },
         {
           "type": "title",
-          "text": "8. Input",
+          "text": "8. Toggle",
+          "color": "#3498db"
+        },
+        {
+          "type": "text",
+          "text": "Modern toggle switch for boolean values. Better UX than checkbox for boolean states. Supports custom colors and onupdate callbacks."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "toggle",
+              "var": "checkboxValue",
+              "label": "Basic Toggle"
+            },
+            {
+              "type": "toggle",
+              "var": "checkboxValue",
+              "label": "Blue Toggle",
+              "color": "#3498db"
+            },
+            {
+              "type": "toggle",
+              "var": "checkboxValue",
+              "label": "Green Toggle",
+              "color": "#27ae60"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "9. Input",
           "color": "#3498db"
         },
         {
@@ -2737,7 +2771,7 @@
         },
         {
           "type": "title",
-          "text": "9. Dropdown",
+          "text": "10. Dropdown",
           "color": "#3498db"
         },
         {
@@ -2779,7 +2813,7 @@
         },
         {
           "type": "title",
-          "text": "10. Row",
+          "text": "11. Row",
           "color": "#3498db"
         },
         {
@@ -2817,7 +2851,7 @@
         },
         {
           "type": "title",
-          "text": "11. Stack",
+          "text": "12. Stack",
           "color": "#3498db"
         },
         {

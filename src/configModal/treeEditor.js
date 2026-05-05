@@ -706,7 +706,7 @@ function _typeColor(type) {
   const t = (type || '').toLowerCase();
   const map = {
     button: 'purple', value: 'blue', input: 'green', counter: 'orange',
-    checkbox: 'cyan', dropdown: 'teal', title: 'pink', text: 'gray',
+    checkbox: 'cyan', toggle: 'cyan', dropdown: 'teal', title: 'pink', text: 'gray',
     divider: 'gray', row: 'indigo', stack: 'indigo', matrix: 'amber',
     matrixbutton: 'amber'
   };

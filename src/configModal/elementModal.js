@@ -72,6 +72,12 @@ function buildFields(type, el) {
       ${colorRow(e.color)}
       ${onUpdateRow(e.onupdate, e.var || 'variableName', 'Executes immediately when toggled')}`;
 
+    case 'toggle': return `
+      <div class="input-group"><label>Variable Name</label><input type="text" id="elem_var" value="${e.var || ''}" placeholder="variableName" /></div>
+      <div class="input-group"><label>Label</label><input type="text" id="elem_label" value="${e.label || ''}" placeholder="Toggle Label" /></div>
+      ${colorRow(e.color)}
+      ${onUpdateRow(e.onupdate, e.var || 'variableName', 'Executes immediately when toggled')}`;
+
     case 'dropdown': {
       const optionsText = (e.options || []).map(opt =>
         typeof opt === 'string' ? opt : `${opt.label || ''} | ${opt.value || ''}`
@@ -217,6 +223,11 @@ function readFields(type, existingChildren) {
       el.var = v('elem_var'); el.label = v('elem_label');
       if (checked('elem_customColor')) el.color = v('elem_color');
       const ou_cb = lines('elem_onupdate'); if (ou_cb.length) el.onupdate = ou_cb;
+      break;
+    case 'toggle':
+      el.var = v('elem_var'); el.label = v('elem_label');
+      if (checked('elem_customColor')) el.color = v('elem_color');
+      const ou_tg = lines('elem_onupdate'); if (ou_tg.length) el.onupdate = ou_tg;
       break;
     case 'dropdown':
       el.var = v('elem_var'); el.label = v('elem_label');

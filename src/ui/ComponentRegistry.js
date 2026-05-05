@@ -15,12 +15,14 @@ import { ValueComponent } from "./ValueComponent.js";
 import { DropdownComponent } from "./DropdownComponent.js";
 import { MatrixComponent } from "./MatrixComponent.js";
 import { DividerComponent } from "./DividerComponent.js";
+import { ToggleComponent } from "./ToggleComponent.js";
 
 export class ComponentRegistry {
   static #registry = {
     button: ButtonComponent,
     input: InputComponent,
     checkbox: CheckboxComponent,
+    toggle: ToggleComponent,
     counter: CounterComponent,
     text: TextComponent,
     title: TitleComponent,
