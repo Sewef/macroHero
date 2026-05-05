@@ -14,6 +14,7 @@ import { StackComponent } from "./StackComponent.js";
 import { ValueComponent } from "./ValueComponent.js";
 import { DropdownComponent } from "./DropdownComponent.js";
 import { MatrixComponent } from "./MatrixComponent.js";
+import { DividerComponent } from "./DividerComponent.js";
 
 export class ComponentRegistry {
   static #registry = {
@@ -28,6 +29,7 @@ export class ComponentRegistry {
     value: ValueComponent,
     dropdown: DropdownComponent,
     matrix: MatrixComponent,
+    divider: DividerComponent,
   };
 
   /**
