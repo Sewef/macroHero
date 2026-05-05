@@ -477,6 +477,64 @@ body {
   color: var(--mh-accent);
 }
 
+/* ── Alert Component ──────────────────────────────────────────────────────────────── */
+
+.mh-layout-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  border-left: 4px solid;
+  background-color: rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+}
+
+.mh-alert-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mh-alert-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mh-alert-title {
+  font-weight: 600;
+  color: var(--mh-text);
+}
+
+.mh-alert-message {
+  color: var(--mh-text);
+  line-height: 1.4;
+}
+
+/* Alert Types */
+
+.mh-alert-info {
+  border-left-color: #3498db;
+  background-color: rgba(52, 152, 219, 0.08);
+}
+
+.mh-alert-warning {
+  border-left-color: #f39c12;
+  background-color: rgba(243, 156, 18, 0.08);
+}
+
+.mh-alert-success {
+  border-left-color: #27ae60;
+  background-color: rgba(39, 174, 96, 0.08);
+}
+
+.mh-alert-error {
+  border-left-color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.08);
+}
+
 /* ============================================
    LAYOUT ELEMENTS - COUNTER
    ============================================ */

@@ -120,6 +120,25 @@ function buildFields(type, el) {
         </select>
       </div>`;
 
+    case 'alert': return `
+      <div class="input-group">
+        <label>Alert Type</label>
+        <select id="elem_alert">
+          <option value="info" ${e.alert === 'info' ? 'selected' : ''}>Info</option>
+          <option value="warning" ${e.alert === 'warning' ? 'selected' : ''}>Warning</option>
+          <option value="success" ${e.alert === 'success' ? 'selected' : ''}>Success</option>
+          <option value="error" ${e.alert === 'error' ? 'selected' : ''}>Error</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Title (optional)</label>
+        <input type="text" id="elem_title" value="${e.title || ''}" placeholder="Alert Title" />
+      </div>
+      <div class="input-group">
+        <label>Message Text</label>
+        <textarea id="elem_text">${e.text || e.message || ''}</textarea>
+      </div>`;
+
     case 'row': return `<p style="color:#c8adff;">Row is a container. Add elements from the tree.</p>`;
 
     case 'stack': return `
@@ -250,6 +269,11 @@ function readFields(type, existingChildren) {
       const h = v('elem_height'); if (h) el.height = h;
       const m = v('elem_margin'); if (m) el.margin = m;
       const st = v('elem_style'); if (st) el.style = st;
+      break;
+    case 'alert':
+      el.alert = v('elem_alert') || 'info';
+      const title = v('elem_title'); if (title) el.title = title;
+      el.text = v('elem_text');
       break;
     case 'row':
     case 'stack':

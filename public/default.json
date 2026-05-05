@@ -3107,7 +3107,7 @@
         },
         {
           "type": "title",
-          "text": "12. Divider",
+          "text": "13. Divider",
           "color": "#3498db"
         },
         {
@@ -3119,11 +3119,57 @@
         },
         {
           "type": "title",
+          "text": "14. Alert",
+          "color": "#3498db"
+        },
+        {
+          "type": "text",
+          "text": "Notification messages with different types: info (ℹ️), warning (⚠️), success (✓), error (❌). Used to display feedback or important information to the user."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "alert",
+              "alert": "info",
+              "title": "Info Alert",
+              "text": "This is an informational message"
+            },
+            {
+              "type": "alert",
+              "alert": "warning",
+              "title": "Warning Alert",
+              "text": "This is a warning message"
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "alert",
+              "alert": "success",
+              "title": "Success Alert",
+              "text": "Operation completed successfully"
+            },
+            {
+              "type": "alert",
+              "alert": "error",
+              "title": "Error Alert",
+              "text": "An error occurred during the operation"
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
           "text": "Summary of Properties"
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }

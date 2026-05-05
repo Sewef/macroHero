@@ -708,7 +708,7 @@ function _typeColor(type) {
     button: 'purple', value: 'blue', input: 'green', counter: 'orange',
     checkbox: 'cyan', toggle: 'cyan', dropdown: 'teal', title: 'pink', text: 'gray',
     divider: 'gray', row: 'indigo', stack: 'indigo', matrix: 'amber',
-    matrixbutton: 'amber'
+    matrixbutton: 'amber', alert: 'red'
   };
   return map[t] || 'gray';
 }
