@@ -853,7 +853,7 @@
         },
         {
           "type": "text",
-          "text": "Use .sequence().projectile().aoe().cone().delay().then().cast() for complex effects."
+          "text": "Use `.sequence().projectile().aoe().cone().delay().then().cast()` for complex effects."
         }
       ]
     },
@@ -1281,11 +1281,7 @@
         },
         {
           "type": "text",
-          "text": "Buttons support right-click (onrightclick) for alternate actions. Perfect for dual-action buttons like Heal/Damage, Cast/Cancel, etc."
-        },
-        {
-          "type": "text",
-          "text": "Try LEFT-clicking and RIGHT-clicking the buttons below to see different behaviors:"
+          "text": "Buttons support right-click (onrightclick) for alternate actions. Perfect for dual-action buttons like Heal/Damage, Cast/Cancel, etc.\nTry LEFT-clicking and RIGHT-clicking the buttons below to see different behaviors:"
         },
         {
           "type": "row",
@@ -1370,27 +1366,7 @@
         },
         {
           "type": "text",
-          "text": "Button properties summary:"
-        },
-        {
-          "type": "text",
-          "text": "• onclick: Array of commands executed on LEFT-click"
-        },
-        {
-          "type": "text",
-          "text": "• onrightclick: Array of commands executed on RIGHT-click (optional)"
-        },
-        {
-          "type": "text",
-          "text": "• label: Button text"
-        },
-        {
-          "type": "text",
-          "text": "• color: Button background color (hex code)"
-        },
-        {
-          "type": "text",
-          "text": "• tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
+          "text": "Button properties summary:\n• onclick: Array of commands executed on LEFT-click\n• onrightclick: Array of commands executed on RIGHT-click (optional)\n• label: Button text\n• color: Button background color (hex code)\n• tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
         },
         {
           "type": "divider"
@@ -1532,11 +1508,7 @@
         },
         {
           "type": "text",
-          "text": "Horizontal container that displays child elements in a row. Auto-distributes space equally."
-        },
-        {
-          "type": "text",
-          "text": "Example row with 3 buttons:"
+          "text": "Horizontal container that displays child elements in a row. Auto-distributes space equally.\nExample row with 3 buttons:"
         },
         {
           "type": "row",
@@ -1631,11 +1603,7 @@
         },
         {
           "type": "text",
-          "text": "Grid of square buttons in a specified number of columns. Perfect for spell bars or inventory layouts."
-        },
-        {
-          "type": "text",
-          "text": "Example: 4-column spell bar"
+          "text": "Grid of square buttons in a specified number of columns. Perfect for spell bars or inventory layouts.\nExample: 4-column spell bar"
         },
         {
           "type": "matrix",
@@ -1822,35 +1790,7 @@
         },
         {
           "type": "text",
-          "text": "matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick."
-        },
-        {
-          "type": "text",
-          "text": "• icon only → large icon, no label beneath"
-        },
-        {
-          "type": "text",
-          "text": "• label only → text centered in the button"
-        },
-        {
-          "type": "text",
-          "text": "• icon + label → icon above, label below"
-        },
-        {
-          "type": "text",
-          "text": "• icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot."
-        },
-        {
-          "type": "text",
-          "text": "• color → button background; borderColor → overrides the border independently"
-        },
-        {
-          "type": "text",
-          "text": "• onrightclick → alternate action on right-click (same as regular buttons)"
-        },
-        {
-          "type": "text",
-          "text": "• empty onclick [] → button is rendered disabled at 50% opacity"
+          "text": "matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick.\n• icon only → large icon, no label beneath\n• label only → text centered in the button\n• icon + label → icon above, label below\n• icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot.\n• color → button background; borderColor → overrides the border independently\n• onrightclick → alternate action on right-click (same as regular buttons)\nempty onclick [] → button is rendered disabled at 50% opacity"
         },
         {
           "type": "divider"
@@ -1873,51 +1813,7 @@
         },
         {
           "type": "text",
-          "text": "✓ title: text, color"
-        },
-        {
-          "type": "text",
-          "text": "✓ text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)"
-        },
-        {
-          "type": "text",
-          "text": "✓ value: var, label"
-        },
-        {
-          "type": "text",
-          "text": "✓ button: label, onclick, tooltip, color, onrightclick"
-        },
-        {
-          "type": "text",
-          "text": "✓ counter: var, label, step, color, onupdate"
-        },
-        {
-          "type": "text",
-          "text": "✓ checkbox: var, label, color, onupdate"
-        },
-        {
-          "type": "text",
-          "text": "✓ input: var, label, placeholder, onupdate"
-        },
-        {
-          "type": "text",
-          "text": "✓ dropdown: var, label, options, onupdate"
-        },
-        {
-          "type": "text",
-          "text": "✓ row: children (array of elements)"
-        },
-        {
-          "type": "text",
-          "text": "✓ stack: children, border, color"
-        },
-        {
-          "type": "text",
-          "text": "✓ matrix: columns, buttonSize, gap, border, color, children"
-        },
-        {
-          "type": "text",
-          "text": "✓ divider: (no properties)"
+          "text": "✓ title: text, color\n✓ text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n✓ value: var, label\n✓ button: label, onclick, tooltip, color, onrightclick\n✓ counter: var, label, step, color, onupdate\n✓ checkbox: var, label, color, onupdate\n✓ input: var, label, placeholder, onupdate\n✓ dropdown: var, label, options, onupdate\n✓ row: children (array of elements)\n✓ stack: children, border, color\n✓ matrix: columns, buttonSize, gap, border, color, children\n✓ divider: (no properties)"
         }
       ]
     }
