@@ -736,6 +736,27 @@
           "children": [
             {
               "type": "button",
+              "label": "min 4d6",
+              "onclick": [
+                "await JustDices.roll('min 4d6');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "max 4d6",
+              "onclick": [
+                "await JustDices.roll('max 4d6');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Roll DB4 (PTU)",
+              "onclick": [
+                "await JustDices.roll('db4');"
+              ]
+            },
+            {
+              "type": "button",
               "label": "/say Hello World!",
               "onclick": [
                 "await JustDices.roll('/say Hello World!');"
@@ -760,6 +781,9 @@
         },
         "storageValue": {
           "value": "myValue"
+        },
+        "persistentCounter": {
+          "eval": "Local.value('persistentCounter', 0)"
         }
       },
       "layout": [
@@ -769,22 +793,36 @@
         },
         {
           "type": "text",
-          "text": "Store and retrieve persistent data in browser localStorage. Useful for custom counters and settings."
+          "text": "Persist data across sessions using `Local`. Values survive page reload and browser restarts — they are stored in the browser's `localStorage` under a single `macroHero_localStorage` key.\n\nAvailable methods:\n- `Local.value(key, default)` — read a value (returns `default` if not set)\n- `Local.set(key, value)` — write a value (any type: string, number, object…)\n- `Local.keys()` — list all stored keys\n- `Local.clear()` — wipe everything"
         },
         {
           "type": "divider"
         },
         {
-          "type": "input",
-          "var": "storageKey",
-          "label": "Key",
-          "placeholder": "Storage key"
+          "type": "title",
+          "text": "Free-form Read / Write",
+          "color": "#3498db"
         },
         {
-          "type": "input",
-          "var": "storageValue",
-          "label": "Value",
-          "placeholder": "Storage value"
+          "type": "text",
+          "text": "Write any key/value pair and read it back."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "input",
+              "var": "storageKey",
+              "label": "Key",
+              "placeholder": "myKey"
+            },
+            {
+              "type": "input",
+              "var": "storageValue",
+              "label": "Value",
+              "placeholder": "myValue"
+            }
+          ]
         },
         {
           "type": "row",
@@ -792,24 +830,124 @@
             {
               "type": "button",
               "label": "Save",
+              "color": "#27ae60",
               "onclick": [
-                "await Local.set(storageKey, storageValue);",
-                "await Owlbear.notification.show('Data saved', 'SUCCESS');"
+                "Local.set(storageKey, storageValue);",
+                "await Owlbear.notification.show('Saved: ' + storageKey + ' = ' + storageValue, 'SUCCESS');"
               ]
             },
             {
               "type": "button",
-              "label": "Retrieve",
+              "label": "Read",
+              "color": "#2980b9",
               "onclick": [
-                "const value = await Local.value(storageKey, 'Not found');",
-                "await Owlbear.notification.show(storageKey + ': ' + value, 'INFO');"
+                "const v = Local.value(storageKey, '(not set)');",
+                "await Owlbear.notification.show(storageKey + ' → ' + v, 'INFO');"
               ]
             },
+            {
+              "type": "button",
+              "label": "List Keys",
+              "color": "#7f8c8d",
+              "onclick": [
+                "const keys = Local.keys();",
+                "await Owlbear.notification.show(keys.length ? keys.join(', ') : '(empty)', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Persistent Counter",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "A counter whose value survives page reload. `persistentCounter` is an `eval` variable — it reads `Local.value('persistentCounter', 0)` on load."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "var": "persistentCounter",
+              "label": "Persistent Counter"
+            },
+            {
+              "type": "button",
+              "label": "+1",
+              "color": "#27ae60",
+              "onclick": [
+                "const next = Local.value('persistentCounter', 0) + 1;",
+                "Local.set('persistentCounter', next);",
+                "await setValue('persistentCounter', next);"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Reset",
+              "color": "#e74c3c",
+              "onclick": [
+                "Local.set('persistentCounter', 0);",
+                "await setValue('persistentCounter', 0);"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Store Structured Data",
+          "color": "#9b59b6"
+        },
+        {
+          "type": "text",
+          "text": "`Local.set` accepts any JSON-serializable value. Use objects to bundle related state."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Save party snapshot",
+              "tooltip": "Stores { tank: 45, healer: 60, dps: 30 } under 'party'",
+              "color": "#9b59b6",
+              "onclick": [
+                "Local.set('party', { tank: 45, healer: 60, dps: 30 });",
+                "await Owlbear.notification.show('Party snapshot saved', 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Read tank HP",
+              "tooltip": "Reads party.tank from the saved snapshot",
+              "color": "#9b59b6",
+              "onclick": [
+                "const party = Local.value('party', {});",
+                "await Owlbear.notification.show('Tank HP: ' + (party.tank ?? 'n/a'), 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "row",
+          "children": [
             {
               "type": "button",
               "label": "Clear All",
+              "color": "#c0392b",
+              "tooltip": "Wipes all keys from Local storage",
               "onclick": [
-                "await Local.clear();",
+                "Local.clear();",
+                "await setValue('persistentCounter', 0);",
                 "await Owlbear.notification.show('Local storage cleared', 'WARNING');"
               ]
             }
@@ -819,6 +957,11 @@
     },
     {
       "label": "Weather",
+      "variables": {
+        "mapID": {
+          "value": null
+        }
+      },
       "layout": [
         {
           "type": "title",
@@ -826,14 +969,31 @@
         },
         {
           "type": "text",
-          "text": "Add atmospheric effects to the scene. Choose from rain, snow, fog, and other weather patterns."
+          "text": "Add atmospheric effects to the scene. Choose from rain, snow, fog, and other weather patterns to enhance immersion and set the mood."
+        },
+        {
+          "type": "text",
+          "text": "The Weather extension allows you to apply dynamic environmental effects to your map. You can control:\n- **Type** — the weather pattern ('SNOW', 'RAIN', 'SAND', 'FIRE', 'CLOUD', 'BLOOM', 'ENERGYSTORM', 'WATER', 'CURRENT')\n- **Speed** — how fast the effect moves (1-4, default 1)\n- **Density** — intensity or coverage (1-4, default 3)\n- **Tint** — color overlay in hex format (e.g., `#4a6fa5` for blue tone)\n\nWeather effects are visible to all players in the scene.\nWarning: ENERGYSTORM, WATER, CURRENT effects and Tint parameter are only availaible use [Weather-extended](https://github.com/IAmConorNolan/weather-extended) version of the extension."
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "input",
+          "var": "mapID",
+          "label": "Map ID",
+          "placeholder": "Paste your map item ID here"
         },
         {
           "type": "divider"
         },
         {
           "type": "title",
-          "text": "Weather Types"
+          "text": "Quick Weather Types"
+        },
+        {
+          "type": "text",
+          "text": "Apply a preset weather type with default settings (speed 1, density 3). All effects are immediately visible to players."
         },
         {
           "type": "row",
@@ -842,7 +1002,7 @@
               "type": "button",
               "label": "Rain",
               "onclick": [
-                "await Weather.setWeather('rain');",
+                "await Weather.setWeather(mapID, { type: 'RAIN' });",
                 "await Owlbear.notification.show('Rain effect applied', 'INFO');"
               ]
             },
@@ -850,7 +1010,7 @@
               "type": "button",
               "label": "Snow",
               "onclick": [
-                "await Weather.setWeather('snow');",
+                "await Weather.setWeather(mapID, { type: 'SNOW' });",
                 "await Owlbear.notification.show('Snow effect applied', 'INFO');"
               ]
             },
@@ -858,8 +1018,46 @@
               "type": "button",
               "label": "Fog",
               "onclick": [
-                "await Weather.setWeather('fog');",
+                "await Weather.setWeather(mapID, { type: 'BLOOM' });",
                 "await Owlbear.notification.show('Fog effect applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "title",
+          "text": "Advanced Weather Types",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "Apply weather with custom speed, density, and color tints for more dramatic effects:"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Sand Storm",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'SAND', speed: 3, density: 4 });",
+                "await Owlbear.notification.show('Sand storm applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Fire Rain",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'FIRE', density: 2, tint: '#ff6600' });",
+                "await Owlbear.notification.show('Fire rain applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Energy Storm",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'ENERGYSTORM', speed: 4, tint: '#00ff00' });",
+                "await Owlbear.notification.show('Energy storm applied', 'INFO');"
               ]
             }
           ]
@@ -869,10 +1067,126 @@
           "children": [
             {
               "type": "button",
+              "label": "Water",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'WATER', speed: 2 });",
+                "await Owlbear.notification.show('Water effect applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Cloud Cover",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'CLOUD', density: 3 });",
+                "await Owlbear.notification.show('Cloud cover applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Current (Custom)",
+              "onclick": [
+                "await Weather.setWeather(mapID, { type: 'CURRENT', speed: 2, density: 2 });",
+                "await Owlbear.notification.show('Current weather applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Weather Management"
+        },
+        {
+          "type": "text",
+          "text": "Query, check, and clear active weather effects on your map. Use these to manage or verify current conditions."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Get Weather",
+              "color": "#2980b9",
+              "tooltip": "Displays current type, speed, and density",
+              "onclick": [
+                "const weather = await Weather.getWeather(mapID);",
+                "if (weather) {",
+                "  await Owlbear.notification.show(`Current: ${weather.type} (Speed: ${weather.speed}, Density: ${weather.density})`, 'INFO');",
+                "} else {",
+                "  await Owlbear.notification.show('No weather on map', 'WARNING');",
+                "}"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Check Weather",
+              "color": "#2980b9",
+              "tooltip": "Yes/No check: is there active weather?",
+              "onclick": [
+                "const has = await Weather.hasWeather(mapID);",
+                "await Owlbear.notification.show(has ? 'Weather is active' : 'No weather', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
               "label": "Clear Weather",
               "onclick": [
-                "await Weather.clearWeather();",
+                "await Weather.removeWeather(mapID);",
                 "await Owlbear.notification.show('Weather cleared', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Dynamic Weather Modification",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "Craft intense atmospheric moments by combining weather effects with custom parameters:\n- **Intense Storm**: Maximum speed and density for dramatic effect\n- **Update Speed**: Change how fast weather moves without restarting\n- **Update Tint**: Overlay a color to shift the mood (e.g., red for danger, blue for cold)\n\nThese tools let you escalate or de-escalate tension in real-time."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Intense Storm",
+              "color": "#c0392b",
+              "tooltip": "Maximum intensity: speed 4, density 4, blue tint",
+              "onclick": [
+                "await Weather.setWeather(mapID, {",
+                "  type: 'RAIN',",
+                "  speed: 4,",
+                "  density: 4,",
+                "  tint: '#4a6fa5'",
+                "});",
+                "await Owlbear.notification.show('Intense storm applied!', 'WARNING');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Update Speed",
+              "color": "#e67e22",
+              "tooltip": "Slow down to speed 2",
+              "onclick": [
+                "await Weather.updateWeather(mapID, { speed: 2 });",
+                "await Owlbear.notification.show('Weather speed updated to 2', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Update Tint",
+              "color": "#9b59b6",
+              "tooltip": "Apply red tint for danger",
+              "onclick": [
+                "await Weather.updateWeather(mapID, { tint: '#ff0000' });",
+                "await Owlbear.notification.show('Weather tint updated to red', 'INFO');"
               ]
             }
           ]
