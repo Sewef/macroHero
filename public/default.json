@@ -26,8 +26,17 @@
     {
       "label": "Google Sheets",
       "variables": {
-        "sheetValue": {
-          "eval": "GoogleSheets.getValue('Xalithra Général', 'G26:I26')"
+        "gsSheetId": {
+          "value": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+        },
+        "gsSheetName": {
+          "value": "Sheet1"
+        },
+        "gsRange": {
+          "value": "A1"
+        },
+        "gsResult": {
+          "value": null
         }
       },
       "layout": [
@@ -37,7 +46,33 @@
         },
         {
           "type": "text",
-          "text": "Read data from external Google Sheets. Configure with your sheet name and cell range."
+          "text": "Read data from any Google Spreadsheet using the Sheets REST API (read-only, API key required).\n\nBefore using this page, go to **Settings ⚙️ → Google Sheets** and enter your API key.\n\nThe three fields below define **what** to read:\n- **Sheet ID** — the long identifier in the spreadsheet URL: `https://docs.google.com/spreadsheets/d/**{SHEET_ID}**/edit`\n- **Page name** — the tab name at the bottom of the spreadsheet (e.g. `Sheet1`, `Inventory`)\n- **Range** — a cell or range in A1 notation (e.g. `A1`, `B2:D5`, `G26:I26`)\n\n`getValue` returns the first cell of the range. `getRange` returns the full 2D array (or a flat 1D array for single-column ranges)."
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "input",
+          "var": "gsSheetId",
+          "label": "Sheet ID",
+          "placeholder": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "input",
+              "var": "gsSheetName",
+              "label": "Page name",
+              "placeholder": "Sheet1"
+            },
+            {
+              "type": "input",
+              "var": "gsRange",
+              "label": "Range",
+              "placeholder": "A1"
+            }
+          ]
         },
         {
           "type": "divider"
@@ -47,17 +82,36 @@
           "children": [
             {
               "type": "value",
-              "var": "sheetValue",
-              "label": "Cell Value"
+              "var": "gsResult",
+              "label": "Result"
             }
           ]
         },
         {
-          "type": "button",
-          "label": "Refresh Data",
-          "onclick": [
-            "const value = await GoogleSheets.getValue('Xalithra Général', 'G26:I26');",
-            "await Owlbear.notification.show('Data refreshed: ' + value, 'SUCCESS');"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Get Value",
+              "tooltip": "Fetch the first cell of the range and store it in `gsResult`",
+              "color": "#27ae60",
+              "onclick": [
+                "const val = await GoogleSheets.getValue(gsSheetId, gsSheetName, gsRange);",
+                "await setValue('gsResult', val);",
+                "await Owlbear.notification.show('Value: ' + val, 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Get Range",
+              "tooltip": "Fetch the full range and display it as JSON in `gsResult`",
+              "color": "#2980b9",
+              "onclick": [
+                "const rows = await GoogleSheets.getRange(gsSheetId, gsSheetName, gsRange);",
+                "await setValue('gsResult', JSON.stringify(rows));",
+                "await Owlbear.notification.show('Range fetched: ' + rows.length + ' row(s)', 'INFO');"
+              ]
+            }
           ]
         }
       ]

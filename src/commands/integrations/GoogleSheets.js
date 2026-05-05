@@ -1,113 +1,85 @@
 ﻿/**
  * Google Sheets Integration
- * Handles reading and writing data to Google Sheets
+ * Handles reading data from Google Sheets via the Sheets REST API (read-only, API key auth).
  */
 
 import { createDebugLogger } from "../../debugMode.js";
 
-// Debug mode constants
 const logger = createDebugLogger("GoogleSheets");
 
+// ── Client ────────────────────────────────────────────────────────────────────
 
 /**
- * Initialize Google Sheets integration
- * @param {Object} config - Configuration object
- * @param {string} config.apiKey - Google API key
- * @param {string} config.sheetId - Google Sheet ID
- * @returns {Object} Initialized client
+ * Create a Sheets API client from an API key.
+ * @param {Object} config
+ * @param {string} config.apiKey
+ * @returns {{ apiKey: string, baseUrl: string } | null}
  */
 export function initializeGoogleSheets(config) {
-  if (!config.apiKey || !config.sheetId) {
-    logger.warn("Not configured: missing API key or sheet ID");
+  if (!config.apiKey) {
+    logger.warn("Not configured: missing API key");
     return null;
   }
-
   return {
     apiKey: config.apiKey,
-    sheetId: config.sheetId,
-    baseUrl: "https://sheets.googleapis.com/v4/spreadsheets"
+    baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
   };
 }
 
+// ── Number parsing ────────────────────────────────────────────────────────────
+
 /**
- * Try to parse a localized numeric string into a Number
- * Supports French format (27,6), thousand separators (1 234 or 1.234) and mixed styles (1.234,56)
- * Returns the original value if it cannot be parsed deterministically
+ * Parse a localized numeric string to Number.
+ * Supports: French "27,6", thousand-separated "1 234" / "1.234", mixed "1.234,56".
+ * Returns the original value when parsing is ambiguous or impossible.
  * @param {*} raw
+ * @returns {number | *}
  */
-function parseLocalizedNumberString(raw) {
-  if (raw === null || raw === undefined) return raw;
-  if (typeof raw !== 'string') return raw;
+function parseLocalizedNumber(raw) {
+  if (raw === null || raw === undefined || typeof raw !== "string") return raw;
 
-  // Trim and normalize whitespace
-  let s = raw.trim();
-  if (s === '') return raw;
-  // Replace NBSP or thin spaces, and remove common thousands separators (space groups later)
-  s = s.replace(/\u00A0|\u202F/g, ' ');
-  // Remove all spaces (could be thousand separators in some locales)
-  s = s.replace(/\s/g, '');
+  // Normalize whitespace (NBSP, thin space → regular space), then strip spaces
+  let s = raw.trim().replace(/[\u00A0\u202F]/g, " ").replace(/\s/g, "");
+  if (s === "") return raw;
 
-  // If it's now a plain integer, keep it as number
   if (/^[+-]?\d+$/.test(s)) return Number(s);
 
-  const hasComma = s.indexOf(',') !== -1;
-  const hasDot = s.indexOf('.') !== -1;
+  const hasComma = s.includes(",");
+  const hasDot   = s.includes(".");
 
-  // If both separators exist, assume the last separator is the decimal marker
   if (hasComma && hasDot) {
-    const lastComma = s.lastIndexOf(',');
-    const lastDot = s.lastIndexOf('.');
-    if (lastComma > lastDot) {
-      // pattern like 1.234,56 -> remove dots (thousands), comma = decimal
-      const normalized = s.replace(/\./g, '').replace(/,/g, '.');
-      const n = Number(normalized);
-      return Number.isNaN(n) ? raw : n;
-    } else {
-      // pattern like 1,234.56 -> remove commas (thousands)
-      const normalized = s.replace(/,/g, '');
-      const n = Number(normalized);
-      return Number.isNaN(n) ? raw : n;
-    }
-  }
-
-  // Only comma -> treat comma as decimal
-  if (hasComma && !hasDot) {
-    const normalized = s.replace(/,/g, '.');
-    const n = Number(normalized);
+    // Last separator is the decimal marker
+    const n = s.lastIndexOf(",") > s.lastIndexOf(".")
+      ? Number(s.replace(/\./g, "").replace(",", "."))   // 1.234,56
+      : Number(s.replace(/,/g, ""));                      // 1,234.56
     return Number.isNaN(n) ? raw : n;
   }
 
-  // Only dot -> standard parse (also remove stray commas if any)
-  if (hasDot && !hasComma) {
-    const normalized = s.replace(/,/g, '');
-    const n = Number(normalized);
+  if (hasComma) {
+    const n = Number(s.replace(",", "."));
+    return Number.isNaN(n) ? raw : n;
+  }
+
+  if (hasDot) {
+    const n = Number(s);
     return Number.isNaN(n) ? raw : n;
   }
 
   return raw;
 }
 
-// Storage keys for persisted GSheets credentials
-export const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
-export const GSHEET_SHEET_ID_STORAGE = "macrohero.gsheet.sheetId";
+// ── Credentials ───────────────────────────────────────────────────────────────
 
-/**
- * Get Google Sheets credentials from localStorage
- * @returns {{apiKey: string|null, sheetId: string|null}}
- */
+export const GSHEET_API_KEY_STORAGE = "macrohero.gsheet.apiKey";
+
+/** @returns {{ apiKey: string | null }} */
 export function getGoogleSheetsCredentials() {
-  return {
-    apiKey: localStorage.getItem(GSHEET_API_KEY_STORAGE),
-    sheetId: localStorage.getItem(GSHEET_SHEET_ID_STORAGE)
-  };
+  return { apiKey: localStorage.getItem(GSHEET_API_KEY_STORAGE) };
 }
 
-/**
- * Save Google Sheets API key to localStorage
- * @param {string} apiKey - The API key to save (or empty to remove)
- */
+/** @param {string} apiKey */
 export function saveGoogleSheetsApiKey(apiKey) {
-  if (apiKey && apiKey.trim()) {
+  if (apiKey?.trim()) {
     localStorage.setItem(GSHEET_API_KEY_STORAGE, apiKey);
     logger.log("API key saved");
   } else {
@@ -115,232 +87,82 @@ export function saveGoogleSheetsApiKey(apiKey) {
   }
 }
 
-/**
- * Save Google Sheets Sheet ID to localStorage
- * @param {string} sheetId - The sheet ID to save (or empty to remove)
- */
-export function saveGoogleSheetsSheetId(sheetId) {
-  if (sheetId && sheetId.trim()) {
-    localStorage.setItem(GSHEET_SHEET_ID_STORAGE, sheetId);
-    logger.log("Sheet ID saved");
-  } else {
-    localStorage.removeItem(GSHEET_SHEET_ID_STORAGE);
-  }
-}
-
-/**
- * Check if Google Sheets credentials are configured
- * @returns {boolean}
- */
+/** @returns {boolean} */
 export function hasGoogleSheetsCredentials() {
-  const { apiKey, sheetId } = getGoogleSheetsCredentials();
-  return !!(apiKey && sheetId);
+  return !!getGoogleSheetsCredentials().apiKey;
+}
+
+// ── Core fetch ────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch a named range from a spreadsheet and return rows with localized numbers parsed.
+ * Single-column results are flattened to a 1-D array.
+ * @param {{ apiKey: string, baseUrl: string }} client
+ * @param {string} sheetId  - Spreadsheet ID
+ * @param {string} range    - A1 notation, already quoted if needed (e.g. "'Sheet1'!A1:D10")
+ * @returns {Promise<Array>}
+ */
+async function readSheetRange(client, sheetId, range) {
+  const url = `${client.baseUrl}/${sheetId}/values/${encodeURIComponent(range)}?key=${client.apiKey}`;
+  logger.log(`Fetching: ${range}`);
+
+  const response = await fetch(url);
+  logger.log(`Response: ${response.status}`);
+
+  if (!response.ok) {
+    const text = await response.text();
+    let detail = text;
+    try { detail = JSON.parse(text).error?.message ?? text; } catch { /* not JSON */ }
+    const msg = `Failed to read sheet (${response.status} ${response.statusText}): ${detail}`;
+    logger.error(msg);
+    throw new Error(msg);
+  }
+
+  const rows = (await response.json()).values ?? [];
+  logger.log(`Read ${rows.length} rows`);
+
+  let conversions = 0;
+  const parsed = rows.map(row =>
+    row.map(cell => {
+      const v = parseLocalizedNumber(cell);
+      if (v !== cell) conversions++;
+      return v;
+    })
+  );
+  if (conversions > 0) logger.log(`Converted ${conversions} numeric strings`);
+
+  // Flatten single-column result
+  if (parsed.length > 0 && parsed.every(r => r.length === 1)) {
+    logger.log("Flattened to 1D array");
+    return parsed.map(r => r[0]);
+  }
+  return parsed;
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Get a range from a named sheet.
+ * @param {{ apiKey: string, baseUrl: string }} client
+ * @param {string} sheetId
+ * @param {string} sheetName - Tab name (e.g. "Sheet1")
+ * @param {string} range     - Range string (e.g. "A1:D10")
+ * @returns {Promise<Array>}
+ */
+export async function getRange(client, sheetId, sheetName, range) {
+  return readSheetRange(client, sheetId, `'${sheetName}'!${range}`);
 }
 
 /**
- * Read range from Google Sheet
- * @param {Object} client - Initialized client
- * @param {string} range - Sheet range (e.g., "Sheet1!A1:D10")
- * @returns {Promise<Array>} Array of rows
+ * Get the first cell value from a range (or the whole range for multi-cell).
+ * @param {{ apiKey: string, baseUrl: string }} client
+ * @param {string} sheetId
+ * @param {string} sheetName
+ * @param {string} range
+ * @returns {Promise<any>}
  */
-async function readSheetRange(client, range) {
-  if (!client) {
-    throw new Error("Google Sheets not initialized");
-  }
-
-  try {
-    const url = `${client.baseUrl}/${client.sheetId}/values/${encodeURIComponent(range)}?key=${client.apiKey}`;
-    logger.log(`Fetching: ${range}`);
-
-    const response = await fetch(url);
-
-    logger.log(`Response: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error('Error response:', errorText);
-
-      // Parse error details if it's JSON
-      let errorDetails = errorText;
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorDetails = errorJson.error?.message || errorText;
-      } catch (e) {
-        // Not JSON, use as-is
-      }
-
-      const errorMsg = `Failed to read sheet (${response.status} ${response.statusText}): ${errorDetails}`;
-      logger.error('Failed to read range:', errorMsg);
-      throw new Error(errorMsg);
-    }
-
-    const data = await response.json();
-    logger.log(`Read ${data.values?.length ?? 0} rows`);
-
-    const values = data.values || [];
-
-    // Use exported helper parseLocalizedNumberString
-
-    // Convert values in place (preserve non-numeric strings)
-    let conversionCount = 0;
-    const convertedValues = values.map(row => row.map(cell => {
-      const parsed = parseLocalizedNumberString(cell);
-      if (parsed !== cell && typeof parsed === 'number' && !Number.isNaN(parsed)) conversionCount += 1;
-      return parsed;
-    }));
-
-    // Log conversions if any
-    if (conversionCount > 0) {
-      logger.log(`Converted ${conversionCount} numeric strings`);
-    }
-
-    // Flatten single-column ranges for convenience
-    // If all rows have exactly 1 column, return a 1D array instead of 2D
-    if (convertedValues.length > 0 && convertedValues.every(row => row.length === 1)) {
-      const flattened = convertedValues.map(row => row[0]);
-      logger.log("Flattened to 1D array");
-      return flattened;
-    }
-
-    return convertedValues;
-  } catch (error) {
-    logger.error('Failed to read range:', error);
-    throw error;
-  }
+export async function getValue(client, sheetId, sheetName, range) {
+  const result = await getRange(client, sheetId, sheetName, range);
+  if (!Array.isArray(result) || result.length === 0) return result ?? null;
+  return Array.isArray(result[0]) ? (result[0][0] ?? null) : (result[0] ?? null);
 }
-
-/**
- * Convenience: Get a range for a given sheet name and range string
- * @param {Object} client - Initialized client
- * @param {string} sheetName - Sheet name (e.g., "Sheet1")
- * @param {string} range - Range string (e.g., "A1:B2")
- * @returns {Promise<Array>} Array of rows or flattened single-column array
- */
-export async function getRange(client, sheetName, range) {
-  const fullRange = `'${sheetName}'!${range}`;
-  return await readSheetRange(client, fullRange);
-}
-
-/**
- * Convenience: Get single-cell value or first value from a range
- * @param {Object} client - Initialized client
- * @param {string} sheetName - Sheet name (e.g., "Sheet1")
- * @param {string} range - Range string (e.g., "A1")
- * @returns {Promise<any>} Single cell value or null
- */
-export async function getValue(client, sheetName, range) {
-  const result = await getRange(client, sheetName, range);
-  if (Array.isArray(result)) {
-    if (result.length === 0) return null;
-    if (Array.isArray(result[0])) return result[0][0] ?? null;
-    return result[0] ?? null;
-  }
-  return result ?? null;
-}
-
-/**
- * Write to Google Sheet
- * @param {Object} client - Initialized client
- * @param {string} range - Sheet range
- * @param {Array} values - 2D array of values
- * @returns {Promise<Object>} Write result
- */
-async function writeSheetRange(client, range, values) {
-  if (!client) {
-    throw new Error("Google Sheets not initialized");
-  }
-
-  try {
-    const url = `${client.baseUrl}/${client.sheetId}/values/${encodeURIComponent(range)}?key=${client.apiKey}&valueInputOption=USER_ENTERED`;
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ values })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error('Failed to write:', response.status);
-      throw new Error(`Failed to write sheet: ${response.status} - ${errorText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    logger.error('Failed to write range:', error);
-    throw error;
-  }
-}
-
-/**
- * Append to Google Sheet
- * @param {Object} client - Initialized client
- * @param {string} range - Sheet range
- * @param {Array} values - Row to append
- * @returns {Promise<Object>} Append result
- */
-async function appendToSheet(client, range, values) {
-  if (!client) {
-    throw new Error("Google Sheets not initialized");
-  }
-
-  try {
-    const url = `${client.baseUrl}/${client.sheetId}/values/${encodeURIComponent(range)}:append?key=${client.apiKey}&valueInputOption=USER_ENTERED`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ values: [values] })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to append to sheet: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    logger.error('Failed to append:', error);
-    throw error;
-  }
-}
-
-/**
- * Get sheet metadata
- * @param {Object} client - Initialized client
- * @returns {Promise<Object>} Sheet metadata
- */
-async function getSheetMetadata(client) {
-  if (!client) {
-    throw new Error("Google Sheets not initialized");
-  }
-
-  try {
-    const url = `${client.baseUrl}/${client.sheetId}?key=${client.apiKey}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Failed to get sheet metadata: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    logger.error('Failed to get metadata:', error);
-    throw error;
-  }
-}
-
-export default {
-  initializeGoogleSheets,
-  getRange,
-  getValue,
-  getGoogleSheetsCredentials,
-  saveGoogleSheetsApiKey,
-  saveGoogleSheetsSheetId,
-  hasGoogleSheetsCredentials,
-  GSHEET_API_KEY_STORAGE,
-  GSHEET_SHEET_ID_STORAGE
-};
-
-

@@ -39,17 +39,16 @@ class IntegrationsManager {
 
   /**
    * Initialize Google Sheets integration
-   * @param {Object} config - { apiKey, sheetId }
+   * @param {Object} config - { apiKey }
    */
   initializeGoogleSheets(config) {
-    if (!config?.apiKey || !config?.sheetId) {
-      logger.warn("Google Sheets config missing apiKey or sheetId");
+    if (!config?.apiKey) {
+      logger.warn("Google Sheets config missing apiKey");
       return;
     }
     
     this.googleSheetsClient = GoogleSheets.initializeGoogleSheets({
       apiKey: config.apiKey,
-      sheetId: config.sheetId
     });
     logger.log("Google Sheets client initialized");
   }
@@ -90,13 +89,13 @@ class IntegrationsManager {
     return {
       // Google Sheets integration (read-only - API keys don't support writes)
       GoogleSheets: {
-        getValue: this.wrapAsync(async (sheetName, range) => {
+        getValue: this.wrapAsync(async (sheetId, sheetName, range) => {
           if (!self.googleSheetsClient) return null;
-          return await GoogleSheets.getValue(self.googleSheetsClient, sheetName, range);
+          return await GoogleSheets.getValue(self.googleSheetsClient, sheetId, sheetName, range);
         }),
-        getRange: this.wrapAsync(async (sheetName, range) => {
+        getRange: this.wrapAsync(async (sheetId, sheetName, range) => {
           if (!self.googleSheetsClient) return null;
-          return await GoogleSheets.getRange(self.googleSheetsClient, sheetName, range);
+          return await GoogleSheets.getRange(self.googleSheetsClient, sheetId, sheetName, range);
         }),
       },
       // Local storage integration
@@ -256,10 +255,10 @@ const manager = new IntegrationsManager();
  * @param {Object} config - Configuration object with gsheet settings (apiKey, sheetId)
  */
 export function initializeIntegrations(config) {
-  // config can be the gsheet config directly (apiKey, sheetId) or wrapped in {gsheet: {...}}
+  // config can be the gsheet config directly (apiKey) or wrapped in {gsheet: {...}}
   const gsheetConfig = config?.gsheet || config;
   
-  if (gsheetConfig?.apiKey && gsheetConfig?.sheetId) {
+  if (gsheetConfig?.apiKey) {
     manager.initializeGoogleSheets(gsheetConfig);
   } else if (config) {
     // Only warn if config was actually provided but incomplete

@@ -65,12 +65,12 @@ OBR.onReady(async () => {
     const cfg = await loadConfig();
 
     // Initialize expression system with Google Sheets from localStorage
-    const { apiKey, sheetId } = getGoogleSheetsCredentials();
+    const { apiKey } = getGoogleSheetsCredentials();
 
-    if (apiKey && sheetId) {
-      initializeExpressions({ apiKey, sheetId });
+    if (apiKey) {
+      initializeExpressions({ apiKey });
     } else {
-      logger.warn("Google Sheets not configured: missing credentials");
+      logger.warn("Google Sheets not configured: missing API key");
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
@@ -140,10 +140,10 @@ OBR.onReady(async () => {
       }
 
       // Re-initialize Google Sheets from localStorage (modal saves credentials there)
-      const { apiKey, sheetId } = getGoogleSheetsCredentials();
+      const { apiKey } = getGoogleSheetsCredentials();
 
-      if (apiKey && sheetId) {
-        initializeExpressions({ apiKey, sheetId });
+      if (apiKey) {
+        initializeExpressions({ apiKey });
       }
 
       // If the modal sent a small flag, load full config from room-scoped localStorage
