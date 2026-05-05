@@ -11,6 +11,19 @@
   },
   "pages": [
     {
+      "label": "Welcome!",
+      "layout": [
+        {
+          "type": "title",
+          "text": "Welcome to MacroHero!"
+        },
+        {
+          "type": "text",
+          "text": "This is a demo configuration showcasing the capabilities of the MacroHero extension system. Explore the various pages to see examples of how to use different extensions and UI components to enhance your Owlbear Rodeo experience.\n\nEach page demonstrates a different extension with sample code and interactive buttons. Use this as a starting point to create your own custom macros and interfaces!\nTo start, you can go to the parameters ⚙️ and change the `token` in the Global Variables to one of your tokens, then explore the ConditionMarkers, OwlTrackers, and StatBubbles pages to see dynamic token interactions. Also, check out the Token Helpers tool while you're at it!"
+        }
+      ]
+    },
+    {
       "label": "Google Sheets",
       "variables": {
         "sheetValue": {
@@ -1132,7 +1145,7 @@
         },
         {
           "type": "text",
-          "text": "**Bold text** and *italic text* and ~~strikethrough~~ and `inline code`\n- List item one\n- List item two\n---\n[See Marked (markdown parser) documentation](https://marked.js.org/)"
+          "text": "**Bold text** and *italic text* and ~~strikethrough~~ and `inline code`\n- List item one\n- List item two\n---\n^^^ See that `---` line?\n[See Marked (markdown parser) documentation](https://marked.js.org/)"
         },
         {
           "type": "text",
@@ -1366,7 +1379,7 @@
         },
         {
           "type": "text",
-          "text": "Button properties summary:\n• onclick: Array of commands executed on LEFT-click\n• onrightclick: Array of commands executed on RIGHT-click (optional)\n• label: Button text\n• color: Button background color (hex code)\n• tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
+          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
         },
         {
           "type": "divider"
@@ -1790,7 +1803,7 @@
         },
         {
           "type": "text",
-          "text": "matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick.\n• icon only → large icon, no label beneath\n• label only → text centered in the button\n• icon + label → icon above, label below\n• icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot.\n• color → button background; borderColor → overrides the border independently\n• onrightclick → alternate action on right-click (same as regular buttons)\nempty onclick [] → button is rendered disabled at 50% opacity"
+          "text": "matrixButton properties: icon (emoji or https://… URL), label, tooltip, color, borderColor, onclick, onrightclick.\n- icon only → large icon, no label beneath\n- label only → text centered in the button\n- icon + label → icon above, label below\n- icon as URL → renders an <img> (24×24). Works with any http/https image or relative path containing a dot.\n- color → button background; borderColor → overrides the border independently\n- onrightclick → alternate action on right-click (same as regular buttons)\nempty onclick [] → button is rendered disabled at 50% opacity"
         },
         {
           "type": "divider"
@@ -1813,7 +1826,7 @@
         },
         {
           "type": "text",
-          "text": "✓ title: text, color\n✓ text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n✓ value: var, label\n✓ button: label, onclick, tooltip, color, onrightclick\n✓ counter: var, label, step, color, onupdate\n✓ checkbox: var, label, color, onupdate\n✓ input: var, label, placeholder, onupdate\n✓ dropdown: var, label, options, onupdate\n✓ row: children (array of elements)\n✓ stack: children, border, color\n✓ matrix: columns, buttonSize, gap, border, color, children\n✓ divider: (no properties)"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)"
         }
       ]
     }
