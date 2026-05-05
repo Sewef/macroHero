@@ -1982,7 +1982,12 @@
       ]
     },
     {
-      "label": "Announcements",
+      "label": "Announcement",
+      "variables": {
+        "announcementContent": {
+          "value": "This is an important announcement for everyone!"
+        }
+      },
       "layout": [
         {
           "type": "title",
@@ -1990,25 +1995,235 @@
         },
         {
           "type": "text",
-          "text": "Display announcements to all players in the room. Supports Markdown formatting."
+          "text": "Display announcements to all players in the room. Announcements appear as prominent notifications visible to everyone at the same time, supporting Markdown formatting for flexible styling and messaging."
+        },
+        {
+          "type": "text",
+          "text": "**Key Features:**\n- **All players see it** — Announcements broadcast to the entire room simultaneously\n- **Markdown support** — Format text with bold, italic, links, lists, and more\n- **Persistent display** — Remains visible until explicitly hidden or cleared\n- **Toggle visibility** — Show/hide without losing content\n- **Dynamic updates** — Change content on the fly\n\n**Available Methods:**\n- `setAnnouncement(content, active)` — Set new announcement\n- `showAnnouncement()` — Display current announcement\n- `hideAnnouncement()` — Hide current announcement\n- `toggleAnnouncement()` — Toggle visibility\n- `updateContent(content)` — Update content only\n- `removeAnnouncementMetadata()` — Delete announcement completely"
         },
         {
           "type": "divider"
         },
         {
-          "type": "button",
-          "label": "Show Announcement",
-          "onclick": [
-            "await Announcement.setAnnouncement({ active: true, content: '**Attention!** Important announcement.' });",
-            "await Owlbear.notification.show('Announcement created', 'SUCCESS');"
+          "type": "title",
+          "text": "Quick Announcement Examples"
+        },
+        {
+          "type": "text",
+          "text": "Ready-made announcements for common game situations."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Combat Active",
+              "tooltip": "Announce combat has started",
+              "color": "#c0392b",
+              "onclick": [
+                "await Announcement.setAnnouncement('⚔️ **COMBAT ACTIVE** ⚔️\\n\\nRoll initiative! Combat has begun.', true);",
+                "await Owlbear.notification.show('Combat announcement displayed', 'WARNING');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Social Encounter",
+              "tooltip": "Announce social/roleplay phase",
+              "color": "#2980b9",
+              "onclick": [
+                "await Announcement.setAnnouncement('💬 **SOCIAL ENCOUNTER**\\n\\nYou approach the merchant at their stall. What do you do?', true);",
+                "await Owlbear.notification.show('Social encounter announced', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Exploration Mode",
+              "tooltip": "Announce exploration/investigation phase",
+              "color": "#27ae60",
+              "onclick": [
+                "await Announcement.setAnnouncement('🔍 **EXPLORATION**\\n\\nYou have time to investigate the area carefully. Perception checks are welcome.', true);",
+                "await Owlbear.notification.show('Exploration announced', 'SUCCESS');"
+              ]
+            }
           ]
         },
         {
-          "type": "button",
-          "label": "Clear Announcement",
-          "onclick": [
-            "await Announcement.removeAnnouncement();",
-            "await Owlbear.notification.show('Announcement cleared', 'INFO');"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Session Start",
+              "tooltip": "Welcome announcement",
+              "color": "#f39c12",
+              "onclick": [
+                "await Announcement.setAnnouncement('✨ **Welcome!**\\n\\nTonight\\'s session is beginning. Please ensure you are ready to play.', true);",
+                "await Owlbear.notification.show('Session started', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Session End",
+              "tooltip": "End of session announcement",
+              "color": "#34495e",
+              "onclick": [
+                "await Announcement.setAnnouncement('👋 **Session Complete**\\n\\nGreat session everyone! Thanks for playing.', true);",
+                "await Owlbear.notification.show('Session ended', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Important Notice",
+              "tooltip": "Urgent attention needed",
+              "color": "#e74c3c",
+              "onclick": [
+                "await Announcement.setAnnouncement('⚠️ **IMPORTANT**\\n\\n*All phones away.* Focus time for the next 10 minutes.', true);",
+                "await Owlbear.notification.show('Important notice displayed', 'WARNING');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Custom Announcement"
+        },
+        {
+          "type": "text",
+          "text": "Create and post a custom announcement. Edit the content below and click \"Post Announcement\"."
+        },
+        {
+          "type": "input",
+          "var": "announcementContent",
+          "label": "Announcement Content",
+          "placeholder": "Enter your message (Markdown supported)"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Post Announcement",
+              "color": "#9b59b6",
+              "tooltip": "Display to all players",
+              "onclick": [
+                "await Announcement.setAnnouncement(announcementContent, true);",
+                "await Owlbear.notification.show('Announcement posted', 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Post Hidden",
+              "color": "#7f8c8d",
+              "tooltip": "Post but keep hidden initially",
+              "onclick": [
+                "await Announcement.setAnnouncement(announcementContent, false);",
+                "await Owlbear.notification.show('Announcement ready (hidden)', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Announcement Management"
+        },
+        {
+          "type": "text",
+          "text": "Control the visibility and state of current announcements."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Show",
+              "color": "#27ae60",
+              "tooltip": "Display the announcement",
+              "onclick": [
+                "await Announcement.showAnnouncement();",
+                "await Owlbear.notification.show('Announcement shown', 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Hide",
+              "color": "#e67e22",
+              "tooltip": "Hide the announcement",
+              "onclick": [
+                "await Announcement.hideAnnouncement();",
+                "await Owlbear.notification.show('Announcement hidden', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Toggle",
+              "color": "#3498db",
+              "tooltip": "Toggle visibility",
+              "onclick": [
+                "await Announcement.toggleAnnouncement();",
+                "await Owlbear.notification.show('Announcement toggled', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Remove",
+              "color": "#c0392b",
+              "tooltip": "Delete announcement completely",
+              "onclick": [
+                "await Announcement.removeAnnouncementMetadata();",
+                "await Owlbear.notification.show('Announcement removed', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Advanced Examples"
+        },
+        {
+          "type": "text",
+          "text": "Complex announcements demonstrating Markdown formatting and structured content."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Initiative Order",
+              "tooltip": "Display a formatted initiative list",
+              "color": "#3498db",
+              "onclick": [
+                "await Announcement.setAnnouncement('🎲 **INITIATIVE ORDER**\\n\\n1. **Alice** - AC 18\\n2. **Bob** - AC 15\\n3. **Goblin** - AC 12\\n\\n*Round 1 - Alice\\'s turn*', true);",
+                "await Owlbear.notification.show('Initiative announced', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Rules Reminder",
+              "tooltip": "Important rule clarification",
+              "color": "#16a085",
+              "onclick": [
+                "await Announcement.setAnnouncement('📖 **RULES REMINDER**\\n\\n- *Advantage*: Roll twice, keep highest\\n- *Disadvantage*: Roll twice, keep lowest\\n- *Critical Hit*: 20 on the die\\n- *Critical Miss*: 1 on the die', true);",
+                "await Owlbear.notification.show('Rules reminder shown', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Event Announcement",
+              "tooltip": "In-game event announcement",
+              "color": "#8e44ad",
+              "onclick": [
+                "await Announcement.setAnnouncement('⚡ **THE DRAGON RISES**\\n\\nA terrible roar echoes across the land. The ancient dragon has awakened!\\n\\n*All players must succeed on a DC 15 Wisdom save or be frightened.*', true);",
+                "await Owlbear.notification.show('Event announced', 'WARNING');"
+              ]
+            }
           ]
         }
       ]
