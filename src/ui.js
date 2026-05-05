@@ -292,12 +292,16 @@ export function updateRenderedValue(varName, value) {
                              (entry.item.text && entry.item.text.includes('{')) || 
                              (entry.item.content && entry.item.content.includes('{'));
       
-      // Evaluate if: has placeholders AND (element is empty OR this var might be needed)
       if (hasPlaceholders) {
         const resolvedVars = { ...globalVariables, ...(entry.page?._resolved || {}) };
-        evaluateItemText(entry.item, resolvedVars)
-          .then(res => { entry.element.textContent = res; })
-          .catch(err => logger.error('Error evaluating layout expression:', err));
+        if (typeof entry.updateFn === 'function') {
+          // Custom updater (e.g. HTML text with ${vars})
+          entry.updateFn(resolvedVars);
+        } else {
+          evaluateItemText(entry.item, resolvedVars)
+            .then(res => { entry.element.textContent = res; })
+            .catch(err => logger.error('Error evaluating layout expression:', err));
+        }
       }
     } catch (err) {
       logger.error('Error updating expression element:', err);

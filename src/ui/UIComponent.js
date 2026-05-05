@@ -4,6 +4,7 @@
  */
 
 import { createDebugLogger } from "../debugMode.js";
+import { parseMd, sanitizeHtml, MD_PATTERN } from "./markdownUtils.js";
 const logger = createDebugLogger("UIComponent");
 
 export class UIComponent {
@@ -121,7 +122,9 @@ export class UIComponent {
   static applyTooltip(element, rawTooltip, getResolved) {
     if (!rawTooltip) return;
 
-    const isHtml = rawTooltip.includes('<');
+    // MD first — marked handles inline HTML natively (mixed MD+HTML works)
+    const isMd   = MD_PATTERN.test(rawTooltip);
+    const isHtml = !isMd && rawTooltip.includes('<');
 
     const evaluate = () => {
       if (!rawTooltip.includes('${')) return rawTooltip;
@@ -132,7 +135,7 @@ export class UIComponent {
       });
     };
 
-    if (!isHtml) {
+    if (!isHtml && !isMd) {
       // Plain text — use native title, evaluated lazily
       element.title = rawTooltip;
       if (rawTooltip.includes('${')) {
@@ -141,7 +144,7 @@ export class UIComponent {
       return;
     }
 
-    // HTML tooltip — use shared #mh-tooltip div
+    // Markdown or HTML tooltip — use shared #mh-tooltip div
     let tooltipEl = document.getElementById('mh-tooltip');
     if (!tooltipEl) {
       tooltipEl = document.createElement('div');
@@ -165,7 +168,8 @@ export class UIComponent {
     }
 
     element.addEventListener('mouseenter', (e) => {
-      tooltipEl.innerHTML = evaluate();
+      const raw = evaluate();
+      tooltipEl.innerHTML = isMd ? parseMd(raw) : sanitizeHtml(raw);
       tooltipEl.style.display = 'block';
       UIComponent._positionTooltip(tooltipEl, e);
     });

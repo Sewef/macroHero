@@ -1127,6 +1127,18 @@
           "text": "This is example text. You can use it to provide context, instructions, or any informational content to the user. Text elements automatically wrap to fit the container width."
         },
         {
+          "type": "text",
+          "text": "**Markdown is supported** — `**bold**`  `*italic*`  `~~strike~~`  `` `code` ``  `[link](url)`  `- list`  `---` (hr)"
+        },
+        {
+          "type": "text",
+          "text": "**Bold text** and *italic text* and ~~strikethrough~~ and `inline code`\n- List item one\n- List item two\n---\n[See Marked (markdown parser) documentation](https://marked.js.org/)"
+        },
+        {
+          "type": "text",
+          "text": "**Counter value: ${counterValue}** — `${varName}` expressions work inside Markdown too, updated live."
+        },
+        {
           "type": "divider"
         },
         {
@@ -1224,7 +1236,7 @@
         },
         {
           "type": "text",
-          "text": "Tooltips support ${varName} expressions (plain text) and full HTML markup. Hover the buttons below."
+          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `${varName}` expressions are evaluated at hover time. Hover the buttons below."
         },
         {
           "type": "row",
@@ -1246,8 +1258,8 @@
             },
             {
               "type": "button",
-              "label": "HTML tooltip",
-              "tooltip": "<b style='color:#f9e2af'>Counter:</b> ${counterValue}<br><hr style='margin:4px 0;border-color:#45475a'><span style='color:#a6e3a1'>Left-click</span> to confirm<br><span style='color:#f38ba8'>Right-click</span> to reset",
+              "label": "Markdown tooltip",
+              "tooltip": "**Counter :** ${counterValue}\n\n- <span style=\"color:green\">*Left-click*</span> to confirm\n- <span style=\"color:red\">*Right-click*</span> to reset\n\n`setValue('counterValue', 0)`",
               "color": "#6c3483",
               "onclick": [
                 "await Owlbear.notification.show('Confirmed! Counter = ' + counterValue, 'SUCCESS');"
@@ -1378,7 +1390,7 @@
         },
         {
           "type": "text",
-          "text": "• tooltip: Hover text — supports ${varName} expressions evaluated at hover time"
+          "text": "• tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
         },
         {
           "type": "divider"
@@ -1865,7 +1877,7 @@
         },
         {
           "type": "text",
-          "text": "✓ text: text"
+          "text": "✓ text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)"
         },
         {
           "type": "text",
