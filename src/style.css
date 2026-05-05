@@ -40,6 +40,15 @@
   --spacing-lg: 16px;
   --spacing-xl: 24px;
   
+  /* Typography Scale */
+  --font-xs: 0.75rem;
+  --font-sm: 0.85rem;
+  --font-base: 0.95rem;
+  --font-md: 1rem;
+  --font-lg: 1.1rem;
+  --font-xl: 1.15rem;
+  --font-2xl: 1.25rem;
+  
   /* Border Radius */
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -105,12 +114,12 @@ body {
   position: sticky;
   top: 0;
   z-index: 9999;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-md);
   border-bottom: 1px solid var(--mh-border);
 }
 
 .mh-title {
-  font-size: 1.25rem;
+  font-size: var(--font-2xl);
   font-weight: 600;
   color: var(--mh-accent);
   letter-spacing: -0.5px;
@@ -134,10 +143,10 @@ body {
   background: transparent;
   border: 1px solid var(--mh-border);
   color: var(--mh-text);
-  padding: var(--spacing-xs) var(--spacing-xs);
+  padding: var(--spacing-xs);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: var(--font-lg);
   height: 28px;
   width: 28px;
   display: inline-flex;
@@ -158,38 +167,44 @@ body {
 .mh-pagebar {
   display: flex;
   flex-wrap: wrap;
-  /* gap: 4px; */
-  /* padding: var(--spacing-sm) var(--spacing-xl) 0; */
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 1px solid var(--mh-border);
   background: var(--mh-surface);
-  align-items: flex-end;
+  align-items: center;
 }
 
 
 .mh-pagebar button {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--mh-panel);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs) var(--spacing-md);
   margin: 0;
   color: var(--mh-text-secondary);
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
   font-family: inherit;
+  box-shadow: var(--shadow-sm);
 }
 
 .mh-pagebar button:hover {
   color: var(--mh-text);
-  border-bottom-color: var(--mh-border-light);
+  background: var(--mh-panel-hover);
+  border-color: var(--mh-border-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .mh-pagebar button.active {
   color: var(--mh-accent);
-  border-bottom-color: var(--mh-accent);
+  background: color-mix(in srgb, var(--mh-accent) 12%, transparent);
+  border-color: var(--mh-accent);
   font-weight: 600;
+  box-shadow: 0 0 0 1px var(--mh-accent);
 }
 
 /* ============================================
@@ -213,7 +228,7 @@ body {
 
 .mh-content::-webkit-scrollbar-thumb {
   background: var(--mh-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .mh-content::-webkit-scrollbar-thumb:hover {
@@ -225,10 +240,10 @@ body {
    ============================================ */
 
 .mh-layout-title {
-  font-size: 1.15rem;
+  font-size: var(--font-xl);
   font-weight: 700;
   color: var(--mh-accent);
-  margin: var(--spacing-xl) 0 var(--spacing-md);
+  margin: var(--spacing-lg) 0 var(--spacing-md);
   padding-bottom: var(--spacing-sm);
   border-bottom: 2px solid var(--mh-accent);
   letter-spacing: -0.3px;
@@ -254,11 +269,11 @@ body {
 .mh-layout-text del    { text-decoration: line-through; opacity: 0.7; }
 .mh-layout-text code   {
   font-family: monospace;
-  font-size: 0.88em;
+  font-size: var(--font-sm);
   background: var(--mh-surface);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-sm);
-  padding: 1px 5px;
+  padding: var(--spacing-xs) var(--spacing-sm);
 }
 .mh-layout-text a {
   color: var(--mh-accent);
@@ -275,7 +290,7 @@ body {
   margin: var(--spacing-xs) 0;
   padding-left: var(--spacing-xl);
 }
-.mh-layout-text li { margin: 2px 0; }
+.mh-layout-text li { margin: var(--spacing-xs) 0; }
 
 .mh-layout-divider {
   height: 1px;
@@ -329,9 +344,9 @@ body {
   background: var(--mh-surface);
   border: 1px solid var(--mh-border);
   color: var(--mh-text);
-  padding: 6px 10px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-sm);
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   font-family: monospace;
   outline: none;
   width: 100%;
@@ -366,7 +381,7 @@ body {
   height: 18px;
   cursor: pointer;
   accent-color: var(--mh-accent);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .mh-checkbox-label {
@@ -467,7 +482,7 @@ body {
 }
 
 .mh-toggle-label {
-  font-size: 0.9rem;
+  font-size: var(--font-base);
   color: var(--mh-text);
   flex: 1;
   transition: var(--transition-fast);
@@ -484,10 +499,10 @@ body {
   align-items: flex-start;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   border-left: 4px solid;
   background-color: rgba(0, 0, 0, 0.1);
-  font-size: 0.9rem;
+  font-size: var(--font-base);
 }
 
 .mh-alert-icon {
@@ -561,7 +576,7 @@ body {
 }
 
 .mh-counter-label {
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   color: var(--mh-text-label);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -584,9 +599,9 @@ body {
   color: var(--mh-accent);
   text-align: center;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--font-md);
   height: 28px;
-  padding: 0 6px;
+  padding: 0 var(--spacing-md);
 }
 
 .mh-counter-input::-webkit-outer-spin-button,
@@ -607,12 +622,12 @@ body {
   background: var(--mh-surface);
   border: 1px solid var(--mh-border);
   color: var(--mh-text);
-  padding: 2px 4px;
-  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-sm);
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition-fast);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   min-height: 18px;
   margin: 0;
   font-family: inherit;
@@ -645,7 +660,7 @@ body {
 
 .mh-stack-counter .mh-counter-label {
   flex-shrink: 0;
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
   color: var(--mh-text-label);
 }
 
@@ -681,7 +696,7 @@ body {
 }
 
 .mh-input-label {
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
   color: var(--mh-text-label);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -701,7 +716,7 @@ body {
 .mh-stack-compact.mh-layout-input .mh-input-label {
   flex-shrink: 0;
   margin: 0;
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
 }
 
 .mh-stack-compact.mh-layout-input .mh-input-field {
@@ -760,7 +775,7 @@ body {
 }
 
 .mh-dropdown-label {
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
   color: var(--mh-text-label);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -796,7 +811,7 @@ body {
 }
 
 .mh-value-label {
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   color: var(--mh-text-label);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -807,7 +822,7 @@ body {
 }
 
 .mh-value-content {
-  font-size: 1.1rem;
+  font-size: var(--font-lg);
   font-weight: 700;
   color: var(--mh-text);
   font-family: monospace;
@@ -836,7 +851,7 @@ body {
 }
 
 .mh-value-calc {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--mh-text-secondary);
   font-style: italic;
   font-family: inherit;
@@ -844,7 +859,7 @@ body {
 
 .mh-value-error {
   color: var(--mh-error);
-  font-size: 0.85rem;
+  font-size: var(--font-sm);
 }
 
 /* Horizontal value layout (inside stacks) */
@@ -859,7 +874,7 @@ body {
 
 .mh-layout-value.mh-stack-horizontal-value .mh-value-label {
   flex-shrink: 0;
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
 }
 
 .mh-layout-value.mh-stack-horizontal-value .mh-value-content {
@@ -874,11 +889,11 @@ body {
   background: color-mix(in srgb, var(--mh-accent) 15%, transparent);
   border: 1px solid var(--mh-accent);
   color: var(--mh-accent);
-  padding: 8px;
+  padding: var(--spacing-sm);
   margin: 0;
   border-radius: var(--radius-lg);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   font-weight: 600;
   transition: var(--transition-normal);
   flex: 1 1 0;
@@ -915,8 +930,8 @@ body {
 
 /* Stack-specific button (more compact) */
 .mh-stack-compact.mh-layout-button {
-  padding: 4px 8px;
-  font-size: 0.85rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-sm);
   min-width: 40px;
 }
 
@@ -972,10 +987,10 @@ button {
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   color: var(--mh-text);
-  padding: 6px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: var(--font-base);
   font-weight: 500;
   font-family: inherit;
   transition: var(--transition-fast);
@@ -1024,7 +1039,7 @@ button:disabled {
 .mh-layout-matrix.mh-bordered {
   border: 1px solid var(--mh-accent);
   border-radius: var(--radius-md);
-  padding: 8px;
+  padding: var(--spacing-sm);
   background: var(--mh-bg);
 }
 
@@ -1036,8 +1051,8 @@ button:disabled {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
+  gap: var(--spacing-xs);
+  font-size: var(--font-base);
   font-weight: bold;
   cursor: pointer;
   transition: transform var(--transition-normal), box-shadow var(--transition-normal), filter var(--transition-normal);
@@ -1108,7 +1123,7 @@ a:hover {
 
 ::-webkit-scrollbar-thumb {
   background: var(--mh-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: var(--transition-fast);
 }
 
