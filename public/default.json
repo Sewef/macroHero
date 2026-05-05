@@ -1583,6 +1583,9 @@
     {
       "label": "Aurora",
       "variables": {
+        "mapID": {
+          "value": null
+        },
         "saturation": {
           "value": 100
         },
@@ -1597,40 +1600,381 @@
         },
         {
           "type": "text",
-          "text": "Control time-of-day lighting effects on maps. Adjust color, brightness, and saturation."
+          "text": "Control time-of-day lighting effects on maps. Aurora allows you to adjust the atmosphere and mood of your scene by applying dynamic lighting presets and custom adjustments.\n\n**Key Features:**\n- **Presets** — Quick time-of-day settings (`MIDNIGHT`, `GOLDEN_HOUR`, `PRE_DAWN`, `BLOOD_MOON`)\n- **Custom adjustments** — Fine-tune color, saturation, and lightness\n- **Ambient lighting** — Set the overall brightness and tone of the scene\n- **Visible to all players** — Changes appear immediately for everyone in the room"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "input",
+          "var": "mapID",
+          "label": "Map ID",
+          "placeholder": "Paste your map item ID here"
         },
         {
           "type": "divider"
         },
         {
           "type": "title",
-          "text": "Quick Presets"
+          "text": "Time-of-Day Presets"
+        },
+        {
+          "type": "text",
+          "text": "Quick lighting presets that set the entire atmosphere for your scene. Each preset includes saturation, lightness, hue, and opacity settings appropriate for that time of day."
         },
         {
           "type": "row",
           "children": [
             {
               "type": "button",
-              "label": "Daylight",
+              "label": "Midnight",
+              "tooltip": "Deep night - minimal light, cool tones",
+              "color": "#1a1a2e",
               "onclick": [
-                "await Aurora.applyPreset('daylight');",
-                "await Owlbear.notification.show('Daylight applied', 'INFO');"
+                "await Aurora.setAurora(mapID, 'MIDNIGHT');",
+                "await Owlbear.notification.show('Midnight preset applied', 'INFO');"
               ]
             },
             {
               "type": "button",
-              "label": "Dusk",
+              "label": "Golden Hour",
+              "tooltip": "Dawn/dusk - warm golden light",
+              "color": "#e67e22",
               "onclick": [
-                "await Aurora.applyPreset('dusk');",
-                "await Owlbear.notification.show('Dusk applied', 'INFO');"
+                "await Aurora.setAurora(mapID, 'GOLDEN_HOUR');",
+                "await Owlbear.notification.show('Golden hour preset applied', 'INFO');"
               ]
             },
             {
               "type": "button",
-              "label": "Night",
+              "label": "Pre-Dawn",
+              "tooltip": "Early morning - cool light before sunrise",
+              "color": "#5dade2",
               "onclick": [
-                "await Aurora.applyPreset('night');",
-                "await Owlbear.notification.show('Night applied', 'INFO');"
+                "await Aurora.setAurora(mapID, 'PRE_DAWN');",
+                "await Owlbear.notification.show('Pre-dawn preset applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Blood Moon",
+              "tooltip": "Eerie red moonlight - supernatural atmosphere",
+              "color": "#c0392b",
+              "onclick": [
+                "await Aurora.setAurora(mapID, 'BLOOD_MOON');",
+                "await Owlbear.notification.show('Blood moon preset applied', 'WARNING');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Custom Lighting Control"
+        },
+        {
+          "type": "text",
+          "text": "Fine-tune Aurora lighting with individual parameters. All values are on a 0-200 scale where 100 is neutral/unchanged.\n\n**Parameters:**\n- **saturation** — Color intensity (0=grayscale, 100=normal, 200=hyper-saturated)\n- **lightness** — Brightness/darkness (0=very dark, 100=normal, 200=very bright)\n- **hue** — Color shift (-180 to 180 degrees on color wheel)\n- **opacity** — Tint overlay strength (0-100, affects how visible the color is)\n- **enabled** — Toggle Aurora on/off (true/false)\n- **blendMode** — How Aurora layers with the map: `Multiply`, `Overlay`, `Soft Light`, or `Color` (default: `Color`)\n- **dreamy** — Atmosphere effect (-100=crisp/sharp, 0=normal, 100=bloom/dreamy)\n- **feather** — Gradient fade zone (0-100, % of edge)"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Brightness Adjustments"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Very Bright (+100)",
+              "tooltip": "Maximum brightness - very washed out",
+              "color": "#f1c40f",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 200 });",
+                "await Owlbear.notification.show('Very bright lighting applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Bright (+50)",
+              "tooltip": "Increased brightness",
+              "color": "#f39c12",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 150 });",
+                "await Owlbear.notification.show('Bright lighting applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Normal",
+              "tooltip": "Standard brightness level",
+              "color": "#e8e8e8",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 100 });",
+                "await Owlbear.notification.show('Normal brightness applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Dim (-30)",
+              "tooltip": "Reduced brightness - moody atmosphere",
+              "color": "#7f8c8d",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 70 });",
+                "await Owlbear.notification.show('Dim lighting applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Very Dark (-70)",
+              "tooltip": "Very dark - barely visible",
+              "color": "#34495e",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 30 });",
+                "await Owlbear.notification.show('Very dark lighting applied', 'WARNING');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Almost Black (-90)",
+              "tooltip": "Nearly complete darkness",
+              "color": "#1a1a1a",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { lightness: 10 });",
+                "await Owlbear.notification.show('Almost complete darkness', 'ERROR');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Hue Adjustments (Color Shift)"
+        },
+        {
+          "type": "text",
+          "text": "Rotate the color wheel to shift the overall tone. Positive values shift toward red/yellow, negative toward cyan/blue."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Warm Shift (+30°)",
+              "tooltip": "Shift toward red and orange tones",
+              "color": "#e67e22",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 30 });",
+                "await Owlbear.notification.show('Warm color shift applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Cool Shift (-60°)",
+              "tooltip": "Shift toward blue and cyan tones",
+              "color": "#3498db",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: -60 });",
+                "await Owlbear.notification.show('Cool color shift applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Neutral Shift",
+              "tooltip": "Reset to neutral color",
+              "color": "#95a5a6",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 0 });",
+                "await Owlbear.notification.show('Neutral color applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Saturation Control"
+        },
+        {
+          "type": "text",
+          "text": "Adjust how vivid the colors are. Lower saturation makes the scene more grayscale and washed out."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Hyper Saturated (+100)",
+              "tooltip": "Very vivid and intense colors",
+              "color": "#e74c3c",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { saturation: 200 });",
+                "await Owlbear.notification.show('Hyper-saturated colors applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Normal",
+              "tooltip": "Standard color saturation",
+              "color": "#2c3e50",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { saturation: 100 });",
+                "await Owlbear.notification.show('Normal saturation applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Desaturated (-50)",
+              "tooltip": "Washed out, grayscale tones",
+              "color": "#bdc3c7",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { saturation: 50 });",
+                "await Owlbear.notification.show('Desaturated colors applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Advanced Atmospheric Combinations"
+        },
+        {
+          "type": "text",
+          "text": "Combine multiple parameters for complex atmospheric effects."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Hellfire",
+              "tooltip": "Red hue shift, dark, intense saturation",
+              "color": "#c0392b",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 0, lightness: 40, saturation: 150, opacity: 60 });",
+                "await Owlbear.notification.show('Hellfire atmosphere applied', 'WARNING');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Icy Cavern",
+              "tooltip": "Cool blue shift, reduced saturation, dim",
+              "color": "#3498db",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: -80, lightness: 50, saturation: 120, opacity: 50 });",
+                "await Owlbear.notification.show('Icy cavern atmosphere applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Toxic Waste",
+              "tooltip": "Green hue, desaturated, sickly pale",
+              "color": "#27ae60",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 120, lightness: 110, saturation: 80, opacity: 40 });",
+                "await Owlbear.notification.show('Toxic atmosphere applied', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Haunted Manor",
+              "tooltip": "Cool desaturated, dim and eerie",
+              "color": "#34495e",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: -40, lightness: 35, saturation: 60, opacity: 55 });",
+                "await Owlbear.notification.show('Haunted manor atmosphere applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Peaceful Garden",
+              "tooltip": "Warm, well-lit, natural saturation",
+              "color": "#27ae60",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 25, lightness: 120, saturation: 110, opacity: 30 });",
+                "await Owlbear.notification.show('Peaceful garden atmosphere applied', 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Reset to Normal",
+              "tooltip": "Clear all custom lighting",
+              "color": "#95a5a6",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 0, lightness: 100, saturation: 100, opacity: 0 });",
+                "await Owlbear.notification.show('Lighting reset to normal', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Blend Mode Examples"
+        },
+        {
+          "type": "text",
+          "text": "Aurora supports four blend modes that control how the color effect layers with your map:\n\n- **Multiply** (0) — Darkens everything, good for shadows and dark overlays\n- **Overlay** (1) — Balances light and dark for balanced effects\n- **Soft Light** (2) — Subtle, gentle blending without washing out colors\n- **Color** (3, default) — Pure color shift, preserves brightness"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Shadow (Multiply)",
+              "tooltip": "Dark overlay with Multiply blend mode",
+              "color": "#2c3e50",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 0, lightness: 60, saturation: 50, opacity: 70, blendMode: 'Multiply' });",
+                "await Owlbear.notification.show('Multiply blend mode applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Balanced (Overlay)",
+              "tooltip": "Balanced blend mode effect",
+              "color": "#16a085",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 45, lightness: 90, saturation: 80, opacity: 60, blendMode: 'Overlay' });",
+                "await Owlbear.notification.show('Overlay blend mode applied', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Gentle (Soft Light)",
+              "tooltip": "Subtle gentle blending",
+              "color": "#d68910",
+              "onclick": [
+                "await Aurora.setAurora(mapID, { hue: 30, lightness: 110, saturation: 100, opacity: 50, blendMode: 'Soft Light' });",
+                "await Owlbear.notification.show('Soft Light blend mode applied', 'INFO');"
               ]
             }
           ]

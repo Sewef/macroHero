@@ -10,18 +10,53 @@ import { createDebugLogger } from "../../debugMode.js";
 // Debug mode constants
 const logger = createDebugLogger("Aurora");
 
+// Blend modes available in Aurora
+const BLEND_MODES = [
+  { label: "Multiply", value: 0 },
+  { label: "Overlay", value: 1 },
+  { label: "Soft Light", value: 2 },
+  { label: "Color", value: 3 },
+];
 
 // Plugin ID for the Aurora extension
-const AURORA_METADATA_KEY = "com.aurora-vtt.aurora/config";
+const AURORA_METADATA_KEY = "https://aurora.several-record.com/config";
+
+/**
+ * Map blend mode label to numeric value
+ * @param {string|number} blendMode - Blend mode label or numeric value
+ * @returns {number|null} Numeric blend mode value or null if invalid
+ */
+function getBlendModeValue(blendMode) {
+  if (typeof blendMode === 'number') {
+    // Validate numeric value
+    if (blendMode >= 0 && blendMode <= 3) return blendMode;
+    return null;
+  }
+  if (typeof blendMode === 'string') {
+    const mode = BLEND_MODES.find(m => m.label.toLowerCase() === blendMode.toLowerCase());
+    return mode ? mode.value : null;
+  }
+  return null;
+}
+
+/**
+ * Map numeric blend mode value to label
+ * @param {number} value - Numeric blend mode value
+ * @returns {string} Blend mode label
+ */
+function getBlendModeLabel(value) {
+  const mode = BLEND_MODES.find(m => m.value === value);
+  return mode ? mode.label : "Color"; // Default to Color (value 3)
+}
 
 /**
  * Aurora presets
  */
 const AURORA_PRESETS = {
-  MIDNIGHT: { n: "Midnight", s: 25, l: 30, h: 115, o: 40, b: 3, f: 0, fi: false },
-  GOLDEN_HOUR: { n: "Golden Hour", s: 120, l: 80, h: 30, o: 20, b: 2, f: 0, fi: false },
-  PRE_DAWN: { n: "Pre-Dawn", s: 80, l: 50, h: -150, o: 40, b: 3, f: 0, fi: false },
-  BLOOD_MOON: { n: "Blood Moon", s: 35, l: 40, h: 0, o: 50, b: 0, f: 0, fi: false },
+  MIDNIGHT: { n: "Midnight", s: 25, l: 30, h: -115, o: 40, b: "Color", f: 0, fi: false, d: 0 },
+  GOLDEN_HOUR: { n: "Golden Hour", s: 120, l: 80, h: 30, o: 20, b: "Soft Light", f: 0, fi: false, d: 0 },
+  PRE_DAWN: { n: "Pre-Dawn", s: 80, l: 50, h: -150, o: 40, b: "Color", f: 0, fi: false, d: 0 },
+  BLOOD_MOON: { n: "Blood Moon", s: 35, l: 40, h: 0, o: 50, b: "Multiply", f: 0, fi: false, d: 0 },
 };
 
 /**
@@ -41,17 +76,26 @@ function getPreset(presetName) {
  */
 function toAuroraMetadata(config) {
   const metadata = {};
-  
+
   if (config.saturation !== undefined) metadata.s = config.saturation;
   if (config.lightness !== undefined) metadata.l = config.lightness;
   if (config.hue !== undefined) metadata.h = config.hue;
   if (config.opacity !== undefined) metadata.o = config.opacity;
   if (config.enabled !== undefined) metadata.e = config.enabled;
-  if (config.blendMode !== undefined) metadata.b = config.blendMode;
+  if (config.blendMode !== undefined) {
+    // Convert blend mode label to numeric value
+    const blendValue = getBlendModeValue(config.blendMode);
+    if (blendValue !== null) {
+      metadata.b = blendValue;
+    } else {
+      throw new Error(`Invalid blend mode: ${config.blendMode}. Valid options: ${BLEND_MODES.map(m => m.label).join(", ")}`);
+    }
+  }
   if (config.feather !== undefined) metadata.f = config.feather;
   if (config.featherInvert !== undefined) metadata.fi = config.featherInvert;
+  if (config.dreamy !== undefined) metadata.d = config.dreamy;
   if (config.name !== undefined) metadata.n = config.name;
-  
+
   return metadata;
 }
 
@@ -62,19 +106,23 @@ function toAuroraMetadata(config) {
  */
 function fromAuroraMetadata(metadata) {
   if (!metadata) return null;
-  
+
   const config = {};
-  
+
   if (metadata.s !== undefined) config.saturation = metadata.s;
   if (metadata.l !== undefined) config.lightness = metadata.l;
   if (metadata.h !== undefined) config.hue = metadata.h;
   if (metadata.o !== undefined) config.opacity = metadata.o;
   if (metadata.e !== undefined) config.enabled = metadata.e;
-  if (metadata.b !== undefined) config.blendMode = metadata.b;
+  if (metadata.b !== undefined) {
+    // Convert numeric blend mode to label, or keep string as-is
+    config.blendMode = typeof metadata.b === 'string' ? metadata.b : getBlendModeLabel(metadata.b);
+  }
   if (metadata.f !== undefined) config.feather = metadata.f;
   if (metadata.fi !== undefined) config.featherInvert = metadata.fi;
+  if (metadata.d !== undefined) config.dreamy = metadata.d;
   if (metadata.n !== undefined) config.name = metadata.n;
-  
+
   return config;
 }
 
@@ -86,10 +134,11 @@ function fromAuroraMetadata(metadata) {
  * @param {number} [config.lightness=100] - Lightness (0-200, 100 = no change)
  * @param {number} [config.hue=0] - Hue (-180 to 180, degrees on the colour wheel)
  * @param {number} [config.opacity=40] - Opacity (0-100, tint overlay strength)
- * @param {boolean} [config.enabled=false] - Enabled (toggle without losing slider values)
- * @param {number} [config.blendMode=3] - Blend mode (0-3, index into BLEND_MODES)
+ * @param {boolean} [config.enabled=false] - Enabled (boolean toggle without losing slider values)
+ * @param {string|number} [config.blendMode="Color"] - Blend mode label ("Multiply", "Overlay", "Soft Light", "Color") or numeric value (0-3)
  * @param {number} [config.feather=0] - Feather (0-100, edge-fade zone as % of shape half-size)
  * @param {boolean} [config.featherInvert=false] - Feather invert (false = fade edges, true = fade centre)
+ * @param {number} [config.dreamy=0] - Dreamy (-100–100, negative = unsharp/crisp, zero = pass-through, positive = bloom/dreamy)
  * @param {string} [config.name] - Name (user-facing preset label)
  * @returns {Promise<void>}
  */
@@ -125,9 +174,10 @@ export async function setAurora(mapId, config) {
       hue: configToUse.hue ?? 0,
       opacity: configToUse.opacity ?? 40,
       enabled: configToUse.enabled ?? true,
-      blendMode: configToUse.blendMode ?? 3,
+      blendMode: configToUse.blendMode ?? "Color",
       feather: configToUse.feather ?? 0,
-      featherInvert: configToUse.featherInvert ?? false
+      featherInvert: configToUse.featherInvert ?? false,
+      dreamy: configToUse.dreamy ?? 0,
     };
 
     // Add name if provided
@@ -148,11 +198,14 @@ export async function setAurora(mapId, config) {
     if (fullConfig.opacity < 0 || fullConfig.opacity > 100) {
       throw new Error("Opacity must be between 0 and 100");
     }
-    if (fullConfig.blendMode < 0 || fullConfig.blendMode > 3) {
-      throw new Error("Blend mode must be between 0 and 3");
+    if (getBlendModeValue(fullConfig.blendMode) === null) {
+      throw new Error(`Invalid blend mode: ${fullConfig.blendMode}. Valid options: ${BLEND_MODES.map(m => m.label).join(", ")}`);
     }
     if (fullConfig.feather < 0 || fullConfig.feather > 100) {
       throw new Error("Feather must be between 0 and 100");
+    }
+    if (fullConfig.dreamy < -100 || fullConfig.dreamy > 100) {
+      throw new Error("Dreamy must be between -100 and 100");
     }
 
     // Convert to Aurora metadata format
@@ -227,7 +280,7 @@ export async function getAurora(mapId) {
     }
 
     const metadata = map.metadata[AURORA_METADATA_KEY];
-    
+
     if (!metadata) {
       logger.log(`No Aurora on map ${mapId}`);
       return null;
@@ -235,7 +288,7 @@ export async function getAurora(mapId) {
 
     // Convert from Aurora metadata format to full property names
     const config = fromAuroraMetadata(metadata);
-    
+
     logger.log(`Aurora config for map ${mapId}:`, config);
     return config;
   } catch (error) {
@@ -302,8 +355,8 @@ export async function updateAurora(mapId, updates) {
     if ('opacity' in updates && (updates.opacity < 0 || updates.opacity > 100)) {
       throw new Error("Opacity must be between 0 and 100");
     }
-    if ('blendMode' in updates && (updates.blendMode < 0 || updates.blendMode > 3)) {
-      throw new Error("Blend mode must be between 0 and 3");
+    if ('blendMode' in updates && getBlendModeValue(updates.blendMode) === null) {
+      throw new Error(`Invalid blend mode: ${updates.blendMode}. Valid options: ${BLEND_MODES.map(m => m.label).join(", ")}`);
     }
     if ('feather' in updates && (updates.feather < 0 || updates.feather > 100)) {
       throw new Error("Feather must be between 0 and 100");
