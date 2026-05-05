@@ -15,6 +15,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { MODAL_LABEL, loadConfig, saveConfigToLocalStorage } from "./config.js";
 import { createDebugLogger } from "./debugMode.js";
+import { loadConfigFile } from "./yamlLoader.js";
 
 import {
   addTrackedListener,
@@ -106,6 +107,41 @@ function _switchConfigFormat() {
   } catch { /* silent */ }
 }
 
+// ── Load Default Config ────────────────────────────────────────────────────────
+
+async function _loadDefaultConfig() {
+  try {
+    logger.log('Loading default config...');
+    const defaultConfig = await loadConfigFile('/default');
+    
+    if (!defaultConfig) {
+      alert('Default config not found');
+      return;
+    }
+
+    // Confirm before overwriting
+    if (!confirm('Load default configuration? Your current changes will be replaced.')) {
+      return;
+    }
+
+    // Update internal state
+    currentConfig = defaultConfig;
+
+    // Sync to JSON tab
+    const format = getConfigFormat();
+    document.getElementById('cfgArea').value = formatConfig(defaultConfig, format);
+
+    // Sync to Editor tab
+    rerenderEditor(defaultConfig);
+
+    logger.log('Default config loaded');
+    alert('Default configuration loaded successfully');
+  } catch (e) {
+    logger.error('Error loading default config:', e);
+    alert('Error loading default config: ' + e.message);
+  }
+}
+
 // ── Save / Cancel ─────────────────────────────────────────────────────────────
 
 async function _closeModal(data) {
@@ -187,6 +223,8 @@ OBR.onReady(() => {
         alert('Error: ' + e.message);
       }
     };
+
+    document.getElementById('loadDefaultBtn').onclick = _loadDefaultConfig;
 
     document.getElementById('cancelBtn').onclick = () => _closeModal();
 

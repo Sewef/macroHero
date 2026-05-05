@@ -14,7 +14,7 @@ export async function loadYamlFile(filePath) {
       throw new Error(`Failed to load ${filePath}: ${response.status}`);
     }
     const yamlContent = await response.text();
-    
+
     // Dynamic import to handle js-yaml
     const { default: YAML } = await import('js-yaml');
     return YAML.load(yamlContent);
@@ -29,24 +29,34 @@ export async function loadYamlFile(filePath) {
  * Tries YAML first, then falls back to JSON if YAML fails
  */
 export async function loadConfigFile(basePath) {
-  const yamlPath = `${basePath}.yaml`;
+  // const yamlPath = `${basePath}.yaml`;
   const jsonPath = `${basePath}.json`;
-  
-  // Try YAML first
+
   try {
-    return await loadYamlFile(yamlPath);
-  } catch (yamlError) {
-    console.warn(`Could not load YAML from ${yamlPath}, trying JSON...`);
-    
-    // Fall back to JSON
-    try {
-      const response = await fetch(jsonPath);
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (jsonError) {
-      console.error(`Could not load config from either ${yamlPath} or ${jsonPath}`);
-      throw new Error(`Failed to load config: ${yamlError.message}`);
+    const response = await fetch(jsonPath);
+    if (response.ok) {
+      return await response.json();
     }
+  } catch (jsonError) {
+    console.error(`Could not load config from either ${yamlPath} or ${jsonPath}`);
+    throw new Error(`Failed to load config: ${yamlError.message}`);
   }
+
+  // Try YAML first
+  // try {
+  //   return await loadYamlFile(yamlPath);
+  // } catch (yamlError) {
+  //   console.warn(`Could not load YAML from ${yamlPath}, trying JSON...`);
+
+  //   // Fall back to JSON
+  //   try {
+  //     const response = await fetch(jsonPath);
+  //     if (response.ok) {
+  //       return await response.json();
+  //     }
+  //   } catch (jsonError) {
+  //     console.error(`Could not load config from either ${yamlPath} or ${jsonPath}`);
+  //     throw new Error(`Failed to load config: ${yamlError.message}`);
+  //   }
+  // }
 }
