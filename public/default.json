@@ -133,6 +133,10 @@
         },
         {
           "type": "text",
+          "text": "# WARNING\nThose features are not currently implemented in ConditionMarkers extension, please don't use them until they are released. This page is a preview of upcoming features and may contain placeholders."
+        },
+        {
+          "type": "text",
           "text": "Apply status conditions to tokens. Conditions persist on the token and can have numeric values."
         },
         {
