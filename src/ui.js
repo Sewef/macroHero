@@ -453,20 +453,13 @@ function renderLayout(container, layoutItems, page) {
 }
 
 function renderLayoutElement(layoutItem, page) {
-  // Special case for divider
-  if (layoutItem.type === "divider") {
-    const divider = document.createElement("div");
-    divider.className = "mh-layout-divider";
-    return divider;
-  }
-
-  // Render other elements
+  // Render all elements through ComponentRegistry (including divider)
   const element = renderElement(layoutItem.type, layoutItem, page);
   if (element) {
     return element;
   }
 
-    logger.warn('Unknown layout type:', layoutItem.type);
+  logger.warn('Unknown layout type:', layoutItem.type);
   return null;
 }
 

@@ -2381,7 +2381,45 @@
         },
         {
           "type": "title",
-          "text": "3. Value",
+          "text": "3. Divider",
+          "color": "#3498db"
+        },
+        {
+          "type": "text",
+          "text": "Visual separator line between sections. Supports custom colors, heights, margins, and styles (solid/dashed/dotted)."
+        },
+        {
+          "type": "text",
+          "text": "Default gradient divider:"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "text",
+          "text": "Solid red divider:"
+        },
+        {
+          "type": "divider",
+          "color": "#e74c3c",
+          "height": "2px"
+        },
+        {
+          "type": "text",
+          "text": "Dashed purple divider:"
+        },
+        {
+          "type": "divider",
+          "style": "dashed",
+          "color": "#9b59b6",
+          "height": "1px"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "4. Value",
           "color": "#3498db"
         },
         {
@@ -2408,7 +2446,7 @@
         },
         {
           "type": "title",
-          "text": "4. Button",
+          "text": "5. Button",
           "color": "#3498db"
         },
         {
@@ -2611,7 +2649,7 @@
         },
         {
           "type": "title",
-          "text": "5. Counter",
+          "text": "6. Counter",
           "color": "#3498db"
         },
         {
@@ -2647,7 +2685,7 @@
         },
         {
           "type": "title",
-          "text": "6. Checkbox",
+          "text": "7. Checkbox",
           "color": "#3498db"
         },
         {
@@ -2681,7 +2719,7 @@
         },
         {
           "type": "title",
-          "text": "7. Input",
+          "text": "8. Input",
           "color": "#3498db"
         },
         {
@@ -2699,7 +2737,7 @@
         },
         {
           "type": "title",
-          "text": "8. Dropdown",
+          "text": "9. Dropdown",
           "color": "#3498db"
         },
         {
@@ -2741,7 +2779,7 @@
         },
         {
           "type": "title",
-          "text": "9. Row",
+          "text": "10. Row",
           "color": "#3498db"
         },
         {
@@ -2779,7 +2817,7 @@
         },
         {
           "type": "title",
-          "text": "10. Stack",
+          "text": "11. Stack",
           "color": "#3498db"
         },
         {

@@ -94,7 +94,25 @@ function buildFields(type, el) {
     case 'text': return `
       <div class="input-group"><label>Text</label><textarea id="elem_text">${e.text || ''}</textarea></div>`;
 
-    case 'divider': return `<p style="color:#888;">Dividers have no properties.</p>`;
+    case 'divider': return `
+      ${colorRow(e.color)}
+      <div class="input-group">
+        <label>Height (optional)</label>
+        <input type="text" id="elem_height" value="${e.height || ''}" placeholder="1px" />
+      </div>
+      <div class="input-group">
+        <label>Margin (optional)</label>
+        <input type="text" id="elem_margin" value="${e.margin || ''}" placeholder="12px" />
+      </div>
+      <div class="input-group">
+        <label>Style (optional)</label>
+        <select id="elem_style">
+          <option value="">Default (gradient)</option>
+          <option value="solid" ${e.style === 'solid' ? 'selected' : ''}>Solid</option>
+          <option value="dashed" ${e.style === 'dashed' ? 'selected' : ''}>Dashed</option>
+          <option value="dotted" ${e.style === 'dotted' ? 'selected' : ''}>Dotted</option>
+        </select>
+      </div>`;
 
     case 'row': return `<p style="color:#c8adff;">Row is a container. Add elements from the tree.</p>`;
 
@@ -215,6 +233,12 @@ function readFields(type, existingChildren) {
       break;
     case 'text':
       el.text = v('elem_text');
+      break;
+    case 'divider':
+      if (checked('elem_customColor')) el.color = v('elem_color');
+      const h = v('elem_height'); if (h) el.height = h;
+      const m = v('elem_margin'); if (m) el.margin = m;
+      const st = v('elem_style'); if (st) el.style = st;
       break;
     case 'row':
     case 'stack':

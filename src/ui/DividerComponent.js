@@ -20,6 +20,14 @@ export class DividerComponent extends UIComponent {
   render() {
     const divider = this.createElement("div", "mh-layout-divider");
 
+    // If any customization is applied, remove the default CSS class
+    const hasCustomization = this.item.color || this.item.height || this.item.margin || this.item.style;
+    if (hasCustomization) {
+      divider.classList.remove("mh-layout-divider");
+      // Apply default margin if not customized
+      divider.style.margin = this.item.margin || "var(--spacing-md) 0";
+    }
+
     // Apply custom height if specified
     if (this.item.height) {
       divider.style.height = this.item.height;
@@ -30,18 +38,15 @@ export class DividerComponent extends UIComponent {
       divider.style.margin = this.item.margin;
     }
 
-    // Apply custom color (overrides gradient)
-    if (this.item.color) {
-      divider.style.background = this.item.color;
-      divider.style.removeProperty('background'); // Remove gradient
-      divider.style.backgroundColor = this.item.color;
-    }
-
-    // Apply custom line style if specified
+    // Apply custom line style if specified (takes precedence over color)
     if (this.item.style) {
       divider.style.borderTop = `${this.item.height || '1px'} ${this.item.style} ${this.item.color || 'var(--mh-accent)'}`;
       divider.style.background = 'none';
       divider.style.height = 'auto';
+    } else if (this.item.color) {
+      // Apply custom color (only if no custom style)
+      divider.style.background = this.item.color;
+      divider.style.height = this.item.height || '1px';
     }
 
     return divider;
