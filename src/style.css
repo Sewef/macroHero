@@ -264,7 +264,7 @@ body {
 .mh-layout-title {
   font-size: var(--font-xl);
   font-weight: 700;
-  background: linear-gradient(135deg, var(--mh-accent), color-mix(in srgb, var(--mh-accent) 50%, #000000));
+  background: var(--mh-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -434,7 +434,7 @@ body {
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
+  min-height: 32px;
   transition: var(--transition-fast);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
@@ -587,16 +587,17 @@ body {
 .mh-layout-counter {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  align-items: stretch;
+  gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
   transition: var(--transition-fast);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .mh-layout-counter:hover {
@@ -618,20 +619,23 @@ body {
 
 .mh-counter-controls {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
+  align-items: stretch;
+  gap: 0;
+  flex: 1;
+  min-height: 22px;
 }
 
 .mh-counter-input {
   flex: 1;
+  min-width: 0;
   background: var(--mh-surface);
   border: 1px solid var(--mh-border);
   color: var(--mh-accent);
   text-align: center;
   font-weight: 600;
-  font-size: var(--font-md);
-  height: 28px;
-  padding: 0 var(--spacing-md);
+  font-size: var(--font-sm);
+  height: 100%;
+  padding: 0 2px;
 }
 
 .mh-counter-input::-webkit-outer-spin-button,
@@ -642,25 +646,27 @@ body {
 
 .mh-counter-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  gap: 0;
   align-items: stretch;
 }
 
 .mh-counter-btn {
-  flex: 1;
   background: var(--mh-surface);
   border: 1px solid var(--mh-border);
+  border-left: none;
   color: var(--mh-text);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-sm);
+  padding: 0;
+  font-size: var(--font-xs);
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition-fast);
-  border-radius: var(--radius-sm);
-  min-height: 18px;
+  border-radius: 0;
+  height: 100%;
+  width: 22px;
   margin: 0;
   font-family: inherit;
+  line-height: 1;
 }
 
 .mh-counter-btn:hover:not(:disabled) {
@@ -679,19 +685,14 @@ body {
   cursor: not-allowed;
 }
 
-/* Stack-specific counter (horizontal) */
+/* Stack-specific counter — same compact row, no overrides needed */
 .mh-stack-counter {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
 }
 
 .mh-stack-counter .mh-counter-label {
   flex-shrink: 0;
-  font-size: var(--font-xs);
-  color: var(--mh-text-label);
 }
 
 .mh-stack-counter .mh-counter-controls {
@@ -713,7 +714,7 @@ body {
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
+  min-height: 32px;
   transition: var(--transition-fast);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
@@ -761,13 +762,12 @@ body {
 .mh-layout-checkbox {
   display: flex;
   align-items: center;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
   transition: var(--transition-fast);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
@@ -793,7 +793,7 @@ body {
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
+  min-height: 32px;
   transition: var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
@@ -819,17 +819,17 @@ body {
 .mh-layout-value {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm);
+  gap: 0;
+  padding: 2px var(--spacing-sm);
   background: var(--mh-panel);
   border: 1px solid var(--mh-border);
   border-radius: var(--radius-md);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
+  min-height: auto;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  align-items: stretch;
+  text-align: left;
   transition: var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
@@ -849,6 +849,7 @@ body {
   white-space: normal;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
 }
 
 .mh-value-content {
@@ -860,6 +861,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  text-align: center;
 }
 
 .mh-value-content.mh-loading {
@@ -928,7 +930,7 @@ body {
   transition: var(--transition-normal);
   flex: 1 1 0;
   min-width: 0;
-  min-height: 36px;
+  min-height: 32px;
   font-family: inherit;
   display: flex;
   align-items: center;

@@ -87,8 +87,8 @@ export class CounterComponent extends UIComponent {
       this.updateCounterValue(input, variable, this.item.var);
     });
 
-    buttonContainer.appendChild(incrementBtn);
     buttonContainer.appendChild(decrementBtn);
+    buttonContainer.appendChild(incrementBtn);
 
     controls.appendChild(input);
     controls.appendChild(buttonContainer);
