@@ -1196,8 +1196,8 @@
     {
       "label": "Embers",
       "variables": {
-        "caster": {
-          "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        "customCommand": {
+          "value": "Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Magic Missile' });"
         }
       },
       "layout": [
@@ -1207,57 +1207,214 @@
         },
         {
           "type": "text",
-          "text": "Apply visual effects using Embers. Chain effects together with delays for dramatic spell sequences."
-        },
-        {
-          "type": "divider"
-        },
-        {
-          "type": "title",
-          "text": "Quick Effects"
-        },
-        {
-          "type": "button",
-          "label": "Magic Missile",
-          "onclick": [
-            "await Embers.sequence()",
-            "  .projectile('magic_missile', caster, await Token.getSelected(), { copies: 3 })",
-            "  .cast({ spellName: 'Magic Missile' });"
-          ]
-        },
-        {
-          "type": "button",
-          "label": "Fireball Impact",
-          "onclick": [
-            "await Embers.sequence()",
-            "  .aoe('fireball.explosion', await Token.getSelected(), { size: 5 })",
-            "  .cast({ spellName: 'Fireball' });"
-          ]
-        },
-        {
-          "type": "divider"
-        },
-        {
-          "type": "title",
-          "text": "Sequential Effects"
-        },
-        {
-          "type": "button",
-          "label": "Projectile → Impact",
-          "onclick": [
-            "await Embers.sequence()",
-            "  .projectile('magic_missile', caster, await Token.getSelected())",
-            "  .then()",
-            "  .aoe('generic.impact.fire', await Token.getSelected(), { size: 4 })",
-            "  .cast({ spellName: 'Missile Impact' });"
-          ]
-        },
-        {
-          "type": "divider"
+          "text": "Apply dramatic visual effects using Embers. Chain effects together to create complex spell sequences with precise timing and positioning."
         },
         {
           "type": "text",
-          "text": "Use `.sequence().projectile().aoe().cone().delay().then().cast()` for complex effects."
+          "text": "Embers uses a **fluent API** — you chain method calls to build effect sequences:\n\n```\nawait Embers.sequence()\n  .projectile(effectName, from, to, options)\n  .aoe(effectName, targetLocation, options)\n  .then()  // Wait for previous effects to finish\n  .delay(milliseconds)  // Pause between effects\n  .cast({ spellName: 'Name' })  // End sequence and display to players\n```\n\n**Core Methods:**\n- **`.sequence()`** — Start a new effect sequence\n- **`.projectile(name, from, to, opts)`** — Draw projectile from point A to point B\n- **`.aoe(name, location, opts)`** — Area-of-effect burst at a location\n- **`.cone(name, from, direction, opts)`** — Cone-shaped blast from origin\n- **`.then()`** — Synchronization point: wait for all previous effects to complete before continuing\n- **`.delay(ms)`** — Pause the sequence for N milliseconds\n- **`.cast({ spellName })`** — Finalize sequence and display to all players"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "How It Works"
+        },
+        {
+          "type": "text",
+          "text": "**Effect Timeline:**\n\n1. **Without `.then()`** — Effects play simultaneously (in parallel)\n   - `Embers.sequence().projectile(...).aoe(...).cast()` → projectile and AOE at same time\n\n2. **With `.then()`** — Effects wait for previous ones to finish (sequential)\n   - `Embers.sequence().projectile(...).then().aoe(...).cast()` → projectile plays first, then AOE\n\n3. **With `.delay(ms)`** — Add a fixed pause\n   - `Embers.sequence().projectile(...).delay(500).aoe(...).cast()` → wait 500ms after projectile\n\n**Parameters:**\n- `effectName` — Name of effect from Embers library (e.g., `'magic_missile'`, `'fireball.explosion'`, `'generic.impact.fire'`)\n- `from` / `to` / `location` — Token IDs or positions on map\n- `options` — Effect config: `{ copies: 3, size: 5, speed: 2, color: '#ff0000' }` etc.\n- `spellName` — Display label in chat/log"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Quick Effects (Parallel)"
+        },
+        {
+          "type": "text",
+          "text": "Effects execute at the same time. Perfect for multi-target spells or simultaneous impacts."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Magic Missile (3x)",
+              "tooltip": "3 projectiles fire simultaneously at target",
+              "onclick": [
+                "await Embers.sequence()",
+                "  .projectile('magic_missile', token, await Token.getSelected(), { copies: 3 })",
+                "  .cast({ spellName: 'Magic Missile' });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Fireball Impact",
+              "tooltip": "Explosion at target location",
+              "onclick": [
+                "await Embers.sequence()",
+                "  .aoe('fireball.explosion', await Token.getSelected(), { size: 5 })",
+                "  .cast({ spellName: 'Fireball' });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Sequential Effects (Chained)"
+        },
+        {
+          "type": "text",
+          "text": "Effects execute one after another. Use `.then()` to create dramatic sequences: projectile travels, then hits, then AOE explodes."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Projectile → Impact",
+              "tooltip": "Missile travels first, then explodes on arrival",
+              "onclick": [
+                "await Embers.sequence()",
+                "  .projectile('magic_missile', token, await Token.getSelected())",
+                "  .then()",
+                "  .aoe('generic.impact.fire', await Token.getSelected(), { size: 4 })",
+                "  .cast({ spellName: 'Missile Impact' });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Delayed Blast",
+              "tooltip": "Projectile with 300ms delay before impact",
+              "onclick": [
+                "const target = await Token.getSelected();",
+                "await Embers.sequence()",
+                "  .projectile('magic_missile', token, target)",
+                "  .delay(300)",
+                "  .aoe('generic.impact.fire', target, { size: 3 })",
+                "  .cast({ spellName: 'Delayed Blast' });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Advanced Sequences",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "Build complex multi-step sequences by combining projectiles, AOEs, delays, and synchronization points."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Chain Lightning",
+              "tooltip": "3 projectiles hit in sequence, each with an impact effect",
+              "onclick": [
+                "const target = await Token.getSelected();",
+                "await Embers.sequence()",
+                "  .projectile('generic.lightning.electric_arc', token, target, { speed: 3 })",
+                "  .then()",
+                "  .aoe('generic.lightning.static_electricity.1', target, { size: 2 })",
+                "  .delay(200)",
+                "  .aoe('generic.lightning.static_electricity.2', target, { size: 2 })",
+                "  .delay(200)",
+                "  .aoe('generic.lightning.static_electricity.3', target, { size: 2 })",
+                "  .cast({ spellName: 'Chain Lightning' });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Dual Projectiles + AOE",
+              "tooltip": "2 projectiles arrive simultaneously, then single AOE",
+              "onclick": [
+                "const target = await Token.getSelected();",
+                "await Embers.sequence()",
+                "  .projectile('magic_missile', token, target)",
+                "  .projectile('magic_missile', token, target)",
+                "  .then()",
+                "  .aoe('generic.impact.fire', target, { size: 4 })",
+                "  .cast({ spellName: 'Dual Strike' });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Cone of Fire",
+              "tooltip": "Cone effect from token position",
+              "onclick": [
+                "const target = await Token.getSelected();",
+                "await Embers.sequence()",
+                "  .cone('burning_hands', token, target, { size: 10 })",
+                "  .cast({ spellName: 'Cone of Fire' });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Multi-Stage Spell",
+              "tooltip": "Projectile → impact → secondary explosion",
+              "onclick": [
+                "const target = await Token.getSelected();",
+                "await Embers.sequence()",
+                "  .projectile('magic_missile', token, target, { speed: 2 })",
+                "  .then()",
+                "  .aoe('generic.impact.fire', target, { size: 5 })",
+                "  .delay(250)",
+                "  .aoe('fireball.explosion', target, { size: 3 })",
+                "  .cast({ spellName: 'Inferno' });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Effect Library Reference"
+        },
+        {
+          "type": "text",
+          "text": "Common effect names available in Embers:\n\n**Projectiles:** `magic_missile`, `lightning`, `arrow`, `fireball`, `frost_bolt`, `shadow_bolt`\n\n**AOE/Impacts:** `fireball.explosion`, `generic.impact.fire`, `generic.impact.electric`, `lightning.impact`, `frost.impact`, `shadow.impact`, `healing.light`\n\n**Cones:** Various cone variants by direction\n\nExplore the full library [here](https://embers.armindo.eu/listings) and experiment with different combinations to create unique spell effects for your game!"
+        },
+        {
+          "type":"divider"
+        },
+        {"type":"title","text":"Playground"},
+        {"type":"text","text":"Type your command in the input below and execute it to test custom Embers sequences. Use `token` as caster and/or `await Token.getSelected()` for interactive selection."},
+        {
+          "type":"input",
+          "var":"customCommand",
+          "label":"Custom Embers Command",
+          "placeholder":"Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Custom' });"
+        },
+        {
+          "type":"button",
+          "label":"Execute Custom Command",
+          "color":"#8e44ad",
+          "onclick":[
+            "try {",
+            "  await eval(`(async () => { ${customCommand} })()`);",
+            "  await Owlbear.notification.show('Custom command executed successfully', 'SUCCESS');",
+            "} catch (err) {",
+            "  console.error('Error executing custom command:', err);",
+            "  await Owlbear.notification.show('Syntax Error: ' + err.message, 'ERROR');",
+            "}"
+          ]
         }
       ]
     },
