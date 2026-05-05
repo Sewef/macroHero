@@ -175,7 +175,7 @@ function _renderList(items) {
       copyBtn.onclick = async e => {
         e.preventDefault(); e.stopPropagation();
         try {
-          await _copyToClipboard(`'${it.id}'`);
+          await _copyToClipboard(`${it.id}`);
           copyBtn.textContent = 'Copied!';
           setTimeout(() => { copyBtn.textContent = 'Copy ID'; }, 1200);
         } catch { /* ignore */ }
