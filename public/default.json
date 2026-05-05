@@ -312,25 +312,30 @@
           "text": "Add Tracker"
         },
         {
-          "type": "button",
-          "label": "Create HP Tracker (50/50)",
-          "onclick": [
-            "await OwlTrackers.addTracker(token, {",
-            "  variant: 'value-max',",
-            "  name: 'HP',",
-            "  value: 50,",
-            "  max: 50,",
-            "  color: 2",
-            "});",
-            "await Owlbear.notification.show('HP Tracker created', 'SUCCESS');"
-          ]
-        },
-        {
-          "type": "button",
-          "label": "Remove HP Tracker",
-          "onclick": [
-            "await OwlTrackers.removeTracker(token, 'HP');",
-            "await Owlbear.notification.show('HP Tracker removed', 'WARNING');"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Create HP Tracker (50/50)",
+              "onclick": [
+                "await OwlTrackers.addTracker(token, {",
+                "  variant: 'value-max',",
+                "  name: 'HP',",
+                "  value: 50,",
+                "  max: 50,",
+                "  color: 2",
+                "});",
+                "await Owlbear.notification.show('HP Tracker created', 'SUCCESS');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Remove HP Tracker",
+              "onclick": [
+                "await OwlTrackers.removeTracker(token, 'HP');",
+                "await Owlbear.notification.show('HP Tracker removed', 'WARNING');"
+              ]
+            }
           ]
         }
       ]
@@ -658,42 +663,23 @@
             },
             {
               "type": "button",
-              "label": "Roll d12",
+              "label": "Roll 2d6 + 4",
               "onclick": [
-                "await JustDices.roll('1d12');"
+                "await JustDices.roll('2d6 + 4');"
               ]
             },
             {
               "type": "button",
-              "label": "Roll d10",
+              "label": "Roll silent d10",
               "onclick": [
-                "await JustDices.roll('1d10');"
-              ]
-            }
-          ]
-        },
-        {
-          "type": "row",
-          "children": [
-            {
-              "type": "button",
-              "label": "Roll d8",
-              "onclick": [
-                "await JustDices.roll('1d8');"
+                "await JustDices.rollSilent('1d10');"
               ]
             },
             {
               "type": "button",
-              "label": "Roll d6",
+              "label": "Roll 4dF",
               "onclick": [
-                "await JustDices.roll('1d6');"
-              ]
-            },
-            {
-              "type": "button",
-              "label": "Roll d4",
-              "onclick": [
-                "await JustDices.roll('1d4');"
+                "await JustDices.rollSilent('4dF');"
               ]
             }
           ]
@@ -703,30 +689,63 @@
         },
         {
           "type": "title",
-          "text": "Damage Rolls"
+          "text": "Advanced Rolls"
         },
         {
           "type": "row",
           "children": [
             {
               "type": "button",
-              "label": "Greatsword (2d6+4)",
+              "label": "Roll 4d6k3 (keep 3 highest)",
               "onclick": [
-                "await JustDices.roll('Greatsword: 2d6 + 4');"
+                "await JustDices.roll('4d6k3');"
               ]
             },
             {
               "type": "button",
-              "label": "Longsword (1d8+3)",
+              "label": "Roll 4d6d2 (drop 2 lowest)",
               "onclick": [
-                "await JustDices.roll('Longsword: 1d8 + 3');"
+                "await JustDices.roll('4d6d2');"
               ]
             },
             {
               "type": "button",
-              "label": "Fireball (8d6)",
+              "label": "Roll 4d6! (explode)",
               "onclick": [
-                "await JustDices.roll('Fireball: 8d6');"
+                "await JustDices.roll('4d6!');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Roll 4d6!>=4 (explode on 4,5,6)",
+              "onclick": [
+                "await JustDices.roll('4d6!>=4');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Non-Standard Rolls"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "/say Hello World!",
+              "onclick": [
+                "await JustDices.roll('/say Hello World!');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "floor(sqrt(1d20))",
+              "onclick": [
+                "await JustDices.roll('floor(sqrt(1d20))');"
               ]
             }
           ]
