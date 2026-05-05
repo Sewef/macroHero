@@ -1427,37 +1427,155 @@
         },
         {
           "type": "text",
-          "text": "Apply visual auras to tokens and items. Useful for spell effects, status indicators, or environmental effects."
+          "text": "Apply visual auras to tokens and items. Useful for spell effects, status indicators, or environmental effects.\n\n**Aura Configuration:**\n- **style** — Type of aura: `Simple|Image|Bubble|Glow|Range|Spirits|Distort`\n  - Warning: `Image` does not work currently\n- **color** — Hex color code (e.g., `'#ff0000'` for red)\n- **size** — Aura size as a number (typically 1-5)\n- **animated** — Boolean for animated effects (optional, `true` or `false`)"
         },
         {
           "type": "divider"
         },
         {
           "type": "title",
-          "text": "Add Auras"
+          "text": "Glow Auras"
         },
         {
-          "type": "button",
-          "label": "Red Glow",
-          "onclick": [
-            "await Auras.addAura(token, { style: 'Glow', color: '#ff0000', animated: true });",
-            "await Owlbear.notification.show('Red glow aura added', 'INFO');"
+          "type": "text",
+          "text": "Add glowing aura effects around tokens. Supports animation and custom colors."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Red Glow",
+              "tooltip": "Animated red glow effect (size 2)",
+              "color": "#c0392b",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Glow', color: '#ff0000', size: 2, animated: true });",
+                "await Owlbear.notification.show('Red glow aura added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Blue Glow",
+              "tooltip": "Animated blue glow effect (size 2)",
+              "color": "#2980b9",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Glow', color: '#0000ff', size: 2, animated: true });",
+                "await Owlbear.notification.show('Blue glow aura added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Green Glow",
+              "tooltip": "Animated green glow effect (size 2)",
+              "color": "#27ae60",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Glow', color: '#00ff00', size: 2, animated: true });",
+                "await Owlbear.notification.show('Green glow aura added', 'INFO');"
+              ]
+            }
           ]
         },
         {
-          "type": "button",
-          "label": "Blue Bubble",
-          "onclick": [
-            "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 2 });",
-            "await Owlbear.notification.show('Blue bubble aura added', 'INFO');"
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Bubble Auras"
+        },
+        {
+          "type": "text",
+          "text": "Add bubble-shaped aura effects. Perfect for status or protection indicators."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Blue Bubble (Small)",
+              "tooltip": "Small blue bubble (size 1)",
+              "color": "#3498db",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 1 });",
+                "await Owlbear.notification.show('Small blue bubble added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Blue Bubble (Medium)",
+              "tooltip": "Medium blue bubble (size 2)",
+              "color": "#3498db",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 2 });",
+                "await Owlbear.notification.show('Medium blue bubble added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Blue Bubble (Large)",
+              "tooltip": "Large blue bubble (size 3)",
+              "color": "#3498db",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 3 });",
+                "await Owlbear.notification.show('Large blue bubble added', 'INFO');"
+              ]
+            }
           ]
         },
         {
-          "type": "button",
-          "label": "Remove All Auras",
-          "onclick": [
-            "await Auras.removeAllAuras(token);",
-            "await Owlbear.notification.show('All auras removed', 'WARNING');"
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Purple Bubble",
+              "tooltip": "Purple bubble effect (size 2)",
+              "color": "#9b59b6",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#ff00ff', size: 2 });",
+                "await Owlbear.notification.show('Purple bubble added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Yellow Bubble",
+              "tooltip": "Yellow bubble effect (size 2)",
+              "color": "#f39c12",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#ffff00', size: 2 });",
+                "await Owlbear.notification.show('Yellow bubble added', 'INFO');"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Orange Bubble",
+              "tooltip": "Orange bubble effect (size 2)",
+              "color": "#e67e22",
+              "onclick": [
+                "await Auras.addAura(token, { style: 'Bubble', color: '#ff8800', size: 2 });",
+                "await Owlbear.notification.show('Orange bubble added', 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Aura Management"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Remove All Auras from Token",
+              "color": "#c0392b",
+              "tooltip": "Remove all auras from the token",
+              "onclick": [
+                "await Auras.removeAura(token);",
+                "await Owlbear.notification.show('All auras removed', 'WARNING');"
+              ]
+            }
           ]
         }
       ]

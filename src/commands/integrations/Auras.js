@@ -77,20 +77,20 @@ export async function getAuras(itemId) {
  * @param {Object} config - Aura configuration object
  *   
  *   Required:
- *   - size: number â€” Aura radius in grid units
+ *   - size: number - Aura radius in grid units
  *
  *   Optional (omitted = uses player defaults):
- *   - style: string â€” Glow|Bubble|Range|Solid|Simple|Distort|Spirits|Image|Custom
- *   - color: string â€” Hex color code (#FF0000, etc.). Required if style is not Image/Custom
- *   - opacity: number â€” 0-1, opacity value
- *   - blendMode: string â€” Blend mode (PLUS, DIFFERENCE, SATURATION, etc.)
- *   - layer: string â€” DRAWING, POST_PROCESS, etc.
- *   - visibleTo: string | null â€” Player ID for visibility (null = invisible to all)
- *   - sksl: string â€” Shader code for Custom style auras (required if style is Custom)
+ *   - style: string - Simple|Image|Bubble|Glow|Range|Spirits|Distort
+ *   - color: string - Hex color code (#FF0000, etc.). Required if style is not Image/Custom
+ *   - opacity: number - 0-1, opacity value
+ *   - blendMode: string - Blend mode (PLUS, DIFFERENCE, SATURATION, etc.)
+ *   - layer: string - DRAWING, POST_PROCESS, etc.
+ *   - visibleTo: string | null - Player ID for visibility (null = invisible to all)
+ *   - sksl: string - Shader code for Custom style auras (required if style is Custom)
  *   
  *   For Image style auras, EITHER:
- *   - imageUrl: string â€” Image URL (automatically detects dimensions and MIME type)
- *   - imageBuildParams: object â€” Full {image: ImageContent, grid: ImageGrid} (overrides imageUrl)
+ *   - imageUrl: string - Image URL (automatically detects dimensions and MIME type)
+ *   - imageBuildParams: object - Full {image: ImageContent, grid: ImageGrid} (overrides imageUrl)
  *
  * @returns {Promise<void>}
  */
