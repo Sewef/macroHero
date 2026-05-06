@@ -180,8 +180,13 @@ export class UIComponent {
       document.body.appendChild(tooltipEl);
     }
 
-    element.addEventListener('mouseenter', (e) => {
-      const raw = evaluate();
+    element.addEventListener('mouseenter', async (e) => {
+      let raw = evaluate();
+      // Variables may not be resolved yet on first hover — retry after a frame
+      if (raw.includes('${')) {
+        await new Promise(r => setTimeout(r, 80));
+        raw = evaluate();
+      }
       tooltipEl.innerHTML = isMd ? parseMd(raw) : sanitizeHtml(raw);
       tooltipEl.style.display = 'block';
       UIComponent._positionTooltip(tooltipEl, e);
