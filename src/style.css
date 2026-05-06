@@ -1162,7 +1162,7 @@ button:disabled {
   white-space: normal;
   word-break: break-word;
   text-align: center;
-  font-size: clamp(0.55rem, 1.8cqw, var(--font-xs));
+  /* font-size: clamp(0.55rem, 1.8cqw, var(--font-xs)); */
   line-height: 1.2;
   pointer-events: none;
 }
