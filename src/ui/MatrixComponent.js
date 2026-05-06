@@ -112,7 +112,7 @@ export class MatrixComponent extends UIComponent {
       this.addEventListener(btn, "click", async () => {
         await this.executeButtonCommands(btn, buttonConfig);
       });
-    } else {
+    } else if (!buttonConfig.onrightclick?.length) {
       btn.disabled = true;
     }
 

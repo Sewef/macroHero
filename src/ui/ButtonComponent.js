@@ -25,11 +25,12 @@ export class ButtonComponent extends UIComponent {
 
     // Add command handler if onclick commands exist
     const hasOnclick = this.item.onclick && Array.isArray(this.item.onclick) && this.item.onclick.length > 0;
+    const hasOnrightclick = this.item.onrightclick && Array.isArray(this.item.onrightclick) && this.item.onrightclick.length > 0;
     if (hasOnclick) {
       this.addEventListener(btn, "click", async () => {
         await this.executeCommands(btn);
       });
-    } else {
+    } else if (!hasOnrightclick) {
       btn.disabled = true;
     }
 
