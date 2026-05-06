@@ -41,7 +41,7 @@ function buildFields(type, el) {
   switch (type) {
     case 'button': return `
       <div class="input-group"><label>Label</label><input type="text" id="elem_label" value="${e.label || ''}" placeholder="Button Text" /></div>
-      <div class="input-group"><label>Tooltip</label><input type="text" id="elem_tooltip" value="${e.tooltip || ''}" placeholder="Displayed on hover" /></div>
+      <div class="input-group"><label>Tooltip</label><textarea id="elem_tooltip" placeholder="Displayed on hover" rows="2" style="resize:vertical;font-family:inherit">${e.tooltip || ''}</textarea></div>
       ${colorRow(e.color)}
       ${onClickRow(e.onclick)}
       <div class="input-group">
@@ -194,7 +194,7 @@ function buildFields(type, el) {
       return `
         <div class="input-group"><label>Label (optional)</label><input type="text" id="mbtn_label" value="${e.label || ''}" placeholder="Button text" /></div>
         <div class="input-group"><label>Icon (emoji or URL)</label><input type="text" id="mbtn_icon" value="${e.icon || ''}" placeholder="🔥 or https://..." /></div>
-        <div class="input-group"><label>Tooltip (optional)</label><input type="text" id="mbtn_tooltip" value="${e.tooltip || ''}" /></div>
+        <div class="input-group"><label>Tooltip (optional)</label><textarea id="mbtn_tooltip" rows="2" style="resize:vertical;font-family:inherit">${e.tooltip || ''}</textarea></div>
         <div class="input-group">
           <label style="display:flex;align-items:center;gap:6px;">
             <input type="checkbox" id="mbtn_hasColor" ${e.color ? 'checked' : ''} /> Custom Color
