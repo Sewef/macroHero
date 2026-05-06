@@ -14,11 +14,15 @@ export class MatrixComponent extends UIComponent {
     const cols = this.item.columns || 4;
     const buttonSize = this.item.buttonSize || "40px";
     const gap = this.item.gap || "4px";
+    const isRect = this.item.buttonShape === 'rectangle';
     
     matrix.style.display = 'grid';
-    matrix.style.gridTemplateColumns = `repeat(${cols}, ${buttonSize})`;
+    // Rectangle: columns fill available space equally; square: fixed size per column
+    matrix.style.gridTemplateColumns = isRect ? `repeat(${cols}, 1fr)` : `repeat(${cols}, ${buttonSize})`;
+    if (isRect) matrix.style.gridAutoRows = buttonSize;
     matrix.style.gap = gap;
     if (this.item.flex) matrix.style.flex = this.item.flex;
+    this._isRect = isRect;
 
     if (this.item.border) {
       matrix.classList.add('mh-bordered');
@@ -47,6 +51,7 @@ export class MatrixComponent extends UIComponent {
    */
   createMatrixButton(buttonConfig, index) {
     const btn = this.createElement("button", "mh-matrix-button");
+    if (this._isRect) btn.classList.add('mh-matrix-button--rect');
 
     // Apply custom color if provided (dynamic — stays inline)
     if (buttonConfig.color) {

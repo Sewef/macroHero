@@ -169,6 +169,14 @@ function buildFields(type, el) {
           <input type="text" id="elem_gap" value="${e.gap || '4px'}" placeholder="4px" />
         </div>
         <div class="input-group">
+          <label>Button Shape</label>
+          <div style="display:flex;gap:4px;">
+            <button type="button" class="btn-small btn-preset${(e.buttonShape||'square')==='square'?' btn-preset-active':''}" data-target="elem_buttonShape" data-value="square">Square</button>
+            <button type="button" class="btn-small btn-preset${e.buttonShape==='rectangle'?' btn-preset-active':''}" data-target="elem_buttonShape" data-value="rectangle">Rectangle</button>
+          </div>
+          <input type="hidden" id="elem_buttonShape" value="${e.buttonShape || 'square'}" />
+        </div>
+        <div class="input-group">
           <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
         </div>
         ${colorRow(e.color)}
@@ -285,6 +293,7 @@ function readFields(type, existingChildren) {
       el.columns = parseInt(v('elem_columns') || '4');
       el.buttonSize = v('elem_buttonSize') || '40px';
       el.gap = v('elem_gap') || '4px';
+      el.buttonShape = v('elem_buttonShape') || 'square';
       if (checked('elem_border')) el.border = true;
       if (checked('elem_customColor')) el.color = v('elem_color');
       if (existingChildren !== null) {

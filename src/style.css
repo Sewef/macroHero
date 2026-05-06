@@ -1137,6 +1137,12 @@ button:disabled {
   cursor: default;
 }
 
+/* Rectangle variant — fixed height, no aspect-ratio */
+.mh-matrix-button--rect {
+  aspect-ratio: 2 / 1;
+  height: 100%;
+}
+
 .mh-matrix-icon {
   font-size: 24px;
   line-height: 1;
