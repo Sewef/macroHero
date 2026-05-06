@@ -871,7 +871,7 @@ body {
 }
 
 .mh-value-content.mh-loading::after {
-  content: '●';
+  content: '\25CF';
   animation: mh-loading-pulse 1.5s ease-in-out infinite;
   margin-left: 4px;
 }
