@@ -1,6 +1,6 @@
 // config.js
 import OBR from "@owlbear-rodeo/sdk";
-import { loadAllEvaluatedVariables, loadEvaluatedVariablesForPage } from "./storage.js";
+import { loadAllEvaluatedVariables } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";
 import { loadConfigFile } from "./yamlLoader.js";
 import { deepClone } from "./utils.js";
@@ -231,19 +231,8 @@ export async function loadConfig() {
         }
         
 // Instead of merging from room metadata, merge evaluated values from localStorage only
-        // Load all variables once at startup (more efficient than loading per-page)
+        // Load all variables once at startup (warms the cache for later use)
         await loadAllEvaluatedVariables();
-        
-        for (let i = 0; i < (config.pages?.length || 0); i++) {
-            const evalVars = await loadEvaluatedVariablesForPage(i);
-            if (config.pages[i]?.variables && evalVars) {
-                Object.entries(evalVars).forEach(([varName, value]) => {
-                    if (config.pages[i].variables[varName]) {
-                        config.pages[i].variables[varName].expression = value;
-                    }
-                });
-            }
-        }
         
         return config;
     } catch (error) {
