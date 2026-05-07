@@ -1088,6 +1088,7 @@ button:disabled {
 .mh-layout-matrix {
   flex: 0 1 auto;
   align-content: start;
+  margin: var(--spacing-sm) 0;
 }
 
 .mh-layout-matrix.mh-bordered {

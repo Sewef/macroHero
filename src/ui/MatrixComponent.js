@@ -61,11 +61,11 @@ export class MatrixComponent extends UIComponent {
 
     // Apply custom border color if provided (dynamic — stays inline)
     if (buttonConfig.borderColor) {
-      btn.style.borderColor = buttonConfig.borderColor;
-      btn.style.borderWidth = '2px';
+      btn.style.outline = `2px solid ${buttonConfig.borderColor}`;
+      btn.style.outlineOffset = '-2px';
     } else if (buttonConfig.color) {
-      btn.style.borderColor = buttonConfig.color;
-      btn.style.borderWidth = '2px';
+      btn.style.outline = `2px solid ${buttonConfig.color}`;
+      btn.style.outlineOffset = '-2px';
     }
 
     // Handle icon if provided
