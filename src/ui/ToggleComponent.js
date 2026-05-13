@@ -57,6 +57,12 @@ export class ToggleComponent extends UIComponent {
       await this.handleCheckboxChange(toggleInput, variable);
     });
 
+    // Make the full element clickable (not only the switch/text)
+    this.addEventListener(container, "click", e => {
+      if (e.target.closest('input, label, button, a, textarea, select')) return;
+      toggleInput.click();
+    });
+
     wrapper.appendChild(switchEl);
     wrapper.appendChild(labelText);
     container.appendChild(wrapper);

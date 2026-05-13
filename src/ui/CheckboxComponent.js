@@ -35,6 +35,12 @@ export class CheckboxComponent extends UIComponent {
       await this.handleCheckboxChange(checkbox, variable);
     });
 
+    // Make the full element clickable (not only the checkbox/text)
+    this.addEventListener(container, "click", e => {
+      if (e.target.closest('input, label, button, a, textarea, select')) return;
+      checkbox.click();
+    });
+
     // Create label text
     const text = this.createElement("span");
     if (!this.services.evaluateAndSetElementText(text, this.item, this.page)) {
