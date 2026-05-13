@@ -188,11 +188,11 @@ export function renderPagePanel(pageIndex) {
       <div class="page-section">
         <div class="page-section-header" id="pageVarsHeader" style="cursor:pointer;" title="Toggle variables">
           <span class="section-title">
-            <span id="pageVarsChevron">▾</span> Variables
+            <span id="pageVarsChevron">▸</span> Variables
           </span>
           <button type="button" class="btn-small" id="addPageVarBtn">+ Variable</button>
         </div>
-        <div id="pageVarsList"></div>
+        <div id="pageVarsList" class="page-vars-list" style="display:none;"></div>
       </div>
 
       <div class="page-section" style="flex:1;min-height:0;">
