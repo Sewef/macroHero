@@ -16,7 +16,6 @@ import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable } from "./storage.js";
 import { getExpressionContext } from "./expressionHelpers.js";
 import { createDebugLogger } from "./debugMode.js";
-import { resolveVariables } from "./expressionEvaluator.js";
 
 const logger = createDebugLogger('executor');
 
@@ -107,6 +106,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       for (const [varName, value] of Object.entries(postResolved)) {
         if (allAffected.has(varName)) {
           page._resolved[varName] = value;
+          variableStore.setVariableResolved(varName, value, pageIndex);
           updateRenderedValue(varName, value);
 
           if (onVariableResolved) {
@@ -128,9 +128,34 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
 
 /**
  * Create helper functions available in command context
- * Uses VariableStore and EventBus for centralized state management
+ * Uses VariableStore for centralized state management
  */
 function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
+  const applyResolvedUpdate = (varName, value) => {
+    page._resolved[varName] = value;
+    variableStore.setVariableResolved(varName, value, pageIndex);
+    updateRenderedValue(varName, value);
+  };
+
+  const resolveDependents = async (changedVarName) => {
+    const dependentVars = variableEngine.getDependentVariables(page.variables, [changedVarName]);
+    dependentVars.delete(changedVarName);
+
+    if (dependentVars.size === 0) {
+      return;
+    }
+
+    logger.log("Re-resolving dependent variables");
+    const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
+    const resolvedDeps = await variableEngine.resolveVariables(page.variables, baseResolved, dependentVars);
+
+    for (const depVarName of dependentVars) {
+      const depValue = resolvedDeps[depVarName];
+      applyResolvedUpdate(depVarName, depValue);
+      logger.log('Updated dependent variable:', depVarName, '=', depValue);
+    }
+  };
+
   return {
     setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
@@ -148,36 +173,16 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       variable.value = newValue;
       delete variable.eval;
       
-      // Update page._resolved immediately - this is the source of truth for UI
-      page._resolved[varName] = newValue;
-
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
-      variableStore.setVariableResolved(varName, newValue, pageIndex);
+      applyResolvedUpdate(varName, newValue);
       variableStore.markVariableModified(varName);
-      eventBus.emit('store:variableResolved', varName, newValue, pageIndex);
-      updateRenderedValue(varName, newValue);
 
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
       logger.log('Set value:', varName, '=', newValue);
-      
-      // Re-resolve dependent variables
-      const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
-      if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
-        logger.log("Re-resolving dependent variables");
-        const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
-        const onVariableResolved = (depVarName, depValue) => {
-          if (depVarName !== varName) {
-            page._resolved[depVarName] = depValue;
-            updateRenderedValue(depVarName, depValue);
-            variableStore.setVariableResolved(depVarName, depValue, pageIndex);
-            eventBus.emit('store:variableResolved', depVarName, depValue, pageIndex);
-            logger.log('Updated dependent variable:', depVarName, '=', depValue);
-          }
-        };
-        await resolveVariables(page.variables, baseResolved, onVariableResolved, dependentVars);
-      }
+
+      await resolveDependents(varName);
       
       return newValue;
     },
@@ -199,36 +204,16 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       variable.value = newValue;
       delete variable.eval;
       
-      // Update page._resolved immediately - this is the source of truth for UI
-      page._resolved[varName] = newValue;
-
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
-      variableStore.setVariableResolved(varName, newValue, pageIndex);
+      applyResolvedUpdate(varName, newValue);
       variableStore.markVariableModified(varName);
-      eventBus.emit('store:variableResolved', varName, newValue, pageIndex);
-      updateRenderedValue(varName, newValue);
 
       // Persist to storage
       await updateEvaluatedVariable(pageIndex, varName, newValue);
 
       logger.log('Add value:', varName, '+=', delta, '=>', newValue);
-      
-      // Re-resolve dependent variables
-      const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
-      if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
-        logger.log("Re-resolving dependent variables");
-        const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
-        const onVariableResolved = (depVarName, depValue) => {
-          if (depVarName !== varName) {
-            page._resolved[depVarName] = depValue;
-            updateRenderedValue(depVarName, depValue);
-            variableStore.setVariableResolved(depVarName, depValue, pageIndex);
-            eventBus.emit('store:variableResolved', depVarName, depValue, pageIndex);
-            logger.log('Updated dependent variable:', depVarName, '=', depValue);
-          }
-        };
-        await resolveVariables(page.variables, baseResolved, onVariableResolved, dependentVars);
-      }
+
+      await resolveDependents(varName);
       
       return newValue;
     },
