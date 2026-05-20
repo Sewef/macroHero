@@ -81,8 +81,8 @@ class VariableEngine {
   }
 
   /**
-   * Track variable dependencies by executing with a tracking Proxy
-   * More reliable than regex-based detection
+   * Track variable dependencies through static identifier analysis.
+   * This avoids evaluating expressions during graph construction.
    * @param {string} expression - Expression to analyze
    * @param {Object} variablesConfig - Variable definitions (needed for structure)
    * @returns {Set} Set of variable names actually used
@@ -90,48 +90,31 @@ class VariableEngine {
   _trackDependencies(expression, variablesConfig = {}) {
     const trackedVars = new Set();
     const varNames = Object.keys(variablesConfig || {});
+    const varSet = new Set(varNames);
 
-    // Create a proxy that tracks property access
-    const trackingProxy = new Proxy({}, {
-      get: (target, prop) => {
-        const propStr = String(prop);
-        // Only track if it's a known variable
-        if (varNames.includes(propStr)) {
-          trackedVars.add(propStr);
-        }
-        // Return undefined or a nested proxy for chaining
-        return new Proxy({}, {
-          get: () => undefined,
-          has: () => false,
-        });
-      },
-      has: (target, prop) => {
-        const propStr = String(prop);
-        if (varNames.includes(propStr)) {
-          trackedVars.add(propStr);
-        }
-        return false;
-      },
-    });
+    if (!expression || typeof expression !== 'string') {
+      return trackedVars;
+    }
 
-    try {
-      // Try to parse and track variable access
-      // Create a minimal context
-      const context = {
-        variables: trackingProxy,
-      };
+    // Track explicit this.var references first.
+    const thisRefs = expression.matchAll(REGEX_PATTERNS.thisReference);
+    for (const match of thisRefs) {
+      const refName = match[1];
+      if (varSet.has(refName)) {
+        trackedVars.add(refName);
+      }
+    }
 
-      // Execute the expression in a try-catch to handle errors gracefully
-      new Function('variables', `return (${expression});`)(trackingProxy);
-    } catch (error) {
-      // If execution fails, fall back to regex-based detection
-      logger.log("Tracking failed, falling back to regex detection", error.message);
-      
-      // Fallback: use simple substring matching for known variables
-      for (const varName of varNames) {
-        if (expression.includes(varName)) {
-          trackedVars.add(varName);
-        }
+    // Ignore quoted string literals to reduce false positives from labels/sheet names.
+    const expressionWithoutQuotedStrings = expression
+      .replace(/"(?:\\.|[^"\\])*"/g, ' ')
+      .replace(/'(?:\\.|[^'\\])*'/g, ' ');
+
+    const identifiers = expressionWithoutQuotedStrings.matchAll(REGEX_PATTERNS.variableIdentifier);
+    for (const match of identifiers) {
+      const identifier = match[1];
+      if (varSet.has(identifier)) {
+        trackedVars.add(identifier);
       }
     }
 
@@ -187,8 +170,7 @@ class VariableEngine {
   }
 
   /**
-   * Build and cache dependency graph using execution tracking
-   * More reliable than static regex analysis
+   * Build and cache dependency graph from static dependency tracking.
    */
   _buildDependencyGraph(variablesConfig) {
     // Check cache first
