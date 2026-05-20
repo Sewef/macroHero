@@ -32,7 +32,7 @@ export class CheckboxComponent extends UIComponent {
     
     // Handle checkbox changes
     this.addEventListener(checkbox, "change", async () => {
-      await this.handleCheckboxChange(checkbox, variable);
+      await this.handleCheckboxChange(checkbox);
     });
 
     // Make the full element clickable (not only the checkbox/text)
@@ -57,38 +57,15 @@ export class CheckboxComponent extends UIComponent {
   /**
    * Handle checkbox change
    * @param {HTMLElement} checkbox - Checkbox element
-   * @param {Object} variable - Variable object
    */
-  async handleCheckboxChange(checkbox, variable) {
+  async handleCheckboxChange(checkbox) {
     const newValue = checkbox.checked;
-    variable.value = newValue;
-    delete variable.eval;
-    this.setResolvedValue(this.item.var, newValue);
 
     try {
-      await this.services.saveConfig(this.services.config)
-        .catch(err => this.handleError("Checkbox", err));
-      await this.services.broadcastConfigUpdated();
-
-      // Execute onupdate commands if defined
-      if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
-        await this.executeOnUpdate(this.item.onupdate, "CheckboxOnUpdate");
-      }
-
-      // Resolve dependent variables
-      const dependentVars = this.services.getDependentVariables(this.page.variables, [this.item.var]);
-      if (dependentVars.size > 0) {
-        const onVariableResolved = (varName, value) => {
-          this.page._resolved[varName] = value;
-          this.services.updateRenderedValue(varName, value);
-        };
-        await this.services.resolveVariables(
-          this.page.variables,
-          this.services.globalVariables,
-          onVariableResolved,
-          dependentVars
-        );
-      }
+      await this.commitVariableChange(this.item.var, newValue, {
+        componentName: "Checkbox",
+        onupdateCommands: this.item.onupdate,
+      });
     } catch (err) {
       this.handleError('Checkbox', err);
     }

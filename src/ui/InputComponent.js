@@ -45,16 +45,16 @@ export class InputComponent extends UIComponent {
 
     // Handle value changes
     this.addEventListener(input, "blur", () => {
-      this.handleInputChange(input, variable, true);
+      this.handleInputChange(input, true);
     });
 
     // For onupdate, listen to input/change events with debounce
     if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
       this.addEventListener(input, "input", () => {
-        this.handleInputChange(input, variable, false);
+        this.handleInputChange(input, false);
       });
       this.addEventListener(input, "change", () => {
-        this.handleInputChange(input, variable, false);
+        this.handleInputChange(input, false);
       });
     }
 
@@ -77,41 +77,18 @@ export class InputComponent extends UIComponent {
   /**
    * Handle input value change
    * @param {HTMLElement} input - Input element
-   * @param {Object} variable - Variable object
    * @param {boolean} isBlur - Whether this was called from blur event
    */
-  async handleInputChange(input, variable, isBlur = true) {
+  async handleInputChange(input, isBlur = true) {
     const newValue = input.value;
-    variable.value = newValue;
-    delete variable.eval;
-    this.setResolvedValue(this.item.var, newValue);
 
     if (isBlur) {
-      // On blur, save immediately without debounce
+      // On blur, commit immediately without debounce
       try {
-        await this.services.saveConfig(this.services.config)
-          .catch(err => this.handleError("Input", err));
-        await this.services.broadcastConfigUpdated();
-
-        // Execute onupdate commands if defined
-        if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
-          await this.executeOnUpdate(this.item.onupdate, "InputOnUpdate");
-        }
-
-        // Resolve dependent variables
-        const dependentVars = this.services.getDependentVariables(this.page.variables, [this.item.var]);
-        if (dependentVars.size > 0) {
-          const onVariableResolved = (varName, value) => {
-            this.page._resolved[varName] = value;
-            this.services.updateRenderedValue(varName, value);
-          };
-          await this.services.resolveVariables(
-            this.page.variables,
-            this.services.globalVariables,
-            onVariableResolved,
-            dependentVars
-          );
-        }
+        await this.commitVariableChange(this.item.var, newValue, {
+          componentName: "Input",
+          onupdateCommands: this.item.onupdate,
+        });
       } catch (err) {
         this.handleError('Input', err);
       }
@@ -120,27 +97,10 @@ export class InputComponent extends UIComponent {
       clearTimeout(this.updateTimer);
       this.updateTimer = setTimeout(async () => {
         try {
-          await this.services.saveConfig(this.services.config)
-            .catch(err => this.handleError("Input", err));
-          await this.services.broadcastConfigUpdated();
-
-          // Execute onupdate commands
-          await this.executeOnUpdate(this.item.onupdate, "InputOnUpdate");
-
-          // Resolve dependent variables
-          const dependentVars = this.services.getDependentVariables(this.page.variables, [this.item.var]);
-          if (dependentVars.size > 0) {
-            const onVariableResolved = (varName, value) => {
-              this.page._resolved[varName] = value;
-              this.services.updateRenderedValue(varName, value);
-            };
-            await this.services.resolveVariables(
-              this.page.variables,
-              this.services.globalVariables,
-              onVariableResolved,
-              dependentVars
-            );
-          }
+          await this.commitVariableChange(this.item.var, newValue, {
+            componentName: "Input",
+            onupdateCommands: this.item.onupdate,
+          });
         } catch (err) {
           this.handleError('Input', err);
         }

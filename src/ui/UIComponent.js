@@ -4,6 +4,9 @@
  */
 
 import { createDebugLogger } from "../debugMode.js";
+import { variableStore } from "../stores/VariableStore.js";
+import { updateEvaluatedVariable } from "../storage.js";
+import { variableEngine } from "../engines/VariableEngine.js";
 import { parseMd, sanitizeHtml, MD_PATTERN } from "./markdownUtils.js";
 const logger = createDebugLogger("UIComponent");
 
@@ -283,12 +286,85 @@ export class UIComponent {
         onVariableResolved,
         this.services.currentPage ?? 0
       );
-
-      await this.services.saveConfig(this.services.config)
-        .catch(err => this.handleError(componentName, err));
-      await this.services.broadcastConfigUpdated();
     } catch (error) {
       this.handleError(componentName, error);
+    }
+  }
+
+  /**
+   * Resolve and refresh variables depending on a changed variable.
+   * @param {string} varName - Changed variable name
+   */
+  async resolveDependentVariables(varName) {
+    const dependentVars = this.services.getDependentVariables(this.page.variables, [varName]);
+    dependentVars.delete(varName);
+
+    if (dependentVars.size === 0) {
+      return;
+    }
+
+    const baseResolved = {
+      ...(this.services.globalVariables || {}),
+      ...(this.page?._resolved || {}),
+    };
+
+    const resolved = await this.services.resolveVariables(
+      this.page.variables,
+      baseResolved,
+      null,
+      dependentVars
+    );
+
+    for (const depVarName of dependentVars) {
+      const value = resolved[depVarName];
+      this.page._resolved[depVarName] = value;
+      if (this.page._pageIndex !== undefined) {
+        variableStore.setVariableResolved(depVarName, value, this.page._pageIndex);
+      }
+      this.services.updateRenderedValue(depVarName, value);
+    }
+  }
+
+  /**
+   * Commit a component-driven variable value change through a shared pipeline.
+   * @param {string} varName - Variable name
+   * @param {*} newValue - New value
+   * @param {Object} options - Optional behavior flags
+   */
+  async commitVariableChange(varName, newValue, options = {}) {
+    const {
+      componentName = "UIComponent",
+      onupdateCommands = null,
+      resolveDependents = true,
+      broadcast = true,
+    } = options;
+
+    const variable = this.getVariable(varName);
+    if (!variable) {
+      throw new Error(`Variable not found: ${varName}`);
+    }
+
+    variable.value = newValue;
+    delete variable.eval;
+    this.setResolvedValue(varName, newValue);
+    variableEngine.invalidateDependencyGraph(this.page.variables);
+
+    if (this.page._pageIndex !== undefined) {
+      variableStore.setVariableResolved(varName, newValue, this.page._pageIndex);
+      variableStore.markVariableModified(varName);
+      await updateEvaluatedVariable(this.page._pageIndex, varName, newValue);
+    }
+
+    if (onupdateCommands && Array.isArray(onupdateCommands) && onupdateCommands.length > 0) {
+      await this.executeOnUpdate(onupdateCommands, `${componentName}OnUpdate`);
+    }
+
+    if (resolveDependents) {
+      await this.resolveDependentVariables(varName);
+    }
+
+    if (broadcast) {
+      await this.services.broadcastConfigUpdated();
     }
   }
 }

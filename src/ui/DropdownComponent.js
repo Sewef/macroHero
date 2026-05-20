@@ -57,7 +57,7 @@ export class DropdownComponent extends UIComponent {
 
     // Handle changes
     this.addEventListener(select, "change", async () => {
-      await this.handleSelectChange(select, variable);
+      await this.handleSelectChange(select);
     });
 
     container.appendChild(label);
@@ -95,38 +95,15 @@ export class DropdownComponent extends UIComponent {
   /**
    * Handle select value change
    * @param {HTMLElement} select - Select element
-   * @param {Object} variable - Variable object
    */
-  async handleSelectChange(select, variable) {
+  async handleSelectChange(select) {
     const newValue = select.value;
-    variable.value = newValue;
-    delete variable.eval;
-    this.setResolvedValue(this.item.var, newValue);
 
     try {
-      await this.services.saveConfig(this.services.config)
-        .catch(err => this.handleError("Dropdown", err));
-      await this.services.broadcastConfigUpdated();
-
-      // Execute onupdate commands if defined
-      if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
-        await this.executeOnUpdate(this.item.onupdate, "DropdownOnUpdate");
-      }
-
-      // Re-evaluate dependent variables
-      const dependentVars = this.services.getDependentVariables(this.page.variables, [this.item.var]);
-      if (dependentVars.size > 0) {
-        const onVariableResolved = (varName, value) => {
-          this.page._resolved[varName] = value;
-          this.services.updateRenderedValue(varName, value);
-        };
-        await this.services.resolveVariables(
-          this.page.variables,
-          this.services.globalVariables,
-          onVariableResolved,
-          dependentVars
-        );
-      }
+      await this.commitVariableChange(this.item.var, newValue, {
+        componentName: "Dropdown",
+        onupdateCommands: this.item.onupdate,
+      });
     } catch (err) {
       this.handleError('Dropdown', err);
     }

@@ -7,6 +7,8 @@ import { UIComponent } from "./UIComponent.js";
 import { createDebugLogger } from "../debugMode.js";
 import { eventBus as EventBus } from "../events/EventBus.js";
 import { variableStore } from "../stores/VariableStore.js";
+import { updateEvaluatedVariable } from "../storage.js";
+import { variableEngine } from "../engines/VariableEngine.js";
 
 const logger = createDebugLogger('ui');
 
@@ -150,16 +152,16 @@ export class CounterComponent extends UIComponent {
     this.setResolvedValue(varName, constrained);
     variable.value = constrained;
     delete variable.eval;
+    variableEngine.invalidateDependencyGraph(this.page.variables);
     
     // Notify VariableStore
     if (this.page._pageIndex !== undefined) {
       variableStore.setVariableResolved(varName, constrained, this.page._pageIndex);
       variableStore.markVariableModified(varName);
       logger.log(`Store notified: ${varName}`);
+      updateEvaluatedVariable(this.page._pageIndex, varName, constrained)
+        .catch(err => this.handleError("Counter", err));
     }
-    
-    // Notify EventBus
-    EventBus.emit('store:variableResolved', varName, constrained, this.page._pageIndex);
     
     // Clear pending save and reschedule
     clearTimeout(this.saveTimer);
@@ -167,9 +169,7 @@ export class CounterComponent extends UIComponent {
     this.saveTimer = setTimeout(async () => {
       try {
         logger.log(`Saving: ${varName}`);
-        
-        await this.services.saveConfig(this.services.config)
-          .catch(err => this.handleError("Counter", err));
+
         await this.services.broadcastConfigUpdated();
         
         // Execute onupdate commands if defined

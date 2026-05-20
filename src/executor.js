@@ -172,6 +172,7 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      variableEngine.invalidateDependencyGraph(page.variables);
       
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
       applyResolvedUpdate(varName, newValue);
@@ -203,6 +204,7 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      variableEngine.invalidateDependencyGraph(page.variables);
       
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
       applyResolvedUpdate(varName, newValue);

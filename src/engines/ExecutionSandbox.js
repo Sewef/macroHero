@@ -96,8 +96,7 @@ class ExecutionSandbox {
       const exprHash = this._hashExpression(expression);
       const integrationKeys = Object.keys(context.integrations).sort().join(', ');
       const mathKeys = Object.keys(context.math).sort().join(', ');
-      const varKeysArray = Object.keys(resolvedVars).sort().join(', ');
-      const cacheKey = `sync:${exprHash}:${integrationKeys}|${mathKeys}|${varKeysArray}`;
+      const cacheKey = `sync:${exprHash}:${integrationKeys}|${mathKeys}`;
 
       // Check if this evaluator is cached
       let evaluator = this.functionCache.get(cacheKey);
@@ -109,8 +108,9 @@ class ExecutionSandbox {
           `
             const { ${integrationKeys} } = context.integrations;
             const { ${mathKeys} } = context.math;
-            const { ${varKeysArray} } = context.variables;
-            return (${expression});
+            with (context.variables) {
+              return (${expression});
+            }
           `
         );
         this._setCacheEntry(cacheKey, evaluator);
@@ -152,8 +152,7 @@ class ExecutionSandbox {
       const exprHash = this._hashExpression(processed);
       const integrationKeys = Object.keys(context.integrations).sort().join(', ');
       const mathKeys = Object.keys(context.math).sort().join(', ');
-      const varKeysArray = Object.keys(resolvedVars).sort().join(', ');
-      const cacheKey = `async:${exprHash}:${integrationKeys}|${mathKeys}|${varKeysArray}`;
+      const cacheKey = `async:${exprHash}:${integrationKeys}|${mathKeys}`;
 
       // Check if this evaluator is cached
       let evaluator = this.functionCache.get(cacheKey);
@@ -166,8 +165,9 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              const { ${varKeysArray} } = context.variables;
-              return (${processed});
+              with (context.variables) {
+                return (${processed});
+              }
             })();
           `
         );
@@ -206,9 +206,7 @@ class ExecutionSandbox {
       const codeHash = this._hashExpression(script);
       const integrationKeys = Object.keys(fullContext.integrations).sort().join(', ');
       const mathKeys = Object.keys(fullContext.math).sort().join(', ');
-      const varKeys = Object.keys(fullContext.variables).sort().join(', ');
-      const helperKeys = Object.keys(fullContext.helpers).sort().join(', ');
-      const cacheKey = `cmd:${codeHash}:${integrationKeys}|${mathKeys}|${varKeys}|${helperKeys}`;
+      const cacheKey = `cmd:${codeHash}:${integrationKeys}|${mathKeys}`;
 
       // Check if this executor is cached
       let executor = this.functionCache.get(cacheKey);
@@ -221,9 +219,11 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              const { ${varKeys} } = context.variables;
-              const { ${helperKeys} } = context.helpers;
-              ${script}
+              with (context.helpers) {
+                with (context.variables) {
+                  ${script}
+                }
+              }
             })();
           `
         );

@@ -54,7 +54,7 @@ export class ToggleComponent extends UIComponent {
 
     // Handle toggle changes
     this.addEventListener(toggleInput, "change", async () => {
-      await this.handleCheckboxChange(toggleInput, variable);
+      await this.handleCheckboxChange(toggleInput);
     });
 
     // Make the full element clickable (not only the switch/text)
@@ -73,15 +73,13 @@ export class ToggleComponent extends UIComponent {
   /**
    * Handle checkbox change event (reused from CheckboxComponent logic)
    */
-  async handleCheckboxChange(checkboxElement, variable) {
+  async handleCheckboxChange(checkboxElement) {
     try {
       const newValue = checkboxElement.checked;
-      this.setResolvedValue(this.item.var, newValue);
-
-      // Execute onupdate commands if any
-      if (this.item.onupdate && Array.isArray(this.item.onupdate)) {
-        await this.executeOnUpdate(this.item.onupdate, 'ToggleComponent');
-      }
+      await this.commitVariableChange(this.item.var, newValue, {
+        componentName: "Toggle",
+        onupdateCommands: this.item.onupdate,
+      });
     } catch (error) {
       this.handleError('ToggleComponent.handleCheckboxChange', error);
     }

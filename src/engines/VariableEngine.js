@@ -42,6 +42,19 @@ class VariableEngine {
   }
 
   /**
+   * Explicitly invalidate cached dependency graph(s).
+   * Use this when variable definitions are mutated in-place.
+   * @param {Object|null} variablesConfig - Specific variables object to invalidate. If omitted, clears all.
+   */
+  invalidateDependencyGraph(variablesConfig = null) {
+    if (variablesConfig) {
+      dependencyCache.delete(variablesConfig);
+      return;
+    }
+    dependencyCache.clear();
+  }
+
+  /**
    * Register a listener for variable changes
    * @param {string} varName - Variable name
    * @param {Function} callback - Called when variable changes: (oldValue, newValue) => {}
