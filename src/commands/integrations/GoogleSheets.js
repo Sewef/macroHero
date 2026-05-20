@@ -7,6 +7,29 @@ import { createDebugLogger } from "../../debugMode.js";
 
 const logger = createDebugLogger("GoogleSheets");
 
+const CACHE_TTL_MS = 1000;
+
+function normalizeRangeKey(range) {
+  if (!range || typeof range !== "string") return "";
+  const trimmed = range.trim();
+  const bangIndex = trimmed.indexOf("!");
+  if (bangIndex === -1) return trimmed;
+  const sheet = trimmed.slice(0, bangIndex).replace(/^'+|'+$/g, "");
+  const a1 = trimmed.slice(bangIndex + 1);
+  return `${sheet}!${a1}`;
+}
+
+function getOrCreateClientState(client) {
+  if (!client.__mhState) {
+    client.__mhState = {
+      cache: new Map(),
+      inFlight: new Map(),
+      pendingBySheet: new Map(),
+    };
+  }
+  return client.__mhState;
+}
+
 // ── Client ────────────────────────────────────────────────────────────────────
 
 /**
@@ -23,6 +46,11 @@ export function initializeGoogleSheets(config) {
   return {
     apiKey: config.apiKey,
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
+    __mhState: {
+      cache: new Map(),
+      inFlight: new Map(),
+      pendingBySheet: new Map(),
+    },
   };
 }
 
@@ -103,40 +131,128 @@ export function hasGoogleSheetsCredentials() {
  * @returns {Promise<Array>}
  */
 async function readSheetRange(client, sheetId, range) {
-  const url = `${client.baseUrl}/${sheetId}/values/${encodeURIComponent(range)}?key=${client.apiKey}`;
-  logger.log(`Fetching: ${range}`);
+  const state = getOrCreateClientState(client);
+  const cacheKey = `${sheetId}|${range}`;
+  const now = Date.now();
 
-  const response = await fetch(url);
-  logger.log(`Response: ${response.status}`);
-
-  if (!response.ok) {
-    const text = await response.text();
-    let detail = text;
-    try { detail = JSON.parse(text).error?.message ?? text; } catch { /* not JSON */ }
-    const msg = `Failed to read sheet (${response.status} ${response.statusText}): ${detail}`;
-    logger.error(msg);
-    throw new Error(msg);
+  const cached = state.cache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    logger.log(`Cache hit: ${range}`);
+    return cached.value;
   }
 
-  const rows = (await response.json()).values ?? [];
-  logger.log(`Read ${rows.length} rows`);
-
-  let conversions = 0;
-  const parsed = rows.map(row =>
-    row.map(cell => {
-      const v = parseLocalizedNumber(cell);
-      if (v !== cell) conversions++;
-      return v;
-    })
-  );
-  if (conversions > 0) logger.log(`Converted ${conversions} numeric strings`);
-
-  // Flatten single-column result
-  if (parsed.length > 0 && parsed.every(r => r.length === 1)) {
-    logger.log("Flattened to 1D array");
-    return parsed.map(r => r[0]);
+  if (state.inFlight.has(cacheKey)) {
+    logger.log(`In-flight reuse: ${range}`);
+    return state.inFlight.get(cacheKey);
   }
-  return parsed;
+
+  const promise = enqueueRangeRead(client, sheetId, range, cacheKey);
+  state.inFlight.set(cacheKey, promise);
+  promise.finally(() => {
+    state.inFlight.delete(cacheKey);
+  });
+  return promise;
+}
+
+function enqueueRangeRead(client, sheetId, range, cacheKey) {
+  const state = getOrCreateClientState(client);
+  let batch = state.pendingBySheet.get(sheetId);
+
+  if (!batch) {
+    batch = {
+      ranges: new Set(),
+      waiters: new Map(),
+      timer: null,
+    };
+    state.pendingBySheet.set(sheetId, batch);
+  }
+
+  return new Promise((resolve, reject) => {
+    batch.ranges.add(range);
+    if (!batch.waiters.has(range)) batch.waiters.set(range, []);
+    batch.waiters.get(range).push({ resolve, reject, cacheKey });
+
+    if (!batch.timer) {
+      batch.timer = setTimeout(() => flushBatch(client, sheetId), 0);
+    }
+  });
+}
+
+async function flushBatch(client, sheetId) {
+  const state = getOrCreateClientState(client);
+  const batch = state.pendingBySheet.get(sheetId);
+  if (!batch) return;
+
+  batch.timer = null;
+  const requestedRanges = Array.from(batch.ranges);
+  if (requestedRanges.length === 0) {
+    state.pendingBySheet.delete(sheetId);
+    return;
+  }
+
+  try {
+    const params = requestedRanges
+      .map(r => `ranges=${encodeURIComponent(r)}`)
+      .join("&");
+    const url = `${client.baseUrl}/${sheetId}/values:batchGet?${params}&key=${client.apiKey}`;
+
+    logger.log(`Batch fetching ${requestedRanges.length} range(s)`);
+    const response = await fetch(url);
+    logger.log(`Batch response: ${response.status}`);
+
+    if (!response.ok) {
+      const text = await response.text();
+      let detail = text;
+      try { detail = JSON.parse(text).error?.message ?? text; } catch { /* not JSON */ }
+      const msg = `Failed to read sheet (${response.status} ${response.statusText}): ${detail}`;
+      throw new Error(msg);
+    }
+
+    const payload = await response.json();
+    const rangeValues = new Map();
+    for (const vr of payload.valueRanges || []) {
+      rangeValues.set(normalizeRangeKey(vr.range), vr.values ?? []);
+    }
+
+    for (const requestedRange of requestedRanges) {
+      // API usually echoes exact A1 with sheet name; fallback to empty when missing
+      const rows = rangeValues.get(normalizeRangeKey(requestedRange)) ?? [];
+
+      let conversions = 0;
+      const parsed = rows.map(row =>
+        row.map(cell => {
+          const v = parseLocalizedNumber(cell);
+          if (v !== cell) conversions++;
+          return v;
+        })
+      );
+
+      let value = parsed;
+      if (parsed.length > 0 && parsed.every(r => r.length === 1)) {
+        value = parsed.map(r => r[0]);
+      }
+
+      if (conversions > 0) {
+        logger.log(`Converted ${conversions} numeric strings for ${requestedRange}`);
+      }
+
+      const waiters = batch.waiters.get(requestedRange) || [];
+      const expiresAt = Date.now() + CACHE_TTL_MS;
+      for (const waiter of waiters) {
+        state.cache.set(waiter.cacheKey, { value, expiresAt });
+        waiter.resolve(value);
+      }
+    }
+  } catch (error) {
+    logger.error("Batch fetch failed:", error);
+    for (const waiters of batch.waiters.values()) {
+      for (const waiter of waiters) {
+        waiter.reject(error);
+      }
+    }
+  } finally {
+    state.pendingBySheet.delete(sheetId);
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
