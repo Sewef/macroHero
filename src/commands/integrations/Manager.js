@@ -93,6 +93,10 @@ class IntegrationsManager {
           if (!self.googleSheetsClient) return null;
           return await GoogleSheets.getValue(self.googleSheetsClient, sheetId, sheetName, range);
         }),
+        getValues: this.wrapAsync(async (sheetId, sheetName, ranges) => {
+          if (!self.googleSheetsClient) return {};
+          return await GoogleSheets.getValues(self.googleSheetsClient, sheetId, sheetName, ranges);
+        }),
         getRange: this.wrapAsync(async (sheetId, sheetName, range) => {
           if (!self.googleSheetsClient) return null;
           return await GoogleSheets.getRange(self.googleSheetsClient, sheetId, sheetName, range);

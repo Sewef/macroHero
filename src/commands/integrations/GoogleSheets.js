@@ -282,3 +282,41 @@ export async function getValue(client, sheetId, sheetName, range) {
   if (!Array.isArray(result) || result.length === 0) return result ?? null;
   return Array.isArray(result[0]) ? (result[0][0] ?? null) : (result[0] ?? null);
 }
+
+/**
+ * Get multiple ranges from a named sheet in one call and return first-cell values.
+ * Returned object keeps the same keys as the requested ranges.
+ *
+ * Example:
+ *   await GoogleSheets.getValues(client, sheetId, "Sheet1", ["A1", "B2:C3"])
+ *   => { A1: 12, "B2:C3": [[...], [...]] }
+ *
+ * @param {{ apiKey: string, baseUrl: string }} client
+ * @param {string} sheetId
+ * @param {string} sheetName
+ * @param {string[]} ranges
+ * @returns {Promise<Record<string, any>>}
+ */
+export async function getValues(client, sheetId, sheetName, ranges) {
+  if (!Array.isArray(ranges) || ranges.length === 0) {
+    return {};
+  }
+
+  const qualifiedRanges = ranges.map(range => `'${sheetName}'!${range}`);
+  const rangeResults = await Promise.all(
+    qualifiedRanges.map(range => readSheetRange(client, sheetId, range))
+  );
+
+  const result = {};
+  for (let i = 0; i < ranges.length; i++) {
+    const range = ranges[i];
+    const value = rangeResults[i];
+    if (!Array.isArray(value) || value.length === 0) {
+      result[range] = value ?? null;
+    } else {
+      result[range] = Array.isArray(value[0]) ? (value[0][0] ?? null) : (value[0] ?? null);
+    }
+  }
+
+  return result;
+}
