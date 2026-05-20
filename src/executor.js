@@ -20,6 +20,15 @@ import { resolveVariables } from "./expressionEvaluator.js";
 
 const logger = createDebugLogger('executor');
 
+function buildResolvedContext(page, pageIndex = 0, globalVariables = {}) {
+  const storeResolved = variableStore.getAllResolvedVariables(pageIndex) || {};
+  return {
+    ...globalVariables,
+    ...storeResolved,
+    ...(page?._resolved || {}),
+  };
+}
+
 /**
  * Handle button click - simplified flow with new architecture
  */
@@ -49,9 +58,10 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
 
     if (varsToResolveBeforeCmd.size > 0) {
       logger.log("Pre-resolving variables");
+      const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
       const preResolved = await variableEngine.resolveVariables(
         page.variables,
-        page._resolved || {},
+        baseResolved,
         varsToResolveBeforeCmd
       );
       page._resolved = { ...page._resolved, ...preResolved };
@@ -60,8 +70,8 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     // Step 3: Build execution context with helpers
     const executionContext = {
       integrations: getExpressionContext(),
-      variables: page._resolved,
-      helpers: createHelperFunctions(page, pageIndex),
+      variables: buildResolvedContext(page, pageIndex, globalVariables),
+      helpers: createHelperFunctions(page, pageIndex, globalVariables),
     };
 
     // Step 4: Execute commands
@@ -86,9 +96,10 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       const allAffected = variableEngine.getDependentVariables(page.variables, affectedVars);
       logger.log("Re-resolving affected variables");
 
+      const postBaseResolved = buildResolvedContext(page, pageIndex, globalVariables);
       const postResolved = await variableEngine.resolveVariables(
         page.variables,
-        page._resolved,
+        postBaseResolved,
         allAffected
       );
 
@@ -119,7 +130,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
  * Create helper functions available in command context
  * Uses VariableStore and EventBus for centralized state management
  */
-function createHelperFunctions(page, pageIndex = 0) {
+function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
   return {
     setValue: async (varName, value) => {
       if (!page.variables || !(varName in page.variables)) {
@@ -155,6 +166,7 @@ function createHelperFunctions(page, pageIndex = 0) {
       const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
       if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
         logger.log("Re-resolving dependent variables");
+        const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
         const onVariableResolved = (depVarName, depValue) => {
           if (depVarName !== varName) {
             page._resolved[depVarName] = depValue;
@@ -164,7 +176,7 @@ function createHelperFunctions(page, pageIndex = 0) {
             logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };
-        await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
+        await resolveVariables(page.variables, baseResolved, onVariableResolved, dependentVars);
       }
       
       return newValue;
@@ -205,6 +217,7 @@ function createHelperFunctions(page, pageIndex = 0) {
       const dependentVars = variableEngine.getDependentVariables(page.variables, [varName]);
       if (dependentVars.size > 1) { // size > 1 because the set includes the variable itself
         logger.log("Re-resolving dependent variables");
+        const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
         const onVariableResolved = (depVarName, depValue) => {
           if (depVarName !== varName) {
             page._resolved[depVarName] = depValue;
@@ -214,7 +227,7 @@ function createHelperFunctions(page, pageIndex = 0) {
             logger.log('Updated dependent variable:', depVarName, '=', depValue);
           }
         };
-        await resolveVariables(page.variables, {}, onVariableResolved, dependentVars);
+        await resolveVariables(page.variables, baseResolved, onVariableResolved, dependentVars);
       }
       
       return newValue;
@@ -229,7 +242,7 @@ export async function executeCommand(command, page) {
   const script = Array.isArray(command) ? command.join('\n') : command;
   const context = {
     variables: page?._resolved || {},
-    helpers: createHelperFunctions(page, page?._pageIndex ?? 0),
+    helpers: createHelperFunctions(page, page?._pageIndex ?? 0, {}),
   };
   return executionSandbox.executeCommand(script, context);
 }
