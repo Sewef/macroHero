@@ -672,14 +672,15 @@
               "type": "button",
               "label": "Roll silent d10",
               "onclick": [
-                "await JustDices.rollSilent('1d10');"
+                "const roll = await JustDices.rollSilent('1d10');",
+                "Owlbear.notification.show('Rolled a ' + roll, 'INFO');"
               ]
             },
             {
               "type": "button",
               "label": "Roll 4dF",
               "onclick": [
-                "await JustDices.rollSilent('4dF');"
+                "JustDices.roll('4dF');"
               ]
             }
           ]
