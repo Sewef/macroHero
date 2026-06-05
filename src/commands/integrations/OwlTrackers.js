@@ -11,7 +11,7 @@ import { createDebugLogger } from "../../debugMode.js";
 const logger = createDebugLogger("OwlTrackers");
 
 
-const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
+const OWLTRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
 
 /**
  * Owl-Trackers Integration
@@ -26,7 +26,7 @@ const TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
  */
 export async function getValue(tokenId, trackerName) {
   try {
-    const value = await getMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName);
+    const value = await getMetadataValue(tokenId, OWLTRACKERS_METADATA_KEY, trackerName);
     if (value === null) {
       logger.warn(`[OwlTrackers] Tracker "${trackerName}" not found on token ${tokenId}`);
     }
@@ -45,7 +45,7 @@ export async function getValue(tokenId, trackerName) {
  */
 export async function getMax(tokenId, trackerName) {
   try {
-    const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
+    const trackers = await getTokenMetadataValue(tokenId, OWLTRACKERS_METADATA_KEY);
     if (!Array.isArray(trackers)) {
       logger.warn(`[OwlTrackers] No trackers found on token ${tokenId}`);
       return null;
@@ -72,7 +72,7 @@ export async function getMax(tokenId, trackerName) {
  * @returns {Promise<void>}
  */
 export async function setValue(tokenId, trackerName, value) {
-  return await setMetadataValue(tokenId, TRACKERS_METADATA_KEY, trackerName, value);
+  return await setMetadataValue(tokenId, OWLTRACKERS_METADATA_KEY, trackerName, value);
 }
 
 /**
@@ -145,7 +145,7 @@ export async function addTracker(tokenId, trackerConfig) {
     }
     
     // Get existing trackers
-    let trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
+    let trackers = await getTokenMetadataValue(tokenId, OWLTRACKERS_METADATA_KEY);
     if (!Array.isArray(trackers)) {
       trackers = [];
     }
@@ -184,7 +184,7 @@ export async function addTracker(tokenId, trackerConfig) {
     trackers.push(newTracker);
     
     // Update token metadata
-    await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, trackers);
+    await setTokenMetadata(tokenId, OWLTRACKERS_METADATA_KEY, trackers);
     
     logger.log(`Added ${variant} tracker "${name || 'unnamed'}" with ID ${trackerId} to token ${tokenId}`);
     return trackerId;
@@ -203,7 +203,7 @@ export async function addTracker(tokenId, trackerConfig) {
  */
 export async function removeTracker(tokenId, trackerIdentifier) {
   try {
-    const trackers = await getTokenMetadataValue(tokenId, TRACKERS_METADATA_KEY);
+    const trackers = await getTokenMetadataValue(tokenId, OWLTRACKERS_METADATA_KEY);
     
     if (!Array.isArray(trackers)) {
       logger.warn(`No trackers found on token ${tokenId}`);
@@ -222,7 +222,7 @@ export async function removeTracker(tokenId, trackerIdentifier) {
     }
     
     // Update token metadata
-    await setTokenMetadata(tokenId, TRACKERS_METADATA_KEY, updatedTrackers);
+    await setTokenMetadata(tokenId, OWLTRACKERS_METADATA_KEY, updatedTrackers);
     
     logger.log(`Removed tracker "${trackerIdentifier}" from token ${tokenId}`);
     return true;

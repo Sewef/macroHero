@@ -9,7 +9,7 @@ import { createDebugLogger } from "../../debugMode.js";
 const logger = createDebugLogger("StatBubbles");
 
 
-const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata";
+const STATBUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata";
 
 /**
  * StatBubbles Integration
@@ -25,7 +25,7 @@ const STAT_BUBBLES_METADATA_KEY = "com.owlbear-rodeo-bubbles-extension/metadata"
  */
 export async function getValue(tokenId, statName) {
   try {
-    return await getFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName);
+    return await getFlatValue(tokenId, STATBUBBLES_METADATA_KEY, statName);
   } catch (error) {
     logger.error(`Failed to get stat "${statName}" value from token ${tokenId}:`, error.message);
     return null;
@@ -41,7 +41,7 @@ export async function getValue(tokenId, statName) {
  */
 export async function setValue(tokenId, statName, value) {
   try {
-    const success = await setFlatValue(tokenId, STAT_BUBBLES_METADATA_KEY, statName, value);
+    const success = await setFlatValue(tokenId, STATBUBBLES_METADATA_KEY, statName, value);
     if (success) {
       logger.log(`Set stat "${statName}" to ${value} on token ${tokenId}`);
     }
@@ -84,7 +84,7 @@ export async function addValue(tokenId, statName, amount) {
  */
 export async function getAllStats(tokenId) {
   try {
-    return await getFlatMetadata(tokenId, STAT_BUBBLES_METADATA_KEY);
+    return await getFlatMetadata(tokenId, STATBUBBLES_METADATA_KEY);
   } catch (error) {
     logger.error(`Failed to get all stats from token ${tokenId}:`, error.message);
     return null;

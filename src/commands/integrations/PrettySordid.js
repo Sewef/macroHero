@@ -5,7 +5,7 @@ import { createDebugLogger } from "../../debugMode.js";
 const logger = createDebugLogger("PrettySordid");
 
 
-const METADATA_KEY = "com.pretty-initiative/metadata";
+const PRETTYSORDID_METADATA_KEY = "com.pretty-initiative/metadata";
 
 /**
  * Normalize an input that may be an item object or a token id string
@@ -31,7 +31,7 @@ export async function hasInitiative(itemOrId) {
   const item = (await _ensureItem(itemOrId));
   try {
     if (!item) return false;
-    return item.metadata && item.metadata[METADATA_KEY] !== undefined;
+    return item.metadata && item.metadata[PRETTYSORDID_METADATA_KEY] !== undefined;
   } catch (err) {
     logger.warn('[PrettySordid] hasInitiative error', err);
     return false;
@@ -41,7 +41,7 @@ export async function hasInitiative(itemOrId) {
 export async function getInitiative(itemOrId) {
   const item = (await _ensureItem(itemOrId));
   if (!item) return 0;
-  const meta = item.metadata?.[METADATA_KEY];
+  const meta = item.metadata?.[PRETTYSORDID_METADATA_KEY];
   if (!meta || !meta.count) return 0;
   const n = parseInt(String(meta.count), 10);
   return Number.isNaN(n) ? 0 : n;
@@ -50,7 +50,7 @@ export async function getInitiative(itemOrId) {
 export async function isActiveTurn(itemOrId) {
   const item = (await _ensureItem(itemOrId));
   if (!item) return false;
-  const meta = item.metadata?.[METADATA_KEY];
+  const meta = item.metadata?.[PRETTYSORDID_METADATA_KEY];
   return !!meta?.active;
 }
 
@@ -68,11 +68,11 @@ export async function setInitiative(itemOrId, count) {
     const item = items.find(i => i.id === tokenId);
     if (!item) return;
 
-    const meta = item.metadata[METADATA_KEY];
+    const meta = item.metadata[PRETTYSORDID_METADATA_KEY];
     if (meta) {
       meta.count = String(count);
     } else {
-      item.metadata[METADATA_KEY] = { count: String(count), active: false, group: 1 };
+      item.metadata[PRETTYSORDID_METADATA_KEY] = { count: String(count), active: false, group: 1 };
     }
   });
 }
@@ -91,7 +91,7 @@ export async function removeInitiative(itemOrId) {
     const item = items.find(i => i.id === tokenId);
     if (!item) return;
 
-    delete item.metadata[METADATA_KEY];
+    delete item.metadata[PRETTYSORDID_METADATA_KEY];
   });
 }
 

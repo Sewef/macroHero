@@ -11,6 +11,8 @@ import { broadcastRequest } from "../shared/sdkHelpers.js";
 const logger = createDebugLogger("JustDices");
 
 
+const JUSTDICES_REQUEST_CHANNEL = "com.sewef.justdices/api.request";
+const JUSTDICES_RESPONSE_CHANNEL = "com.sewef.justdices/api.response";
 let SELF_ID_PROMISE = null;
 
 /**
@@ -64,8 +66,8 @@ export async function roll(expression, hiddenOrOptions = {}) {
     const payload = { callId, expression: finalExpression, showInLogs, requesterId };
     
     const result = await broadcastRequest(
-      "justdices.api.request",
-      "justdices.api.response",
+      JUSTDICES_REQUEST_CHANNEL,
+      JUSTDICES_RESPONSE_CHANNEL,
       payload,
       { destination: "LOCAL", timeoutMs }
     );
@@ -111,8 +113,8 @@ export async function getRollObject(expression, hiddenOrOptions = {}) {
     const payload = { callId, expression: finalExpression, showInLogs, requesterId };
     
     const result = await broadcastRequest(
-      "justdices.api.request",
-      "justdices.api.response",
+      JUSTDICES_REQUEST_CHANNEL,
+      JUSTDICES_RESPONSE_CHANNEL,
       payload,
       { destination: "LOCAL", timeoutMs }
     );
