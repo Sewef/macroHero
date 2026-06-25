@@ -11,8 +11,8 @@ import { broadcastRequest } from "../shared/sdkHelpers.js";
 const logger = createDebugLogger("ConditionMarkers");
 
 // API Channel constants
-const API_REQUEST_CHANNEL = "conditionmarkers.api.request";
-const API_RESPONSE_CHANNEL = "conditionmarkers.api.response";
+const API_REQUEST_CHANNEL = "keegan.dev.condition-markers/api.request";
+const API_RESPONSE_CHANNEL = "keegan.dev.condition-markers/api.response";
 
 // Metadata key constants
 const MARKER_METADATA_KEY = "keegan.dev.condition-markers/metadata";
@@ -30,18 +30,27 @@ function getConditionName(condition) {
 
 /**
  * Send an API request to condition markers service
- * @param {string} action - Action ('add' or 'remove')
+ * @param {string} action - Action ('addCondition', 'removeCondition', 'removeAllConditions', 'getTokenConditions', 'getAvailableConditions')
  * @param {string} tokenId - Token ID
  * @param {string} conditionName - Condition name
- * @param {any} value - Optional value for add action
  * @returns {Promise<any>} API response data
  */
-async function sendConditionAPIRequest(action, tokenId, conditionName, value = null) {
-  const callId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const payload = { callId, action, tokenId, condition: conditionName };
-  
-  if (value !== null && value !== undefined) {
-    payload.value = value;
+async function sendAPIRequest(action, tokenId, conditionName, value = null) {
+  const normalizedAction = {
+    add: "addCondition",
+    remove: "removeCondition",
+  }[action] || action;
+
+  const payload = { action: normalizedAction };
+
+  if (normalizedAction !== "getAvailableConditions") {
+    payload.data = { tokenId };
+    if (conditionName !== null && conditionName !== undefined) {
+      payload.data.condition = conditionName;
+    }
+    if (value !== null && value !== undefined) {
+      payload.data.value = value;
+    }
   }
 
   const requestResult = await broadcastRequest(
@@ -55,7 +64,17 @@ async function sendConditionAPIRequest(action, tokenId, conditionName, value = n
     throw new Error(requestResult.error);
   }
 
-  return requestResult.data;
+  const response = requestResult.data;
+
+  if (response?.action !== normalizedAction) {
+    throw new Error(`Unexpected ConditionMarkers API response: ${response?.action ?? "unknown"}`);
+  }
+
+  if (!response.success) {
+    throw new Error(response.message || "ConditionMarkers API request failed");
+  }
+
+  return response.data ?? response;
 }
 
 /**
@@ -125,9 +144,8 @@ function parseConditionValue(labelText) {
  */
 export async function getConditions(itemId) {
   try {
-    const items = await OBR.scene.items.getItems();
-    const markers = items.filter(item => item.attachedTo === itemId && item.name && item.name.startsWith("Condition Marker - "));
-    return markers.map(m => ({ name: m.name.replace("Condition Marker - ", "") }));
+    const result = await sendAPIRequest("getTokenConditions", itemId);
+    return (result.conditions || []).map(condition => ({ name: condition }));
   } catch (error) {
     logger.error("Failed to get item conditions:", error);
     throw error;
@@ -144,7 +162,7 @@ export async function getConditions(itemId) {
 export async function addCondition(itemId, conditionName, value = null) {
   try {
     logger.log(`Adding condition '${conditionName}' to token ${itemId}, value: ${value}`);
-    const result = await sendConditionAPIRequest('add', itemId, conditionName, value);
+    const result = await sendAPIRequest('addCondition', itemId, conditionName, value);
     logger.log(`Condition '${conditionName}' added successfully`);
     return result;
   } catch (error) {
@@ -162,7 +180,7 @@ export async function addCondition(itemId, conditionName, value = null) {
 export async function removeCondition(itemId, conditionName) {
   try {
     logger.log(`Removing condition '${conditionName}' from token ${itemId}`);
-    const result = await sendConditionAPIRequest('remove', itemId, conditionName);
+    const result = await sendAPIRequest('removeCondition', itemId, conditionName);
     logger.log(`Condition '${conditionName}' removed successfully`);
     return result;
   } catch (error) {
@@ -200,11 +218,11 @@ export async function toggleCondition(itemId, conditionName) {
  */
 export async function clearAllConditions(itemId) {
   try {
-    const conditions = await getConditions(itemId);
-    for (const condition of conditions) {
-      await removeCondition(itemId, getConditionName(condition));
-    }
+    await sendAPIRequest("removeAllConditions", itemId);
   } catch (error) {
+    if (error.message === "No conditions found on token") {
+      return;
+    }
     logger.error("Failed to clear conditions:", error);
     throw error;
   }
