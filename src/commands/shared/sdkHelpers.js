@@ -178,7 +178,7 @@ const imageNamespace = {
  */
 export const BROADCAST_DESTINATIONS = {
   LOCAL: "LOCAL",
-  ROOM: "ROOM",
+  REMOTE: "REMOTE",
   ALL: "ALL",
 };
 
@@ -214,7 +214,7 @@ export async function broadcastMessage(messageId, data, options = {}) {
     for (const dest of destinations) {
       try {
         await OBR.broadcast.sendMessage(messageId, data, { destination: dest });
-        logger.log(`Broadcast sent to ${dest}`, { messageId });
+        logger.log(`Broadcast sent to ${dest}`, { messageId, data });
         return { success: true, destination: dest, attempts: attempt + 1 };
       } catch (err) {
         const msg = err?.error ?? String(err);
