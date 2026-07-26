@@ -16,7 +16,6 @@ import { DropdownComponent } from "./DropdownComponent.js";
 import { MatrixComponent } from "./MatrixComponent.js";
 import { DividerComponent } from "./DividerComponent.js";
 import { ToggleComponent } from "./ToggleComponent.js";
-import { AlertComponent } from "./AlertComponent.js";
 
 export class ComponentRegistry {
   static #registry = {
@@ -33,7 +32,6 @@ export class ComponentRegistry {
     dropdown: DropdownComponent,
     matrix: MatrixComponent,
     divider: DividerComponent,
-    alert: AlertComponent,
   };
 
   /**
