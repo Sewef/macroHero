@@ -19,7 +19,7 @@ const BLEND_MODES = [
 ];
 
 // Plugin ID for the Aurora extension
-const AURORA_METADATA_KEY = "https://aurora.several-record.com/config";
+const AURORA_METADATA_KEY = "com.several-record.aurora/config";
 
 /**
  * Map blend mode label to numeric value
