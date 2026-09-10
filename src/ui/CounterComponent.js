@@ -38,6 +38,7 @@ export class CounterComponent extends UIComponent {
     }
 
     // Get initial value
+    const isComputed = variable.eval !== undefined;
     const initialValue = this.getResolvedValue(this.item.var, this.item.min ?? 0);
     const numValue = Number(initialValue) || 0;
     this.lastSavedValue = numValue;
@@ -55,6 +56,8 @@ export class CounterComponent extends UIComponent {
     input.type = "number";
     input.className = "mh-counter-input";
     input.value = numValue;
+    input.disabled = isComputed;
+    input.title = isComputed ? "Calculated value" : "";
     
     if (variable.min !== undefined) input.min = variable.min;
     if (variable.max !== undefined) input.max = variable.max;
@@ -75,7 +78,9 @@ export class CounterComponent extends UIComponent {
     
     const incrementBtn = this.createElement("button", "mh-counter-btn");
     incrementBtn.textContent = "+";
+    incrementBtn.disabled = isComputed;
     this.addEventListener(incrementBtn, "click", () => {
+      if (isComputed) return;
       logger.log(`Increment: ${this.item.var}`);
       input.value = Number(input.value) + (this.item.step ?? 1);
       this.updateCounterValue(input, variable, this.item.var);
@@ -83,7 +88,9 @@ export class CounterComponent extends UIComponent {
 
     const decrementBtn = this.createElement("button", "mh-counter-btn");
     decrementBtn.textContent = "-";
+    decrementBtn.disabled = isComputed;
     this.addEventListener(decrementBtn, "click", () => {
+      if (isComputed) return;
       logger.log(`Decrement: ${this.item.var}`);
       input.value = Number(input.value) - (this.item.step ?? 1);
       this.updateCounterValue(input, variable, this.item.var);
@@ -132,6 +139,11 @@ export class CounterComponent extends UIComponent {
    * @param {string} varName - Variable name
    */
   updateCounterValue(input, variable, varName) {
+    if (variable.eval !== undefined) {
+      input.value = Number(this.getResolvedValue(varName, this.item.min ?? 0)) || 0;
+      return;
+    }
+
     const constrained = this.applyConstraints(input.value);
     
     // Always sync the input value to respect constraints

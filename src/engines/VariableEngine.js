@@ -302,11 +302,19 @@ class VariableEngine {
   _topologicalSort(dependencies, varsToResolve, variablesConfig) {
     const sorted = [];
     const completed = new Set();
+    const visiting = new Set();
 
-    const visit = (varName) => {
+    const visit = (varName, path = []) => {
       if (completed.has(varName)) return;
+      if (visiting.has(varName)) {
+        logger.error(`Circular variable dependency: ${[...path, varName].join(' -> ')}`);
+        return;
+      }
+
+      visiting.add(varName);
       const deps = dependencies.get(varName) || [];
-      for (const dep of deps) visit(dep);
+      for (const dep of deps) visit(dep, [...path, varName]);
+      visiting.delete(varName);
       completed.add(varName);
       sorted.push(varName);
     };

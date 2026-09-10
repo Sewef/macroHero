@@ -4,7 +4,9 @@
  */
 
 import { UIComponent } from "./UIComponent.js";
+import { createDebugLogger } from "../debugMode.js";
 
+const logger = createDebugLogger("DropdownComponent");
 
 export class DropdownComponent extends UIComponent {
   render() {

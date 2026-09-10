@@ -162,6 +162,21 @@ export async function loadConfigFromLocalStorage() {
     return null;
 }
 
+function mergeEvaluatedValuesIntoConfig(cfg, evaluatedVariables) {
+    if (!cfg?.pages || !evaluatedVariables) return;
+
+    for (const [pageIndex, pageValues] of Object.entries(evaluatedVariables)) {
+        const page = cfg.pages[Number(pageIndex)];
+        if (!page?.variables || !pageValues || typeof pageValues !== 'object') continue;
+
+        for (const [varName, value] of Object.entries(pageValues)) {
+            const variable = page.variables[varName];
+            if (!variable || variable.eval !== undefined || variable.value === undefined) continue;
+            variable.value = value;
+        }
+    }
+}
+
 // --------------------------------------
 // CONFIG PAR DÉFAUT
 // --------------------------------------
@@ -234,7 +249,8 @@ export async function loadConfig() {
         
 // Instead of merging from room metadata, merge evaluated values from localStorage only
         // Load all variables once at startup (warms the cache for later use)
-        await loadAllEvaluatedVariables();
+        const evaluatedVariables = await loadAllEvaluatedVariables();
+        mergeEvaluatedValuesIntoConfig(config, evaluatedVariables);
         
         return config;
     } catch (error) {

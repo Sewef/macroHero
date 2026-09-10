@@ -4,7 +4,6 @@
  */
 
 import { createDebugLogger } from "./debugMode.js";
-import { eventBus as EventBus } from "./events/EventBus.js";
 import { variableStore } from "./stores/VariableStore.js";
 import { ComponentRegistry } from "./ui/ComponentRegistry.js";
 
@@ -20,7 +19,7 @@ let renderedExpressionElements = []; // Array of { element, item, page } for tit
 let renderCycle = 0; // Incremented for each page render to ignore stale async work
 
 import OBR from "@owlbear-rodeo/sdk";
-import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
+import { saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
 import { resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
 import { eventBus } from "./events/EventBus.js";
@@ -393,32 +392,6 @@ function evaluateAndSetElementText(element, item, page) {
     .catch(err => { logger.error('Error evaluating element text:', err); });
   
   return true;
-}
-
-/**
- * Create a label element with optional dynamic evaluation
- * @param {Object} item - Layout item
- * @param {Object} page - Page object
- * @param {boolean} inStack - Whether to create span (true) or div (false)
- * @param {string} suffix - Optional suffix to append (e.g., ":" for stack labels)
- * @returns {HTMLElement} Label element
- */
-function createDynamicLabel(item, page, inStack = false, suffix = "") {
-  const labelEl = document.createElement(inStack ? "span" : "div");
-  labelEl.className = inStack ? "mh-input-label" : "mh-value-label";
-  
-  if (shouldEvaluateDynamically(item)) {
-    evaluateAndSetElementText(labelEl, item, page);
-    // Add suffix after evaluation
-    if (suffix) {
-      const originalPush = renderedExpressionElements[renderedExpressionElements.length - 1];
-      const originalCatch = originalPush;
-    }
-  } else {
-    labelEl.textContent = (item.label ?? item.var ?? "") + suffix;
-  }
-  
-  return labelEl;
 }
 
 // ============================================
