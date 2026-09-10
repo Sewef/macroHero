@@ -62,6 +62,7 @@ export class ButtonComponent extends UIComponent {
       const pageObj = (this.services.currentPage !== null && this.services.currentPage !== undefined) 
         ? this.services.findPageByIndex(this.services.currentPage) 
         : this.page;
+      const pageIndex = pageObj?._pageIndex ?? this.services.currentPage ?? 0;
 
       const oldResolved = { ...pageObj._resolved };
 
@@ -69,7 +70,7 @@ export class ButtonComponent extends UIComponent {
         const oldValue = oldResolved[varName];
         if (oldValue !== value) {
           pageObj._resolved[varName] = value;
-          this.services.updateRenderedValue(varName, value);
+          this.services.updateRenderedValue(varName, value, pageIndex);
         }
       };
 
@@ -78,7 +79,7 @@ export class ButtonComponent extends UIComponent {
         pageObj,
         this.services.globalVariables,
         onVariableResolved,
-        this.services.currentPage ?? 0
+        pageIndex
       );
 
       await this.services.saveConfig(this.services.config)
@@ -101,6 +102,7 @@ export class ButtonComponent extends UIComponent {
       const pageObj = (this.services.currentPage !== null && this.services.currentPage !== undefined) 
         ? this.services.findPageByIndex(this.services.currentPage) 
         : this.page;
+      const pageIndex = pageObj?._pageIndex ?? this.services.currentPage ?? 0;
 
       const oldResolved = { ...pageObj._resolved };
 
@@ -108,7 +110,7 @@ export class ButtonComponent extends UIComponent {
         const oldValue = oldResolved[varName];
         if (oldValue !== value) {
           pageObj._resolved[varName] = value;
-          this.services.updateRenderedValue(varName, value);
+          this.services.updateRenderedValue(varName, value, pageIndex);
         }
       };
 
@@ -117,7 +119,7 @@ export class ButtonComponent extends UIComponent {
         pageObj,
         this.services.globalVariables,
         onVariableResolved,
-        this.services.currentPage ?? 0
+        pageIndex
       );
 
       await this.services.saveConfig(this.services.config)

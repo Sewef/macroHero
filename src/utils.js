@@ -49,6 +49,7 @@ export function cleanConfigForRuntime(cfg) {
         delete page._resolved;
         delete page._modifiedVars;
         delete page._pageIndex;
+        delete page._variablesVersion;
       }
     });
   }

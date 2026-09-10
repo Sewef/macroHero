@@ -102,9 +102,10 @@ export function cleanConfigForSave(cfg) {
         if (clone._modifiedVars) delete clone._modifiedVars;
         if (Array.isArray(clone.pages)) {
             clone.pages.forEach(p => {
-                if (p && p._resolved) delete p._resolved;
-                if (p && p._modifiedVars) delete p._modifiedVars;
-                if (p && p._pageIndex) delete p._pageIndex;
+                if (p && '_resolved' in p) delete p._resolved;
+                if (p && '_modifiedVars' in p) delete p._modifiedVars;
+                if (p && '_pageIndex' in p) delete p._pageIndex;
+                if (p && '_variablesVersion' in p) delete p._variablesVersion;
             });
         }
         return clone;
@@ -119,6 +120,7 @@ export function cleanConfigForSave(cfg) {
                 delete cp._resolved;
                 delete cp._modifiedVars;
                 delete cp._pageIndex;
+                delete cp._variablesVersion;
                 return cp;
             });
         }

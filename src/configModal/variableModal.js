@@ -148,14 +148,14 @@ export async function openVariableModal(pageIndex, key = '', existingValue = und
   maxInput.value    = '';
 
   if (existingValue !== undefined && typeof existingValue === 'object' && existingValue !== null) {
-    if ('value' in existingValue) {
-      valueRadio.checked = true; evalRadio.checked = false;
-      valueInput.disabled = false; evalInput.disabled = true;
-      valueInput.value = typeof existingValue.value === 'string' ? existingValue.value : JSON.stringify(existingValue.value);
-    } else if ('eval' in existingValue) {
+    if ('eval' in existingValue) {
       evalRadio.checked = true; valueRadio.checked = false;
       evalInput.disabled = false; valueInput.disabled = true;
       evalInput.value = existingValue.eval ?? '';
+    } else if ('value' in existingValue) {
+      valueRadio.checked = true; evalRadio.checked = false;
+      valueInput.disabled = false; evalInput.disabled = true;
+      valueInput.value = typeof existingValue.value === 'string' ? existingValue.value : JSON.stringify(existingValue.value);
     }
     if (existingValue.min !== undefined && existingValue.min !== null) minInput.value = existingValue.min;
     if (existingValue.max !== undefined && existingValue.max !== null) maxInput.value = existingValue.max;

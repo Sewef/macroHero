@@ -107,7 +107,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
         if (allAffected.has(varName)) {
           page._resolved[varName] = value;
           variableStore.setVariableResolved(varName, value, pageIndex);
-          updateRenderedValue(varName, value);
+          updateRenderedValue(varName, value, pageIndex);
 
           if (onVariableResolved) {
             onVariableResolved(varName, value);
@@ -134,7 +134,7 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
   const applyResolvedUpdate = (varName, value) => {
     page._resolved[varName] = value;
     variableStore.setVariableResolved(varName, value, pageIndex);
-    updateRenderedValue(varName, value);
+    updateRenderedValue(varName, value, pageIndex);
   };
 
   const resolveDependents = async (changedVarName) => {
@@ -172,6 +172,7 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      page._variablesVersion = (page._variablesVersion || 0) + 1;
       variableEngine.invalidateDependencyGraph(page.variables);
       
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
@@ -204,6 +205,7 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
       // Update variable definition directly in page
       variable.value = newValue;
       delete variable.eval;
+      page._variablesVersion = (page._variablesVersion || 0) + 1;
       variableEngine.invalidateDependencyGraph(page.variables);
       
       // Update resolved value and notify all listeners (Counter, EventBus, ui.js)

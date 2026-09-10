@@ -17,6 +17,7 @@ let globalVariables = {}; // Store global variables for use in button clicks
 let renderedValueElements = {}; // Map of varName -> DOM element for live updates
 let renderedCheckboxElements = {}; // Map of varName -> checkbox input element for live updates
 let renderedExpressionElements = []; // Array of { element, item, page } for title/text expression evaluation
+let renderCycle = 0; // Incremented for each page render to ignore stale async work
 
 import OBR from "@owlbear-rodeo/sdk";
 import { STORAGE_KEY, MODAL_LABEL, loadConfig, saveConfig } from "./config.js";
@@ -42,6 +43,7 @@ async function broadcastConfigUpdated() {
  */
 export function initUI(cfg) {
   config = cfg;
+  variableStore.setConfig(cfg);
   updateHeaderTitle();
   renderPageButtons();
   selectFirstPage();
@@ -51,7 +53,7 @@ export function initUI(cfg) {
   // Listen for variable updates from VariableStore and update UI
   eventBus.on('store:variableResolved', (varName, value, pageIndex) => {
     logger.log('Variable updated:', varName, '=', value);
-    updateRenderedValue(varName, value);
+    updateRenderedValue(varName, value, pageIndex);
   });
 }
 
@@ -91,6 +93,7 @@ function hideLoadingOverlay() {
  */
 export function setGlobalVariables(vars) {
   globalVariables = vars;
+  variableStore.setGlobalVariablesResolved(vars);
   logger.log("Global variables stored");
 }
 
@@ -175,6 +178,13 @@ export async function reloadCurrentPage() {
 
 async function renderPageContent(page) {
   const container = document.getElementById("content");
+  const pageIndex = config.pages?.indexOf(page) ?? -1;
+  const cycle = ++renderCycle;
+
+  if (pageIndex >= 0) {
+    page._pageIndex = pageIndex;
+    variableStore.setCurrentPage(pageIndex);
+  }
   
   // Clear previous element maps
   renderedValueElements = {};
@@ -213,25 +223,33 @@ async function renderPageContent(page) {
   if (page.variables && Object.keys(page.variables).length > 0) {
     // Find which variables need resolution (not already in _resolved)
     const varsToResolve = new Set();
-    for (const varName in page.variables) {
-      if (!(varName in page._resolved)) {
+    for (const [varName, variableConfig] of Object.entries(page.variables)) {
+      if (variableConfig?.eval !== undefined || !(varName in page._resolved)) {
         varsToResolve.add(varName);
       }
     }
     
     // Only resolve if there are unresolved variables
     if (varsToResolve.size > 0) {
+      const resolutionVersion = page._variablesVersion || 0;
       const onVariableResolved = (varName, value) => {
+        if ((page._variablesVersion || 0) !== resolutionVersion) return;
         page._resolved[varName] = value;
-        // Update UI immediately as each variable resolves
-        updateRenderedValue(varName, value);
+        if (isCurrentRender(page, pageIndex, cycle)) {
+          updateRenderedValue(varName, value, pageIndex);
+        }
       };
       
       // Resolve the needed variables in the background, not blocking the initial render
       // Pass existing _resolved as base to avoid re-evaluating already-resolved vars
       resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve)
         .then(allResolved => {
-          page._resolved = allResolved;
+          if ((page._variablesVersion || 0) !== resolutionVersion) return;
+          for (const varName of varsToResolve) {
+            if (varName in allResolved) {
+              page._resolved[varName] = allResolved[varName];
+            }
+          }
           logger.log("Background variable resolution complete");
         })
         .catch(err => {
@@ -241,10 +259,20 @@ async function renderPageContent(page) {
   }
 }
 
+function isCurrentRender(page, pageIndex, cycle) {
+  return cycle === renderCycle
+    && pageIndex === currentPage
+    && config?.pages?.[pageIndex] === page;
+}
+
 /**
  * Update a rendered value element when its variable resolves
  */
-export function updateRenderedValue(varName, value) {
+export function updateRenderedValue(varName, value, pageIndex = null) {
+  if (pageIndex !== null && pageIndex !== undefined && pageIndex !== currentPage) {
+    return;
+  }
+
   const entry = renderedValueElements[varName];
   // Support both single element (legacy) and array (for multiple counters sharing a variable)
   const elements = Array.isArray(entry) ? entry : (entry ? [entry] : []);
@@ -507,6 +535,7 @@ export async function updateConfig(newConfig) {
   logger.log("Config updated, refreshing");
   // Don't show loading overlay - let the UI update progressively
   config = newConfig;
+  variableStore.setConfig(config);
   updateHeaderTitle();
   
   // Re-resolve variables when config updates
@@ -517,8 +546,11 @@ export async function updateConfig(newConfig) {
     config._resolvedGlobal = globalVars;
 
     // Reset page resolved sets - they will resolve progressively when rendered
-    for (const page of config.pages || []) {
+    for (let i = 0; i < (config.pages || []).length; i++) {
+      const page = config.pages[i];
       page._resolved = { ...globalVars }; // Start with global vars
+      page._pageIndex = i;
+      page._variablesVersion = 0;
     }
   } catch (error) {
     logger.error("Error re-resolving global variables:", error);

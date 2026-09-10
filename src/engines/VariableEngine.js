@@ -272,10 +272,10 @@ class VariableEngine {
         let value;
         const oldValue = resolved[varName];
 
-        if (varConfig.value !== undefined) {
-          value = varConfig.value;
-        } else if (varConfig.eval !== undefined) {
+        if (varConfig.eval !== undefined) {
           value = await this.evaluateExpression(varConfig.eval, resolved);
+        } else if (varConfig.value !== undefined) {
+          value = varConfig.value;
         } else {
           value = null;
         }

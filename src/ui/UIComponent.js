@@ -81,8 +81,8 @@ export class UIComponent {
     }
     const variable = this.getVariable(varName);
     if (variable) {
+      if (variable.eval !== undefined) return defaultValue;
       if (variable.value !== undefined) return variable.value;
-      if (variable.eval !== undefined) return variable.eval;
     }
     return defaultValue;
   }
@@ -273,10 +273,11 @@ export class UIComponent {
       const pageObj = (this.services.currentPage !== null && this.services.currentPage !== undefined) 
         ? this.services.findPageByIndex(this.services.currentPage) 
         : this.page;
+      const pageIndex = pageObj?._pageIndex ?? this.services.currentPage ?? 0;
 
       const onVariableResolved = (varName, value) => {
         pageObj._resolved[varName] = value;
-        this.services.updateRenderedValue(varName, value);
+        this.services.updateRenderedValue(varName, value, pageIndex);
       };
 
       await this.services.handleButtonClick(
@@ -284,7 +285,7 @@ export class UIComponent {
         pageObj,
         this.services.globalVariables,
         onVariableResolved,
-        this.services.currentPage ?? 0
+        pageIndex
       );
     } catch (error) {
       this.handleError(componentName, error);
@@ -321,7 +322,7 @@ export class UIComponent {
       if (this.page._pageIndex !== undefined) {
         variableStore.setVariableResolved(depVarName, value, this.page._pageIndex);
       }
-      this.services.updateRenderedValue(depVarName, value);
+      this.services.updateRenderedValue(depVarName, value, this.page._pageIndex);
     }
   }
 
@@ -347,6 +348,7 @@ export class UIComponent {
     variable.value = newValue;
     delete variable.eval;
     this.setResolvedValue(varName, newValue);
+    this.page._variablesVersion = (this.page._variablesVersion || 0) + 1;
     variableEngine.invalidateDependencyGraph(this.page.variables);
 
     if (this.page._pageIndex !== undefined) {

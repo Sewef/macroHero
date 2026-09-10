@@ -152,6 +152,7 @@ export class CounterComponent extends UIComponent {
     this.setResolvedValue(varName, constrained);
     variable.value = constrained;
     delete variable.eval;
+    this.page._variablesVersion = (this.page._variablesVersion || 0) + 1;
     variableEngine.invalidateDependencyGraph(this.page.variables);
     
     // Notify VariableStore
@@ -199,11 +200,16 @@ export class CounterComponent extends UIComponent {
           const onVariableResolved = (resolvedVarName, value) => {
             logger.log(`Resolved: ${resolvedVarName} = ${value}`);
             this.page._resolved[resolvedVarName] = value;
-            this.services.updateRenderedValue(resolvedVarName, value);
+            this.services.updateRenderedValue(resolvedVarName, value, this.page._pageIndex);
           };
+          const baseResolved = {
+            ...(this.services.globalVariables || {}),
+            ...(this.page?._resolved || {}),
+          };
+
           await this.services.resolveVariables(
             this.page.variables,
-            this.services.globalVariables,
+            baseResolved,
             onVariableResolved,
             dependentVarsToResolve
           );
@@ -222,7 +228,11 @@ export class CounterComponent extends UIComponent {
   setupExternalChangeListener() {
     const myContainer = this.container; // capture own container — not the shared map entry
 
-    this.unsubscribe = EventBus.on('store:variableResolved', (varName, value) => {
+    this.unsubscribe = EventBus.on('store:variableResolved', (varName, value, pageIndex) => {
+      if (pageIndex !== null && pageIndex !== undefined && pageIndex !== this.page._pageIndex) {
+        return;
+      }
+
       if (varName === this.item.var && !this.isUpdatingCounter) {
         logger.log(`External change: ${varName} = ${value}`);
         const constrained = this.applyConstraints(value);
@@ -233,7 +243,7 @@ export class CounterComponent extends UIComponent {
         this.lastSavedValue = constrained;
         this.setResolvedValue(varName, constrained);
         const variable = this.getVariable(varName);
-        if (variable) {
+        if (variable && variable.eval === undefined) {
           variable.value = constrained;
         }
       }

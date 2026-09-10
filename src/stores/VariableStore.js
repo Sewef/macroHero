@@ -33,6 +33,7 @@ class VariableStore {
   setConfig(config) {
     this.config = config;
     this.globalVariablesConfig = config.global?.variables || {};
+    this.pageVariablesConfigs = (config.pages || []).map(page => page?.variables || {});
     logger.log("Config initialized");
     eventBus.emit('store:configChanged', config);
   }
@@ -95,7 +96,7 @@ class VariableStore {
       this.globalVariablesResolved[varName] = value;
       this.modifiedVariables.add(varName);
       logger.log('Global variable resolved:', varName, '=', value);
-      eventBus.emit('store:variableResolved', varName, value, 'global');
+      eventBus.emit('store:variableResolved', varName, value, null);
     } else {
       // Page variable
       if (!this.pageVariablesResolved[targetIndex]) {
@@ -104,7 +105,7 @@ class VariableStore {
       this.pageVariablesResolved[targetIndex][varName] = value;
       this.modifiedVariables.add(varName);
       logger.log('Page variable resolved:', varName, '=', value);
-      eventBus.emit('store:variableResolved', varName, value, 'page', targetIndex);
+      eventBus.emit('store:variableResolved', varName, value, targetIndex);
     }
   }
 

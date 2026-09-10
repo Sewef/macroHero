@@ -29,11 +29,17 @@ export async function resolveVariables(variablesConfig, globalVars = {}, onVaria
   logger.log("Delegating to VariableEngine");
   const resolved = await variableEngine.resolveVariables(variablesConfig, globalVars, onlyVars);
   
-  // Call the callback for each variable if provided (backwards compatibility)
+  // Call the callback for requested config variables only (backwards compatibility).
+  // The resolved object also contains base/global values; those should not be reported
+  // as freshly resolved page variables.
   if (onVariableResolved) {
-    for (const [varName, value] of Object.entries(resolved)) {
-      if (onVariableResolved) {
-        onVariableResolved(varName, value);
+    const callbackVars = onlyVars
+      ? Array.from(onlyVars)
+      : Object.keys(variablesConfig || {});
+
+    for (const varName of callbackVars) {
+      if (varName in resolved) {
+        onVariableResolved(varName, resolved[varName]);
       }
     }
   }
