@@ -28,6 +28,23 @@ function buildResolvedContext(page, pageIndex = 0, globalVariables = {}) {
   };
 }
 
+function getVariableScope(page, varName) {
+  if (page?.variables && varName in page.variables) {
+    return { scope: 'page', variable: page.variables[varName] };
+  }
+  if (variableStore.globalVariablesConfig && varName in variableStore.globalVariablesConfig) {
+    return { scope: 'global', variable: variableStore.globalVariablesConfig[varName] };
+  }
+  return { scope: null, variable: null };
+}
+
+function getCommandMutableVariables(page) {
+  return new Set([
+    ...Object.keys(variableStore.globalVariablesConfig || {}),
+    ...Object.keys(page?.variables || {}),
+  ]);
+}
+
 /**
  * Handle button click - simplified flow with new architecture
  */
@@ -67,20 +84,45 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     }
 
     // Step 3: Build execution context with helpers
+    const executionVariables = buildResolvedContext(page, pageIndex, globalVariables);
     const executionContext = {
       integrations: getExpressionContext(),
-      variables: buildResolvedContext(page, pageIndex, globalVariables),
-      helpers: createHelperFunctions(page, pageIndex, globalVariables),
+      variables: executionVariables,
+      helpers: createHelperFunctions(page, pageIndex, globalVariables, executionVariables),
     };
 
     // Step 4: Execute commands
     const script = Array.isArray(commands) ? commands.join('\n') : commands;
     logger.log("Executing script");
 
+    const mutableVars = getCommandMutableVariables(page);
+    const beforeCommandValues = new Map();
+    for (const varName of mutableVars) {
+      beforeCommandValues.set(varName, executionContext.variables[varName]);
+    }
+
     await executionSandbox.executeCommand(script, executionContext);
+
+    const directlyMutatedVars = new Set();
+    for (const varName of mutableVars) {
+      const beforeValue = beforeCommandValues.get(varName);
+      const afterValue = executionContext.variables[varName];
+      if (!Object.is(beforeValue, afterValue)) {
+        await applyVariableChange(page, pageIndex, globalVariables, varName, afterValue, {
+          persist: false,
+          resolveDependents: false,
+        });
+        directlyMutatedVars.add(varName);
+      }
+    }
 
     // Step 5: Find variables AFFECTED by commands
     const affectedVars = variableEngine.getAffectedVariables(commands, page.variables);
+    for (const varName of directlyMutatedVars) {
+      if (page.variables && varName in page.variables) {
+        affectedVars.add(varName);
+      }
+    }
     
     if (page._modifiedVars.size > 0) {
       for (const modVar of page._modifiedVars) {
@@ -130,95 +172,97 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
  * Create helper functions available in command context
  * Uses VariableStore for centralized state management
  */
-function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
-  const applyResolvedUpdate = (varName, value) => {
-    page._resolved[varName] = value;
-    variableStore.setVariableResolved(varName, value, pageIndex);
-    updateRenderedValue(varName, value, pageIndex);
-  };
+async function applyVariableChange(page, pageIndex = 0, globalVariables = {}, varName, value, options = {}) {
+  const {
+    persist = true,
+    resolveDependents: shouldResolveDependents = true,
+    runtimeVariables = null,
+  } = options;
+  const { scope, variable } = getVariableScope(page, varName);
 
-  const resolveDependents = async (changedVarName) => {
-    const dependentVars = variableEngine.getDependentVariables(page.variables, [changedVarName]);
-    dependentVars.delete(changedVarName);
+  if (!variable) {
+    throw new Error(`Variable "${varName}" not found`);
+  }
 
-    if (dependentVars.size === 0) {
-      return;
+  let newValue = value;
+
+  // Apply constraints
+  if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
+  if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
+
+  variable.value = newValue;
+  delete variable.eval;
+  if (runtimeVariables) {
+    runtimeVariables[varName] = newValue;
+  }
+
+  if (scope === 'global') {
+    globalVariables[varName] = newValue;
+    if (!page._resolved) page._resolved = {};
+    page._resolved[varName] = newValue;
+    variableEngine.invalidateDependencyGraph(variableStore.globalVariablesConfig);
+    variableStore.setGlobalVariableResolved(varName, newValue);
+    updateRenderedValue(varName, newValue, null);
+  } else {
+    page._variablesVersion = (page._variablesVersion || 0) + 1;
+    variableEngine.invalidateDependencyGraph(page.variables);
+    page._resolved[varName] = newValue;
+    variableStore.setVariableResolved(varName, newValue, pageIndex);
+    updateRenderedValue(varName, newValue, pageIndex);
+
+    if (persist) {
+      await updateEvaluatedVariable(pageIndex, varName, newValue);
     }
+  }
 
-    logger.log("Re-resolving dependent variables");
-    const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
-    const resolvedDeps = await variableEngine.resolveVariables(page.variables, baseResolved, dependentVars);
+  variableStore.markVariableModified(varName);
 
-    for (const depVarName of dependentVars) {
-      const depValue = resolvedDeps[depVarName];
-      applyResolvedUpdate(depVarName, depValue);
-      logger.log('Updated dependent variable:', depVarName, '=', depValue);
-    }
-  };
+  if (shouldResolveDependents && scope === 'page') {
+    await resolvePageDependents(page, pageIndex, globalVariables, varName);
+  }
 
+  return newValue;
+}
+
+async function resolvePageDependents(page, pageIndex = 0, globalVariables = {}, changedVarName) {
+  const dependentVars = variableEngine.getDependentVariables(page.variables, [changedVarName]);
+  dependentVars.delete(changedVarName);
+
+  if (dependentVars.size === 0) {
+    return;
+  }
+
+  logger.log("Re-resolving dependent variables");
+  const baseResolved = buildResolvedContext(page, pageIndex, globalVariables);
+  const resolvedDeps = await variableEngine.resolveVariables(page.variables, baseResolved, dependentVars);
+
+  for (const depVarName of dependentVars) {
+    const depValue = resolvedDeps[depVarName];
+    page._resolved[depVarName] = depValue;
+    variableStore.setVariableResolved(depVarName, depValue, pageIndex);
+    updateRenderedValue(depVarName, depValue, pageIndex);
+    logger.log('Updated dependent variable:', depVarName, '=', depValue);
+  }
+}
+
+function createHelperFunctions(page, pageIndex = 0, globalVariables = {}, runtimeVariables = null) {
   return {
     setValue: async (varName, value) => {
-      if (!page.variables || !(varName in page.variables)) {
-        throw new Error(`Variable "${varName}" not found`);
-      }
-
-      const variable = page.variables[varName];
-      let newValue = value;
-
-      // Apply constraints
-      if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
-      if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
-
-      // Update variable definition directly in page
-      variable.value = newValue;
-      delete variable.eval;
-      page._variablesVersion = (page._variablesVersion || 0) + 1;
-      variableEngine.invalidateDependencyGraph(page.variables);
-      
-      // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
-      applyResolvedUpdate(varName, newValue);
-      variableStore.markVariableModified(varName);
-
-      // Persist to storage
-      await updateEvaluatedVariable(pageIndex, varName, newValue);
-
+      const newValue = await applyVariableChange(page, pageIndex, globalVariables, varName, value, { runtimeVariables });
       logger.log('Set value:', varName, '=', newValue);
-
-      await resolveDependents(varName);
-      
       return newValue;
     },
 
     addValue: async (varName, delta) => {
-      if (!page.variables || !(varName in page.variables)) {
+      const { scope } = getVariableScope(page, varName);
+      if (!scope) {
         throw new Error(`Variable "${varName}" not found`);
       }
-
-      const variable = page.variables[varName];
-      const currentValue = Number(variableStore.getVariableResolved(varName, pageIndex) ?? page._resolved[varName]) || 0;
-      let newValue = currentValue + Number(delta);
-
-      // Apply constraints
-      if (variable.min !== undefined && newValue < variable.min) newValue = variable.min;
-      if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
-
-      // Update variable definition directly in page
-      variable.value = newValue;
-      delete variable.eval;
-      page._variablesVersion = (page._variablesVersion || 0) + 1;
-      variableEngine.invalidateDependencyGraph(page.variables);
-      
-      // Update resolved value and notify all listeners (Counter, EventBus, ui.js)
-      applyResolvedUpdate(varName, newValue);
-      variableStore.markVariableModified(varName);
-
-      // Persist to storage
-      await updateEvaluatedVariable(pageIndex, varName, newValue);
-
+      const currentValue = scope === 'global'
+        ? Number(globalVariables[varName] ?? variableStore.globalVariablesResolved[varName] ?? page._resolved[varName]) || 0
+        : Number(variableStore.getVariableResolved(varName, pageIndex) ?? page._resolved[varName]) || 0;
+      const newValue = await applyVariableChange(page, pageIndex, globalVariables, varName, currentValue + Number(delta), { runtimeVariables });
       logger.log('Add value:', varName, '+=', delta, '=>', newValue);
-
-      await resolveDependents(varName);
-      
       return newValue;
     },
   };
@@ -229,9 +273,10 @@ function createHelperFunctions(page, pageIndex = 0, globalVariables = {}) {
  */
 export async function executeCommand(command, page) {
   const script = Array.isArray(command) ? command.join('\n') : command;
+  const variables = page?._resolved || {};
   const context = {
-    variables: page?._resolved || {},
-    helpers: createHelperFunctions(page, page?._pageIndex ?? 0, {}),
+    variables,
+    helpers: createHelperFunctions(page, page?._pageIndex ?? 0, {}, variables),
   };
   return executionSandbox.executeCommand(script, context);
 }

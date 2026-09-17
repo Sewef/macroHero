@@ -61,7 +61,7 @@ class VariableStore {
     
     // Initialize resolved page variables if not already done
     if (!this.pageVariablesResolved[pageIndex]) {
-      this.pageVariablesResolved[pageIndex] = { ...this.globalVariablesResolved };
+      this.pageVariablesResolved[pageIndex] = {};
     }
 
     logger.log('Current page set:', pageIndex);
@@ -107,6 +107,25 @@ class VariableStore {
       logger.log('Page variable resolved:', varName, '=', value);
       eventBus.emit('store:variableResolved', varName, value, targetIndex);
     }
+  }
+
+  /**
+   * Update a resolved global variable even when a page is currently selected.
+   */
+  setGlobalVariableResolved(varName, value) {
+    this.globalVariablesResolved[varName] = value;
+    this.modifiedVariables.add(varName);
+
+    // Older page caches may contain a copied global value. Keep those copies
+    // aligned unless a page explicitly shadows the same variable name.
+    for (let i = 0; i < this.pageVariablesResolved.length; i++) {
+      if (this.pageVariablesResolved[i] && !(varName in (this.pageVariablesConfigs[i] || {}))) {
+        this.pageVariablesResolved[i][varName] = value;
+      }
+    }
+
+    logger.log('Global variable resolved:', varName, '=', value);
+    eventBus.emit('store:variableResolved', varName, value, null);
   }
 
   /**
