@@ -16,12 +16,11 @@ import OBR from "@owlbear-rodeo/sdk";
 import { MODAL_LABEL, loadConfig, saveConfigToLocalStorage } from "./config.js";
 import { normalizeConfig, prepareConfigForSave } from "./configSchema.js";
 import { createDebugLogger } from "./debugMode.js";
-import { loadConfigFile } from "./yamlLoader.js";
+import { loadConfigFile } from "./configLoader.js";
 
 import {
   addTrackedListener,
   cleanupAllListeners,
-  getConfigFormat,
   formatConfig,
   parseConfig,
 } from "./configModal/utils.js";
@@ -59,8 +58,7 @@ function switchTab(tabName) {
 function _syncEditorToJson() {
   try {
     const config = buildConfigFromEditor();
-    const format = getConfigFormat();
-    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(config), format);
+    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(config));
   } catch (e) {
     logger.error('Error exporting config:', e);
     alert('Error exporting config: ' + e.message);
@@ -70,8 +68,7 @@ function _syncEditorToJson() {
 function _syncJsonToEditor() {
   try {
     const text   = document.getElementById('cfgArea').value;
-    const format = getConfigFormat();
-    const parsed = normalizeConfig(parseConfig(text, format));
+    const parsed = normalizeConfig(parseConfig(text));
 
     if (!parsed.global) parsed.global = { title: 'Macro Hero', width: 600, height: 600, variables: {} };
     if (!Array.isArray(parsed.pages)) parsed.pages = [];
@@ -84,28 +81,10 @@ function _syncJsonToEditor() {
 
     currentConfig = parsed;
     rerenderEditor(parsed);
-    alert(`Synced from ${format.toUpperCase()} to visual editor`);
+    alert('Synced from JSON to visual editor');
   } catch (e) {
-    alert(`Invalid ${format.toUpperCase()}: ` + e.message);
+    alert('Invalid JSON: ' + e.message);
   }
-}
-
-function _switchConfigFormat() {
-  try {
-    const format = getConfigFormat();
-    const label  = document.getElementById('cfgLabel');
-    if (label) label.textContent = format === 'json' ? 'Raw JSON Configuration' : 'Raw YAML Configuration';
-    const cfgArea = document.getElementById('cfgArea');
-    const text    = cfgArea.value.trim();
-    if (!text) return;
-    let config;
-    try { config = JSON.parse(text); } catch { config = null; }
-    if (!config) {
-      // Let it fail silently — YAML requires dynamic import which is async
-      return;
-    }
-    cfgArea.value = formatConfig(prepareConfigForSave(normalizeConfig(config)), format);
-  } catch { /* silent */ }
 }
 
 // ── Load Default Config ────────────────────────────────────────────────────────
@@ -129,8 +108,7 @@ async function _loadDefaultConfig() {
     currentConfig = normalizeConfig(defaultConfig);
 
     // Sync to JSON tab
-    const format = getConfigFormat();
-    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(currentConfig), format);
+    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(currentConfig));
 
     // Sync to Editor tab
     rerenderEditor(currentConfig);
@@ -191,16 +169,12 @@ OBR.onReady(() => {
     });
 
     document.getElementById('syncFromJson').onclick = _syncJsonToEditor;
-    document.querySelectorAll('input[name="cfgFormat"]').forEach(r => {
-      addTrackedListener(r, 'change', _switchConfigFormat);
-    });
-
     document.getElementById('saveBtn').onclick = async () => {
       logger.log('Save clicked');
       try {
         let config;
         if (currentTab === 'json') {
-          config = normalizeConfig(parseConfig(document.getElementById('cfgArea').value, getConfigFormat()));
+          config = normalizeConfig(parseConfig(document.getElementById('cfgArea').value));
         } else {
           config = buildConfigFromEditor();
         }

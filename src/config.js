@@ -2,7 +2,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { configureRuntimeStateStorage, loadAllEvaluatedVariables } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";
-import { loadConfigFile } from "./yamlLoader.js";
+import { loadConfigFile } from "./configLoader.js";
 import { deepClone } from "./utils.js";
 import { CONFIG_SCHEMA_VERSION, GLOBAL_STATE_ID, normalizeConfig, prepareConfigForSave } from "./configSchema.js";
 
@@ -213,17 +213,16 @@ export async function loadConfig() {
         logger.log(`Room metadata keys: ${Object.keys(roomMetadata).join(", ")}`);
         
         // Start with full config from room-scoped localStorage.
-        // If not found, try to load the bundled config (YAML or JSON) shipped with the extension.
+        // If not found, try to load the bundled JSON config shipped with the extension.
         // Fallback to the in-code `defaultConfig` if that fails.
         const localStorageConfig = await loadConfigFromLocalStorage();
         let config;
         if (localStorageConfig) {
             config = deepClone(localStorageConfig);
         } else {
-            // Try to load packaged config files - first YAML (modern format), then JSON (legacy)
             // In Vite, public files are served at the root during dev and at build output root in production
             const tryPaths = [
-                '/default',           // Primary path: public/default.yaml or public/default.json
+                '/default',           // Primary path: public/default.json
                 '/public/default',    // Fallback: explicit public path
             ];
             let packaged = null;

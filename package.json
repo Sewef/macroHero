@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "convert-yaml": "node convertToYaml.js",
-    "convert-yaml:watch": "nodemon --watch src -e json --exec 'npm run convert-yaml'"
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^7.2.4"
@@ -16,7 +14,6 @@
   "dependencies": {
     "@owlbear-rodeo/sdk": "^3.1.0",
     "dompurify": "^3.4.2",
-    "js-yaml": "^4.1.1",
     "marked": "^18.0.3",
     "mathjs": "^15.1.0"
   }
