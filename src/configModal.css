@@ -915,9 +915,8 @@ body {
   gap: 3px;
 }
 .matrix-children .builder-child-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
-  gap: 3px;
+  display: flex;
+  flex-direction: column;
 }
 .builder-block.depth-2,
 .builder-block.depth-3,

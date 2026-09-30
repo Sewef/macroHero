@@ -684,9 +684,21 @@ function _bindingSelect(label, value, mode) {
   const warning = mode === 'state' && value && !options.includes(value)
     ? `<small class="warn">"${_esc(value)}" is not a State variable. Inputs can only bind State.</small>`
     : '';
+  let selectedUsed = false;
+  const optionGroups = _bindingOptionGroups(mode).map(group => {
+    if (group.names.length === 0) return '';
+    return `<optgroup label="${_attr(group.label)}">
+      ${group.names.map(name => {
+        const selected = !selectedUsed && name === value;
+        if (selected) selectedUsed = true;
+        return `<option value="${_attr(name)}" ${selected ? 'selected' : ''}>${_esc(name)} · ${_esc(group.shortLabel)}</option>`;
+      }).join('')}
+    </optgroup>`;
+  }).join('');
+
   return `<div class="input-group"><label>${_esc(label)}</label><select data-prop="var">
     <option value="">Select variable...</option>
-    ${options.map(name => `<option value="${_attr(name)}" ${name === value ? 'selected' : ''}>${_esc(name)}</option>`).join('')}
+    ${optionGroups}
     ${value && !options.includes(value) ? `<option value="${_attr(value)}" selected>${_esc(value)} (missing)</option>` : ''}
   </select>${warning}</div>`;
 }
@@ -912,6 +924,21 @@ function _allVariableNames() {
     ...Object.keys(page.state || {}),
     ...Object.keys(page.computed || {}),
   ];
+}
+
+function _bindingOptionGroups(mode) {
+  const page = _config.pages?.[_selectedPageIndex] || {};
+  const groups = [
+    { label: 'Global State', shortLabel: 'global state', names: Object.keys(_config.global?.state || {}) },
+    { label: 'Page State', shortLabel: 'page state', names: Object.keys(page.state || {}) },
+  ];
+  if (mode !== 'state') {
+    groups.push(
+      { label: 'Global Computed', shortLabel: 'global computed', names: Object.keys(_config.global?.computed || {}) },
+      { label: 'Page Computed', shortLabel: 'page computed', names: Object.keys(page.computed || {}) },
+    );
+  }
+  return groups;
 }
 
 function _getNodeAt(layout, path) {

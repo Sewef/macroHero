@@ -3,6 +3,37 @@ import { deepClone } from "./utils.js";
 export const CONFIG_SCHEMA_VERSION = 2;
 export const GLOBAL_STATE_ID = "__global";
 
+const ROOT_KEY_ORDER = ["schemaVersion", "global", "pages"];
+const GLOBAL_KEY_ORDER = ["title", "width", "height", "state", "computed"];
+const PAGE_KEY_ORDER = ["label", "id", "state", "computed", "layout"];
+const ELEMENT_KEY_ORDER = [
+  "type",
+  "label",
+  "text",
+  "var",
+  "placeholder",
+  "options",
+  "icon",
+  "tooltip",
+  "columns",
+  "buttonSize",
+  "buttonShape",
+  "gap",
+  "step",
+  "height",
+  "margin",
+  "style",
+  "border",
+  "color",
+  "borderColor",
+  "onclick",
+  "onrightclick",
+  "onupdate",
+  "children",
+];
+const STATE_ENTRY_KEY_ORDER = ["default", "min", "max"];
+const COMPUTED_ENTRY_KEY_ORDER = ["eval", "min", "max"];
+
 function slugify(value, fallback) {
   const slug = String(value || "")
     .trim()
@@ -25,6 +56,83 @@ function uniqueId(base, used) {
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function orderObjectByKeys(source, preferredKeys, valueMapper = value => value) {
+  if (!isPlainObject(source)) return source;
+  const ordered = {};
+  const handled = new Set();
+
+  for (const key of preferredKeys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      ordered[key] = valueMapper(source[key], key);
+      handled.add(key);
+    }
+  }
+
+  Object.keys(source)
+    .filter(key => !handled.has(key))
+    .sort()
+    .forEach(key => {
+      ordered[key] = valueMapper(source[key], key);
+    });
+
+  return ordered;
+}
+
+function orderGenericValue(value) {
+  if (Array.isArray(value)) return value.map(orderGenericValue);
+  if (!isPlainObject(value)) return value;
+  return orderObjectByKeys(value, [], orderGenericValue);
+}
+
+function orderStateEntries(entries = {}) {
+  return orderObjectByKeys(entries, [], entry => (
+    isPlainObject(entry)
+      ? orderObjectByKeys(entry, STATE_ENTRY_KEY_ORDER, orderGenericValue)
+      : entry
+  ));
+}
+
+function orderComputedEntries(entries = {}) {
+  return orderObjectByKeys(entries, [], entry => (
+    isPlainObject(entry)
+      ? orderObjectByKeys(entry, COMPUTED_ENTRY_KEY_ORDER, orderGenericValue)
+      : entry
+  ));
+}
+
+function orderLayoutItem(item) {
+  if (!isPlainObject(item)) return orderGenericValue(item);
+  return orderObjectByKeys(item, ELEMENT_KEY_ORDER, (value, key) => {
+    if (key === "children") return Array.isArray(value) ? value.map(orderLayoutItem) : [];
+    return orderGenericValue(value);
+  });
+}
+
+function orderGlobalForExport(global = {}) {
+  return orderObjectByKeys(global, GLOBAL_KEY_ORDER, (value, key) => {
+    if (key === "state") return orderStateEntries(value);
+    if (key === "computed") return orderComputedEntries(value);
+    return orderGenericValue(value);
+  });
+}
+
+function orderPageForExport(page = {}) {
+  return orderObjectByKeys(page, PAGE_KEY_ORDER, (value, key) => {
+    if (key === "state") return orderStateEntries(value);
+    if (key === "computed") return orderComputedEntries(value);
+    if (key === "layout") return Array.isArray(value) ? value.map(orderLayoutItem) : [];
+    return orderGenericValue(value);
+  });
+}
+
+function orderConfigForExport(cfg = {}) {
+  return orderObjectByKeys(cfg, ROOT_KEY_ORDER, (value, key) => {
+    if (key === "global") return orderGlobalForExport(value);
+    if (key === "pages") return Array.isArray(value) ? value.map(orderPageForExport) : [];
+    return orderGenericValue(value);
+  });
 }
 
 function splitVariables(variables = {}) {
@@ -187,7 +295,7 @@ export function prepareConfigForSave(rawConfig) {
     cfg.pages.forEach(page => stripRuntimeFields(page));
   }
 
-  return cfg;
+  return orderConfigForExport(cfg);
 }
 
 export function getMutableVariableNames(scope = {}) {
