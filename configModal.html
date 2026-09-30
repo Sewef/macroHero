@@ -4,434 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Macro Hero Config</title>
-  <style>
-    /* ── CSS Variables ────────────────────────────────── */
-    :root {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
-      line-height: 1.5;
-      font-synthesis: none;
-      -webkit-font-smoothing: antialiased;
-
-      --bg:         #0d0d14;
-      --surface:    #141420;
-      --panel:      #1a1a28;
-      --panel2:     #202030;
-      --border:     #2e3050;
-      --border2:    #3a3d60;
-      --text:       #dde0f0;
-      --text2:      #8890b0;
-      --text3:      #5560808;
-      --accent:     #a78bfa;
-      --accent-dim: #7c65c2;
-      --accent-bg:  rgba(167,139,250,0.12);
-      --red:        #f87171;
-      --green:      #4ade80;
-      --amber:      #fbbf24;
-      --blue:       #60a5fa;
-      --cyan:       #22d3ee;
-      --teal:       #2dd4bf;
-      --indigo:     #818cf8;
-      --pink:       #f472b6;
-      --purple:     #c084fc;
-      --orange:     #fb923c;
-      --gray:       #6b7280;
-
-      --radius: 5px;
-      --radius-lg: 8px;
-      --transition: 0.15s ease;
-    }
-
-    html.mh-light {
-      --bg:      #f4f4f8;
-      --surface: #ffffff;
-      --panel:   #eeeef6;
-      --panel2:  #e4e4f0;
-      --border:  #c8c8e0;
-      --border2: #b0b0d0;
-      --text:    #1a1a2e;
-      --text2:   #505070;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ── Topbar ───────────────────────────────────────── */
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 20px 0;
-      flex-shrink: 0;
-      z-index: 100;
-    }
-    .topbar-left { display: flex; flex-direction: column; gap: 4px; }
-    .topbar h2 { margin: 0; font-size: 1.1em; font-weight: 700; color: var(--accent); }
-
-    .tabs { display: flex; gap: 2px; margin-bottom: -1px; }
-    .tab {
-      background: none; border: none;
-      border-bottom: 2px solid transparent;
-      padding: 6px 14px;
-      cursor: pointer;
-      color: var(--text2);
-      font-size: 0.9em;
-      transition: var(--transition);
-      font-family: inherit;
-    }
-    .tab:hover { color: var(--accent); }
-    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .header-actions { display: flex; gap: 8px; align-items: center; padding-bottom: 10px; }
-
-    /* ── Main form ────────────────────────────────────── */
-    #configForm {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .tab-content { display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-    .tab-content.active { display: flex; }
-    #json-tab.active, #integrations-tab.active, #tokens-tab.active, #debug-tab.active {
-      overflow-y: auto;
-      padding: 16px 20px;
-    }
-
-    /* ── Editor layout: sidebar + main ───────────────── */
-    .editor-layout {
-      display: flex;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-      gap: 0;
-    }
-
-    /* ── Sidebar ─────────────────────────────────────── */
-    .editor-sidebar {
-      flex: 0 0 260px;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .sidebar-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .sidebar-section {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-    }
-    .sidebar-section:last-child { border-bottom: none; padding-bottom: 0; }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    .section-title {
-      font-size: 0.75em;
-      font-weight: 700;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    /* Collapsible */
-    .collapsible-toggle {
-      background: none; border: none; cursor: pointer;
-      display: flex; align-items: center; width: 100%; gap: 6px;
-      padding: 4px 0; color: inherit;
-    }
-    .collapsible-arrow { color: var(--accent); transition: transform 0.2s; font-size: 0.8em; }
-    .collapsible-arrow.open { transform: rotate(90deg); }
-    .collapsible-body { overflow: hidden; }
-    .collapsible-body.hidden { display: none; }
-
-    /* Pages list */
-    .pages-list { display: flex; flex-direction: column; gap: 4px; }
-    .page-item-sidebar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 10px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .page-item-sidebar:hover { border-color: var(--border2); background: var(--panel2); }
-    .page-item-sidebar.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 600; }
-    .page-item-sidebar-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9em; }
-    .page-item-sidebar-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; }
-    .page-item-sidebar:hover .page-item-sidebar-actions { opacity: 1; }
-
-    /* Variable items */
-    .var-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 5px 8px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 4px;
-      font-size: 0.85em;
-    }
-    .var-key { color: var(--accent); font-weight: 600; min-width: 80px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .var-val { flex: 1; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .var-actions { display: flex; gap: 2px; }
-
-    /* ── Main editor panel ───────────────────────────── */
-    .editor-main {
-      flex: 1;
-      background: var(--panel);
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .page-panel {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .page-panel-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      flex-shrink: 0;
-    }
-
-    .page-section {
-      display: flex;
-      flex-direction: column;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      min-height: 0;
-    }
-    .page-section:last-child { flex: 1; border-bottom: none; }
-
-    .page-section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-shrink: 0;
-    }
-
-    .page-vars-list {
-      max-height: 34vh;
-      overflow-y: auto;
-      min-height: 0;
-    }
-
-    /* ── Tree ─────────────────────────────────────────── */
-    .tree-container {
-      flex: 1;
-      overflow-y: auto;
-      font-size: 0.9em;
-    }
-
-    .tree-node { position: relative; }
-
-    .tree-node-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 6px;
-      border-radius: var(--radius);
-      transition: background var(--transition);
-    }
-    .tree-node-row:hover { background: var(--panel2); }
-
-    .tree-node-type {
-      display: inline-block;
-      padding: 1px 7px;
-      border-radius: 3px;
-      font-size: 0.72em;
-      font-weight: 700;
-      flex-shrink: 0;
-      color: #000;
-    }
-    /* type badge colors */
-    .badge-purple  { background: var(--purple);  }
-    .badge-blue    { background: var(--blue);    }
-    .badge-green   { background: var(--green);   }
-    .badge-orange  { background: var(--orange);  }
-    .badge-cyan    { background: var(--cyan);     }
-    .badge-teal    { background: var(--teal);    }
-    .badge-pink    { background: var(--pink);    }
-    .badge-gray    { background: var(--gray); color: #fff; }
-    .badge-indigo  { background: var(--indigo);  }
-    .badge-amber   { background: var(--amber);   }
-
-    .tree-node-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2); }
-    .tree-node-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
-    .tree-node-row:hover .tree-node-actions { opacity: 1; }
-
-    .tree-children { border-left: 1.5px solid var(--border2); margin-left: 16px; }
-    .tree-children-empty { padding: 4px 0; }
-    .tree-empty { color: var(--text2); font-style: italic; font-size: 0.85em; }
-    .tree-indent-guide { display: none; }
-
-    /* ── Buttons ──────────────────────────────────────── */
-    button {
-      background: none;
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-size: 0.9em;
-      padding: 6px 14px;
-      font-family: inherit;
-      transition: var(--transition);
-      color: var(--text);
-    }
-    button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    button:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-
-    #saveBtn { border-color: var(--accent); color: var(--accent); }
-    #saveBtn:hover { background: var(--accent); color: #000; }
-
-    .btn-small { padding: 3px 10px; font-size: 0.8em; }
-    .btn-preset-active { background: var(--accent) !important; color: #fff !important; outline: 2px solid var(--accent); }
-    .dnd-dragging { opacity: 0.35; }
-    .tree-node-row.dnd-drop-before { box-shadow: 0 -2px 0 0 var(--accent); }
-    .tree-node-row.dnd-drop-after  { box-shadow: 0 2px 0 0 var(--accent); }
-    .btn-icon  { padding: 2px 6px; font-size: 0.8em; border-radius: 3px; }
-    .btn-add   { border-style: dashed; color: var(--accent); border-color: var(--accent-dim); }
-    .btn-add:hover { background: var(--accent-bg); }
-    .btn-danger { border-color: var(--red); color: var(--red); }
-    .btn-danger:hover { background: var(--red); color: #000; }
-
-    /* ── Form elements ────────────────────────────────── */
-    .input-group { margin-bottom: 10px; }
-    .input-group:last-child { margin-bottom: 0; }
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 0.78em;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-
-    input[type="text"],
-    input[type="password"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 5px 8px;
-      background: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      font-family: inherit;
-      font-size: 0.9em;
-    }
-    input[type="text"]:focus,
-    input[type="password"]:focus,
-    input[type="number"]:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    textarea { min-height: 100px; resize: vertical; font-family: monospace; }
-    input[type="color"] { padding: 2px; height: 32px; cursor: pointer; }
-    small { color: var(--text2); font-size: 0.8em; }
-
-    /* ── Modal overlay ────────────────────────────────── */
-    .modal {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal.active { display: flex; }
-    .modal-content {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      max-width: 520px;
-      width: 95%;
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .modal-header h3 { margin: 0; color: var(--accent); font-size: 1em; }
-    .close-modal { background: none; border: none; color: var(--text2); font-size: 1.4em; cursor: pointer; padding: 0; width: 28px; height: 28px; }
-    .close-modal:hover { color: var(--text); }
-    .buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
-
-    /* ── Scrollbars ───────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
-
-    /* ── Integrations ─────────────────────────────────── */
-    .integration-module { margin-bottom: 24px; }
-    .integration-module-header {
-      font-size: 0.95em; font-weight: 600; color: var(--accent);
-      padding-bottom: 8px; margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* ── Debug ────────────────────────────────────────── */
-    .debug-category { margin-bottom: 16px; }
-    .debug-category-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0; user-select: none; }
-    .debug-category-title { font-size: 0.9em; font-weight: 600; color: var(--accent); flex: 1; }
-    .debug-category-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
-    .debug-category-modules { display: flex; flex-direction: column; gap: 4px; margin-left: 24px; padding-left: 10px; border-left: 2px solid var(--border); }
-    .debug-module-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition); }
-    .debug-module-item:hover { border-color: var(--accent); }
-    .debug-module-label { flex: 1; font-size: 0.88em; cursor: pointer; user-select: none; }
-
-    /* ── Token helper ─────────────────────────────────── */
-    .variable-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; margin-bottom: 6px; display: flex; gap: 10px; /*align-items: center;*/ }
-    .layout-item-type { display: inline-block; background: var(--accent); color: #000; padding: 1px 7px; border-radius: 3px; font-size: 0.72em; font-weight: 700; flex-shrink: 0; }
-    .page-item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; }
-
-    /* ── Row helper ───────────────────────────────────── */
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  </style>
+  <link rel="stylesheet" href="/src/configModal.css" />
   <script src="/src/configModal.js" type="module"></script>
 </head>
 
@@ -472,7 +45,7 @@
                 <span class="section-title">Global Settings</span>
               </button>
               <div class="collapsible-body hidden" id="bodySettings">
-                <div class="input-group" style="margin-top:8px;">
+                <div class="input-group input-group-offset">
                   <label for="globalTitle">Title</label>
                   <input type="text" id="globalTitle" placeholder="Macro Hero" />
                 </div>
@@ -492,14 +65,14 @@
             <!-- Global Variables -->
             <div class="sidebar-section">
               <div class="section-header">
-                <button type="button" class="collapsible-toggle" id="toggleGlobalVars" style="flex:1;">
+                <button type="button" class="collapsible-toggle grow" id="toggleGlobalVars">
                   <span class="collapsible-arrow" id="arrowGlobalVars">▶</span>
                   <span class="section-title">Global Variables</span>
                 </button>
                 <button type="button" class="btn-icon btn-add" id="addGlobalVariableBtn" title="Add variable">＋</button>
               </div>
               <div class="collapsible-body hidden" id="bodyGlobalVars">
-                <div id="globalVariablesList" style="margin-top:4px;">
+                <div id="globalVariablesList" class="sidebar-list-offset">
                   <div class="tree-empty">No global variables</div>
                 </div>
               </div>
@@ -521,7 +94,7 @@
 
         <!-- Main panel -->
         <div class="editor-main">
-          <div id="pageEditorContainer" style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text2);">
+          <div id="pageEditorContainer" class="page-editor-container">
             <p>Select or create a page to edit</p>
           </div>
         </div>
@@ -533,7 +106,7 @@
     <div id="json-tab" class="tab-content">
       <div class="input-group">
         <label><span id="cfgLabel">Raw JSON Configuration</span></label>
-        <textarea id="cfgArea" style="min-height:420px;"></textarea>
+        <textarea id="cfgArea" class="raw-config-area"></textarea>
       </div>
       <button type="button" id="syncFromJson">Sync to Visual Editor</button>
     </div>
@@ -544,7 +117,7 @@
       <!-- ── Google Sheets ── -->
       <div class="integration-module">
         <div class="integration-module-header">Google Sheets</div>
-        <div id="gsheetsError" style="color:var(--red);font-size:0.9em;display:none;margin-bottom:10px;"></div>
+        <div id="gsheetsError" class="form-error"></div>
         <div class="input-group">
           <label for="apiKeyInput">API Key</label>
           <input type="password" id="apiKeyInput" placeholder="Enter Google API Key" autocomplete="off" />
@@ -555,25 +128,25 @@
 
     <!-- ── TOKEN HELPER ────────────────────────────── -->
     <div id="tokens-tab" class="tab-content">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-        <input type="text" id="tokensSearch" placeholder="Search by name, id, type…" style="flex:1;" />
-        <select id="tokensFilter" style="width:140px;">
+      <div class="toolbar-row">
+        <input type="text" id="tokensSearch" class="grow" placeholder="Search by name, id, type…" />
+        <select id="tokensFilter" class="tokens-filter">
           <option value="all">Creator: All</option>
           <option value="me">Creator: Me</option>
         </select>
         <button type="button" id="tokensRefresh">Refresh</button>
       </div>
-      <div id="tokensList" style="overflow:auto;max-height:62vh;"></div>
-      <div id="tokensStatus" style="color:var(--text2);font-size:0.85em;margin-top:8px;"></div>
+      <div id="tokensList" class="tokens-list"></div>
+      <div id="tokensStatus" class="subtle-status"></div>
     </div>
 
     <!-- ── DEBUG ───────────────────────────────────── -->
     <div id="debug-tab" class="tab-content">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <h3 style="color:var(--accent);margin:0;">Integration Module Debug Modes</h3>
+      <div class="section-toolbar">
+        <h3 class="panel-title">Integration Module Debug Modes</h3>
         <button type="button" class="btn-small" id="debugToggleAllBtn">Enable All</button>
       </div>
-      <p style="color:var(--text2);font-size:0.88em;margin-bottom:16px;">Settings stored locally, not in config.</p>
+      <p class="panel-note">Settings stored locally, not in config.</p>
       <div id="debugModulesContainer"></div>
     </div>
 
@@ -626,3 +199,4 @@
   </script>
 </body>
 </html>
+

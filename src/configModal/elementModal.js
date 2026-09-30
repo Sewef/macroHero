@@ -11,11 +11,11 @@ function colorRow(existingColor) {
   const value   = existingColor || '#c8adff';
   return `
     <div class="input-group">
-      <label style="display:flex;align-items:center;gap:6px;">
+      <label class="checkbox-label">
         <input type="checkbox" id="elem_customColor" ${checked ? 'checked' : ''} />
         Custom Color
       </label>
-      <input type="color" id="elem_color" value="${value}" ${checked ? '' : 'disabled'} style="margin-top:4px;width:100%;height:32px;" />
+      <input type="color" id="elem_color" class="color-input" value="${value}" ${checked ? '' : 'disabled'} />
     </div>`;
 }
 
@@ -23,8 +23,8 @@ function onUpdateRow(commands, varName = 'variableName', hint = '') {
   return `
     <div class="input-group">
       <label>onupdate (one command per line, optional)</label>
-      <textarea id="elem_onupdate" style="min-height:80px;" placeholder="console.log(${varName});">${dedentCommandList(commands || []).join('\n')}</textarea>
-      ${hint ? `<small style="color:#888;font-size:0.85em;margin-top:4px;display:block;">${hint}</small>` : ''}
+      <textarea id="elem_onupdate" class="textarea-command" placeholder="console.log(${varName});">${dedentCommandList(commands || []).join('\n')}</textarea>
+      ${hint ? `<small class="form-hint">${hint}</small>` : ''}
     </div>`;
 }
 
@@ -32,7 +32,7 @@ function onClickRow(commands, placeholder = "JustDices.roll('1d20')") {
   return `
     <div class="input-group">
       <label>onclick</label>
-      <textarea id="elem_onclick" style="min-height:80px;" placeholder="${placeholder}">${dedentCommandList(commands || []).join('\n')}</textarea>
+      <textarea id="elem_onclick" class="textarea-command" placeholder="${placeholder}">${dedentCommandList(commands || []).join('\n')}</textarea>
     </div>`;
 }
 
@@ -41,12 +41,12 @@ function buildFields(type, el) {
   switch (type) {
     case 'button': return `
       <div class="input-group"><label>Label</label><input type="text" id="elem_label" value="${e.label || ''}" placeholder="Button Text" /></div>
-      <div class="input-group"><label>Tooltip</label><textarea id="elem_tooltip" placeholder="Displayed on hover" rows="2" style="resize:vertical;font-family:inherit">${e.tooltip || ''}</textarea></div>
+      <div class="input-group"><label>Tooltip</label><textarea id="elem_tooltip" class="textarea-plain" placeholder="Displayed on hover" rows="2">${e.tooltip || ''}</textarea></div>
       ${colorRow(e.color)}
       ${onClickRow(e.onclick)}
       <div class="input-group">
         <label>onrightclick</label>
-        <textarea id="elem_onrightclick" style="min-height:80px;" placeholder="JustDices.roll('1d20')">${dedentCommandList(e.onrightclick || []).join('\n')}</textarea>
+        <textarea id="elem_onrightclick" class="textarea-command" placeholder="JustDices.roll('1d20')">${dedentCommandList(e.onrightclick || []).join('\n')}</textarea>
       </div>`;
 
     case 'value': return `
@@ -88,7 +88,7 @@ function buildFields(type, el) {
         <div class="input-group">
           <label>Options (one per line)</label>
           <textarea id="elem_options" placeholder="Option 1\nLabel | value">${optionsText}</textarea>
-          <small style="color:#888;font-size:0.85em;margin-top:4px;display:block;">Format: "Label" or "Label | value"</small>
+          <small class="form-hint">Format: "Label" or "Label | value"</small>
         </div>
         ${onUpdateRow(e.onupdate, e.var || 'variableName', 'Executes immediately when selection changes')}`;
     }
@@ -120,14 +120,14 @@ function buildFields(type, el) {
         </select>
       </div>`;
 
-    case 'row': return `<p style="color:#c8adff;">Row is a container. Add elements from the tree.</p>`;
+    case 'row': return `<p class="accent-note">Row is a container. Add elements from the tree.</p>`;
 
     case 'stack': return `
       <div class="input-group">
-        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
+        <label class="checkbox-label"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
       </div>
       ${colorRow(e.color)}
-      <p style="color:#c8adff;margin-top:12px;">Stack is a container. Add elements from the tree.</p>`;
+      <p class="accent-note note-offset">Stack is a container. Add elements from the tree.</p>`;
 
     case 'matrix': {
       const isNew = !el;
@@ -137,36 +137,36 @@ function buildFields(type, el) {
         <div class="input-group"><label>Columns</label><input type="number" id="elem_columns" value="${e.columns || 4}" min="1" max="12" /></div>
         <div class="input-group">
           <label>Button Size</label>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+          <div class="preset-row">
             ${sizePresets.map(v => `<button type="button" class="btn-small btn-preset${(e.buttonSize||'40px')===v?' btn-preset-active':''}" data-target="elem_buttonSize" data-value="${v}">${v}</button>`).join('')}
           </div>
           <input type="text" id="elem_buttonSize" value="${e.buttonSize || '40px'}" placeholder="40px" />
         </div>
         <div class="input-group">
           <label>Gap</label>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
+          <div class="preset-row">
             ${gapPresets.map(([v,l]) => `<button type="button" class="btn-small btn-preset${(e.gap||'4px')===v?' btn-preset-active':''}" data-target="elem_gap" data-value="${v}">${l}</button>`).join('')}
           </div>
           <input type="text" id="elem_gap" value="${e.gap || '4px'}" placeholder="4px" />
         </div>
         <div class="input-group">
           <label>Button Shape</label>
-          <div style="display:flex;gap:4px;">
+          <div class="preset-row compact">
             <button type="button" class="btn-small btn-preset${(e.buttonShape||'square')==='square'?' btn-preset-active':''}" data-target="elem_buttonShape" data-value="square">Square</button>
             <button type="button" class="btn-small btn-preset${e.buttonShape==='rectangle'?' btn-preset-active':''}" data-target="elem_buttonShape" data-value="rectangle">Rectangle</button>
           </div>
           <input type="hidden" id="elem_buttonShape" value="${e.buttonShape || 'square'}" />
         </div>
         <div class="input-group">
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
+          <label class="checkbox-label"><input type="checkbox" id="elem_border" ${e.border ? 'checked' : ''} /> Add Border</label>
         </div>
         ${colorRow(e.color)}
         ${isNew ? `
-        <div class="input-group" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border,#333);">
+        <div class="input-group field-divider">
           <label>Initialize with N buttons</label>
           <input type="number" id="elem_initButtons" value="0" min="0" max="200" />
-          <small style="color:#888;font-size:0.85em;margin-top:4px;display:block;">Creates empty buttons — configure them in the tree.</small>
-        </div>` : '<p style="color:#c8adff;margin-top:12px;">Add buttons from the tree.</p>'}`;
+          <small class="form-hint">Creates empty buttons — configure them in the tree.</small>
+        </div>` : '<p class="accent-note note-offset">Add buttons from the tree.</p>'}`;
     }
 
     case 'matrixButton': {
@@ -175,24 +175,24 @@ function buildFields(type, el) {
       return `
         <div class="input-group"><label>Label (optional)</label><input type="text" id="mbtn_label" value="${e.label || ''}" placeholder="Button text" /></div>
         <div class="input-group"><label>Icon (emoji or URL)</label><input type="text" id="mbtn_icon" value="${e.icon || ''}" placeholder="🔥 or https://..." /></div>
-        <div class="input-group"><label>Tooltip (optional)</label><textarea id="mbtn_tooltip" rows="2" style="resize:vertical;font-family:inherit">${e.tooltip || ''}</textarea></div>
+        <div class="input-group"><label>Tooltip (optional)</label><textarea id="mbtn_tooltip" class="textarea-plain" rows="2">${e.tooltip || ''}</textarea></div>
         <div class="input-group">
-          <label style="display:flex;align-items:center;gap:6px;">
+          <label class="checkbox-label">
             <input type="checkbox" id="mbtn_hasColor" ${e.color ? 'checked' : ''} /> Custom Color
           </label>
-          <input type="color" id="mbtn_color" value="${e.color || '#ffffff'}" ${e.color ? '' : 'disabled'} style="margin-top:4px;width:100%;height:32px;" />
+          <input type="color" id="mbtn_color" class="color-input" value="${e.color || '#ffffff'}" ${e.color ? '' : 'disabled'} />
         </div>
         <div class="input-group">
-          <label style="display:flex;align-items:center;gap:6px;">
+          <label class="checkbox-label">
             <input type="checkbox" id="mbtn_hasBorderColor" ${e.borderColor ? 'checked' : ''} /> Custom Border Color
           </label>
-          <input type="color" id="mbtn_borderColor" value="${e.borderColor || '#c8adff'}" ${e.borderColor ? '' : 'disabled'} style="margin-top:4px;width:100%;height:32px;" />
+          <input type="color" id="mbtn_borderColor" class="color-input" value="${e.borderColor || '#c8adff'}" ${e.borderColor ? '' : 'disabled'} />
         </div>
-        <div class="input-group"><label>onclick (one per line)</label><textarea id="mbtn_onclick" style="min-height:70px;">${onclickText}</textarea></div>
-        <div class="input-group"><label>onrightclick (one per line, optional)</label><textarea id="mbtn_onrightclick" style="min-height:60px;">${onrightText}</textarea></div>`;
+        <div class="input-group"><label>onclick (one per line)</label><textarea id="mbtn_onclick" class="textarea-command compact">${onclickText}</textarea></div>
+        <div class="input-group"><label>onrightclick (one per line, optional)</label><textarea id="mbtn_onrightclick" class="textarea-command small">${onrightText}</textarea></div>`;
     }
 
-    default: return `<p style="color:#888;">Unknown type: ${type}</p>`;
+    default: return `<p class="property-help">Unknown type: ${type}</p>`;
   }
 }
 

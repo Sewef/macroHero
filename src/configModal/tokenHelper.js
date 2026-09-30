@@ -68,7 +68,7 @@ async function _applyAndRender() {
       _meId = await _getCurrentUserId();
       if (!_meId) {
         const c = document.getElementById('tokensList');
-        if (c) c.innerHTML = '<div style="color:#ffb86b;">Could not detect current user ID.</div>';
+        if (c) c.innerHTML = '<div class="token-warning">Could not detect current user ID.</div>';
         if (statusEl) statusEl.textContent = 'Could not detect current user ID';
         return;
       }
@@ -101,7 +101,7 @@ function _renderList(items) {
   container.textContent = '';
 
   if (!items || items.length === 0) {
-    container.innerHTML = '<div style="color:#666">No items found in the scene.</div>';
+    container.innerHTML = '<div class="empty-muted">No items found in the scene.</div>';
     if (statusEl) statusEl.textContent = '';
     return;
   }
@@ -115,13 +115,12 @@ function _renderList(items) {
 
   Object.keys(groups).sort().forEach(layer => {
     const groupDiv = document.createElement('div');
-    groupDiv.className = 'page-item';
-    groupDiv.style.marginBottom = '10px';
+    groupDiv.className = 'page-item token-group';
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
-    header.innerHTML = `<strong style="color:#c8adff">${layer} — ${groups[layer].length} items </strong>
-      <div style="display:flex;gap:8px;">
+    header.className = 'token-group-header';
+    header.innerHTML = `<strong>${layer} — ${groups[layer].length} items </strong>
+      <div class="token-actions">
         <button type="button" class="btn-small" data-action="expandAll">Expand all</button>
         <button type="button" class="btn-small" data-action="collapseAll">Collapse all</button>
       </div>`;
@@ -134,13 +133,12 @@ function _renderList(items) {
     groups[layer].forEach(it => {
       const itemDiv = document.createElement('div');
       itemDiv.className = 'variable-item token-item';
-      itemDiv.style.cssText = 'cursor:pointer;flex-direction:column;';
 
       const summary = document.createElement('div');
-      summary.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;';
+      summary.className = 'token-summary';
 
       const left = document.createElement('div');
-      left.style.cssText = 'display:flex;gap:12px;align-items:center;flex:1;overflow:hidden;';
+      left.className = 'token-summary-left';
 
       const badge = document.createElement('span');
       badge.className = 'layout-item-type';
@@ -149,21 +147,21 @@ function _renderList(items) {
 
       const nameText = it.name || (it.text?.plainText) || it.id || '';
       const nameEl = document.createElement('span');
+      nameEl.className = 'token-name';
       nameEl.innerHTML = `<strong>${truncated(nameText, 36)}</strong>`;
-      nameEl.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
       left.appendChild(nameEl);
 
       const meta = document.createElement('span');
-      meta.style.cssText = 'color:#bbb;font-size:0.9em;white-space:nowrap;';
+      meta.className = 'token-meta';
       meta.textContent = `${it.layer || ''} • ${it.visible ? 'visible' : 'hidden'}`;
       left.appendChild(meta);
       summary.appendChild(left);
 
       const right = document.createElement('div');
-      right.style.cssText = 'display:flex;gap:8px;align-items:center;';
+      right.className = 'token-summary-actions';
 
       const idCode = document.createElement('code');
-      idCode.style.fontSize = '0.8em';
+      idCode.className = 'token-id';
       idCode.textContent = truncated(it.id, 20);
       idCode.title = it.id;
       right.appendChild(idCode);
@@ -185,27 +183,27 @@ function _renderList(items) {
       itemDiv.appendChild(summary);
 
       const details = document.createElement('div');
-      details.style.display = 'none';
-      details.style.marginTop = '8px';
+      details.className = 'token-details';
+      details.hidden = true;
       details.dataset.populated = 'false';
       itemDiv.appendChild(details);
 
       summary.onclick = () => toggle();
 
       const toggle = (forceExpand) => {
-        const shouldExpand = forceExpand !== undefined ? forceExpand : details.style.display === 'none';
+        const shouldExpand = forceExpand !== undefined ? forceExpand : details.hidden;
         if (shouldExpand) {
           if (details.dataset.populated !== 'true') {
             const pre = document.createElement('pre');
-            pre.style.cssText = 'white-space:pre-wrap;font-family:monospace;font-size:0.85em;margin:0;';
+            pre.className = 'token-json';
             pre.textContent = JSON.stringify(it, null, 2);
             details.appendChild(pre);
             details.dataset.populated = 'true';
           }
-          details.style.display = 'block';
+          details.hidden = false;
           itemDiv.classList.add('expanded');
         } else {
-          details.style.display = 'none';
+          details.hidden = true;
           itemDiv.classList.remove('expanded');
         }
       };
@@ -230,7 +228,7 @@ async function _copyToClipboard(text) {
   } catch { /* fallback */ }
   // execCommand fallback
   const ta = Object.assign(document.createElement('textarea'), {
-    value: text, style: 'position:fixed;left:-9999px;top:0;'
+    value: text, className: 'clipboard-fallback'
   });
   document.body.appendChild(ta);
   ta.select();

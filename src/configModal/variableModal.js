@@ -9,7 +9,7 @@ let _onSave = null; // callback(pageIndex, key, value, isEdit)
 
 const MODAL_HTML = `
 <div id="variableModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="variableModalTitle">
-  <div class="modal-content" style="width:500px;max-width:95vw;">
+  <div class="modal-content modal-content-narrow">
     <div class="modal-header">
       <h3 id="variableModalTitle">Edit Variable</h3>
       <button type="button" class="close-modal" id="variableModalClose" aria-label="Close">×</button>
@@ -26,18 +26,18 @@ const MODAL_HTML = `
       <label><input type="radio" name="variableType" value="eval" id="variableTypeEval" /> Expression (Eval)</label>
       <input type="text" id="variableEval" placeholder="e.g. Math.floor(atk * 1.5)" disabled />
     </div>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <div class="input-group" style="flex:1;margin-bottom:0;">
+    <div class="row-compact">
+      <div class="input-group grow no-margin">
         <label for="variableMin">Min</label>
         <input type="number" id="variableMin" placeholder="optional" />
       </div>
-      <div class="input-group" style="flex:1;margin-bottom:0;">
+      <div class="input-group grow no-margin">
         <label for="variableMax">Max</label>
         <input type="number" id="variableMax" placeholder="optional" />
       </div>
     </div>
-    <div id="variableError" style="color:#ff4e4e;font-size:0.9em;display:none;margin:8px 0 0;"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+    <div id="variableError" class="form-error form-error-inline"></div>
+    <div class="modal-actions">
       <button type="button" class="btn-small" id="saveVariableBtn">Save</button>
       <button type="button" class="btn-small btn-danger" id="cancelVariableBtn">Cancel</button>
     </div>
