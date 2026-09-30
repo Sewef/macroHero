@@ -13,6 +13,41 @@ import { openVariableModal } from './variableModal.js';
 import { openElementModal, closeElementModal, saveElement } from './elementModal.js';
 import { deepClone } from '../utils.js';
 
+function _slugify(value, fallback) {
+  return String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || fallback;
+}
+
+function _syncVariableToCanonical(scope, key, value) {
+  if (!scope) return;
+  if (!scope.state) scope.state = {};
+  if (!scope.computed) scope.computed = {};
+
+  if (value?.eval !== undefined) {
+    const entry = deepClone(value);
+    const expr = entry.eval;
+    delete entry.eval;
+    delete entry.value;
+    delete scope.state[key];
+    scope.computed[key] = Object.keys(entry).length === 0 ? expr : { ...entry, eval: expr };
+  } else {
+    const entry = value && typeof value === 'object' ? deepClone(value) : { value };
+    const defaultValue = entry.value;
+    delete entry.value;
+    delete scope.computed[key];
+    scope.state[key] = Object.keys(entry).length === 0 ? { default: defaultValue } : { ...entry, default: defaultValue };
+  }
+}
+
+function _deleteCanonicalVariable(scope, key) {
+  if (!scope) return;
+  if (scope.state) delete scope.state[key];
+  if (scope.computed) delete scope.computed[key];
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let _config = null;
@@ -69,6 +104,8 @@ export function buildConfigFromEditor() {
       title:     document.getElementById('globalTitle')?.value || 'Macro Hero',
       width:     parseInt(document.getElementById('globalWidth')?.value) || 600,
       height:    parseInt(document.getElementById('globalHeight')?.value) || 600,
+      state:     _config?.global?.state || {},
+      computed:  _config?.global?.computed || {},
       variables: _config?.global?.variables || {}
     },
     pages: _config?.pages ? deepClone(_config.pages) : []
@@ -261,6 +298,7 @@ function _renderPageVars(pageIndex) {
       if (btn.dataset.action === 'deleteVar') {
         if (confirm(`Delete variable "${key}"?`)) {
           delete _config.pages[pageIndex].variables[key];
+          _deleteCanonicalVariable(_config.pages[pageIndex], key);
           _renderPageVars(pageIndex);
           _notify();
         }
@@ -592,7 +630,8 @@ function _openElementModal(pageIndex, type, parentPath, parentType) {
 
 function _addPage() {
   if (!_config.pages) _config.pages = [];
-  _config.pages.push({ label: 'New Page', variables: {}, layout: [] });
+  const id = _slugify('New Page', `page-${_config.pages.length + 1}`);
+  _config.pages.push({ id, label: 'New Page', state: {}, computed: {}, variables: {}, layout: [] });
   _selectPage(_config.pages.length - 1);
   _notify();
 }
@@ -638,10 +677,12 @@ function _openVarModal(pageIndex, key) {
       if (!_config.global) _config.global = {};
       if (!_config.global.variables) _config.global.variables = {};
       _config.global.variables[k] = value;
+      _syncVariableToCanonical(_config.global, k, value);
       _renderGlobalVariables();
     } else {
       if (!_config.pages[pi].variables) _config.pages[pi].variables = {};
       _config.pages[pi].variables[k] = value;
+      _syncVariableToCanonical(_config.pages[pi], k, value);
       _renderPageVars(pi);
     }
     _notify();
@@ -651,6 +692,7 @@ function _openVarModal(pageIndex, key) {
 function _deleteGlobalVar(key) {
   if (!confirm(`Delete global variable "${key}"?`)) return;
   delete _config.global.variables[key];
+  _deleteCanonicalVariable(_config.global, key);
   _renderGlobalVariables();
   _notify();
 }

@@ -14,8 +14,9 @@ const logger = createDebugLogger("storage");
 // Cache for room ID to avoid repeated lookups
 let roomIdCache = null;
 
-// In-memory cache for evaluated variables (maps pageIndex -> varName -> value)
+// In-memory cache for runtime state (maps pageId -> varName -> value)
 let evaluatedVariablesCache = {};
+let pageIndexToId = new Map();
 
 // Batching system - accumulate changes before writing
 let pendingChanges = {};
@@ -57,44 +58,92 @@ export async function loadAllEvaluatedVariables() {
 }
 
 /**
+ * Configure page id lookup and migrate legacy page-indexed runtime state.
+ * @param {Object} config - Normalized app config
+ * @returns {Promise<boolean>} True when legacy state was migrated
+ */
+export async function configureRuntimeStateStorage(config) {
+  pageIndexToId = new Map();
+  (config?.pages || []).forEach((page, index) => {
+    pageIndexToId.set(index, page?.id || String(index));
+  });
+
+  if (!Object.keys(evaluatedVariablesCache).length) {
+    await loadAllEvaluatedVariables();
+  }
+
+  let migrated = false;
+  for (const [legacyKey, values] of Object.entries({ ...evaluatedVariablesCache })) {
+    if (!/^\d+$/.test(legacyKey)) continue;
+
+    const pageId = pageIndexToId.get(Number(legacyKey));
+    if (!pageId) continue;
+
+    evaluatedVariablesCache[pageId] = {
+      ...(evaluatedVariablesCache[pageId] || {}),
+      ...(values || {}),
+    };
+    delete evaluatedVariablesCache[legacyKey];
+    migrated = true;
+  }
+
+  if (migrated) {
+    pendingChanges = { ...evaluatedVariablesCache };
+    await flushPendingChanges();
+    logger.log("Migrated runtime state from page indexes to page ids");
+  }
+
+  return migrated;
+}
+
+function resolveStateScopeKey(pageRef) {
+  if (typeof pageRef === "number") {
+    return pageIndexToId.get(pageRef) || String(pageRef);
+  }
+  return String(pageRef);
+}
+
+/**
  * Load evaluated variables for a specific page
  */
-export async function loadEvaluatedVariablesForPage(pageIndex) {
+export async function loadEvaluatedVariablesForPage(pageRef) {
   // Ensure cache is primed
   if (!Object.keys(evaluatedVariablesCache).length) {
     await loadAllEvaluatedVariables();
   }
-  return evaluatedVariablesCache[pageIndex] || {};
+  return evaluatedVariablesCache[resolveStateScopeKey(pageRef)] || {};
 }
 
 /**
  * Get evaluated variable value directly from cache
  */
-export function getEvaluatedVariable(pageIndex, varName) {
-  return evaluatedVariablesCache[pageIndex]?.[varName];
+export function getEvaluatedVariable(pageRef, varName) {
+  return evaluatedVariablesCache[resolveStateScopeKey(pageRef)]?.[varName];
 }
 
 /**
  * Update a variable and queue it for saving
  * This batches multiple updates into a single localStorage write
  */
-export async function updateEvaluatedVariable(pageIndex, varName, value) {
+export async function updateEvaluatedVariable(pageRef, varName, value) {
+  const scopeKey = resolveStateScopeKey(pageRef);
+
   // Update in-memory cache immediately
-  if (!evaluatedVariablesCache[pageIndex]) {
-    evaluatedVariablesCache[pageIndex] = {};
+  if (!evaluatedVariablesCache[scopeKey]) {
+    evaluatedVariablesCache[scopeKey] = {};
   }
-  evaluatedVariablesCache[pageIndex][varName] = value;
+  evaluatedVariablesCache[scopeKey][varName] = value;
   
   // Track the change for batching
-  if (!pendingChanges[pageIndex]) {
-    pendingChanges[pageIndex] = {};
+  if (!pendingChanges[scopeKey]) {
+    pendingChanges[scopeKey] = {};
   }
-  pendingChanges[pageIndex][varName] = value;
+  pendingChanges[scopeKey][varName] = value;
   
   // Schedule a batched write
   await scheduleBatchSave();
   
-    logger.log(`Variable queued: page${pageIndex}.${varName}`);
+    logger.log(`Variable queued: ${scopeKey}.${varName}`);
 }
 
 /**

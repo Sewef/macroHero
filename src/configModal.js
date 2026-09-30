@@ -14,6 +14,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { MODAL_LABEL, loadConfig, saveConfigToLocalStorage } from "./config.js";
+import { normalizeConfig, prepareConfigForSave } from "./configSchema.js";
 import { createDebugLogger } from "./debugMode.js";
 import { loadConfigFile } from "./yamlLoader.js";
 
@@ -59,7 +60,7 @@ function _syncEditorToJson() {
   try {
     const config = buildConfigFromEditor();
     const format = getConfigFormat();
-    document.getElementById('cfgArea').value = formatConfig(config, format);
+    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(config), format);
   } catch (e) {
     logger.error('Error exporting config:', e);
     alert('Error exporting config: ' + e.message);
@@ -70,7 +71,7 @@ function _syncJsonToEditor() {
   try {
     const text   = document.getElementById('cfgArea').value;
     const format = getConfigFormat();
-    const parsed = parseConfig(text, format);
+    const parsed = normalizeConfig(parseConfig(text, format));
 
     if (!parsed.global) parsed.global = { title: 'Macro Hero', width: 600, height: 600, variables: {} };
     if (!Array.isArray(parsed.pages)) parsed.pages = [];
@@ -103,7 +104,7 @@ function _switchConfigFormat() {
       // Let it fail silently — YAML requires dynamic import which is async
       return;
     }
-    cfgArea.value = formatConfig(config, format);
+    cfgArea.value = formatConfig(prepareConfigForSave(normalizeConfig(config)), format);
   } catch { /* silent */ }
 }
 
@@ -125,14 +126,14 @@ async function _loadDefaultConfig() {
     }
 
     // Update internal state
-    currentConfig = defaultConfig;
+    currentConfig = normalizeConfig(defaultConfig);
 
     // Sync to JSON tab
     const format = getConfigFormat();
-    document.getElementById('cfgArea').value = formatConfig(defaultConfig, format);
+    document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(currentConfig), format);
 
     // Sync to Editor tab
-    rerenderEditor(defaultConfig);
+    rerenderEditor(currentConfig);
 
     logger.log('Default config loaded');
     alert('Default configuration loaded successfully');
@@ -183,7 +184,7 @@ OBR.onReady(() => {
 
     initEditor(cfg, updatedCfg => { currentConfig = updatedCfg; });
 
-    document.getElementById('cfgArea').value = JSON.stringify(cfg, null, 2);
+    document.getElementById('cfgArea').value = JSON.stringify(prepareConfigForSave(cfg), null, 2);
 
     document.querySelectorAll('.tab').forEach(tab => {
       addTrackedListener(tab, 'click', e => { e.preventDefault(); switchTab(tab.dataset.tab); });
@@ -199,7 +200,7 @@ OBR.onReady(() => {
       try {
         let config;
         if (currentTab === 'json') {
-          config = parseConfig(document.getElementById('cfgArea').value, getConfigFormat());
+          config = normalizeConfig(parseConfig(document.getElementById('cfgArea').value, getConfigFormat()));
         } else {
           config = buildConfigFromEditor();
         }

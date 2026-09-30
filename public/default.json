@@ -2280,7 +2280,7 @@
               "type": "button",
               "label": "Error",
               "onclick": [
-                "await Owlbear.notification.error('This is an error message');"
+                "await Owlbear.notification.show('This is an error message', 'ERROR');"
               ]
             },
             {

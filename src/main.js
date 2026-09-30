@@ -63,6 +63,15 @@ OBR.onReady(async () => {
     }
 
     const cfg = await loadConfig();
+    if (cfg._migration?.migrated) {
+      const detail = (cfg._migration.messages || []).join(" ");
+      logger.warn("Configuration migrated:", detail);
+      try {
+        await OBR.notification.show("MacroHero config migrated to the new state format.", "INFO");
+      } catch (err) {
+        logger.warn("Could not show migration notification:", err);
+      }
+    }
 
     // Initialize expression system with Google Sheets from localStorage
     const { apiKey } = getGoogleSheetsCredentials();

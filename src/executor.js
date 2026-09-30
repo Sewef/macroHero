@@ -14,6 +14,7 @@ import { eventBus } from "./events/EventBus.js";
 import { variableStore } from "./stores/VariableStore.js";
 import { updateRenderedValue } from "./ui.js";
 import { updateEvaluatedVariable } from "./storage.js";
+import { GLOBAL_STATE_ID } from "./configSchema.js";
 import { getExpressionContext } from "./expressionHelpers.js";
 import { createDebugLogger } from "./debugMode.js";
 
@@ -109,7 +110,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       const afterValue = executionContext.variables[varName];
       if (!Object.is(beforeValue, afterValue)) {
         await applyVariableChange(page, pageIndex, globalVariables, varName, afterValue, {
-          persist: false,
+          persist: true,
           resolveDependents: false,
         });
         directlyMutatedVars.add(varName);
@@ -203,6 +204,9 @@ async function applyVariableChange(page, pageIndex = 0, globalVariables = {}, va
     variableEngine.invalidateDependencyGraph(variableStore.globalVariablesConfig);
     variableStore.setGlobalVariableResolved(varName, newValue);
     updateRenderedValue(varName, newValue, null);
+    if (persist) {
+      await updateEvaluatedVariable(GLOBAL_STATE_ID, varName, newValue);
+    }
   } else {
     page._variablesVersion = (page._variablesVersion || 0) + 1;
     variableEngine.invalidateDependencyGraph(page.variables);

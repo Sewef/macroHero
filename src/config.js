@@ -1,9 +1,10 @@
 // config.js
 import OBR from "@owlbear-rodeo/sdk";
-import { loadAllEvaluatedVariables } from "./storage.js";
+import { configureRuntimeStateStorage, loadAllEvaluatedVariables } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";
 import { loadConfigFile } from "./yamlLoader.js";
 import { deepClone } from "./utils.js";
+import { CONFIG_SCHEMA_VERSION, GLOBAL_STATE_ID, normalizeConfig, prepareConfigForSave } from "./configSchema.js";
 
 export const STORAGE_KEY = "com.sewef.macrohero/playerConfigs";
 export const LOCAL_STORAGE_CONFIG_KEY = "com.sewef.macrohero/fullConfig";
@@ -97,18 +98,7 @@ async function getRoomScopedLocalStorageKey() {
 export function cleanConfigForSave(cfg) {
     if (!cfg) return cfg;
     try {
-        const clone = deepClone(cfg);
-        if (clone._resolvedGlobal) delete clone._resolvedGlobal;
-        if (clone._modifiedVars) delete clone._modifiedVars;
-        if (Array.isArray(clone.pages)) {
-            clone.pages.forEach(p => {
-                if (p && '_resolved' in p) delete p._resolved;
-                if (p && '_modifiedVars' in p) delete p._modifiedVars;
-                if (p && '_pageIndex' in p) delete p._pageIndex;
-                if (p && '_variablesVersion' in p) delete p._variablesVersion;
-            });
-        }
-        return clone;
+        return prepareConfigForSave(cfg);
     } catch (e) {
         logger.warn('Failed to clean config for save, using fallback', e);
         const clone = Object.assign({}, cfg);
@@ -152,7 +142,7 @@ export async function loadConfigFromLocalStorage() {
         const key = await getRoomScopedLocalStorageKey();
         const configJson = localStorage.getItem(key);
         if (configJson) {
-            const cfg = JSON.parse(configJson);
+            const cfg = normalizeConfig(JSON.parse(configJson));
             logger.log("Loaded from storage");
             return cfg;
         }
@@ -162,16 +152,29 @@ export async function loadConfigFromLocalStorage() {
     return null;
 }
 
-function mergeEvaluatedValuesIntoConfig(cfg, evaluatedVariables) {
-    if (!cfg?.pages || !evaluatedVariables) return;
+function mergeRuntimeStateIntoConfig(cfg, runtimeState) {
+    if (!cfg || !runtimeState) return;
 
-    for (const [pageIndex, pageValues] of Object.entries(evaluatedVariables)) {
-        const page = cfg.pages[Number(pageIndex)];
+    const globalState = runtimeState[GLOBAL_STATE_ID];
+    if (globalState && cfg.global?.variables) {
+        const globalMutable = new Set(Object.keys(cfg.global.state || {}));
+        for (const [varName, value] of Object.entries(globalState)) {
+            if (globalMutable.has(varName) && cfg.global.variables[varName]) {
+                cfg.global.variables[varName].value = value;
+            }
+        }
+    }
+
+    if (!Array.isArray(cfg.pages)) return;
+
+    for (const page of cfg.pages) {
+        const pageValues = runtimeState[page.id];
         if (!page?.variables || !pageValues || typeof pageValues !== 'object') continue;
+        const mutableVars = new Set(Object.keys(page.state || {}));
 
         for (const [varName, value] of Object.entries(pageValues)) {
             const variable = page.variables[varName];
-            if (!variable || variable.eval !== undefined || variable.value === undefined) continue;
+            if (!mutableVars.has(varName) || !variable || variable.eval !== undefined) continue;
             variable.value = value;
         }
     }
@@ -181,10 +184,12 @@ function mergeEvaluatedValuesIntoConfig(cfg, evaluatedVariables) {
 // CONFIG PAR DÉFAUT
 // --------------------------------------
 export const defaultConfig = {
+    schemaVersion: CONFIG_SCHEMA_VERSION,
     global: {
         title: "Macro Hero",
         theme: "default",
-        variables: {}
+        state: {},
+        computed: {}
     },
     pages: []
 };
@@ -246,16 +251,34 @@ export async function loadConfig() {
                 config = deepClone(defaultConfig);
             }
         }
-        
-// Instead of merging from room metadata, merge evaluated values from localStorage only
-        // Load all variables once at startup (warms the cache for later use)
-        const evaluatedVariables = await loadAllEvaluatedVariables();
-        mergeEvaluatedValuesIntoConfig(config, evaluatedVariables);
+
+        config = normalizeConfig(config);
+        const configMigrated = Boolean(config._migration?.migrated);
+
+        // Load all runtime state once at startup (warms the cache for later use),
+        // migrate legacy index-keyed state to stable page ids, then overlay it in memory.
+        const runtimeState = await loadAllEvaluatedVariables();
+        const runtimeStateMigrated = await configureRuntimeStateStorage(config);
+        mergeRuntimeStateIntoConfig(config, runtimeState);
+
+        if (runtimeStateMigrated) {
+            config._migration.messages.push("Runtime state migrated from page indexes to page ids.");
+            config._migration.migrated = true;
+        }
+
+        if (configMigrated || runtimeStateMigrated) {
+            try {
+                await saveConfigToLocalStorage(config);
+                logger.log("Persisted migrated config to storage");
+            } catch (e) {
+                logger.warn('Failed to persist migrated config', e);
+            }
+        }
         
         return config;
     } catch (error) {
         logger.error('Error loading config:', error);
-        return defaultConfig;
+        return normalizeConfig(defaultConfig);
     }
 }
 
