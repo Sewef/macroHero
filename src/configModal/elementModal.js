@@ -3,6 +3,7 @@
  * Exports openElementModal(element, onSave, opts)
  */
 import { addTrackedListener, dedentCommandList } from './utils.js';
+import { enhanceCodeEditors } from './codeEditors.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ function onUpdateRow(commands, varName = 'variableName', hint = '') {
   return `
     <div class="input-group">
       <label>onupdate (one command per line, optional)</label>
-      <textarea id="elem_onupdate" class="textarea-command" placeholder="console.log(${varName});">${dedentCommandList(commands || []).join('\n')}</textarea>
+      <textarea id="elem_onupdate" class="textarea-command" data-editor-lang="javascript" placeholder="console.log(${varName});">${dedentCommandList(commands || []).join('\n')}</textarea>
       ${hint ? `<small class="form-hint">${hint}</small>` : ''}
     </div>`;
 }
@@ -32,7 +33,7 @@ function onClickRow(commands, placeholder = "JustDices.roll('1d20')") {
   return `
     <div class="input-group">
       <label>onclick</label>
-      <textarea id="elem_onclick" class="textarea-command" placeholder="${placeholder}">${dedentCommandList(commands || []).join('\n')}</textarea>
+      <textarea id="elem_onclick" class="textarea-command" data-editor-lang="javascript" placeholder="${placeholder}">${dedentCommandList(commands || []).join('\n')}</textarea>
     </div>`;
 }
 
@@ -41,12 +42,12 @@ function buildFields(type, el) {
   switch (type) {
     case 'button': return `
       <div class="input-group"><label>Label</label><input type="text" id="elem_label" value="${e.label || ''}" placeholder="Button Text" /></div>
-      <div class="input-group"><label>Tooltip</label><textarea id="elem_tooltip" class="textarea-plain" placeholder="Displayed on hover" rows="2">${e.tooltip || ''}</textarea></div>
+      <div class="input-group"><label>Tooltip</label><textarea id="elem_tooltip" class="textarea-plain" data-editor-lang="markdown" placeholder="Displayed on hover" rows="2">${e.tooltip || ''}</textarea></div>
       ${colorRow(e.color)}
       ${onClickRow(e.onclick)}
       <div class="input-group">
         <label>onrightclick</label>
-        <textarea id="elem_onrightclick" class="textarea-command" placeholder="JustDices.roll('1d20')">${dedentCommandList(e.onrightclick || []).join('\n')}</textarea>
+        <textarea id="elem_onrightclick" class="textarea-command" data-editor-lang="javascript" placeholder="JustDices.roll('1d20')">${dedentCommandList(e.onrightclick || []).join('\n')}</textarea>
       </div>`;
 
     case 'value': return `
@@ -98,7 +99,7 @@ function buildFields(type, el) {
       ${colorRow(e.color)}`;
 
     case 'text': return `
-      <div class="input-group"><label>Text</label><textarea id="elem_text">${e.text || ''}</textarea></div>`;
+      <div class="input-group"><label>Text</label><textarea id="elem_text" data-editor-lang="markdown">${e.text || ''}</textarea></div>`;
 
     case 'divider': return `
       ${colorRow(e.color)}
@@ -175,7 +176,7 @@ function buildFields(type, el) {
       return `
         <div class="input-group"><label>Label (optional)</label><input type="text" id="mbtn_label" value="${e.label || ''}" placeholder="Button text" /></div>
         <div class="input-group"><label>Icon (emoji or URL)</label><input type="text" id="mbtn_icon" value="${e.icon || ''}" placeholder="🔥 or https://..." /></div>
-        <div class="input-group"><label>Tooltip (optional)</label><textarea id="mbtn_tooltip" class="textarea-plain" rows="2">${e.tooltip || ''}</textarea></div>
+        <div class="input-group"><label>Tooltip (optional)</label><textarea id="mbtn_tooltip" class="textarea-plain" data-editor-lang="markdown" rows="2">${e.tooltip || ''}</textarea></div>
         <div class="input-group">
           <label class="checkbox-label">
             <input type="checkbox" id="mbtn_hasColor" ${e.color ? 'checked' : ''} /> Custom Color
@@ -188,8 +189,8 @@ function buildFields(type, el) {
           </label>
           <input type="color" id="mbtn_borderColor" class="color-input" value="${e.borderColor || '#c8adff'}" ${e.borderColor ? '' : 'disabled'} />
         </div>
-        <div class="input-group"><label>onclick (one per line)</label><textarea id="mbtn_onclick" class="textarea-command compact">${onclickText}</textarea></div>
-        <div class="input-group"><label>onrightclick (one per line, optional)</label><textarea id="mbtn_onrightclick" class="textarea-command small">${onrightText}</textarea></div>`;
+        <div class="input-group"><label>onclick (one per line)</label><textarea id="mbtn_onclick" class="textarea-command compact" data-editor-lang="javascript">${onclickText}</textarea></div>
+        <div class="input-group"><label>onrightclick (one per line, optional)</label><textarea id="mbtn_onrightclick" class="textarea-command small" data-editor-lang="javascript">${onrightText}</textarea></div>`;
     }
 
     default: return `<p class="property-help">Unknown type: ${type}</p>`;
@@ -324,6 +325,7 @@ function _renderFields() {
   _wireColorToggle('elem_customColor', 'elem_color');
   _wireColorToggle('mbtn_hasColor', 'mbtn_color');
   _wireColorToggle('mbtn_hasBorderColor', 'mbtn_borderColor');
+  enhanceCodeEditors(document.getElementById('elementFields'));
 }
 
 export function openElementModal({ type = 'button', element = null, title = 'Add Element', saveLabel = 'Add Element', onSave, lockType = false }) {
@@ -343,6 +345,7 @@ export function openElementModal({ type = 'button', element = null, title = 'Add
   _wireColorToggle('mbtn_hasColor', 'mbtn_color');
   _wireColorToggle('mbtn_hasBorderColor', 'mbtn_borderColor');
   _wirePresetButtons();
+  enhanceCodeEditors(document.getElementById('elementFields'));
 
   // Re-render when type changes (only when not locked)
   if (!lockType) {
@@ -353,6 +356,7 @@ export function openElementModal({ type = 'button', element = null, title = 'Add
       _wireColorToggle('mbtn_hasColor', 'mbtn_color');
       _wireColorToggle('mbtn_hasBorderColor', 'mbtn_borderColor');
       _wirePresetButtons();
+      enhanceCodeEditors(document.getElementById('elementFields'));
     };
   }
 

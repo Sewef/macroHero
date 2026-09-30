@@ -1125,6 +1125,29 @@ textarea {
   resize: vertical;
   font-family: monospace;
 }
+.code-editor-source {
+  display: none !important;
+}
+.mh-code-editor {
+  width: 100%;
+  overflow: hidden;
+}
+.mh-code-editor .cm-scroller {
+  max-height: min(52vh, 560px);
+}
+.mh-code-editor-json .cm-scroller {
+  max-height: calc(100vh - 240px);
+}
+.mh-code-editor .cm-diagnosticAction {
+  background: var(--accent);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: #081017;
+  cursor: pointer;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  padding: 2px 6px;
+}
 input[type="color"] { padding: 2px; height: 32px; cursor: pointer; }
 small { color: var(--text2); font-size: 0.8em; }
 

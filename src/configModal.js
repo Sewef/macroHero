@@ -24,6 +24,7 @@ import {
   formatConfig,
   parseConfig,
 } from "./configModal/utils.js";
+import { enhanceCodeEditors, syncCodeEditor } from "./configModal/codeEditors.js";
 
 import {
   initEditor,
@@ -49,7 +50,11 @@ function switchTab(tabName) {
   currentTab = tabName;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `${tabName}-tab`));
-  if (tabName === 'json')   _syncEditorToJson();
+  if (tabName === 'json') {
+    _syncEditorToJson();
+    enhanceCodeEditors(document.getElementById('json-tab'));
+    syncCodeEditor('cfgArea');
+  }
   if (tabName === 'tokens') refreshTokenHelper();
 }
 
@@ -59,6 +64,7 @@ function _syncEditorToJson() {
   try {
     const config = buildConfigFromEditor();
     document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(config));
+    syncCodeEditor('cfgArea');
   } catch (e) {
     logger.error('Error exporting config:', e);
     alert('Error exporting config: ' + e.message);
@@ -109,6 +115,7 @@ async function _loadDefaultConfig() {
 
     // Sync to JSON tab
     document.getElementById('cfgArea').value = formatConfig(prepareConfigForSave(currentConfig));
+    syncCodeEditor('cfgArea');
 
     // Sync to Editor tab
     rerenderEditor(currentConfig);

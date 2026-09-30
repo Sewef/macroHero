@@ -12,6 +12,7 @@
 import { addTrackedListener, dedentCommandList } from './utils.js';
 import { buildVariablesFromStateComputed } from '../configSchema.js';
 import { deepClone } from '../utils.js';
+import { enhanceCodeEditors } from './codeEditors.js';
 
 let _config = null;
 let _selectedPageIndex = null;
@@ -479,11 +480,13 @@ function _renderPropertyPanel() {
   if (_selection.kind === 'variable') {
     panel.innerHTML = _renderVariableInspector();
     _attachVariableInspector();
+    enhanceCodeEditors(panel);
     return;
   }
   if (_selection.kind === 'element') {
     panel.innerHTML = _renderElementInspector();
     _attachElementInspector();
+    enhanceCodeEditors(panel);
     return;
   }
   panel.innerHTML = _renderPageInspector();
@@ -604,7 +607,7 @@ function _elementFields(type, e) {
     case 'button':
       return `
         ${_textInput('Label', 'label', e.label)}
-        ${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3 })}
+        ${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3, lang: 'markdown' })}
         ${_colorInput(e.color)}
         ${_commandInput('onclick', 'onclick', e.onclick)}
         ${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
@@ -622,7 +625,7 @@ function _elementFields(type, e) {
     case 'title':
       return `${_textInput('Text', 'text', e.text)}${_colorInput(e.color)}`;
     case 'text':
-      return `${_textareaInput('Text', 'text', e.text, { rows: 8 })}`;
+      return `${_textareaInput('Text', 'text', e.text, { rows: 8, lang: 'markdown' })}`;
     case 'divider':
       return `${_colorInput(e.color)}${_textInput('Height', 'height', e.height)}${_textInput('Margin', 'margin', e.margin)}${_selectInput('Style', 'style', e.style, [['', 'Default'], ['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted']])}`;
     case 'row':
@@ -632,7 +635,7 @@ function _elementFields(type, e) {
     case 'matrix':
       return `${_numberInput('Columns', 'columns', e.columns ?? 4)}${_textInput('Button size', 'buttonSize', e.buttonSize ?? '40px')}${_textInput('Gap', 'gap', e.gap ?? '4px')}${_selectInput('Button shape', 'buttonShape', e.buttonShape || 'square', [['square', 'Square'], ['rectangle', 'Rectangle']])}${_checkboxInput('Border', 'border', e.border)}${_colorInput(e.color)}`;
     case 'matrixbutton':
-      return `${_textInput('Label', 'label', e.label)}${_textInput('Icon', 'icon', e.icon)}${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3 })}${_colorInput(e.color)}${_textInput('Border color', 'borderColor', e.borderColor)}${_commandInput('onclick', 'onclick', e.onclick)}${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
+      return `${_textInput('Label', 'label', e.label)}${_textInput('Icon', 'icon', e.icon)}${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3, lang: 'markdown' })}${_colorInput(e.color)}${_textInput('Border color', 'borderColor', e.borderColor)}${_commandInput('onclick', 'onclick', e.onclick)}${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
     default:
       return `<p class="property-help">Unknown element type: ${_esc(type)}</p>`;
   }
@@ -647,7 +650,8 @@ function _numberInput(label, prop, value = '') {
 }
 
 function _textareaInput(label, prop, value = '', options = {}) {
-  return `<div class="input-group"><label>${_esc(label)}</label><textarea data-prop="${prop}" rows="${options.rows || 4}">${_esc(value || '')}</textarea></div>`;
+  const lang = options.lang ? ` data-editor-lang="${_attr(options.lang)}"` : '';
+  return `<div class="input-group"><label>${_esc(label)}</label><textarea data-prop="${prop}" rows="${options.rows || 4}"${lang}>${_esc(value || '')}</textarea></div>`;
 }
 
 function _checkboxInput(label, prop, value) {
@@ -671,7 +675,7 @@ function _colorInput(value) {
 }
 
 function _commandInput(label, prop, commands) {
-  return `<div class="input-group"><label>${_esc(label)}</label><textarea data-command-prop="${prop}" rows="5">${_esc(dedentCommandList(commands || []).join('\n'))}</textarea></div>`;
+  return `<div class="input-group"><label>${_esc(label)}</label><textarea data-command-prop="${prop}" data-editor-lang="javascript" rows="5">${_esc(dedentCommandList(commands || []).join('\n'))}</textarea></div>`;
 }
 
 function _optionsInput(options = []) {
