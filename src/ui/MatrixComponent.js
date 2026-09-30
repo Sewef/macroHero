@@ -17,10 +17,12 @@ export class MatrixComponent extends UIComponent {
     const isRect = this.item.buttonShape === 'rectangle';
     
     matrix.style.display = 'grid';
-    // Rectangle: columns fill available space equally; square: fixed size per column
-    matrix.style.gridTemplateColumns = isRect ? `repeat(${cols}, 1fr)` : `repeat(${cols}, ${buttonSize})`;
-    if (isRect) matrix.style.gridAutoRows = buttonSize;
+    // Keep configured columns while letting the matrix fill the available row width.
+    matrix.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    matrix.style.gridAutoRows = buttonSize;
     matrix.style.gap = gap;
+    matrix.style.width = '100%';
+    matrix.style.setProperty('--mh-matrix-button-size', buttonSize);
     if (this.item.flex) matrix.style.flex = this.item.flex;
     this._isRect = isRect;
 

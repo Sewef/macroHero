@@ -58,42 +58,51 @@ export class CounterComponent extends UIComponent {
     input.value = numValue;
     input.disabled = isComputed;
     input.title = isComputed ? "Calculated value" : "";
+    input.inputMode = "decimal";
+    input.step = this.getCounterStep(variable);
     
-    if (variable.min !== undefined) input.min = variable.min;
-    if (variable.max !== undefined) input.max = variable.max;
+    if (this.item.min !== undefined || variable.min !== undefined) input.min = this.item.min ?? variable.min;
+    if (this.item.max !== undefined || variable.max !== undefined) input.max = this.item.max ?? variable.max;
 
     // Event listeners for input
     this.addEventListener(input, "input", (e) => {
       logger.log(`Input value: ${this.item.var} = ${e.target.value}`);
-      this.updateCounterValue(input, variable, this.item.var);
+      this.handleCounterTextInput(input, variable, this.item.var);
     });
 
     this.addEventListener(input, "change", (e) => {
       logger.log(`Changed: ${this.item.var} = ${e.target.value}`);
-      this.updateCounterValue(input, variable, this.item.var);
+      this.commitCounterInput(input, variable, this.item.var);
+    });
+
+    this.addEventListener(input, "blur", (e) => {
+      logger.log(`Blurred: ${this.item.var} = ${e.target.value}`);
+      this.commitCounterInput(input, variable, this.item.var);
     });
 
     // Create buttons
     const buttonContainer = this.createElement("div", "mh-counter-buttons");
     
     const incrementBtn = this.createElement("button", "mh-counter-btn");
+    incrementBtn.type = "button";
     incrementBtn.textContent = "+";
+    incrementBtn.setAttribute("aria-label", `Increase ${this.item.label ?? this.item.var}`);
     incrementBtn.disabled = isComputed;
     this.addEventListener(incrementBtn, "click", () => {
       if (isComputed) return;
       logger.log(`Increment: ${this.item.var}`);
-      input.value = Number(input.value) + (this.item.step ?? 1);
-      this.updateCounterValue(input, variable, this.item.var);
+      this.nudgeCounter(input, variable, this.item.var, 1);
     });
 
     const decrementBtn = this.createElement("button", "mh-counter-btn");
+    decrementBtn.type = "button";
     decrementBtn.textContent = "-";
+    decrementBtn.setAttribute("aria-label", `Decrease ${this.item.label ?? this.item.var}`);
     decrementBtn.disabled = isComputed;
     this.addEventListener(decrementBtn, "click", () => {
       if (isComputed) return;
       logger.log(`Decrement: ${this.item.var}`);
-      input.value = Number(input.value) - (this.item.step ?? 1);
-      this.updateCounterValue(input, variable, this.item.var);
+      this.nudgeCounter(input, variable, this.item.var, -1);
     });
 
     buttonContainer.appendChild(decrementBtn);
@@ -112,6 +121,86 @@ export class CounterComponent extends UIComponent {
     this.setupExternalChangeListener();
 
     return container;
+  }
+
+  /**
+   * Return the configured numeric step.
+   * @param {Object} variable - Variable object
+   * @returns {number} Step value
+   */
+  getCounterStep(variable) {
+    const step = Number(this.item.step ?? variable?.step ?? 1);
+    return Number.isFinite(step) && step !== 0 ? step : 1;
+  }
+
+  /**
+   * Format a number without floating-point noise from decimal steps.
+   * @param {number} value - Number to format
+   * @returns {string} Display string
+   */
+  formatCounterValue(value) {
+    if (!Number.isFinite(value)) return "0";
+    const rounded = Number(value.toFixed(10));
+    return String(rounded);
+  }
+
+  /**
+   * Let users type temporary number states like "-" or "." without snapping to 0.
+   * @param {string} value - Raw input value
+   * @returns {boolean} True for incomplete input
+   */
+  isIncompleteNumberInput(value) {
+    return value === "" || value === "-" || value === "+" || value === "." || value === "-." || value === "+.";
+  }
+
+  /**
+   * Update while the user types, but avoid rewriting incomplete numeric text.
+   * @param {HTMLElement} input - Input element
+   * @param {Object} variable - Variable object
+   * @param {string} varName - Variable name
+   */
+  handleCounterTextInput(input, variable, varName) {
+    if (variable.eval !== undefined) {
+      input.value = Number(this.getResolvedValue(varName, this.item.min ?? 0)) || 0;
+      return;
+    }
+
+    if (this.isIncompleteNumberInput(input.value) || !Number.isFinite(Number(input.value))) {
+      return;
+    }
+
+    this.updateCounterValue(input, variable, varName, { clamp: true, syncInput: false });
+  }
+
+  /**
+   * Commit an input edit and normalize the displayed value.
+   * @param {HTMLElement} input - Input element
+   * @param {Object} variable - Variable object
+   * @param {string} varName - Variable name
+   */
+  commitCounterInput(input, variable, varName) {
+    if (this.isIncompleteNumberInput(input.value) || !Number.isFinite(Number(input.value))) {
+      input.value = this.formatCounterValue(this.lastSavedValue ?? this.item.min ?? variable.min ?? 0);
+    }
+
+    this.updateCounterValue(input, variable, varName, { clamp: true, syncInput: true });
+  }
+
+  /**
+   * Apply a +/- step from the current committed or typed value.
+   * @param {HTMLElement} input - Input element
+   * @param {Object} variable - Variable object
+   * @param {string} varName - Variable name
+   * @param {number} direction - 1 to increment, -1 to decrement
+   */
+  nudgeCounter(input, variable, varName, direction) {
+    const typedValue = Number(input.value);
+    const resolvedValue = Number(this.getResolvedValue(varName, this.item.min ?? variable.min ?? 0));
+    const fallbackValue = this.lastSavedValue ?? (Number.isFinite(resolvedValue) ? resolvedValue : 0);
+    const current = Number.isFinite(typedValue) ? typedValue : fallbackValue;
+
+    input.value = this.formatCounterValue(current + direction * this.getCounterStep(variable));
+    this.updateCounterValue(input, variable, varName, { clamp: true, syncInput: true });
   }
 
   /**
@@ -137,17 +226,26 @@ export class CounterComponent extends UIComponent {
    * @param {HTMLElement} input - Input element
    * @param {Object} variable - Variable object
    * @param {string} varName - Variable name
+   * @param {Object} options - Update options
    */
-  updateCounterValue(input, variable, varName) {
+  updateCounterValue(input, variable, varName, options = {}) {
+    const { clamp = true, syncInput = true } = options;
+
     if (variable.eval !== undefined) {
       input.value = Number(this.getResolvedValue(varName, this.item.min ?? 0)) || 0;
       return;
     }
 
-    const constrained = this.applyConstraints(input.value);
+    const parsed = Number(input.value);
+    if (!Number.isFinite(parsed)) {
+      return;
+    }
+
+    const constrained = clamp ? this.applyConstraints(parsed) : parsed;
     
-    // Always sync the input value to respect constraints
-    input.value = constrained;
+    if (syncInput) {
+      input.value = this.formatCounterValue(constrained);
+    }
     
     if (constrained === this.lastSavedValue) {
       return;
