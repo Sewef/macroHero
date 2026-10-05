@@ -775,13 +775,15 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
         }}
         height="100%"
         headerTitle={`MacroHero - ${activePage.label || activePage.id || "Page"} - ${builderMode === "variables" ? "Variables" : "Layout"}`}
-        renderHeaderActions={() => (
+        renderHeaderActions={({ state }) => (
           <BuilderHeaderControls
             pages={pages}
             safePageIndex={safePageIndex}
             setPageIndex={setPageIndex}
             builderMode={builderMode}
             setBuilderMode={setBuilderMode}
+            activeSidebarPlugin={state?.ui?.plugin?.current}
+            rememberSidebarPlugin={rememberSidebarPlugin}
           />
         )}
       />
@@ -789,7 +791,20 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
   );
 }
 
-function BuilderHeaderControls({ pages, safePageIndex, setPageIndex, builderMode, setBuilderMode }) {
+function BuilderHeaderControls({
+  pages,
+  safePageIndex,
+  setPageIndex,
+  builderMode,
+  setBuilderMode,
+  activeSidebarPlugin,
+  rememberSidebarPlugin,
+}) {
+  const changeBuilderMode = mode => {
+    if (activeSidebarPlugin) rememberSidebarPlugin(activeSidebarPlugin);
+    setBuilderMode(mode);
+  };
+
   return (
     <div className="puck-header-controls">
       <select
@@ -804,8 +819,8 @@ function BuilderHeaderControls({ pages, safePageIndex, setPageIndex, builderMode
         ))}
       </select>
       <div className="puck-header-mode-switch" role="group" aria-label="Builder mode">
-        <button type="button" className={builderMode === "layout" ? "active" : ""} onClick={() => setBuilderMode("layout")}>Layout</button>
-        <button type="button" className={builderMode === "variables" ? "active" : ""} onClick={() => setBuilderMode("variables")}>Variables</button>
+        <button type="button" className={builderMode === "layout" ? "active" : ""} onClick={() => changeBuilderMode("layout")}>Layout</button>
+        <button type="button" className={builderMode === "variables" ? "active" : ""} onClick={() => changeBuilderMode("variables")}>Variables</button>
       </div>
     </div>
   );
@@ -937,6 +952,10 @@ function VariableEditorPlugin({ groups, safePageIndex, updateConfig }) {
   return (
     <section className="puck-config-section">
       <h3>Variables <span>{total}</span></h3>
+      <div className="puck-variable-intro">
+        <p><strong>State</strong> is a stored value that controls can read and update.</p>
+        <p><strong>Computed</strong> is a read-only value calculated from an expression and other variables.</p>
+      </div>
       <div className="puck-variable-stack">
         {groups.map(group => (
           <VariableBucket
@@ -1116,7 +1135,7 @@ function ContainerBlock({ type, label, slot, border, color }) {
   return (
     <section
       className={`mh-preview-container mh-preview-${type}`}
-      style={{ borderColor: color || undefined }}
+      style={{ borderColor: border && color ? color : undefined }}
       aria-label={label}
       data-bordered={border ? "true" : undefined}
     >
