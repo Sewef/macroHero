@@ -120,6 +120,11 @@ const MARKDOWN_FIELD = {
   render: props => <CodeField {...props} language="markdown" minRows={3} />,
 };
 
+const COLOR_FIELD = {
+  type: "custom",
+  render: props => <ColorField {...props} />,
+};
+
 const DEFAULT_PERMISSIONS = {
   drag: true,
   duplicate: true,
@@ -217,7 +222,7 @@ function createPuckConfig(variableGroups, builderMode) {
       label: "Stack",
       fields: {
         borderFlag: { type: "radio", label: "Border", options: BOOLEAN_OPTIONS },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         children: { type: "slot", allow: NON_MATRIX_BUTTON_COMPONENTS },
       },
       render: ({ children, borderFlag, color }) => (
@@ -238,7 +243,7 @@ function createPuckConfig(variableGroups, builderMode) {
         gap: { type: "text" },
         buttonShape: { type: "select", options: MATRIX_SHAPE_OPTIONS },
         borderFlag: { type: "radio", label: "Border", options: BOOLEAN_OPTIONS },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         children: { type: "slot", allow: ["MatrixButton"] },
       },
       render: ({ children, columns, borderFlag, color }) => (
@@ -256,7 +261,7 @@ function createPuckConfig(variableGroups, builderMode) {
       fields: {
         label: { type: "text" },
         tooltip: { ...MARKDOWN_FIELD, label: "Tooltip" },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         ...COMMAND_FIELDS,
       },
       defaultProps: { label: "Button", onclickText: "" },
@@ -270,8 +275,8 @@ function createPuckConfig(variableGroups, builderMode) {
         label: { type: "text" },
         icon: { type: "text" },
         tooltip: { ...MARKDOWN_FIELD, label: "Tooltip" },
-        color: { type: "text" },
-        borderColor: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
+        borderColor: { ...COLOR_FIELD, label: "Border color" },
         ...COMMAND_FIELDS,
       },
       defaultProps: { label: "", icon: "", onclickText: "" },
@@ -307,7 +312,7 @@ function createPuckConfig(variableGroups, builderMode) {
         var: stateVariableField,
         label: { type: "text" },
         step: { type: "number" },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         ...UPDATE_FIELD,
       },
       defaultProps: { step: 1 },
@@ -320,7 +325,7 @@ function createPuckConfig(variableGroups, builderMode) {
       fields: {
         var: stateVariableField,
         label: { type: "text" },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         ...UPDATE_FIELD,
       },
       render: ({ label, var: variable }) => (
@@ -332,7 +337,7 @@ function createPuckConfig(variableGroups, builderMode) {
       fields: {
         var: stateVariableField,
         label: { type: "text" },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
         ...UPDATE_FIELD,
       },
       render: ({ label, var: variable }) => (
@@ -355,7 +360,7 @@ function createPuckConfig(variableGroups, builderMode) {
       label: "Title",
       fields: {
         text: { type: "text" },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
       },
       defaultProps: { text: "Title" },
       render: ({ text, color }) => <TitlePreview text={text || "Title"} color={color} />,
@@ -376,7 +381,7 @@ function createPuckConfig(variableGroups, builderMode) {
         height: { type: "text" },
         margin: { type: "text" },
         style: { type: "select", options: DIVIDER_STYLE_OPTIONS },
-        color: { type: "text" },
+        color: { ...COLOR_FIELD, label: "Color" },
       },
       render: ({ color }) => <DividerPreview color={color} />,
     },
@@ -872,7 +877,7 @@ function VariableSelectField({ id, value, onChange, readOnly, field, name, group
 
   return (
     <div className="puck-variable-field">
-      <label className="puck-custom-field-label" htmlFor={id}>{label}</label>
+      <CustomFieldLabel htmlFor={id} kind="variable">{label}</CustomFieldLabel>
       <select
         id={id}
         value={value || ""}
@@ -904,10 +909,14 @@ function VariableSelectField({ id, value, onChange, readOnly, field, name, group
 
 function ContainerBlock({ type, label, slot, border, color }) {
   return (
-    <section className={`mh-preview-container mh-preview-${type}`} style={{ borderColor: color || undefined }}>
+    <section
+      className={`mh-preview-container mh-preview-${type}`}
+      style={{ borderColor: color || undefined }}
+      aria-label={label}
+      data-bordered={border ? "true" : undefined}
+    >
       <div className="mh-preview-container-head">
         <strong>{label}</strong>
-        <span>{border ? "bordered" : type}</span>
       </div>
       <div className="mh-preview-slot">
         {typeof slot === "function" ? slot({ className: "mh-preview-dropzone", minEmptyHeight: 44 }) : null}
@@ -975,10 +984,9 @@ function LeafBlock({ type, title, detail }) {
 
 function PreviewBlock({ type, label, children }) {
   return (
-    <div className={`mh-preview-widget mh-preview-block mh-preview-${type}`}>
+    <div className={`mh-preview-widget mh-preview-block mh-preview-${type}`} aria-label={label}>
       <div className="mh-preview-block-head">
         <strong>{label}</strong>
-        <span>{type}</span>
       </div>
       <div className="mh-preview-block-content">
         {children}
@@ -991,10 +999,12 @@ function ButtonPreview({ label, tooltip }) {
   const tooltipText = getTooltipTitle(tooltip);
 
   return (
-    <div className="mh-preview-widget mh-preview-button">
-      <button type="button">{label}</button>
-      {tooltipText ? <span className="mh-preview-tooltip-chip" title={tooltipText}>Tooltip</span> : null}
-    </div>
+    <PreviewBlock type="button" label="Button">
+      <div className="mh-preview-button-face">
+        <button type="button">{label}</button>
+        {tooltipText ? <span className="mh-preview-tooltip-chip" title={tooltipText}>Tooltip</span> : null}
+      </div>
+    </PreviewBlock>
   );
 }
 
@@ -1002,40 +1012,54 @@ function MatrixButtonPreview({ label, icon, tooltip }) {
   const tooltipText = getTooltipTitle(tooltip);
 
   return (
-    <div className="mh-preview-widget mh-preview-matrix-button">
+    <PreviewBlock type="matrix-button" label="Matrix button">
       <div className="mh-preview-matrix-face">
         {icon ? <span className="mh-preview-matrix-icon">{icon}</span> : null}
         {label ? <span className="mh-preview-matrix-label">{label}</span> : null}
         {!icon && !label ? <span className="mh-preview-matrix-label muted">Matrix button</span> : null}
       </div>
       {tooltipText ? <span className="mh-preview-tooltip-chip" title={tooltipText}>Tooltip</span> : null}
-    </div>
+    </PreviewBlock>
   );
 }
 
 function ValuePreview({ label, variable }) {
   return (
-    <div className="mh-preview-widget mh-preview-value">
-      <span>{label}</span>
-      <strong>{variable ? `{${variable}}` : "0"}</strong>
-    </div>
+    <PreviewBlock type="value" label="Value">
+      <div className="mh-preview-value">
+        <span>{label}</span>
+        <strong>{variable ? `{${variable}}` : "0"}</strong>
+      </div>
+    </PreviewBlock>
   );
 }
 
 function ControlPreview({ type, label, variable }) {
   return (
-    <div className={`mh-preview-widget mh-preview-control mh-preview-control-${type}`}>
-      <span className="mh-preview-control-label">{label}</span>
-      <span className="mh-preview-control-surface">
-        {type === "counter" ? <><button type="button">-</button><strong>0</strong><button type="button">+</button></> : null}
-        {type === "checkbox" ? <span className="mh-preview-check" /> : null}
-        {type === "toggle" ? <span className="mh-preview-toggle"><span /></span> : null}
-        {type === "dropdown" ? <span className="mh-preview-select">Select</span> : null}
-        {type === "input" ? <span className="mh-preview-input">Text</span> : null}
-      </span>
-      <small>{variable ? `{${variable}}` : "No state binding"}</small>
-    </div>
+    <PreviewBlock type={type} label={controlTypeLabel(type)}>
+      <div className={`mh-preview-control mh-preview-control-${type}`}>
+        <span className="mh-preview-control-label">{label}</span>
+        <span className="mh-preview-control-surface">
+          {type === "counter" ? <><button type="button">-</button><strong>0</strong><button type="button">+</button></> : null}
+          {type === "checkbox" ? <span className="mh-preview-check" /> : null}
+          {type === "toggle" ? <span className="mh-preview-toggle"><span /></span> : null}
+          {type === "dropdown" ? <span className="mh-preview-select">Select</span> : null}
+          {type === "input" ? <span className="mh-preview-input">Text</span> : null}
+        </span>
+        <small>{variable ? `{${variable}}` : "No state binding"}</small>
+      </div>
+    </PreviewBlock>
   );
+}
+
+function controlTypeLabel(type) {
+  return {
+    input: "Input",
+    counter: "Counter",
+    checkbox: "Checkbox",
+    toggle: "Toggle",
+    dropdown: "Dropdown",
+  }[type] || "Control";
 }
 
 function TitlePreview({ text, color }) {
@@ -1066,6 +1090,37 @@ function DividerPreview({ color }) {
         <span style={{ borderTopColor: color || undefined }} />
       </div>
     </PreviewBlock>
+  );
+}
+
+function ColorField({ id, value, onChange, readOnly, field, name }) {
+  const label = field?.label || formatFieldLabel(name || id);
+  const textId = `${id || name || "color"}-text`;
+  const pickerId = `${id || name || "color"}-picker`;
+  const normalized = normalizeColorForPicker(value);
+
+  return (
+    <div className="puck-color-field">
+      <CustomFieldLabel htmlFor={textId} kind="color">{label}</CustomFieldLabel>
+      <div className="puck-color-field-row">
+        <input
+          id={textId}
+          type="text"
+          value={value || ""}
+          disabled={readOnly}
+          placeholder="#4f46e5, red, var(--accent)"
+          onChange={event => onChange(event.target.value)}
+        />
+        <input
+          id={pickerId}
+          type="color"
+          value={normalized}
+          disabled={readOnly}
+          title={`Pick ${label}`}
+          onChange={event => onChange(event.target.value)}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -1119,9 +1174,20 @@ function CodeField({ id, value, onChange, readOnly, field, name, language = "jav
 
   return (
     <div className="puck-code-field">
-      <label className="puck-custom-field-label" htmlFor={editorId}>{label}</label>
+      <CustomFieldLabel htmlFor={editorId} kind={language === "markdown" ? "markdown" : "code"}>
+        {label}
+      </CustomFieldLabel>
       <div id={editorId} ref={hostRef} />
     </div>
+  );
+}
+
+function CustomFieldLabel({ htmlFor, kind = "field", children }) {
+  return (
+    <label className={`puck-custom-field-label puck-custom-field-label-${kind}`} htmlFor={htmlFor}>
+      <span className="puck-custom-field-label-icon" aria-hidden="true" />
+      <span>{children}</span>
+    </label>
   );
 }
 
@@ -1129,8 +1195,16 @@ function formatFieldLabel(value) {
   return String(value || "Field")
     .replace(/Text$/, "")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .trim()
-    .toLowerCase();
+    .trim();
+}
+
+function normalizeColorForPicker(value) {
+  const raw = String(value || "").trim();
+  if (/^#[0-9a-f]{6}$/i.test(raw)) return raw;
+  if (/^#[0-9a-f]{3}$/i.test(raw)) {
+    return `#${raw.slice(1).split("").map(char => char + char).join("")}`;
+  }
+  return "#4f46e5";
 }
 
 function getTooltipTitle(value) {
