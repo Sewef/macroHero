@@ -26,7 +26,7 @@ export function ensureRawJsonEditor() {
     target,
     props: {
       content: lastContent,
-      mode: Mode.tree,
+      mode: Mode.text,
       mainMenuBar: true,
       navigationBar: true,
       statusBar: true,

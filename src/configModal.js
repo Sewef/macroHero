@@ -61,9 +61,15 @@ async function switchTab(tabName) {
   }
   if (tabName === 'json') {
     _syncEditorToJson();
-    const rawJsonEditor = await _loadRawJsonEditor();
-    rawJsonEditor.ensureRawJsonEditor();
-    rawJsonEditor.syncRawJsonEditorFromTextarea();
+    try {
+      const rawJsonEditor = await _loadRawJsonEditor();
+      rawJsonEditor.ensureRawJsonEditor();
+      rawJsonEditor.syncRawJsonEditorFromTextarea();
+      _setRawEditorFallback(false);
+    } catch (e) {
+      logger.warn('Enhanced JSON editor unavailable; using plain text mode:', e);
+      _setRawEditorFallback(true, e?.message);
+    }
   }
   if (tabName === 'tokens') refreshTokenHelper();
 }
@@ -71,7 +77,7 @@ async function switchTab(tabName) {
 async function _captureCurrentTabState() {
   if (!currentConfig) return;
   if (currentTab === 'json') {
-    currentConfig = await _parseRawConfig();
+    currentConfig = await _parseRawConfig({ validateShape: false });
   }
 }
 
@@ -109,14 +115,16 @@ async function _syncJsonToEditor() {
   }
 }
 
-async function _parseRawConfig() {
+async function _parseRawConfig({ validateShape = true } = {}) {
   const text = rawJsonEditorModule
     ? rawJsonEditorModule.getRawJsonText()
     : document.getElementById('cfgArea')?.value || '';
   const parsed = normalizeConfig(parseConfig(text));
-  const validation = validateConfigShape(prepareConfigForSave(parsed));
-  if (!validation.valid) {
-    throw new Error(formatValidationErrors(validation.errors));
+  if (validateShape) {
+    const validation = validateConfigShape(prepareConfigForSave(parsed));
+    if (!validation.valid) {
+      throw new Error(formatValidationErrors(validation.errors));
+    }
   }
   return parsed;
 }
@@ -159,9 +167,29 @@ async function _loadRawJsonEditor() {
       .then(module => {
         rawJsonEditorModule = module;
         return module;
+      })
+      .catch(error => {
+        rawJsonEditorPromise = null;
+        throw error;
       });
   }
   return rawJsonEditorPromise;
+}
+
+function _setRawEditorFallback(enabled, detail = '') {
+  const textarea = document.getElementById('cfgArea');
+  const host = document.getElementById('jsonEditorHost');
+  const status = document.getElementById('jsonEditorStatus');
+
+  textarea?.classList.toggle('raw-config-source-fallback', enabled);
+  host?.classList.toggle('is-unavailable', enabled);
+
+  if (enabled && status) {
+    status.textContent = detail
+      ? `Plain text mode. Enhanced editor unavailable: ${detail}`
+      : 'Plain text mode.';
+    status.className = 'json-editor-status error';
+  }
 }
 
 async function _loadPuckBuilder() {

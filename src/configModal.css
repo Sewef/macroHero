@@ -1153,12 +1153,20 @@ textarea {
 .raw-config-source {
   display: none !important;
 }
+.raw-config-source.raw-config-source-fallback {
+  display: block !important;
+  min-height: calc(100vh - 240px);
+  resize: vertical;
+}
 .json-editor-host {
   min-height: calc(100vh - 240px);
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border2);
   border-radius: var(--radius-md);
+}
+.json-editor-host.is-unavailable {
+  display: none;
 }
 .json-editor-host .jse-theme-dark {
   --jse-theme-color: var(--accent);
