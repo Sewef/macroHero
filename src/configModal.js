@@ -40,6 +40,43 @@ let rawJsonEditorModule = null;
 let rawJsonEditorPromise = null;
 let puckBuilderModule = null;
 let puckBuilderPromise = null;
+let themeUnsubscribe = null;
+
+// ── Owlbear theme sync ───────────────────────────────────────────────────────
+
+function _applyOwlbearTheme(theme) {
+  const isLight = theme?.mode === 'LIGHT';
+  const root = document.documentElement;
+  const rawEditorHost = document.getElementById('jsonEditorHost');
+
+  root.classList.toggle('mh-light', isLight);
+  root.classList.toggle('mh-dark', !isLight);
+  rawEditorHost?.classList.toggle('jse-theme-dark', !isLight);
+
+  if (theme?.primary) {
+    const accent = isLight
+      ? (theme.primary.main || '#7c3aed')
+      : (theme.primary.light || theme.primary.main || '#c8adff');
+    const accentDim = isLight
+      ? (theme.primary.dark || theme.primary.main || '#6d28d9')
+      : (theme.primary.main || theme.primary.light || '#a78bfa');
+
+    root.style.setProperty('--accent', accent);
+    root.style.setProperty('--accent-dim', accentDim);
+  }
+
+  logger.log(`Applied Owlbear ${isLight ? 'light' : 'dark'} theme`);
+}
+
+async function _initThemeSync() {
+  try {
+    _applyOwlbearTheme(await OBR.theme.getTheme());
+    themeUnsubscribe?.();
+    themeUnsubscribe = OBR.theme.onChange(_applyOwlbearTheme);
+  } catch (error) {
+    logger.warn('Theme API unavailable; keeping the default dark theme:', error);
+  }
+}
 
 // ── Tab management ────────────────────────────────────────────────────────────
 
@@ -189,6 +226,9 @@ function _setRawEditorFallback(enabled, detail = '') {
       ? `Plain text mode. Enhanced editor unavailable: ${detail}`
       : 'Plain text mode.';
     status.className = 'json-editor-status error';
+  } else if (status?.textContent?.startsWith('Plain text mode.')) {
+    status.textContent = '';
+    status.className = 'json-editor-status';
   }
 }
 
@@ -264,6 +304,8 @@ async function _loadDefaultConfig() {
 
 async function _closeModal(data) {
   cleanupAllListeners();
+  themeUnsubscribe?.();
+  themeUnsubscribe = null;
   if (data) {
     const attempts = [
       { opts: { destination: 'ROOM' }, desc: 'ROOM' },
@@ -297,7 +339,7 @@ OBR.onReady(() => {
 
   initGoogleSheetsUI();
 
-  loadConfig().then(cfg => {
+  Promise.all([_initThemeSync(), loadConfig()]).then(([, cfg]) => {
     currentConfig = cfg;
 
     _setRawJsonText(JSON.stringify(prepareConfigForSave(cfg), null, 2));

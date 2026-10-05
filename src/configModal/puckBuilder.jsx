@@ -1248,7 +1248,7 @@ function MatrixButtonPreview({ label, icon, tooltip }) {
 function ValuePreview({ label, variable }) {
   return (
     <PreviewBlock type="value" label="Value">
-      <div className="mh-preview-value">
+      <div className="mh-preview-value-row">
         <span>{label}</span>
         <strong>{variable ? `{${variable}}` : "0"}</strong>
       </div>
