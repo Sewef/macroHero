@@ -244,6 +244,12 @@ export function normalizeConfig(rawConfig, options = {}) {
     }
 
     const currentPage = cfg.pages[index];
+    if (!currentPage.label) {
+      currentPage.label = currentPage.title || `Page ${index + 1}`;
+      migrated = true;
+      messages.push(`Page ${index + 1} received label "${currentPage.label}".`);
+    }
+
     if (!currentPage.id) {
       currentPage.id = uniqueId(slugify(currentPage.label || currentPage.title, `page-${index + 1}`), usedPageIds);
       migrated = true;

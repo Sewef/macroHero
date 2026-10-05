@@ -14,7 +14,7 @@
     <div class="topbar-left">
       <h2>Macro Hero — Configuration</h2>
       <div class="tabs">
-        <button type="button" class="tab active" data-tab="editor">Visual Editor</button>
+        <button type="button" class="tab active" data-tab="editor">Builder</button>
         <button type="button" class="tab" data-tab="json">Raw Editor</button>
         <button type="button" class="tab" data-tab="integrations">Integrations</button>
         <button type="button" class="tab" data-tab="tokens">Token Helper</button>
@@ -30,85 +30,25 @@
 
   <form id="configForm" onsubmit="return false;">
 
-    <!-- ── VISUAL EDITOR ───────────────────────────── -->
+    <!-- ── PUCK BUILDER ────────────────────────────── -->
     <div id="editor-tab" class="tab-content active">
-      <div class="editor-layout">
-
-        <!-- Sidebar -->
-        <div class="editor-sidebar">
-          <div class="sidebar-body">
-
-            <!-- Global Settings -->
-            <div class="sidebar-section">
-              <button type="button" class="collapsible-toggle" id="toggleSettings">
-                <span class="collapsible-arrow" id="arrowSettings">▶</span>
-                <span class="section-title">Global Settings</span>
-              </button>
-              <div class="collapsible-body hidden" id="bodySettings">
-                <div class="input-group input-group-offset">
-                  <label for="globalTitle">Title</label>
-                  <input type="text" id="globalTitle" placeholder="Macro Hero" />
-                </div>
-                <div class="row-2">
-                  <div class="input-group">
-                    <label for="globalWidth">Width</label>
-                    <input type="number" id="globalWidth" placeholder="600" />
-                  </div>
-                  <div class="input-group">
-                    <label for="globalHeight">Height</label>
-                    <input type="number" id="globalHeight" placeholder="600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Global Variables -->
-            <div class="sidebar-section">
-              <div class="section-header">
-                <button type="button" class="collapsible-toggle grow" id="toggleGlobalVars">
-                  <span class="collapsible-arrow" id="arrowGlobalVars">▶</span>
-                  <span class="section-title">Global Variables</span>
-                </button>
-                <button type="button" class="btn-icon btn-add" id="addGlobalVariableBtn" title="Add variable">＋</button>
-              </div>
-              <div class="collapsible-body hidden" id="bodyGlobalVars">
-                <div id="globalVariablesList" class="sidebar-list-offset">
-                  <div class="tree-empty">No global variables</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Pages -->
-            <div class="sidebar-section">
-              <div class="section-header">
-                <span class="section-title">Pages</span>
-                <button type="button" class="btn-icon btn-add" id="addPageBtn" title="Add page">＋</button>
-              </div>
-              <div id="pagesListSidebar" class="pages-list">
-                <div class="tree-empty">No pages</div>
-              </div>
-            </div>
-
-          </div><!-- /.sidebar-body -->
-        </div><!-- /.editor-sidebar -->
-
-        <!-- Main panel -->
-        <div class="editor-main">
-          <div id="pageEditorContainer" class="page-editor-container">
-            <p>Select or create a page to edit</p>
-          </div>
+      <div id="puckBuilderHost" class="puck-builder-host">
+        <div class="puck-empty-state">
+          <strong>Loading Builder...</strong>
+          <small>Preparing the visual editor.</small>
         </div>
-
-      </div><!-- /.editor-layout -->
+      </div>
     </div><!-- /#editor-tab -->
 
     <!-- ── RAW EDITOR ──────────────────────────────── -->
     <div id="json-tab" class="tab-content">
       <div class="input-group">
         <label><span id="cfgLabel">Raw JSON Configuration</span></label>
-        <textarea id="cfgArea" class="raw-config-area" data-editor-lang="json"></textarea>
+        <textarea id="cfgArea" class="raw-config-area raw-config-source"></textarea>
+        <div id="jsonEditorHost" class="json-editor-host"></div>
+        <div id="jsonEditorStatus" class="json-editor-status"></div>
       </div>
-      <button type="button" id="syncFromJson">Sync to Visual Editor</button>
+      <button type="button" id="syncFromJson">Sync to Builder</button>
     </div>
 
     <!-- ── GOOGLE SHEETS ───────────────────────────── -->
@@ -151,52 +91,6 @@
     </div>
 
   </form>
-
-  <!-- ── Element Editor Modal ────────────────────── -->
-  <div id="elementModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalTitle">Add Element</h3>
-        <button type="button" class="close-modal" onclick="closeElementModal()">×</button>
-      </div>
-      <div class="input-group">
-        <label for="elementType">Element Type</label>
-        <select id="elementType">
-          <option value="button">Button</option>
-          <option value="value">Value Display</option>
-          <option value="input">Text Input</option>
-          <option value="counter">Counter</option>
-          <option value="checkbox">Checkbox</option>
-          <option value="dropdown">Dropdown</option>
-          <option value="title">Title</option>
-          <option value="text">Text / Description</option>
-          <option value="divider">Divider</option>
-          <option value="row">Row (Container)</option>
-          <option value="stack">Stack (Vertical container)</option>
-          <option value="matrix">Matrix (Grid of buttons)</option>
-        </select>
-      </div>
-      <div id="elementFields"></div>
-      <div class="buttons">
-        <button type="button" onclick="closeElementModal()">Cancel</button>
-        <button type="button" id="saveElementBtn" onclick="saveElement()">Add Element</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Collapsible toggle script (no module needed) -->
-  <script>
-    function _toggleSection(arrowId, bodyId) {
-      const arrow = document.getElementById(arrowId);
-      const body  = document.getElementById(bodyId);
-      if (!arrow || !body) return;
-      const open = !body.classList.contains('hidden');
-      body.classList.toggle('hidden', open);
-      arrow.classList.toggle('open', !open);
-    }
-    document.getElementById('toggleSettings').onclick    = () => _toggleSection('arrowSettings', 'bodySettings');
-    document.getElementById('toggleGlobalVars').onclick  = () => _toggleSection('arrowGlobalVars', 'bodyGlobalVars');
-  </script>
 </body>
 </html>
 
