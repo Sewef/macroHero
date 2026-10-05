@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Puck } from "@puckeditor/core";
 import { EditorView, minimalSetup } from "codemirror";
+import { autocompletion, snippetCompletion } from "@codemirror/autocomplete";
 import { javascript, esLint } from "@codemirror/lang-javascript";
 import { markdown } from "@codemirror/lang-markdown";
 import { linter, lintGutter } from "@codemirror/lint";
@@ -65,6 +66,162 @@ const JS_LINT_CONFIG = [
   },
 ];
 
+const SCRIPT_HELPER_COMPLETIONS = [
+  snippetCompletion("await setValue(${varName}, ${value})", {
+    label: "setValue",
+    type: "function",
+    detail: "(varName, value)",
+    info: "Set a State variable and refresh dependent values.",
+  }),
+  snippetCompletion("await addValue(${varName}, ${delta})", {
+    label: "addValue",
+    type: "function",
+    detail: "(varName, delta)",
+    info: "Add a numeric delta to a State variable.",
+  }),
+  snippetCompletion("console.log(${value})", {
+    label: "console.log",
+    type: "function",
+    detail: "(value)",
+    info: "Write a value to the browser console.",
+  }),
+];
+
+const SCRIPT_NAMESPACE_METHODS = {
+  GoogleSheets: [
+    methodCompletion("getValue", "(sheetId, sheetName, range)", "getValue(${sheetId}, ${sheetName}, ${range})"),
+    methodCompletion("getValues", "(sheetId, sheetName, ranges)", "getValues(${sheetId}, ${sheetName}, ${ranges})"),
+    methodCompletion("getRange", "(sheetId, sheetName, range)", "getRange(${sheetId}, ${sheetName}, ${range})"),
+  ],
+  Local: [
+    methodCompletion("value", "(key, defaultValue)", "value(${key}, ${defaultValue})"),
+    methodCompletion("set", "(key, value)", "set(${key}, ${value})"),
+    methodCompletion("clear", "()", "clear()"),
+    methodCompletion("keys", "()", "keys()"),
+  ],
+  ConditionMarkers: [
+    methodCompletion("getConditions", "(tokenId)", "getConditions(${tokenId})"),
+    methodCompletion("getValue", "(tokenId, conditionName)", "getValue(${tokenId}, ${conditionName})"),
+    methodCompletion("hasCondition", "(tokenId, conditionName)", "hasCondition(${tokenId}, ${conditionName})"),
+    methodCompletion("addCondition", "(tokenId, conditionName, options)", "addCondition(${tokenId}, ${conditionName}, ${options})"),
+    methodCompletion("removeCondition", "(tokenId, conditionName)", "removeCondition(${tokenId}, ${conditionName})"),
+    methodCompletion("toggleCondition", "(tokenId, conditionName)", "toggleCondition(${tokenId}, ${conditionName})"),
+    methodCompletion("clearAllConditions", "(tokenId)", "clearAllConditions(${tokenId})"),
+  ],
+  OwlTrackers: [
+    methodCompletion("getValue", "(tokenId, trackerName)", "getValue(${tokenId}, ${trackerName})"),
+    methodCompletion("getMax", "(tokenId, trackerName)", "getMax(${tokenId}, ${trackerName})"),
+    methodCompletion("setValue", "(tokenId, trackerName, value)", "setValue(${tokenId}, ${trackerName}, ${value})"),
+    methodCompletion("addValue", "(tokenId, trackerName, delta)", "addValue(${tokenId}, ${trackerName}, ${delta})"),
+    methodCompletion("addTracker", "(tokenId, trackerConfig)", "addTracker(${tokenId}, ${trackerConfig})"),
+    methodCompletion("removeTracker", "(tokenId, trackerIdentifier)", "removeTracker(${tokenId}, ${trackerIdentifier})"),
+  ],
+  StatBubbles: [
+    methodCompletion("getValue", "(tokenId, statName)", "getValue(${tokenId}, ${statName})"),
+    methodCompletion("setValue", "(tokenId, statName, value)", "setValue(${tokenId}, ${statName}, ${value})"),
+    methodCompletion("addValue", "(tokenId, statName, amount)", "addValue(${tokenId}, ${statName}, ${amount})"),
+    methodCompletion("getAllStats", "(tokenId)", "getAllStats(${tokenId})"),
+    methodCompletion("getHealthPercentage", "(tokenId)", "getHealthPercentage(${tokenId})"),
+    methodCompletion("heal", "(tokenId, amount)", "heal(${tokenId}, ${amount})"),
+    methodCompletion("damage", "(tokenId, amount)", "damage(${tokenId}, ${amount})"),
+  ],
+  ColoredRings: [
+    methodCompletion("getRings", "(tokenId)", "getRings(${tokenId})"),
+    methodCompletion("hasRing", "(tokenId, color)", "hasRing(${tokenId}, ${color})"),
+    methodCompletion("addRing", "(tokenId, color)", "addRing(${tokenId}, ${color})"),
+    methodCompletion("removeRing", "(tokenId, color)", "removeRing(${tokenId}, ${color})"),
+  ],
+  JustDices: [
+    methodCompletion("roll", "(expression, hiddenOrOptions)", "roll(${expression}, ${hiddenOrOptions})"),
+    methodCompletion("getRollObject", "(expression, hiddenOrOptions)", "getRollObject(${expression}, ${hiddenOrOptions})"),
+    methodCompletion("rollSilent", "(expression, hidden)", "rollSilent(${expression}, ${hidden})"),
+    methodCompletion("getRollObjectSilent", "(expression, hidden)", "getRollObjectSilent(${expression}, ${hidden})"),
+  ],
+  DicePlus: [
+    methodCompletion("isReady", "(timeoutMs)", "isReady(${timeoutMs})"),
+    methodCompletion("roll", "(diceNotation, options)", "roll(${diceNotation}, ${options})"),
+    methodCompletion("rollTotal", "(diceNotation, options)", "rollTotal(${diceNotation}, ${options})"),
+    methodCompletion("rollSecret", "(diceNotation, visibility, options)", "rollSecret(${diceNotation}, ${visibility}, ${options})"),
+    methodCompletion("getRollObject", "(diceNotation, options)", "getRollObject(${diceNotation}, ${options})"),
+  ],
+  PrettySordid: [
+    methodCompletion("hasInitiative", "(itemOrId)", "hasInitiative(${itemOrId})"),
+    methodCompletion("getInitiative", "(itemOrId)", "getInitiative(${itemOrId})"),
+    methodCompletion("isActiveTurn", "(itemOrId)", "isActiveTurn(${itemOrId})"),
+    methodCompletion("setInitiative", "(itemOrId, count)", "setInitiative(${itemOrId}, ${count})"),
+    methodCompletion("removeInitiative", "(itemOrId)", "removeInitiative(${itemOrId})"),
+  ],
+  Weather: [
+    methodCompletion("setWeather", "(mapId, config)", "setWeather(${mapId}, ${config})"),
+    methodCompletion("removeWeather", "(mapId)", "removeWeather(${mapId})"),
+    methodCompletion("getWeather", "(mapId)", "getWeather(${mapId})"),
+    methodCompletion("hasWeather", "(mapId)", "hasWeather(${mapId})"),
+    methodCompletion("updateWeather", "(mapId, updates)", "updateWeather(${mapId}, ${updates})"),
+  ],
+  Aurora: [
+    methodCompletion("setAurora", "(mapId, config)", "setAurora(${mapId}, ${config})"),
+    methodCompletion("removeAurora", "(mapId)", "removeAurora(${mapId})"),
+    methodCompletion("getAurora", "(mapId)", "getAurora(${mapId})"),
+    methodCompletion("hasAurora", "(mapId)", "hasAurora(${mapId})"),
+    methodCompletion("updateAurora", "(mapId, updates)", "updateAurora(${mapId}, ${updates})"),
+    methodCompletion("getPresets", "()", "getPresets()"),
+  ],
+  Embers: [
+    methodCompletion("sequence", "()", "sequence()"),
+    methodCompletion("castProjectile", "(effectId, casterId, targetIds, config)", "castProjectile(${effectId}, ${casterId}, ${targetIds}, ${config})"),
+    methodCompletion("castAOE", "(effectId, tokenIds, config)", "castAOE(${effectId}, ${tokenIds}, ${config})"),
+    methodCompletion("castCone", "(effectId, casterId, targetId, config)", "castCone(${effectId}, ${casterId}, ${targetId}, ${config})"),
+    methodCompletion("sendInstructions", "(instructions, options)", "sendInstructions(${instructions}, ${options})"),
+  ],
+  Announcement: [
+    methodCompletion("setAnnouncement", "(content, active)", "setAnnouncement(${content}, ${active})"),
+    methodCompletion("getAnnouncement", "()", "getAnnouncement()"),
+    methodCompletion("removeAnnouncementMetadata", "()", "removeAnnouncementMetadata()"),
+    methodCompletion("updateAnnouncement", "(updates)", "updateAnnouncement(${updates})"),
+    methodCompletion("toggleAnnouncement", "()", "toggleAnnouncement()"),
+    methodCompletion("showAnnouncement", "()", "showAnnouncement()"),
+    methodCompletion("hideAnnouncement", "()", "hideAnnouncement()"),
+    methodCompletion("updateContent", "(content)", "updateContent(${content})"),
+  ],
+  Auras: [
+    methodCompletion("hasAura", "(itemId)", "hasAura(${itemId})"),
+    methodCompletion("getAuras", "(itemId)", "getAuras(${itemId})"),
+    methodCompletion("addAura", "(itemId, config)", "addAura(${itemId}, ${config})"),
+    methodCompletion("removeAura", "(itemId)", "removeAura(${itemId})"),
+  ],
+  Token: [
+    methodCompletion("getSelected", "()", "getSelected()"),
+    methodCompletion("getSelectedAll", "()", "getSelectedAll()"),
+    methodCompletion("getPosition", "(tokenId)", "getPosition(${tokenId})"),
+    methodCompletion("getSize", "(tokenId)", "getSize(${tokenId})"),
+    methodCompletion("getClosest", "(tokenId, filter)", "getClosest(${tokenId}, ${filter})"),
+    methodCompletion("create", "(params)", "create(${params})"),
+    methodCompletion("createMany", "(tokensParams)", "createMany(${tokensParams})"),
+    methodCompletion("setVisible", "(itemIds, visible)", "setVisible(${itemIds}, ${visible})"),
+    methodCompletion("setLocked", "(itemIds, locked)", "setLocked(${itemIds}, ${locked})"),
+    methodCompletion("setImage", "(itemIds, url, mime)", "setImage(${itemIds}, ${url}, ${mime})"),
+    methodCompletion("setName", "(itemIds, name)", "setName(${itemIds}, ${name})"),
+    methodCompletion("setLabel", "(itemIds, label)", "setLabel(${itemIds}, ${label})"),
+    methodCompletion("setLayer", "(itemIds, layer)", "setLayer(${itemIds}, ${layer})"),
+    methodCompletion("setPosition", "(itemIds, position, gridPosition)", "setPosition(${itemIds}, ${position}, ${gridPosition})"),
+    methodCompletion("setScale", "(itemIds, scale)", "setScale(${itemIds}, ${scale})"),
+    methodCompletion("setRotation", "(itemIds, rotation)", "setRotation(${itemIds}, ${rotation})"),
+    methodCompletion("setMetadata", "(itemIds, metadata)", "setMetadata(${itemIds}, ${metadata})"),
+  ],
+  Scene: [
+    methodCompletion("getMapIdFromToken", "(tokenId)", "getMapIdFromToken(${tokenId})"),
+  ],
+};
+
+const SCRIPT_NAMESPACE_COMPLETIONS = Object.keys(SCRIPT_NAMESPACE_METHODS)
+  .sort((left, right) => left.localeCompare(right))
+  .map(label => ({
+    label,
+    type: "namespace",
+    detail: "MacroHero API",
+    info: "Type a dot to access available methods.",
+  }));
+
 let jsLintSourcePromise = null;
 
 const COMPONENT_TYPE_MAP = {
@@ -93,27 +250,6 @@ const PUCK_TYPE_MAP = Object.fromEntries(
 
 const COMPONENT_NAMES = Object.values(COMPONENT_TYPE_MAP);
 const NON_MATRIX_BUTTON_COMPONENTS = COMPONENT_NAMES.filter(name => name !== "MatrixButton");
-
-const COMMAND_FIELDS = {
-  onclickText: {
-    type: "custom",
-    label: "onclick",
-    render: props => <CodeField {...props} language="javascript" minRows={5} />,
-  },
-  onrightclickText: {
-    type: "custom",
-    label: "onrightclick",
-    render: props => <CodeField {...props} language="javascript" minRows={4} />,
-  },
-};
-
-const UPDATE_FIELD = {
-  onupdateText: {
-    type: "custom",
-    label: "onupdate",
-    render: props => <CodeField {...props} language="javascript" minRows={4} />,
-  },
-};
 
 const MARKDOWN_FIELD = {
   type: "custom",
@@ -150,9 +286,15 @@ const VARIABLE_CATEGORIES = {
   variables: { title: "Page Variables", components: ["PageStateVariable", "PageComputedVariable"] },
 };
 
+const SIDEBAR_PLUGIN_PAGES = "macrohero-pages";
+const SIDEBAR_PLUGIN_GLOBAL_CONFIG = "macrohero-global-config";
+const SIDEBAR_PLUGIN_PAGE_CONFIG = "macrohero-page-config";
+
 function createPuckConfig(variableGroups, builderMode) {
   const readableVariableField = createVariableField(variableGroups, "all");
   const stateVariableField = createVariableField(variableGroups, "state");
+  const commandFields = createCommandFields(variableGroups);
+  const updateField = createUpdateField(variableGroups);
 
   return {
     categories: builderMode === "variables" ? VARIABLE_CATEGORIES : LAYOUT_CATEGORIES,
@@ -195,7 +337,7 @@ function createPuckConfig(variableGroups, builderMode) {
       label: "Computed Variable",
       fields: {
         variableName: { type: "text", label: "Name" },
-        expression: { type: "custom", label: "Expression", render: props => <CodeField {...props} language="javascript" minRows={3} /> },
+        expression: createScriptCodeField(variableGroups, { label: "Expression", minRows: 3 }),
         min: { type: "number", label: "Min" },
         max: { type: "number", label: "Max" },
       },
@@ -262,7 +404,7 @@ function createPuckConfig(variableGroups, builderMode) {
         label: { type: "text" },
         tooltip: { ...MARKDOWN_FIELD, label: "Tooltip" },
         color: { ...COLOR_FIELD, label: "Color" },
-        ...COMMAND_FIELDS,
+        ...commandFields,
       },
       defaultProps: { label: "Button", onclickText: "" },
       render: ({ label, tooltip }) => (
@@ -277,7 +419,7 @@ function createPuckConfig(variableGroups, builderMode) {
         tooltip: { ...MARKDOWN_FIELD, label: "Tooltip" },
         color: { ...COLOR_FIELD, label: "Color" },
         borderColor: { ...COLOR_FIELD, label: "Border color" },
-        ...COMMAND_FIELDS,
+        ...commandFields,
       },
       defaultProps: { label: "", icon: "", onclickText: "" },
       render: ({ label, icon, tooltip }) => (
@@ -300,7 +442,7 @@ function createPuckConfig(variableGroups, builderMode) {
         var: stateVariableField,
         label: { type: "text" },
         placeholder: { type: "text" },
-        ...UPDATE_FIELD,
+        ...updateField,
       },
       render: ({ label, var: variable }) => (
         <ControlPreview type="input" label={label || "Input"} variable={variable} />
@@ -313,7 +455,7 @@ function createPuckConfig(variableGroups, builderMode) {
         label: { type: "text" },
         step: { type: "number" },
         color: { ...COLOR_FIELD, label: "Color" },
-        ...UPDATE_FIELD,
+        ...updateField,
       },
       defaultProps: { step: 1 },
       render: ({ label, var: variable }) => (
@@ -326,7 +468,7 @@ function createPuckConfig(variableGroups, builderMode) {
         var: stateVariableField,
         label: { type: "text" },
         color: { ...COLOR_FIELD, label: "Color" },
-        ...UPDATE_FIELD,
+        ...updateField,
       },
       render: ({ label, var: variable }) => (
         <ControlPreview type="checkbox" label={label || "Checkbox"} variable={variable} />
@@ -338,7 +480,7 @@ function createPuckConfig(variableGroups, builderMode) {
         var: stateVariableField,
         label: { type: "text" },
         color: { ...COLOR_FIELD, label: "Color" },
-        ...UPDATE_FIELD,
+        ...updateField,
       },
       render: ({ label, var: variable }) => (
         <ControlPreview type="toggle" label={label || "Toggle"} variable={variable} />
@@ -350,7 +492,7 @@ function createPuckConfig(variableGroups, builderMode) {
         var: stateVariableField,
         label: { type: "text" },
         optionsText: { type: "textarea", label: "Options" },
-        ...UPDATE_FIELD,
+        ...updateField,
       },
       render: ({ label, var: variable }) => (
         <ControlPreview type="dropdown" label={label || "Dropdown"} variable={variable} />
@@ -394,6 +536,34 @@ function createVariableField(variableGroups, mode) {
     type: "custom",
     label: mode === "state" ? "Bind to State" : "Read variable",
     render: props => <VariableSelectField {...props} groups={variableGroups} mode={mode} />,
+  };
+}
+
+function createScriptCodeField(variableGroups, { label, minRows = 4 } = {}) {
+  return {
+    type: "custom",
+    ...(label ? { label } : {}),
+    render: props => (
+      <CodeField
+        {...props}
+        language="javascript"
+        minRows={minRows}
+        completionGroups={variableGroups}
+      />
+    ),
+  };
+}
+
+function createCommandFields(variableGroups) {
+  return {
+    onclickText: createScriptCodeField(variableGroups, { label: "onclick", minRows: 5 }),
+    onrightclickText: createScriptCodeField(variableGroups, { label: "onrightclick", minRows: 4 }),
+  };
+}
+
+function createUpdateField(variableGroups) {
+  return {
+    onupdateText: createScriptCodeField(variableGroups, { label: "onupdate", minRows: 4 }),
   };
 }
 
@@ -465,6 +635,7 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
   const [pageIndex, setPageIndex] = useState(0);
   const [builderMode, setBuilderMode] = useState("layout");
   const [version, setVersion] = useState(0);
+  const [activeSidebarPlugin, setActiveSidebarPlugin] = useState(null);
   const config = getConfig() || {};
   const pages = Array.isArray(config.pages) ? config.pages : [];
   const activePage = pages[pageIndex] || pages[0] || null;
@@ -502,10 +673,13 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
     setConfig(nextConfig);
     setVersion(value => value + 1);
   }, [getConfig, setConfig]);
+  const rememberSidebarPlugin = useCallback(pluginName => {
+    setActiveSidebarPlugin(pluginName);
+  }, []);
   const builderPlugins = useMemo(
     () => [
       {
-        name: "macrohero-pages",
+        name: SIDEBAR_PLUGIN_PAGES,
         label: "Pages",
         render: () => (
           <PagesPlugin
@@ -514,12 +688,13 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
             setPageIndex={setPageIndex}
             updateConfig={updateConfig}
             reload={() => setVersion(value => value + 1)}
+            rememberSidebarPlugin={rememberSidebarPlugin}
           />
         ),
         mobilePanelHeight: "min-content",
       },
       {
-        name: "macrohero-global-config",
+        name: SIDEBAR_PLUGIN_GLOBAL_CONFIG,
         label: "Global Config",
         render: () => (
           <GlobalConfigPlugin
@@ -527,24 +702,26 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
             updateConfig={updateConfig}
             variableGroups={variableGroups.filter(group => group.scope === "global")}
             safePageIndex={safePageIndex}
+            rememberSidebarPlugin={rememberSidebarPlugin}
           />
         ),
         mobilePanelHeight: "min-content",
       },
       {
-        name: "macrohero-page-config",
+        name: SIDEBAR_PLUGIN_PAGE_CONFIG,
         label: "Page Config",
         render: () => (
           <PageConfigPlugin
             activePage={activePage}
             safePageIndex={safePageIndex}
             updateConfig={updateConfig}
+            rememberSidebarPlugin={rememberSidebarPlugin}
           />
         ),
         mobilePanelHeight: "min-content",
       },
     ],
-    [activePage, config, pages, safePageIndex, updateConfig, variableGroups]
+    [activePage, config, pages, rememberSidebarPlugin, safePageIndex, updateConfig, variableGroups]
   );
 
   if (!activePage) {
@@ -586,6 +763,14 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
             controlsVisible: false,
             options: BUILDER_VIEWPORTS,
           },
+          ...(activeSidebarPlugin ? {
+            plugin: { current: activeSidebarPlugin },
+            leftSideBarVisible: true,
+          } : {}),
+        }}
+        onAction={(action, nextState) => {
+          const currentPlugin = nextState?.ui?.plugin?.current || nextState?.state?.ui?.plugin?.current;
+          if (currentPlugin) setActiveSidebarPlugin(currentPlugin);
         }}
         height="100%"
         headerTitle={`MacroHero - ${activePage.label || activePage.id || "Page"} - ${builderMode === "variables" ? "Variables" : "Layout"}`}
@@ -625,9 +810,11 @@ function BuilderHeaderControls({ pages, safePageIndex, setPageIndex, builderMode
   );
 }
 
-function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload }) {
+function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload, rememberSidebarPlugin }) {
+  const rememberPages = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_PAGES);
+
   return (
-    <div className="puck-config-plugin">
+    <div className="puck-config-plugin" onPointerDownCapture={rememberPages} onFocusCapture={rememberPages}>
       <section className="puck-config-section">
         <h3>Pages <span>{pages.length}</span></h3>
         <div className="puck-page-switcher">
@@ -636,7 +823,10 @@ function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload 
               key={page.id || index}
               type="button"
               className={`puck-page-switcher-item${index === safePageIndex ? " active" : ""}`}
-              onClick={() => setPageIndex(index)}
+              onClick={() => {
+                rememberPages();
+                setPageIndex(index);
+              }}
             >
               <strong>{page.label || page.id || `Page ${index + 1}`}</strong>
               <small>{page.id || `page-${index + 1}`}</small>
@@ -644,25 +834,36 @@ function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload 
           ))}
         </div>
         <div className="puck-config-actions">
-          <button type="button" onClick={() => updateConfig(next => {
-            if (!Array.isArray(next.pages)) next.pages = [];
-            next.pages.push(defaultPage(next.pages.length));
-            setPageIndex(next.pages.length - 1);
-          })}>Add page</button>
-          <button type="button" disabled={pages.length <= 1} onClick={() => updateConfig(next => {
-            next.pages.splice(safePageIndex, 1);
-            setPageIndex(Math.max(0, safePageIndex - 1));
-          })}>Delete</button>
-          <button type="button" onClick={reload}>Reload</button>
+          <button type="button" onClick={() => {
+            rememberPages();
+            updateConfig(next => {
+              if (!Array.isArray(next.pages)) next.pages = [];
+              next.pages.push(defaultPage(next.pages.length));
+              setPageIndex(next.pages.length - 1);
+            });
+          }}>Add page</button>
+          <button type="button" disabled={pages.length <= 1} onClick={() => {
+            rememberPages();
+            updateConfig(next => {
+              next.pages.splice(safePageIndex, 1);
+              setPageIndex(Math.max(0, safePageIndex - 1));
+            });
+          }}>Delete</button>
+          <button type="button" onClick={() => {
+            rememberPages();
+            reload();
+          }}>Reload</button>
         </div>
       </section>
     </div>
   );
 }
 
-function GlobalConfigPlugin({ config, updateConfig, variableGroups, safePageIndex }) {
+function GlobalConfigPlugin({ config, updateConfig, variableGroups, safePageIndex, rememberSidebarPlugin }) {
+  const rememberGlobalConfig = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_GLOBAL_CONFIG);
+
   return (
-    <div className="puck-config-plugin">
+    <div className="puck-config-plugin" onPointerDownCapture={rememberGlobalConfig} onFocusCapture={rememberGlobalConfig}>
       <section className="puck-config-section">
         <h3>Global Settings</h3>
         <label>
@@ -703,9 +904,12 @@ function PageConfigPlugin({
   activePage,
   safePageIndex,
   updateConfig,
+  rememberSidebarPlugin,
 }) {
+  const rememberPageConfig = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_PAGE_CONFIG);
+
   return (
-    <div className="puck-config-plugin">
+    <div className="puck-config-plugin" onPointerDownCapture={rememberPageConfig} onFocusCapture={rememberPageConfig}>
       <section className="puck-config-section">
         <h3>Page Settings</h3>
         <label>
@@ -1124,7 +1328,7 @@ function ColorField({ id, value, onChange, readOnly, field, name }) {
   );
 }
 
-function CodeField({ id, value, onChange, readOnly, field, name, language = "javascript", minRows = 4 }) {
+function CodeField({ id, value, onChange, readOnly, field, name, language = "javascript", minRows = 4, completionGroups = [] }) {
   const hostRef = React.useRef(null);
   const viewRef = React.useRef(null);
   const valueRef = React.useRef(value || "");
@@ -1143,7 +1347,7 @@ function CodeField({ id, value, onChange, readOnly, field, name, language = "jav
         codeFieldTheme,
         EditorView.lineWrapping,
         lintGutter(),
-        ...codeLanguageExtensions(language),
+        ...codeLanguageExtensions(language, completionGroups),
         EditorView.editable.of(!readOnly),
         EditorView.updateListener.of(update => {
           if (!update.docChanged) return;
@@ -1162,7 +1366,7 @@ function CodeField({ id, value, onChange, readOnly, field, name, language = "jav
       view.destroy();
       viewRef.current = null;
     };
-  }, [language, minRows, onChange, readOnly]);
+  }, [completionGroups, language, minRows, onChange, readOnly]);
 
   useEffect(() => {
     const nextValue = value || "";
@@ -1259,9 +1463,82 @@ const codeFieldTheme = EditorView.theme({
   },
 }, { dark: true });
 
-function codeLanguageExtensions(language) {
+function codeLanguageExtensions(language, completionGroups = []) {
   if (language === "markdown") return [markdown(), linter(markdownFenceLinter)];
-  return [javascript(), linter(safeJsLintSource)];
+  const javascriptSupport = javascript();
+  return [
+    javascriptSupport,
+    javascriptSupport.language.data.of({
+      autocomplete: createScriptCompletionSource(completionGroups),
+    }),
+    autocompletion(),
+    linter(safeJsLintSource),
+  ];
+}
+
+function createScriptCompletionSource(variableGroups = []) {
+  const rootOptions = [
+    ...SCRIPT_HELPER_COMPLETIONS,
+    ...SCRIPT_NAMESPACE_COMPLETIONS,
+    ...createVariableCompletions(variableGroups),
+  ];
+
+  return context => {
+    const property = context.matchBefore(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)?$/);
+    if (property) {
+      const [namespace] = property.text.split(".");
+      const methods = SCRIPT_NAMESPACE_METHODS[namespace];
+      if (!methods) return null;
+
+      return {
+        from: property.from + namespace.length + 1,
+        options: methods,
+        validFor: /^[\w$]*$/,
+      };
+    }
+
+    const word = context.matchBefore(/[A-Za-z_$][\w$]*$/);
+    if (!word && !context.explicit) return null;
+
+    return {
+      from: word ? word.from : context.pos,
+      options: rootOptions,
+      validFor: /^[\w$]*$/,
+    };
+  };
+}
+
+function createVariableCompletions(variableGroups = []) {
+  const seen = new Set();
+  const completions = [];
+
+  for (const group of variableGroups) {
+    for (const item of group.items || []) {
+      if (!isJsIdentifier(item.name) || seen.has(item.name)) continue;
+      seen.add(item.name);
+      completions.push({
+        label: item.name,
+        type: "variable",
+        detail: `${group.label} variable`,
+        info: item.description || "Resolved variable available in this script.",
+      });
+    }
+  }
+
+  return completions;
+}
+
+function isJsIdentifier(value) {
+  return /^[A-Za-z_$][\w$]*$/.test(String(value || ""));
+}
+
+function methodCompletion(label, detail, template, info = "MacroHero script helper.") {
+  return snippetCompletion(template, {
+    label,
+    type: "function",
+    detail,
+    info,
+  });
 }
 
 async function safeJsLintSource(view) {
