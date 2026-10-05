@@ -699,8 +699,10 @@ body {
 
 .mh-toggle-switch {
   position: relative;
-  width: 34px;
-  height: 18px;
+  display: inline-block;
+  width: 36px;
+  min-width: 36px;
+  height: 20px;
   flex: 0 0 auto;
 }
 
@@ -723,8 +725,8 @@ body {
 .mh-toggle-slider::before {
   content: "";
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   left: 1px;
   top: 1px;
   background: var(--mh-text-secondary);

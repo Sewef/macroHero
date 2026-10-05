@@ -30,7 +30,7 @@ export class ToggleComponent extends UIComponent {
     const wrapper = this.createElement("label", "mh-toggle-wrapper");
 
     // Create switch element
-    const switchEl = this.createElement("div", "mh-toggle-switch");
+    const switchEl = this.createElement("span", "mh-toggle-switch");
     const toggleInput = this.createElement("input");
     toggleInput.type = "checkbox";
     toggleInput.className = "mh-toggle-input";

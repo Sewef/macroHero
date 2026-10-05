@@ -286,6 +286,7 @@ const VARIABLE_CATEGORIES = {
   variables: { title: "Page Variables", components: ["PageStateVariable", "PageComputedVariable"] },
 };
 
+const EMPTY_COMPLETION_GROUPS = [];
 const SIDEBAR_PLUGIN_PAGES = "macrohero-pages";
 const SIDEBAR_PLUGIN_GLOBAL_CONFIG = "macrohero-global-config";
 const SIDEBAR_PLUGIN_PAGE_CONFIG = "macrohero-page-config";
@@ -483,7 +484,7 @@ function createPuckConfig(variableGroups, builderMode) {
         ...updateField,
       },
       render: ({ label, var: variable }) => (
-        <ControlPreview type="toggle" label={label || "Toggle"} variable={variable} />
+        <TogglePreview label={label || "Toggle"} variable={variable} />
       ),
     },
     Dropdown: {
@@ -1186,9 +1187,9 @@ function LeafBlock({ type, title, detail }) {
   );
 }
 
-function PreviewBlock({ type, label, children }) {
+function PreviewBlock({ type, label, title, children }) {
   return (
-    <div className={`mh-preview-widget mh-preview-block mh-preview-${type}`} aria-label={label}>
+    <div className={`mh-preview-widget mh-preview-block mh-preview-${type}`} aria-label={label} title={title || undefined}>
       <div className="mh-preview-block-head">
         <strong>{label}</strong>
       </div>
@@ -1203,10 +1204,9 @@ function ButtonPreview({ label, tooltip }) {
   const tooltipText = getTooltipTitle(tooltip);
 
   return (
-    <PreviewBlock type="button" label="Button">
+    <PreviewBlock type="button" label="Button" title={tooltipText}>
       <div className="mh-preview-button-face">
         <button type="button">{label}</button>
-        {tooltipText ? <span className="mh-preview-tooltip-chip" title={tooltipText}>Tooltip</span> : null}
       </div>
     </PreviewBlock>
   );
@@ -1216,13 +1216,12 @@ function MatrixButtonPreview({ label, icon, tooltip }) {
   const tooltipText = getTooltipTitle(tooltip);
 
   return (
-    <PreviewBlock type="matrix-button" label="Matrix button">
+    <PreviewBlock type="matrix-button" label="Matrix button" title={tooltipText}>
       <div className="mh-preview-matrix-face">
         {icon ? <span className="mh-preview-matrix-icon">{icon}</span> : null}
         {label ? <span className="mh-preview-matrix-label">{label}</span> : null}
         {!icon && !label ? <span className="mh-preview-matrix-label muted">Matrix button</span> : null}
       </div>
-      {tooltipText ? <span className="mh-preview-tooltip-chip" title={tooltipText}>Tooltip</span> : null}
     </PreviewBlock>
   );
 }
@@ -1246,11 +1245,28 @@ function ControlPreview({ type, label, variable }) {
         <span className="mh-preview-control-surface">
           {type === "counter" ? <><button type="button">-</button><strong>0</strong><button type="button">+</button></> : null}
           {type === "checkbox" ? <span className="mh-preview-check" /> : null}
-          {type === "toggle" ? <span className="mh-preview-toggle"><span /></span> : null}
           {type === "dropdown" ? <span className="mh-preview-select">Select</span> : null}
           {type === "input" ? <span className="mh-preview-input">Text</span> : null}
         </span>
         <small>{variable ? `{${variable}}` : "No state binding"}</small>
+      </div>
+    </PreviewBlock>
+  );
+}
+
+function TogglePreview({ label, variable }) {
+  return (
+    <PreviewBlock type="toggle" label="Toggle">
+      <div className="mh-preview-toggle-card">
+        <div className="mh-preview-toggle-main">
+          <span className="mh-preview-toggle-label">{label}</span>
+          <code className={variable ? "" : "muted"}>
+            {variable ? `{${variable}}` : "No binding"}
+          </code>
+          <span className="mh-preview-toggle-switch" aria-hidden="true">
+            <span className="mh-preview-toggle-thumb" />
+          </span>
+        </div>
       </div>
     </PreviewBlock>
   );
@@ -1328,12 +1344,17 @@ function ColorField({ id, value, onChange, readOnly, field, name }) {
   );
 }
 
-function CodeField({ id, value, onChange, readOnly, field, name, language = "javascript", minRows = 4, completionGroups = [] }) {
+function CodeField({ id, value, onChange, readOnly, field, name, language = "javascript", minRows = 4, completionGroups = EMPTY_COMPLETION_GROUPS }) {
   const hostRef = React.useRef(null);
   const viewRef = React.useRef(null);
   const valueRef = React.useRef(value || "");
+  const onChangeRef = React.useRef(onChange);
   const label = field?.label || formatFieldLabel(name || id);
   const editorId = `${id || name || "code"}-editor`;
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     if (!hostRef.current || viewRef.current) return;
@@ -1353,7 +1374,7 @@ function CodeField({ id, value, onChange, readOnly, field, name, language = "jav
           if (!update.docChanged) return;
           const nextValue = update.state.doc.toString();
           valueRef.current = nextValue;
-          onChange(nextValue);
+          onChangeRef.current(nextValue);
         }),
       ],
     });
@@ -1366,7 +1387,7 @@ function CodeField({ id, value, onChange, readOnly, field, name, language = "jav
       view.destroy();
       viewRef.current = null;
     };
-  }, [completionGroups, language, minRows, onChange, readOnly]);
+  }, [language, minRows, readOnly]);
 
   useEffect(() => {
     const nextValue = value || "";
