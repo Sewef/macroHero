@@ -1,17 +1,22 @@
 {
+  "schemaVersion": 2,
   "global": {
     "title": "MacroHero Configuration",
     "width": 800,
     "height": 600,
-    "variables": {
+    "state": {
       "token": {
-        "value": "996ed434-a22c-4510-aa82-9df34820c0be"
+        "default": "fe508da6-88ec-4526-96b5-2886bfe2bd28"
       }
-    }
+    },
+    "computed": {}
   },
   "pages": [
     {
       "label": "Welcome!",
+      "id": "welcome",
+      "state": {},
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -25,20 +30,22 @@
     },
     {
       "label": "Google Sheets",
-      "variables": {
-        "gsSheetId": {
-          "value": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-        },
-        "gsSheetName": {
-          "value": "Sheet1"
-        },
+      "id": "google-sheets",
+      "state": {
         "gsRange": {
-          "value": "A1"
+          "default": "A1"
         },
         "gsResult": {
-          "value": null
+          "default": null
+        },
+        "gsSheetId": {
+          "default": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+        },
+        "gsSheetName": {
+          "default": "Sheet1"
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -53,8 +60,8 @@
         },
         {
           "type": "input",
-          "var": "gsSheetId",
           "label": "Sheet ID",
+          "var": "gsSheetId",
           "placeholder": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
         },
         {
@@ -62,14 +69,14 @@
           "children": [
             {
               "type": "input",
-              "var": "gsSheetName",
               "label": "Page name",
+              "var": "gsSheetName",
               "placeholder": "Sheet1"
             },
             {
               "type": "input",
-              "var": "gsRange",
               "label": "Range",
+              "var": "gsRange",
               "placeholder": "A1"
             }
           ]
@@ -82,8 +89,8 @@
           "children": [
             {
               "type": "value",
-              "var": "gsResult",
-              "label": "Result"
+              "label": "Result",
+              "var": "gsResult"
             }
           ]
         },
@@ -118,13 +125,11 @@
     },
     {
       "label": "ConditionMarkers",
-      "variables": {
-        "isBandaged": {
-          "eval": "ConditionMarkers.hasCondition(token, 'Bandaged')"
-        },
-        "conditionValue": {
-          "eval": "ConditionMarkers.getValue(token, 'Bandaged')"
-        }
+      "id": "conditionmarkers",
+      "state": {},
+      "computed": {
+        "conditionValue": "ConditionMarkers.getValue(token, 'Bandaged')",
+        "isBandaged": "ConditionMarkers.hasCondition(token, 'Bandaged')"
       },
       "layout": [
         {
@@ -133,7 +138,7 @@
         },
         {
           "type": "text",
-          "text": "# WARNING\nThose features are not currently implemented in ConditionMarkers extension, please don't use them until they are released. This page is a preview of upcoming features and may contain placeholders."
+          "text": "# WARNING\nFeatures with a mention of Value are not in the official ConditionMarkers branch (conditionValue, Increment Value etc)"
         },
         {
           "type": "text",
@@ -147,13 +152,13 @@
           "children": [
             {
               "type": "value",
-              "var": "isBandaged",
-              "label": "Bandaged Status"
+              "label": "Bandaged Status",
+              "var": "isBandaged"
             },
             {
               "type": "value",
-              "var": "conditionValue",
-              "label": "Condition Value"
+              "label": "Condition Value",
+              "var": "conditionValue"
             }
           ]
         },
@@ -233,13 +238,11 @@
     },
     {
       "label": "OwlTrackers",
-      "variables": {
-        "trackerHP": {
-          "eval": "OwlTrackers.getValue(token, 'HP')"
-        },
-        "trackerMaxHP": {
-          "eval": "OwlTrackers.getMax(token, 'HP')"
-        }
+      "id": "owltrackers",
+      "state": {},
+      "computed": {
+        "trackerHP": "OwlTrackers.getValue(token, 'HP')",
+        "trackerMaxHP": "OwlTrackers.getMax(token, 'HP')"
       },
       "layout": [
         {
@@ -258,13 +261,13 @@
           "children": [
             {
               "type": "value",
-              "var": "trackerHP",
-              "label": "Current HP"
+              "label": "Current HP",
+              "var": "trackerHP"
             },
             {
               "type": "value",
-              "var": "trackerMaxHP",
-              "label": "Max HP"
+              "label": "Max HP",
+              "var": "trackerMaxHP"
             }
           ]
         },
@@ -342,16 +345,12 @@
     },
     {
       "label": "StatBubbles",
-      "variables": {
-        "bubbleHealth": {
-          "eval": "StatBubbles.getValue(token, 'health')"
-        },
-        "bubbleMaxHealth": {
-          "eval": "StatBubbles.getValue(token, 'max health')"
-        },
-        "bubbleAC": {
-          "eval": "StatBubbles.getValue(token, 'armor class')"
-        }
+      "id": "statbubbles",
+      "state": {},
+      "computed": {
+        "bubbleAC": "StatBubbles.getValue(token, 'armor class')",
+        "bubbleHealth": "StatBubbles.getValue(token, 'health')",
+        "bubbleMaxHealth": "StatBubbles.getValue(token, 'max health')"
       },
       "layout": [
         {
@@ -370,18 +369,18 @@
           "children": [
             {
               "type": "value",
-              "var": "bubbleHealth",
-              "label": "Health"
+              "label": "Health",
+              "var": "bubbleHealth"
             },
             {
               "type": "value",
-              "var": "bubbleMaxHealth",
-              "label": "Max Health"
+              "label": "Max Health",
+              "var": "bubbleMaxHealth"
             },
             {
               "type": "value",
-              "var": "bubbleAC",
-              "label": "AC"
+              "label": "AC",
+              "var": "bubbleAC"
             }
           ]
         },
@@ -461,10 +460,10 @@
     },
     {
       "label": "ColoredRings",
-      "variables": {
-        "hasBlueRing": {
-          "eval": "ColoredRings.hasRing(token, '#1a6aff')"
-        }
+      "id": "coloredrings",
+      "state": {},
+      "computed": {
+        "hasBlueRing": "ColoredRings.hasRing(token, '#1a6aff')"
       },
       "layout": [
         {
@@ -483,8 +482,8 @@
           "children": [
             {
               "type": "value",
-              "var": "hasBlueRing",
-              "label": "Has Blue Ring"
+              "label": "Has Blue Ring",
+              "var": "hasBlueRing"
             }
           ]
         },
@@ -558,13 +557,11 @@
     },
     {
       "label": "PrettySordid",
-      "variables": {
-        "prettyHasInitiative": {
-          "eval": "PrettySordid.hasInitiative(token)"
-        },
-        "prettyInitiativeCount": {
-          "eval": "PrettySordid.getInitiative(token)"
-        }
+      "id": "prettysordid",
+      "state": {},
+      "computed": {
+        "prettyHasInitiative": "PrettySordid.hasInitiative(token)",
+        "prettyInitiativeCount": "PrettySordid.getInitiative(token)"
       },
       "layout": [
         {
@@ -583,13 +580,13 @@
           "children": [
             {
               "type": "value",
-              "var": "prettyHasInitiative",
-              "label": "In Combat"
+              "label": "In Combat",
+              "var": "prettyHasInitiative"
             },
             {
               "type": "value",
-              "var": "prettyInitiativeCount",
-              "label": "Initiative"
+              "label": "Initiative",
+              "var": "prettyInitiativeCount"
             }
           ]
         },
@@ -635,6 +632,9 @@
     },
     {
       "label": "JustDices",
+      "id": "justdices",
+      "state": {},
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -776,16 +776,17 @@
     },
     {
       "label": "Local Storage",
-      "variables": {
+      "id": "local-storage",
+      "state": {
         "storageKey": {
-          "value": "myKey"
+          "default": "myKey"
         },
         "storageValue": {
-          "value": "myValue"
-        },
-        "persistentCounter": {
-          "eval": "Local.value('persistentCounter', 0)"
+          "default": "myValue"
         }
+      },
+      "computed": {
+        "persistentCounter": "Local.value('persistentCounter', 0)"
       },
       "layout": [
         {
@@ -813,14 +814,14 @@
           "children": [
             {
               "type": "input",
-              "var": "storageKey",
               "label": "Key",
+              "var": "storageKey",
               "placeholder": "myKey"
             },
             {
               "type": "input",
-              "var": "storageValue",
               "label": "Value",
+              "var": "storageValue",
               "placeholder": "myValue"
             }
           ]
@@ -874,8 +875,8 @@
           "children": [
             {
               "type": "value",
-              "var": "persistentCounter",
-              "label": "Persistent Counter"
+              "label": "Persistent Counter",
+              "var": "persistentCounter"
             },
             {
               "type": "button",
@@ -944,8 +945,8 @@
             {
               "type": "button",
               "label": "Clear All",
-              "color": "#c0392b",
               "tooltip": "Wipes all keys from Local storage",
+              "color": "#c0392b",
               "onclick": [
                 "Local.clear();",
                 "await setValue('persistentCounter', 0);",
@@ -958,11 +959,13 @@
     },
     {
       "label": "Weather",
-      "variables": {
+      "id": "weather",
+      "state": {
         "mapID": {
-          "value": null
+          "default": null
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -981,8 +984,8 @@
         },
         {
           "type": "input",
-          "var": "mapID",
           "label": "Map ID",
+          "var": "mapID",
           "placeholder": "Paste your map item ID here"
         },
         {
@@ -1109,8 +1112,8 @@
             {
               "type": "button",
               "label": "Get Weather",
-              "color": "#2980b9",
               "tooltip": "Displays current type, speed, and density",
+              "color": "#2980b9",
               "onclick": [
                 "const weather = await Weather.getWeather(mapID);",
                 "if (weather) {",
@@ -1123,8 +1126,8 @@
             {
               "type": "button",
               "label": "Check Weather",
-              "color": "#2980b9",
               "tooltip": "Yes/No check: is there active weather?",
+              "color": "#2980b9",
               "onclick": [
                 "const has = await Weather.hasWeather(mapID);",
                 "await Owlbear.notification.show(has ? 'Weather is active' : 'No weather', 'INFO');"
@@ -1158,8 +1161,8 @@
             {
               "type": "button",
               "label": "Intense Storm",
-              "color": "#c0392b",
               "tooltip": "Maximum intensity: speed 4, density 4, blue tint",
+              "color": "#c0392b",
               "onclick": [
                 "await Weather.setWeather(mapID, {",
                 "  type: 'RAIN',",
@@ -1173,8 +1176,8 @@
             {
               "type": "button",
               "label": "Update Speed",
-              "color": "#e67e22",
               "tooltip": "Slow down to speed 2",
+              "color": "#e67e22",
               "onclick": [
                 "await Weather.updateWeather(mapID, { speed: 2 });",
                 "await Owlbear.notification.show('Weather speed updated to 2', 'INFO');"
@@ -1183,8 +1186,8 @@
             {
               "type": "button",
               "label": "Update Tint",
-              "color": "#9b59b6",
               "tooltip": "Apply red tint for danger",
+              "color": "#9b59b6",
               "onclick": [
                 "await Weather.updateWeather(mapID, { tint: '#ff0000' });",
                 "await Owlbear.notification.show('Weather tint updated to red', 'INFO');"
@@ -1196,11 +1199,13 @@
     },
     {
       "label": "Embers",
-      "variables": {
+      "id": "embers",
+      "state": {
         "customCommand": {
-          "value": "Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Magic Missile' });"
+          "default": "Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Magic Missile' });"
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -1393,21 +1398,27 @@
           "text": "Common effect names available in Embers:\n\n**Projectiles:** `magic_missile`, `lightning`, `arrow`, `fireball`, `frost_bolt`, `shadow_bolt`\n\n**AOE/Impacts:** `fireball.explosion`, `generic.impact.fire`, `generic.impact.electric`, `lightning.impact`, `frost.impact`, `shadow.impact`, `healing.light`\n\n**Cones:** Various cone variants by direction\n\nExplore the full library [here](https://embers.armindo.eu/listings) and experiment with different combinations to create unique spell effects for your game!"
         },
         {
-          "type":"divider"
-        },
-        {"type":"title","text":"Playground"},
-        {"type":"text","text":"Type your command in the input below and execute it to test custom Embers sequences. Use `token` as caster and/or `await Token.getSelected()` for interactive selection."},
-        {
-          "type":"input",
-          "var":"customCommand",
-          "label":"Custom Embers Command",
-          "placeholder":"Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Custom' });"
+          "type": "divider"
         },
         {
-          "type":"button",
-          "label":"Execute Custom Command",
-          "color":"#8e44ad",
-          "onclick":[
+          "type": "title",
+          "text": "Playground"
+        },
+        {
+          "type": "text",
+          "text": "Type your command in the input below and execute it to test custom Embers sequences. Use `token` as caster and/or `await Token.getSelected()` for interactive selection."
+        },
+        {
+          "type": "input",
+          "label": "Custom Embers Command",
+          "var": "customCommand",
+          "placeholder": "Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Custom' });"
+        },
+        {
+          "type": "button",
+          "label": "Execute Custom Command",
+          "color": "#8e44ad",
+          "onclick": [
             "try {",
             "  await eval(`(async () => { ${customCommand} })()`);",
             "  await Owlbear.notification.show('Custom command executed successfully', 'SUCCESS');",
@@ -1421,6 +1432,9 @@
     },
     {
       "label": "Auras",
+      "id": "auras",
+      "state": {},
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -1570,8 +1584,8 @@
             {
               "type": "button",
               "label": "Remove All Auras from Token",
-              "color": "#c0392b",
               "tooltip": "Remove all auras from the token",
+              "color": "#c0392b",
               "onclick": [
                 "await Auras.removeAura(token);",
                 "await Owlbear.notification.show('All auras removed', 'WARNING');"
@@ -1583,17 +1597,19 @@
     },
     {
       "label": "Aurora",
-      "variables": {
+      "id": "aurora",
+      "state": {
+        "lightness": {
+          "default": 100
+        },
         "mapID": {
-          "value": null
+          "default": null
         },
         "saturation": {
-          "value": 100
-        },
-        "lightness": {
-          "value": 100
+          "default": 100
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -1608,8 +1624,8 @@
         },
         {
           "type": "input",
-          "var": "mapID",
           "label": "Map ID",
+          "var": "mapID",
           "placeholder": "Paste your map item ID here"
         },
         {
@@ -1984,11 +2000,13 @@
     },
     {
       "label": "Announcement",
-      "variables": {
+      "id": "announcement",
+      "state": {
         "announcementContent": {
-          "value": "This is an important announcement for everyone!"
+          "default": "This is an important announcement for everyone!"
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -2096,8 +2114,8 @@
         },
         {
           "type": "input",
-          "var": "announcementContent",
           "label": "Announcement Content",
+          "var": "announcementContent",
           "placeholder": "Enter your message (Markdown supported)"
         },
         {
@@ -2106,8 +2124,8 @@
             {
               "type": "button",
               "label": "Post Announcement",
-              "color": "#9b59b6",
               "tooltip": "Display to all players",
+              "color": "#9b59b6",
               "onclick": [
                 "await Announcement.setAnnouncement(announcementContent, true);",
                 "await Owlbear.notification.show('Announcement posted', 'SUCCESS');"
@@ -2116,8 +2134,8 @@
             {
               "type": "button",
               "label": "Post Hidden",
-              "color": "#7f8c8d",
               "tooltip": "Post but keep hidden initially",
+              "color": "#7f8c8d",
               "onclick": [
                 "await Announcement.setAnnouncement(announcementContent, false);",
                 "await Owlbear.notification.show('Announcement ready (hidden)', 'INFO');"
@@ -2142,8 +2160,8 @@
             {
               "type": "button",
               "label": "Show",
-              "color": "#27ae60",
               "tooltip": "Display the announcement",
+              "color": "#27ae60",
               "onclick": [
                 "await Announcement.showAnnouncement();",
                 "await Owlbear.notification.show('Announcement shown', 'SUCCESS');"
@@ -2152,8 +2170,8 @@
             {
               "type": "button",
               "label": "Hide",
-              "color": "#e67e22",
               "tooltip": "Hide the announcement",
+              "color": "#e67e22",
               "onclick": [
                 "await Announcement.hideAnnouncement();",
                 "await Owlbear.notification.show('Announcement hidden', 'INFO');"
@@ -2162,8 +2180,8 @@
             {
               "type": "button",
               "label": "Toggle",
-              "color": "#3498db",
               "tooltip": "Toggle visibility",
+              "color": "#3498db",
               "onclick": [
                 "await Announcement.toggleAnnouncement();",
                 "await Owlbear.notification.show('Announcement toggled', 'INFO');"
@@ -2172,8 +2190,8 @@
             {
               "type": "button",
               "label": "Remove",
-              "color": "#c0392b",
               "tooltip": "Delete announcement completely",
+              "color": "#c0392b",
               "onclick": [
                 "await Announcement.removeAnnouncementMetadata();",
                 "await Owlbear.notification.show('Announcement removed', 'INFO');"
@@ -2231,6 +2249,9 @@
     },
     {
       "label": "SDK Helpers",
+      "id": "sdk-helpers",
+      "state": {},
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -2280,7 +2301,7 @@
               "type": "button",
               "label": "Error",
               "onclick": [
-                "await Owlbear.notification.show('This is an error message', 'ERROR');"
+                "await Owlbear.notification.error('This is an error message');"
               ]
             },
             {
@@ -2296,29 +2317,31 @@
     },
     {
       "label": "UI Elements",
-      "variables": {
-        "displayText": {
-          "value": "Sample Display Text"
-        },
-        "displayNumber": {
-          "value": 42
+      "id": "ui-elements",
+      "state": {
+        "checkboxValue": {
+          "default": false
         },
         "counterValue": {
-          "value": 10
+          "default": 10
         },
-        "checkboxValue": {
-          "value": false
+        "displayNumber": {
+          "default": 42
         },
-        "inputValue": {
-          "value": "Enter text here"
-        },
-        "dropdownValue": {
-          "value": "Option 1"
+        "displayText": {
+          "default": "Sample Display Text"
         },
         "dropdownComplexValue": {
-          "value": "easy"
+          "default": "easy"
+        },
+        "dropdownValue": {
+          "default": "Option 1"
+        },
+        "inputValue": {
+          "default": "Enter text here"
         }
       },
+      "computed": {},
       "layout": [
         {
           "type": "title",
@@ -2402,8 +2425,8 @@
         },
         {
           "type": "divider",
-          "color": "#e74c3c",
-          "height": "2px"
+          "height": "2px",
+          "color": "#e74c3c"
         },
         {
           "type": "text",
@@ -2411,9 +2434,9 @@
         },
         {
           "type": "divider",
+          "height": "1px",
           "style": "dashed",
-          "color": "#9b59b6",
-          "height": "1px"
+          "color": "#9b59b6"
         },
         {
           "type": "divider"
@@ -2432,13 +2455,13 @@
           "children": [
             {
               "type": "value",
-              "var": "displayText",
-              "label": "Text Value"
+              "label": "Text Value",
+              "var": "displayText"
             },
             {
               "type": "value",
-              "var": "displayNumber",
-              "label": "Number Value"
+              "label": "Number Value",
+              "var": "displayNumber"
             }
           ]
         },
@@ -2520,8 +2543,8 @@
           "children": [
             {
               "type": "counter",
-              "var": "counterValue",
               "label": "Counter",
+              "var": "counterValue",
               "step": 1
             },
             {
@@ -2662,20 +2685,20 @@
           "children": [
             {
               "type": "counter",
-              "var": "counterValue",
               "label": "Counter (step 1)",
+              "var": "counterValue",
               "step": 1
             },
             {
               "type": "counter",
-              "var": "counterValue",
               "label": "Counter (step 5)",
+              "var": "counterValue",
               "step": 5
             },
             {
               "type": "counter",
-              "var": "counterValue",
               "label": "Counter (colored)",
+              "var": "counterValue",
               "step": 1,
               "color": "#f39c12"
             }
@@ -2698,19 +2721,19 @@
           "children": [
             {
               "type": "checkbox",
-              "var": "checkboxValue",
-              "label": "Basic Checkbox"
+              "label": "Basic Checkbox",
+              "var": "checkboxValue"
             },
             {
               "type": "checkbox",
-              "var": "checkboxValue",
               "label": "Blue Checkbox",
+              "var": "checkboxValue",
               "color": "#3498db"
             },
             {
               "type": "checkbox",
-              "var": "checkboxValue",
               "label": "Green Checkbox",
+              "var": "checkboxValue",
               "color": "#27ae60"
             }
           ]
@@ -2732,19 +2755,19 @@
           "children": [
             {
               "type": "toggle",
-              "var": "checkboxValue",
-              "label": "Basic Toggle"
+              "label": "Basic Toggle",
+              "var": "checkboxValue"
             },
             {
               "type": "toggle",
-              "var": "checkboxValue",
               "label": "Blue Toggle",
+              "var": "checkboxValue",
               "color": "#3498db"
             },
             {
               "type": "toggle",
-              "var": "checkboxValue",
               "label": "Green Toggle",
+              "var": "checkboxValue",
               "color": "#27ae60"
             }
           ]
@@ -2763,8 +2786,8 @@
         },
         {
           "type": "input",
-          "var": "inputValue",
           "label": "Text Input",
+          "var": "inputValue",
           "placeholder": "Type something..."
         },
         {
@@ -2781,8 +2804,8 @@
         },
         {
           "type": "dropdown",
-          "var": "dropdownValue",
           "label": "Simple Dropdown",
+          "var": "dropdownValue",
           "options": [
             "Option 1",
             "Option 2",
@@ -2792,8 +2815,8 @@
         },
         {
           "type": "dropdown",
-          "var": "dropdownComplexValue",
           "label": "Complex Dropdown",
+          "var": "dropdownComplexValue",
           "options": [
             {
               "label": "Easy Mode",
@@ -2926,8 +2949,8 @@
           "children": [
             {
               "type": "matrixButton",
-              "icon": "🔥",
               "label": "Fire",
+              "icon": "🔥",
               "tooltip": "Cast fireball",
               "onclick": [
                 "await Owlbear.notification.show('Fire spell cast', 'INFO');"
@@ -2935,8 +2958,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "❄️",
               "label": "Ice",
+              "icon": "❄️",
               "tooltip": "Cast freeze",
               "onclick": [
                 "await Owlbear.notification.show('Ice spell cast', 'INFO');"
@@ -2944,8 +2967,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "⚡",
               "label": "Lightning",
+              "icon": "⚡",
               "tooltip": "Cast lightning bolt",
               "onclick": [
                 "await Owlbear.notification.show('Lightning spell cast', 'INFO');"
@@ -2953,8 +2976,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "🌿",
               "label": "Nature",
+              "icon": "🌿",
               "tooltip": "Cast nature magic",
               "onclick": [
                 "await Owlbear.notification.show('Nature spell cast', 'INFO');"
@@ -2962,8 +2985,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "⚔️",
               "label": "Sword",
+              "icon": "⚔️",
               "tooltip": "Melee attack",
               "onclick": [
                 "await Owlbear.notification.show('Sword attack executed', 'INFO');"
@@ -2971,8 +2994,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "🛡️",
               "label": "Shield",
+              "icon": "🛡️",
               "tooltip": "Defensive stance",
               "onclick": [
                 "await Owlbear.notification.show('Shield raised', 'INFO');"
@@ -2980,8 +3003,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "💚",
               "label": "Heal",
+              "icon": "💚",
               "tooltip": "Restore health",
               "onclick": [
                 "await Owlbear.notification.show('Healing spell cast', 'SUCCESS');"
@@ -2989,8 +3012,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "💠",
               "label": "Special",
+              "icon": "💠",
               "tooltip": "Use special ability",
               "onclick": [
                 "await Owlbear.notification.show('Special ability activated', 'INFO');"
@@ -3025,8 +3048,8 @@
           "children": [
             {
               "type": "matrixButton",
-              "icon": "🔥",
               "label": "Fire",
+              "icon": "🔥",
               "tooltip": "Icon + label",
               "color": "#c0392b",
               "onclick": [
@@ -3053,8 +3076,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "https://www.google.com/favicon.ico",
               "label": "URL",
+              "icon": "https://www.google.com/favicon.ico",
               "tooltip": "Icon from URL",
               "onclick": [
                 "await Owlbear.notification.show('URL icon button', 'INFO');"
@@ -3072,8 +3095,8 @@
             },
             {
               "type": "matrixButton",
-              "icon": "💀",
               "label": "R-Click",
+              "icon": "💀",
               "tooltip": "Left: attack | Right: cancel",
               "color": "#6c3483",
               "onclick": [
@@ -3119,12 +3142,15 @@
           "type": "divider"
         },
         {
+          "type": "divider"
+        },
+        {
           "type": "title",
           "text": "Summary of Properties"
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }
