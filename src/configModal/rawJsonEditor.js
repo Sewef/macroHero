@@ -1,17 +1,13 @@
-import "vanilla-jsoneditor/themes/jse-theme-dark.css";
-import { createJSONEditor, createAjvValidator, Mode } from "vanilla-jsoneditor";
-import { MACRO_HERO_CONFIG_JSON_SCHEMA } from "../configJsonSchema.js";
-import { formatConfig } from "./utils.js";
+import { EditorView, minimalSetup } from "codemirror";
+import { json, jsonParseLinter } from "@codemirror/lang-json";
+import { linter, lintGutter } from "@codemirror/lint";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { formatValidationErrors, validateConfigShape } from "../configValidation.js";
 
 let editor = null;
 let textarea = null;
 let statusEl = null;
-let lastContent = { text: "" };
 let syncing = false;
-
-const validator = createAjvValidator({
-  schema: MACRO_HERO_CONFIG_JSON_SCHEMA,
-});
 
 export function ensureRawJsonEditor() {
   if (editor) return editor;
@@ -21,27 +17,33 @@ export function ensureRawJsonEditor() {
   statusEl = document.getElementById("jsonEditorStatus");
   if (!target || !textarea) return null;
 
-  lastContent = contentFromText(textarea.value);
-  editor = createJSONEditor({
-    target,
-    props: {
-      content: lastContent,
-      mode: Mode.text,
-      mainMenuBar: true,
-      navigationBar: true,
-      statusBar: true,
-      validator,
-      onChange: (updatedContent, _previousContent, status) => {
-        lastContent = updatedContent;
-        if (!syncing) textarea.value = textFromContent(updatedContent);
-        renderStatus(status?.contentErrors);
-      },
-      onError: error => {
-        renderStatus(error?.message || "JSON editor error.");
-      },
-    },
-  });
+  target.replaceChildren();
+  target.classList.add("mh-code-editor", "mh-code-editor-json");
 
+  const extensions = [
+    minimalSetup,
+    json(),
+    lintGutter(),
+    linter(jsonParseLinter()),
+    EditorView.lineWrapping,
+    EditorView.updateListener.of(update => {
+      if (!update.docChanged) return;
+      const text = update.state.doc.toString();
+      if (!syncing) textarea.value = text;
+      renderStatus(text);
+    }),
+  ];
+
+  if (document.documentElement.classList.contains("mh-dark")) {
+    extensions.push(oneDark);
+  }
+
+  editor = new EditorView({
+    doc: textarea.value,
+    extensions,
+    parent: target,
+  });
+  renderStatus(textarea.value);
   return editor;
 }
 
@@ -49,19 +51,21 @@ export function syncRawJsonEditorFromTextarea() {
   const instance = ensureRawJsonEditor();
   if (!instance || !textarea) return;
 
-  const nextContent = contentFromText(textarea.value);
-  if (textFromContent(nextContent) === textFromContent(lastContent)) return;
+  const nextText = textarea.value || "";
+  const currentText = instance.state.doc.toString();
+  if (nextText === currentText) return;
 
   syncing = true;
-  lastContent = nextContent;
-  instance.set(nextContent);
+  instance.dispatch({ changes: { from: 0, to: currentText.length, insert: nextText } });
   syncing = false;
+  renderStatus(nextText);
 }
 
 export function getRawJsonText() {
-  if (!editor) return textarea?.value || document.getElementById("cfgArea")?.value || "";
-  const content = editor.get();
-  return textFromContent(content);
+  return editor?.state.doc.toString()
+    ?? textarea?.value
+    ?? document.getElementById("cfgArea")?.value
+    ?? "";
 }
 
 export function setRawJsonValue(value) {
@@ -70,31 +74,25 @@ export function setRawJsonValue(value) {
   if (editor) syncRawJsonEditorFromTextarea();
 }
 
-function contentFromText(text) {
-  try {
-    return { json: JSON.parse(text) };
-  } catch {
-    return { text: text || "" };
-  }
-}
-
-function textFromContent(content) {
-  if (!content) return "";
-  if ("text" in content) return content.text || "";
-  return formatConfig(content.json);
-}
-
-function renderStatus(contentErrors) {
+function renderStatus(text) {
   if (!statusEl) return;
-  if (!contentErrors || (Array.isArray(contentErrors) && contentErrors.length === 0)) {
-    statusEl.textContent = "JSON valide.";
-    statusEl.className = "json-editor-status ok";
+
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    statusEl.textContent = error?.message || "JSON invalide.";
+    statusEl.className = "json-editor-status error";
     return;
   }
 
-  const message = Array.isArray(contentErrors)
-    ? `${contentErrors.length} erreur(s) de validation.`
-    : contentErrors.message || "JSON invalide.";
-  statusEl.textContent = message;
-  statusEl.className = "json-editor-status error";
+  const validation = validateConfigShape(parsed);
+  if (!validation.valid) {
+    statusEl.textContent = formatValidationErrors(validation.errors);
+    statusEl.className = "json-editor-status error";
+    return;
+  }
+
+  statusEl.textContent = "JSON valide.";
+  statusEl.className = "json-editor-status ok";
 }

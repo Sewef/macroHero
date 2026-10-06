@@ -27,7 +27,6 @@
     "marked": "^18.0.3",
     "mathjs": "^15.1.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "vanilla-jsoneditor": "^3.13.0"
+    "react-dom": "^19.3.0"
   }
 }

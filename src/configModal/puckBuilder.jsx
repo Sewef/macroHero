@@ -8,7 +8,6 @@ import { markdown } from "@codemirror/lang-markdown";
 import { linter, lintGutter } from "@codemirror/lint";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { parseMd, sanitizeHtml, MD_PATTERN } from "../ui/markdownUtils.js";
-import "@puckeditor/core/puck.css";
 
 console.info("[MacroHero Builder] Puck module loaded");
 
@@ -282,78 +281,31 @@ const LAYOUT_CATEGORIES = {
   layout: { title: "Layout", components: ["Row", "Stack", "Matrix"] },
 };
 
-const VARIABLE_CATEGORIES = {
-  variables: { title: "Page Variables", components: ["PageStateVariable", "PageComputedVariable"] },
-};
-
 const EMPTY_COMPLETION_GROUPS = [];
 const SIDEBAR_PLUGIN_PAGES = "macrohero-pages";
-const SIDEBAR_PLUGIN_GLOBAL_CONFIG = "macrohero-global-config";
-const SIDEBAR_PLUGIN_PAGE_CONFIG = "macrohero-page-config";
+const SIDEBAR_PLUGIN_VARIABLES = "macrohero-variables";
+const SIDEBAR_PLUGIN_SETTINGS = "macrohero-settings";
 
-function createPuckConfig(variableGroups, builderMode) {
+function createPuckConfig(variableGroups, activePage) {
   const readableVariableField = createVariableField(variableGroups, "all");
   const stateVariableField = createVariableField(variableGroups, "state");
   const commandFields = createCommandFields(variableGroups);
   const updateField = createUpdateField(variableGroups);
 
   return {
-    categories: builderMode === "variables" ? VARIABLE_CATEGORIES : LAYOUT_CATEGORIES,
+    categories: LAYOUT_CATEGORIES,
     root: {
-      fields: {
-        pageLabel: { type: "text", label: "Page label" },
-        pageId: { type: "text", label: "Page id" },
-      },
-      render: ({ children, pageLabel, pageId }) => (
+      fields: {},
+      render: ({ children }) => (
         <PageRootPreview
-          label={pageLabel}
-          pageId={pageId}
+          label={activePage?.label}
+          pageId={activePage?.id}
         >
           {children}
         </PageRootPreview>
       ),
     },
     components: {
-    PageStateVariable: {
-      label: "State Variable",
-      fields: {
-        variableName: { type: "text", label: "Name" },
-        defaultText: { type: "text", label: "Default value" },
-        min: { type: "number", label: "Min" },
-        max: { type: "number", label: "Max" },
-      },
-      defaultProps: { variableName: "newState", defaultText: "" },
-      render: ({ variableName, defaultText, min, max }) => (
-        <VariableObjectPreview
-          kind="state"
-          name={variableName || "newState"}
-          primaryLabel="default"
-          primaryValue={defaultText}
-          min={min}
-          max={max}
-        />
-      ),
-    },
-    PageComputedVariable: {
-      label: "Computed Variable",
-      fields: {
-        variableName: { type: "text", label: "Name" },
-        expression: createScriptCodeField(variableGroups, { label: "Expression", minRows: 3 }),
-        min: { type: "number", label: "Min" },
-        max: { type: "number", label: "Max" },
-      },
-      defaultProps: { variableName: "newComputed", expression: "" },
-      render: ({ variableName, expression, min, max }) => (
-        <VariableObjectPreview
-          kind="computed"
-          name={variableName || "newComputed"}
-          primaryLabel="eval"
-          primaryValue={expression}
-          min={min}
-          max={max}
-        />
-      ),
-    },
     Row: {
       label: "Row",
       fields: {
@@ -634,7 +586,6 @@ class BuilderErrorBoundary extends React.Component {
 
 function MacroHeroPuckBuilder({ getConfig, setConfig }) {
   const [pageIndex, setPageIndex] = useState(0);
-  const [builderMode, setBuilderMode] = useState("layout");
   const [version, setVersion] = useState(0);
   const [activeSidebarPlugin, setActiveSidebarPlugin] = useState(null);
   const config = getConfig() || {};
@@ -646,8 +597,8 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
     [config, activePage]
   );
   const puckConfig = useMemo(
-    () => createPuckConfig(variableGroups, builderMode),
-    [builderMode, variableGroups]
+    () => createPuckConfig(variableGroups, activePage),
+    [activePage, variableGroups]
   );
 
   useEffect(() => {
@@ -664,8 +615,8 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
   }, [activePage, safePageIndex]);
 
   const puckData = useMemo(
-    () => pageToPuckData(activePage, builderMode),
-    [activePage, builderMode, version]
+    () => pageToPuckData(activePage),
+    [activePage, version]
   );
 
   const updateConfig = useCallback(recipe => {
@@ -685,6 +636,7 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
         render: () => (
           <PagesPlugin
             pages={pages}
+            activePage={activePage}
             safePageIndex={safePageIndex}
             setPageIndex={setPageIndex}
             updateConfig={updateConfig}
@@ -695,13 +647,13 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
         mobilePanelHeight: "min-content",
       },
       {
-        name: SIDEBAR_PLUGIN_GLOBAL_CONFIG,
-        label: "Global Config",
+        name: SIDEBAR_PLUGIN_VARIABLES,
+        label: "Variables",
         render: () => (
-          <GlobalConfigPlugin
-            config={config}
+          <VariablesPlugin
+            groups={variableGroups}
+            pageLabel={activePage?.label || activePage?.id || `Page ${safePageIndex + 1}`}
             updateConfig={updateConfig}
-            variableGroups={variableGroups.filter(group => group.scope === "global")}
             safePageIndex={safePageIndex}
             rememberSidebarPlugin={rememberSidebarPlugin}
           />
@@ -709,12 +661,11 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
         mobilePanelHeight: "min-content",
       },
       {
-        name: SIDEBAR_PLUGIN_PAGE_CONFIG,
-        label: "Page Config",
+        name: SIDEBAR_PLUGIN_SETTINGS,
+        label: "Settings",
         render: () => (
-          <PageConfigPlugin
-            activePage={activePage}
-            safePageIndex={safePageIndex}
+          <GlobalConfigPlugin
+            config={config}
             updateConfig={updateConfig}
             rememberSidebarPlugin={rememberSidebarPlugin}
           />
@@ -724,6 +675,15 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
     ],
     [activePage, config, pages, rememberSidebarPlugin, safePageIndex, updateConfig, variableGroups]
   );
+  const builderOverrides = useMemo(() => ({
+    headerActions: () => (
+      <BuilderHeaderControls
+        pages={pages}
+        safePageIndex={safePageIndex}
+        setPageIndex={setPageIndex}
+      />
+    ),
+  }), [pages, safePageIndex]);
 
   if (!activePage) {
     return (
@@ -740,22 +700,18 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
   return (
     <div className="puck-builder-shell">
       <Puck
-        key={`${safePageIndex}:${builderMode}:${version}`}
+        key={`${safePageIndex}:${version}`}
         config={puckConfig}
         data={puckData}
         onChange={data => {
           const nextConfig = structuredCloneSafe(getConfig() || {});
           if (!nextConfig.pages?.[safePageIndex]) return;
-          applyRootPropsToPage(nextConfig.pages[safePageIndex], data?.root, safePageIndex);
-          if (builderMode === "variables") {
-            applyPuckVariablesToPage(nextConfig.pages[safePageIndex], data);
-          } else {
-            nextConfig.pages[safePageIndex].layout = puckDataToLayout(data);
-          }
+          nextConfig.pages[safePageIndex].layout = puckDataToLayout(data);
           setConfig(nextConfig);
         }}
         permissions={DEFAULT_PERMISSIONS}
         plugins={builderPlugins}
+        overrides={builderOverrides}
         iframe={{ enabled: false }}
         viewports={BUILDER_VIEWPORTS}
         ui={{
@@ -774,18 +730,7 @@ function MacroHeroPuckBuilder({ getConfig, setConfig }) {
           if (currentPlugin) setActiveSidebarPlugin(currentPlugin);
         }}
         height="100%"
-        headerTitle={`MacroHero - ${activePage.label || activePage.id || "Page"} - ${builderMode === "variables" ? "Variables" : "Layout"}`}
-        renderHeaderActions={({ state }) => (
-          <BuilderHeaderControls
-            pages={pages}
-            safePageIndex={safePageIndex}
-            setPageIndex={setPageIndex}
-            builderMode={builderMode}
-            setBuilderMode={setBuilderMode}
-            activeSidebarPlugin={state?.ui?.plugin?.current}
-            rememberSidebarPlugin={rememberSidebarPlugin}
-          />
-        )}
+        headerTitle={`MacroHero - ${activePage.label || activePage.id || "Page"}`}
       />
     </div>
   );
@@ -795,16 +740,7 @@ function BuilderHeaderControls({
   pages,
   safePageIndex,
   setPageIndex,
-  builderMode,
-  setBuilderMode,
-  activeSidebarPlugin,
-  rememberSidebarPlugin,
 }) {
-  const changeBuilderMode = mode => {
-    if (activeSidebarPlugin) rememberSidebarPlugin(activeSidebarPlugin);
-    setBuilderMode(mode);
-  };
-
   return (
     <div className="puck-header-controls">
       <select
@@ -818,15 +754,11 @@ function BuilderHeaderControls({
           </option>
         ))}
       </select>
-      <div className="puck-header-mode-switch" role="group" aria-label="Builder mode">
-        <button type="button" className={builderMode === "layout" ? "active" : ""} onClick={() => changeBuilderMode("layout")}>Layout</button>
-        <button type="button" className={builderMode === "variables" ? "active" : ""} onClick={() => changeBuilderMode("variables")}>Variables</button>
-      </div>
     </div>
   );
 }
 
-function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload, rememberSidebarPlugin }) {
+function PagesPlugin({ pages, activePage, safePageIndex, setPageIndex, updateConfig, reload, rememberSidebarPlugin }) {
   const rememberPages = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_PAGES);
 
   return (
@@ -871,17 +803,33 @@ function PagesPlugin({ pages, safePageIndex, setPageIndex, updateConfig, reload,
           }}>Reload</button>
         </div>
       </section>
+      <section className="puck-config-section puck-config-section-divided">
+        <h3>Selected page</h3>
+        <label>
+          Label
+          <input type="text" value={activePage?.label || ""} onChange={event => updateConfig(next => {
+            next.pages[safePageIndex].label = event.target.value;
+          })} />
+        </label>
+        <label>
+          ID
+          <input type="text" value={activePage?.id || ""} onChange={event => updateConfig(next => {
+            next.pages[safePageIndex].id = slugify(event.target.value, `page-${safePageIndex + 1}`);
+          })} />
+        </label>
+        <small className="puck-config-help">The ID is used by links and must be unique.</small>
+      </section>
     </div>
   );
 }
 
-function GlobalConfigPlugin({ config, updateConfig, variableGroups, safePageIndex, rememberSidebarPlugin }) {
-  const rememberGlobalConfig = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_GLOBAL_CONFIG);
+function GlobalConfigPlugin({ config, updateConfig, rememberSidebarPlugin }) {
+  const rememberSettings = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_SETTINGS);
 
   return (
-    <div className="puck-config-plugin" onPointerDownCapture={rememberGlobalConfig} onFocusCapture={rememberGlobalConfig}>
+    <div className="puck-config-plugin" onPointerDownCapture={rememberSettings} onFocusCapture={rememberSettings}>
       <section className="puck-config-section">
-        <h3>Global Settings</h3>
+        <h3>Workspace settings</h3>
         <label>
           Title
           <input type="text" value={config.global?.title || ""} onChange={event => updateConfig(next => {
@@ -907,8 +855,24 @@ function GlobalConfigPlugin({ config, updateConfig, variableGroups, safePageInde
         </div>
       </section>
 
+    </div>
+  );
+}
+
+function VariablesPlugin({
+  groups,
+  pageLabel,
+  safePageIndex,
+  updateConfig,
+  rememberSidebarPlugin,
+}) {
+  const rememberVariables = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_VARIABLES);
+
+  return (
+    <div className="puck-config-plugin" onPointerDownCapture={rememberVariables} onFocusCapture={rememberVariables}>
       <VariableEditorPlugin
-        groups={variableGroups}
+        groups={groups}
+        pageLabel={pageLabel}
         safePageIndex={safePageIndex}
         updateConfig={updateConfig}
       />
@@ -916,36 +880,7 @@ function GlobalConfigPlugin({ config, updateConfig, variableGroups, safePageInde
   );
 }
 
-function PageConfigPlugin({
-  activePage,
-  safePageIndex,
-  updateConfig,
-  rememberSidebarPlugin,
-}) {
-  const rememberPageConfig = () => rememberSidebarPlugin(SIDEBAR_PLUGIN_PAGE_CONFIG);
-
-  return (
-    <div className="puck-config-plugin" onPointerDownCapture={rememberPageConfig} onFocusCapture={rememberPageConfig}>
-      <section className="puck-config-section">
-        <h3>Page Settings</h3>
-        <label>
-          Label
-          <input type="text" value={activePage.label || ""} onChange={event => updateConfig(next => {
-            next.pages[safePageIndex].label = event.target.value;
-          })} />
-        </label>
-        <label>
-          ID
-          <input type="text" value={activePage.id || ""} onChange={event => updateConfig(next => {
-            next.pages[safePageIndex].id = slugify(event.target.value, `page-${safePageIndex + 1}`);
-          })} />
-        </label>
-      </section>
-    </div>
-  );
-}
-
-function VariableEditorPlugin({ groups, safePageIndex, updateConfig }) {
+function VariableEditorPlugin({ groups, pageLabel, safePageIndex, updateConfig }) {
   const [selection, setSelection] = useState(null);
   const total = groups.reduce((sum, group) => sum + group.items.length, 0);
 
@@ -956,15 +891,35 @@ function VariableEditorPlugin({ groups, safePageIndex, updateConfig }) {
         <p><strong>State</strong> is a stored value that controls can read and update.</p>
         <p><strong>Computed</strong> is a read-only value calculated from an expression and other variables.</p>
       </div>
-      <div className="puck-variable-stack">
-        {groups.map(group => (
-          <VariableBucket
-            key={group.id}
-            group={group}
-            onAdd={() => setSelection({ scope: group.scope, kind: group.kind, name: "" })}
-            onEdit={name => setSelection({ scope: group.scope, kind: group.kind, name })}
-          />
-        ))}
+      <div className="puck-variable-scopes">
+        {[
+          { scope: "global", label: "Global", description: "Available on every page" },
+          { scope: "page", label: pageLabel, description: "Available on this page only" },
+        ].map(scopeGroup => {
+          const scopedGroups = groups.filter(group => group.scope === scopeGroup.scope);
+          const scopedTotal = scopedGroups.reduce((sum, group) => sum + group.items.length, 0);
+          return (
+            <section className="puck-variable-scope" key={scopeGroup.scope}>
+              <div className="puck-variable-scope-head">
+                <div>
+                  <strong>{scopeGroup.label}</strong>
+                  <small>{scopeGroup.description}</small>
+                </div>
+                <span>{scopedTotal}</span>
+              </div>
+              <div className="puck-variable-stack">
+                {scopedGroups.map(group => (
+                  <VariableBucket
+                    key={group.id}
+                    group={{ ...group, label: group.kind === "state" ? "State" : "Computed" }}
+                    onAdd={() => setSelection({ scope: group.scope, kind: group.kind, name: "" })}
+                    onEdit={name => setSelection({ scope: group.scope, kind: group.kind, name })}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       {selection ? (
@@ -1158,37 +1113,13 @@ function PageRootPreview({ label, pageId, children }) {
           <span>{pageId || "page-id"}</span>
         </div>
         <div className="mh-preview-page-vars">
-          <span>Page variables</span>
+          <span>Layout</span>
         </div>
       </header>
       <div className="mh-preview-page-content">
         {children}
       </div>
     </main>
-  );
-}
-
-function VariableObjectPreview({ kind, name, primaryLabel, primaryValue, min, max }) {
-  const hasMin = min !== "" && min !== null && min !== undefined;
-  const hasMax = max !== "" && max !== null && max !== undefined;
-
-  return (
-    <div className={`mh-preview-widget mh-preview-variable mh-preview-variable-${kind}`}>
-      <div className="mh-preview-variable-head">
-        <strong>{name}</strong>
-        <span>{kind}</span>
-      </div>
-      <div className="mh-preview-variable-body">
-        <code>{primaryLabel}: {String(primaryValue ?? "").trim() || "(empty)"}</code>
-        {(hasMin || hasMax) ? (
-          <small>
-            {hasMin ? `min ${min}` : ""}
-            {hasMin && hasMax ? " | " : ""}
-            {hasMax ? `max ${max}` : ""}
-          </small>
-        ) : null}
-      </div>
-    </div>
   );
 }
 
@@ -1633,75 +1564,11 @@ function markdownFenceLinter(view) {
   }];
 }
 
-function pageToPuckData(page, builderMode) {
+function pageToPuckData(page) {
   return {
-    root: { props: pageToRootProps(page) },
-    content: builderMode === "variables"
-      ? pageVariablesToPuckContent(page)
-      : (page?.layout || []).map((item, index) => layoutItemToPuck(item, [index])).filter(Boolean),
+    root: { props: { title: page?.label || "MacroHero page layout" } },
+    content: (page?.layout || []).map((item, index) => layoutItemToPuck(item, [index])).filter(Boolean),
   };
-}
-
-function pageToRootProps(page) {
-  return {
-    title: page?.label || "MacroHero page layout",
-    pageLabel: page?.label || "",
-    pageId: page?.id || "",
-  };
-}
-
-function applyRootPropsToPage(page, root, pageIndex) {
-  const props = root?.props || root || {};
-  if (!page || !props) return;
-
-  if ("pageLabel" in props) page.label = String(props.pageLabel || "");
-  if ("pageId" in props) page.id = slugify(props.pageId, `page-${pageIndex + 1}`);
-}
-
-function pageVariablesToPuckContent(page = {}) {
-  return [
-    ...variableEntries(page.state, "state").map((item, index) => ({
-      type: "PageStateVariable",
-      props: {
-        id: `mh-page-state-${index}-${slugify(item.name, "state")}`,
-        variableName: item.name,
-        defaultText: item.rawPrimary,
-        min: item.rawMin,
-        max: item.rawMax,
-      },
-    })),
-    ...variableEntries(page.computed, "computed").map((item, index) => ({
-      type: "PageComputedVariable",
-      props: {
-        id: `mh-page-computed-${index}-${slugify(item.name, "computed")}`,
-        variableName: item.name,
-        expression: item.rawPrimary,
-        min: item.rawMin,
-        max: item.rawMax,
-      },
-    })),
-  ];
-}
-
-function applyPuckVariablesToPage(page, data) {
-  const state = {};
-  const computed = {};
-
-  for (const item of data?.content || []) {
-    const props = item?.props || {};
-    const name = String(props.variableName || "").trim();
-    if (!name) continue;
-
-    if (item.type === "PageStateVariable") {
-      state[name] = buildStateEntry(props.defaultText, props.min, props.max);
-    } else if (item.type === "PageComputedVariable") {
-      const expression = String(props.expression || "").trim();
-      computed[name] = buildComputedEntry(expression, props.min, props.max);
-    }
-  }
-
-  page.state = state;
-  page.computed = computed;
 }
 
 function layoutItemToPuck(item, path) {

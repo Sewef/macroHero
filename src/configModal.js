@@ -213,6 +213,14 @@ async function _loadRawJsonEditor() {
   return rawJsonEditorPromise;
 }
 
+async function _prepareRawJsonEditor() {
+  try {
+    await _loadRawJsonEditor();
+  } catch (error) {
+    logger.warn('JSON editor preload failed; plain text mode remains available:', error);
+  }
+}
+
 function _setRawEditorFallback(enabled, detail = '') {
   const textarea = document.getElementById('cfgArea');
   const host = document.getElementById('jsonEditorHost');
@@ -343,7 +351,6 @@ OBR.onReady(() => {
     currentConfig = cfg;
 
     _setRawJsonText(JSON.stringify(prepareConfigForSave(cfg), null, 2));
-
     document.querySelectorAll('.tab').forEach(tab => {
       addTrackedListener(tab, 'click', e => { e.preventDefault(); switchTab(tab.dataset.tab).catch(err => logger.error('Tab switch failed:', err)); });
     });
@@ -390,7 +397,18 @@ OBR.onReady(() => {
     initTokenHelperUI();
     refreshTokenHelper().catch(() => {});
 
-    switchTab(currentTab).catch(err => logger.error('Initial tab switch failed:', err));
+    switchTab(currentTab)
+      .then(() => {
+        // Warm the editor after the Builder has mounted so the first tab switch
+        // is instant without competing with the initial builder bundle.
+        const preload = () => void _prepareRawJsonEditor();
+        if ('requestIdleCallback' in window) {
+          window.requestIdleCallback(preload, { timeout: 1500 });
+        } else {
+          window.setTimeout(preload, 250);
+        }
+      })
+      .catch(err => logger.error('Initial tab switch failed:', err));
   }).catch(err => {
     logger.error('Error loading config in modal:', err);
     _showBuilderStatus('Configuration failed to load.', err?.message || String(err), true);

@@ -1153,6 +1153,13 @@ textarea {
 .json-editor-host.is-unavailable {
   display: none;
 }
+.json-editor-host > .cm-editor {
+  height: calc(100vh - 240px);
+  min-height: 420px;
+}
+.json-editor-host .cm-scroller {
+  overflow: auto;
+}
 .json-editor-host.jse-theme-dark,
 .json-editor-host .jse-theme-dark {
   --jse-theme-color: var(--accent);
@@ -1385,6 +1392,15 @@ html.mh-light .puck-builder-shell {
   flex-direction: column;
   gap: 10px;
 }
+.puck-config-section-divided {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+.puck-config-help {
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.35;
+}
 .puck-config-section h3,
 .puck-variable-editor h4 {
   margin: 0;
@@ -1479,6 +1495,55 @@ html.mh-light .puck-builder-shell {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.puck-variable-scopes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.puck-variable-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.puck-variable-scope + .puck-variable-scope {
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+.puck-variable-scope-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.puck-variable-scope-head > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.puck-variable-scope-head strong {
+  overflow: hidden;
+  color: #111827;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.puck-variable-scope-head small {
+  color: #6b7280;
+  font-size: 11px;
+}
+.puck-variable-scope-head > span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0 6px;
+  color: #4f46e5;
+  background: #eef2ff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 .puck-variable-intro {
   display: grid;
@@ -2137,6 +2202,7 @@ html.mh-dark .puck-header-mode-switch button.active {
 }
 html.mh-dark .puck-config-section h3,
 html.mh-dark .puck-variable-editor h4,
+html.mh-dark .puck-variable-scope-head strong,
 html.mh-dark .puck-page-switcher-item.active,
 html.mh-dark .puck-variable-intro strong,
 html.mh-dark .puck-variable-bucket-head span {
@@ -2144,6 +2210,8 @@ html.mh-dark .puck-variable-bucket-head span {
 }
 html.mh-dark .puck-config-section h3 span,
 html.mh-dark .puck-config-plugin label,
+html.mh-dark .puck-config-help,
+html.mh-dark .puck-variable-scope-head small,
 html.mh-dark .puck-page-switcher-item small,
 html.mh-dark .puck-variable-intro,
 html.mh-dark .puck-variable-item span,
@@ -2168,6 +2236,14 @@ html.mh-dark .puck-page-switcher-item.active {
 html.mh-dark .puck-variable-bucket {
   background: var(--puck-color-surface-muted);
   border-color: var(--puck-color-border-muted);
+}
+html.mh-dark .puck-config-section-divided,
+html.mh-dark .puck-variable-scope + .puck-variable-scope {
+  border-color: var(--puck-color-border-muted);
+}
+html.mh-dark .puck-variable-scope-head > span {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 html.mh-dark .puck-variable-item code {
   color: var(--accent);
