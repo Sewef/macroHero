@@ -261,7 +261,7 @@ export async function loadConfig() {
         mergeRuntimeStateIntoConfig(config, runtimeState);
 
         if (runtimeStateMigrated) {
-            config._migration.messages.push("Runtime state migrated from page indexes to page ids.");
+            config._migration.messages.push("Runtime state keys migrated to the current page and variable identifiers.");
             config._migration.migrated = true;
         }
 

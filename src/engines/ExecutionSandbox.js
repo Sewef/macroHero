@@ -62,7 +62,7 @@ class ExecutionSandbox {
    * Build execution context with all available functions/values
    * Cached to avoid rebuilding integrations on every eval
    */
-  buildContext(resolvedVars = {}) {
+  buildContext(resolvedVars = {}, scopes = {}) {
     const integrations = getExpressionContext();
     
     return {
@@ -70,8 +70,10 @@ class ExecutionSandbox {
       integrations,
       // Math functions
       math,
-      // Resolved variables (specific to this evaluation)
-      variables: resolvedVars,
+      scopes: {
+        Global: scopes.Global || resolvedVars,
+        Page: scopes.Page || {},
+      },
     };
   }
 
@@ -81,7 +83,7 @@ class ExecutionSandbox {
    * @param {Object} resolvedVars - Variables available in scope
    * @returns {any} Result of evaluation
    */
-  executeSync(expression, resolvedVars = {}) {
+  executeSync(expression, resolvedVars = {}, scopes = {}) {
     try {
       // Literal values pass through unchanged
       if (expression === null || expression === undefined) return expression;
@@ -90,7 +92,7 @@ class ExecutionSandbox {
 
       logger.log("Executing sync");
 
-      const context = this.buildContext(resolvedVars);
+      const context = this.buildContext(resolvedVars, scopes);
       
       // Generate cache key including expression hash
       const exprHash = this._hashExpression(expression);
@@ -108,9 +110,8 @@ class ExecutionSandbox {
           `
             const { ${integrationKeys} } = context.integrations;
             const { ${mathKeys} } = context.math;
-            with (context.variables) {
-              return (${expression});
-            }
+            const { Page, Global } = context.scopes;
+            return (${expression});
           `
         );
         this._setCacheEntry(cacheKey, evaluator);
@@ -131,7 +132,7 @@ class ExecutionSandbox {
    * @param {Object} resolvedVars - Variables available in scope
    * @returns {Promise<any>} Result of evaluation
    */
-  async executeAsync(expression, resolvedVars = {}) {
+  async executeAsync(expression, resolvedVars = {}, scopes = {}) {
     try {
       // Literal values pass through unchanged
       if (expression === null || expression === undefined) return expression;
@@ -140,7 +141,7 @@ class ExecutionSandbox {
 
       logger.log("Executing async");
 
-      const context = this.buildContext(resolvedVars);
+      const context = this.buildContext(resolvedVars, scopes);
       
       // Process expression to auto-await integration calls using pre-compiled regex
       let processed = expression;
@@ -165,9 +166,8 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              with (context.variables) {
-                return (${processed});
-              }
+              const { Page, Global } = context.scopes;
+              return (${processed});
             })();
           `
         );
@@ -198,8 +198,7 @@ class ExecutionSandbox {
       const fullContext = {
         integrations: context.integrations || getExpressionContext(),
         math,
-        variables: context.variables || {},
-        helpers: context.helpers || {},
+        scopes: context.scopes || { Page: {}, Global: {} },
       };
 
       // Generate cache key including code hash
@@ -219,11 +218,8 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              with (context.helpers) {
-                with (context.variables) {
-                  ${script}
-                }
-              }
+              const { Page, Global } = context.scopes;
+              ${script}
             })();
           `
         );

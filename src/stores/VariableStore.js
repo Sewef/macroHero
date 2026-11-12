@@ -171,7 +171,7 @@ class VariableStore {
   }
 
   /**
-   * Update a variable definition (for setValue, addValue, etc)
+   * Update a variable definition in the runtime store.
    */
   setVariableConfig(varName, config, pageIndex = null) {
     const targetIndex = pageIndex !== null ? pageIndex : this.currentPageIndex;

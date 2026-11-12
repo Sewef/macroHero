@@ -87,12 +87,35 @@ export async function configureRuntimeStateStorage(config) {
     migrated = true;
   }
 
+  const variableRenames = config?._migration?.variableRenames;
+  if (variableRenames) {
+    migrated = migrateRuntimeVariableNames("__global", variableRenames.global) || migrated;
+    for (const [pageId, renames] of Object.entries(variableRenames.pages || {})) {
+      migrated = migrateRuntimeVariableNames(pageId, renames) || migrated;
+    }
+  }
+
   if (migrated) {
     pendingChanges = { ...evaluatedVariablesCache };
     await flushPendingChanges();
     logger.log("Migrated runtime state from page indexes to page ids");
   }
 
+  return migrated;
+}
+
+function migrateRuntimeVariableNames(scopeKey, renames = {}) {
+  const values = evaluatedVariablesCache[scopeKey];
+  if (!values || typeof values !== "object") return false;
+  let migrated = false;
+  for (const [previousName, nextName] of Object.entries(renames || {})) {
+    if (!Object.prototype.hasOwnProperty.call(values, previousName)) continue;
+    if (!Object.prototype.hasOwnProperty.call(values, nextName)) {
+      values[nextName] = values[previousName];
+    }
+    delete values[previousName];
+    migrated = true;
+  }
   return migrated;
 }
 

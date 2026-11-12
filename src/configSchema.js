@@ -1,6 +1,7 @@
 import { deepClone } from "./utils.js";
+import { migrateConfigV2ToV3, repairConfigV3VariableCalls } from "./configMigration.js";
 
-export const CONFIG_SCHEMA_VERSION = 2;
+export const CONFIG_SCHEMA_VERSION = 3;
 export const GLOBAL_STATE_ID = "__global";
 
 const ROOT_KEY_ORDER = ["schemaVersion", "global", "pages"];
@@ -222,13 +223,14 @@ function normalizeScope(scope, options = {}) {
 export function normalizeConfig(rawConfig, options = {}) {
   const cfg = deepClone(rawConfig || {});
   const messages = Array.isArray(cfg._migration?.messages) ? [...cfg._migration.messages] : [];
+  let variableRenames = cfg._migration?.variableRenames || null;
   let migrated = Boolean(cfg._migration?.migrated);
+  const sourceVersion = Number(cfg.schemaVersion) || 1;
 
-  if (cfg.schemaVersion !== CONFIG_SCHEMA_VERSION) {
+  if (sourceVersion !== CONFIG_SCHEMA_VERSION) {
     migrated = true;
     messages.push(`Config schema migrated to v${CONFIG_SCHEMA_VERSION}.`);
   }
-  cfg.schemaVersion = CONFIG_SCHEMA_VERSION;
 
   if (!cfg.global) cfg.global = {};
   if (normalizeScope(cfg.global, options)) {
@@ -270,9 +272,28 @@ export function normalizeConfig(rawConfig, options = {}) {
     }
   });
 
+  if (sourceVersion < 3) {
+    const v3Migration = migrateConfigV2ToV3(cfg);
+    migrated = migrated || v3Migration.migrated;
+    messages.push(...v3Migration.messages);
+    variableRenames = v3Migration.variableRenames;
+
+    cfg.global.variables = buildVariablesFromStateComputed(cfg.global);
+    cfg.pages.forEach(page => {
+      page.variables = buildVariablesFromStateComputed(page);
+    });
+  }
+
+  const v3Repair = repairConfigV3VariableCalls(cfg);
+  if (v3Repair.migrated) migrated = true;
+  messages.push(...v3Repair.messages);
+
+  cfg.schemaVersion = CONFIG_SCHEMA_VERSION;
+
   cfg._migration = {
     migrated,
     messages,
+    ...(variableRenames ? { variableRenames } : {}),
   };
 
   return cfg;

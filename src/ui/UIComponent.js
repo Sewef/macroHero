@@ -131,19 +131,10 @@ export class UIComponent {
 
     const evaluate = () => {
       if (!rawTooltip.includes('${')) return rawTooltip;
-      const resolved = getResolved();
+      const scopes = getResolved();
       return rawTooltip.replace(/\$\{([^}]+)\}/g, (m, expr) => {
-        // Fast path: simple identifier
-        if (/^[a-zA-Z_]\w*$/.test(expr.trim())) {
-          const val = resolved[expr.trim()];
-          return val !== undefined ? String(val) : m;
-        }
-        // Complex expression — evaluate synchronously with resolved vars
         try {
-          const keys = Object.keys(resolved);
-          const vals = keys.map(k => resolved[k]);
-          // eslint-disable-next-line no-new-func
-          const result = new Function(...keys, `return (${expr})`)(...vals);
+          const result = new Function('Page', 'Global', `return (${expr})`)(scopes.Page || {}, scopes.Global || {});
           return result !== undefined && result !== null ? String(result) : m;
         } catch {
           return m;

@@ -9,7 +9,7 @@ const variableNamePattern = "^[A-Za-z_$][A-Za-z0-9_$]*$";
 
 export const MACRO_HERO_CONFIG_JSON_SCHEMA = {
   $schema: "http://json-schema.org/draft-07/schema#",
-  $id: "https://macrohero.local/schemas/config-v2.json",
+  $id: "https://macrohero.local/schemas/config-v3.json",
   title: "MacroHero config",
   type: "object",
   required: ["schemaVersion", "global", "pages"],

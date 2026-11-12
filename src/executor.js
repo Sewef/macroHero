@@ -29,21 +29,76 @@ function buildResolvedContext(page, pageIndex = 0, globalVariables = {}) {
   };
 }
 
-function getVariableScope(page, varName) {
-  if (page?.variables && varName in page.variables) {
+function getVariableScope(page, varName, requestedScope = null) {
+  if (requestedScope !== 'global' && page?.variables && varName in page.variables) {
     return { scope: 'page', variable: page.variables[varName] };
   }
-  if (variableStore.globalVariablesConfig && varName in variableStore.globalVariablesConfig) {
+  if (requestedScope !== 'page' && variableStore.globalVariablesConfig && varName in variableStore.globalVariablesConfig) {
     return { scope: 'global', variable: variableStore.globalVariablesConfig[varName] };
   }
   return { scope: null, variable: null };
 }
 
-function getCommandMutableVariables(page) {
-  return new Set([
-    ...Object.keys(variableStore.globalVariablesConfig || {}),
-    ...Object.keys(page?.variables || {}),
-  ]);
+function createVariableNamespace(config, values, label) {
+  const target = Object.fromEntries(
+    Object.keys(config || {}).map(name => [name, cloneVariableValue(values[name])])
+  );
+  const mutable = new Set(
+    Object.entries(config || {}).filter(([, variable]) => variable?.eval === undefined).map(([name]) => name)
+  );
+
+  return {
+    mutable,
+    proxy: new Proxy(target, {
+      set(object, property, value) {
+        if (typeof property !== 'string' || !Object.prototype.hasOwnProperty.call(config || {}, property)) {
+          throw new Error(`${label}.${String(property)} is not a declared variable`);
+        }
+        if (!mutable.has(property)) {
+          throw new Error(`${label}.${property} is computed and read-only`);
+        }
+        object[property] = value;
+        return true;
+      },
+      deleteProperty(_object, property) {
+        throw new Error(`${label}.${String(property)} cannot be deleted`);
+      },
+      defineProperty() {
+        throw new Error(`${label} variables must be changed with a direct assignment`);
+      },
+    }),
+  };
+}
+
+function cloneVariableValue(value) {
+  if (value === null || typeof value !== 'object') return value;
+  try {
+    return structuredClone(value);
+  } catch {
+    return JSON.parse(JSON.stringify(value));
+  }
+}
+
+function sameVariableValue(left, right) {
+  if (Object.is(left, right)) return true;
+  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') return false;
+  try {
+    return JSON.stringify(left) === JSON.stringify(right);
+  } catch {
+    return false;
+  }
+}
+
+function createExecutionScopes(page, pageIndex, globalVariables) {
+  const resolved = buildResolvedContext(page, pageIndex, globalVariables);
+  const globalValues = {
+    ...variableStore.globalVariablesResolved,
+    ...globalVariables,
+  };
+  return {
+    Page: createVariableNamespace(page?.variables || {}, resolved, 'Page'),
+    Global: createVariableNamespace(variableStore.globalVariablesConfig || {}, globalValues, 'Global'),
+  };
 }
 
 /**
@@ -84,45 +139,61 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       page._resolved = { ...page._resolved, ...preResolved };
     }
 
-    // Step 3: Build execution context with helpers
-    const executionVariables = buildResolvedContext(page, pageIndex, globalVariables);
+    // Step 3: Build explicit Page / Global namespaces.
+    const namespaces = createExecutionScopes(page, pageIndex, globalVariables);
     const executionContext = {
       integrations: getExpressionContext(),
-      variables: executionVariables,
-      helpers: createHelperFunctions(page, pageIndex, globalVariables, executionVariables),
+      scopes: {
+        Page: namespaces.Page.proxy,
+        Global: namespaces.Global.proxy,
+      },
     };
 
     // Step 4: Execute commands
     const script = Array.isArray(commands) ? commands.join('\n') : commands;
     logger.log("Executing script");
 
-    const mutableVars = getCommandMutableVariables(page);
-    const beforeCommandValues = new Map();
-    for (const varName of mutableVars) {
-      beforeCommandValues.set(varName, executionContext.variables[varName]);
-    }
+    const beforePageValues = new Map([...namespaces.Page.mutable].map(name => [name, cloneVariableValue(namespaces.Page.proxy[name])]));
+    const beforeGlobalValues = new Map([...namespaces.Global.mutable].map(name => [name, cloneVariableValue(namespaces.Global.proxy[name])]));
 
     await executionSandbox.executeCommand(script, executionContext);
 
-    const directlyMutatedVars = new Set();
-    for (const varName of mutableVars) {
-      const beforeValue = beforeCommandValues.get(varName);
-      const afterValue = executionContext.variables[varName];
-      if (!Object.is(beforeValue, afterValue)) {
+    const directlyMutatedPageVars = new Set();
+    const directlyMutatedGlobalVars = new Set();
+    for (const varName of namespaces.Page.mutable) {
+      const beforeValue = beforePageValues.get(varName);
+      const afterValue = namespaces.Page.proxy[varName];
+      if (!sameVariableValue(beforeValue, afterValue)) {
         await applyVariableChange(page, pageIndex, globalVariables, varName, afterValue, {
+          scope: 'page',
           persist: true,
           resolveDependents: false,
         });
-        directlyMutatedVars.add(varName);
+        directlyMutatedPageVars.add(varName);
+      }
+    }
+    for (const varName of namespaces.Global.mutable) {
+      const beforeValue = beforeGlobalValues.get(varName);
+      const afterValue = namespaces.Global.proxy[varName];
+      if (!sameVariableValue(beforeValue, afterValue)) {
+        await applyVariableChange(page, pageIndex, globalVariables, varName, afterValue, {
+          scope: 'global',
+          persist: true,
+          resolveDependents: false,
+        });
+        directlyMutatedGlobalVars.add(varName);
       }
     }
 
+    await resolveGlobalDependents(page, globalVariables, directlyMutatedGlobalVars);
+
     // Step 5: Find variables AFFECTED by commands
     const affectedVars = variableEngine.getAffectedVariables(commands, page.variables);
-    for (const varName of directlyMutatedVars) {
-      if (page.variables && varName in page.variables) {
-        affectedVars.add(varName);
-      }
+    directlyMutatedPageVars.forEach(varName => affectedVars.add(varName));
+    if (directlyMutatedGlobalVars.size > 0) {
+      Object.entries(page.variables || {}).forEach(([name, variable]) => {
+        if (variable?.eval !== undefined) affectedVars.add(name);
+      });
     }
     
     if (page._modifiedVars.size > 0) {
@@ -175,14 +246,17 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
  */
 async function applyVariableChange(page, pageIndex = 0, globalVariables = {}, varName, value, options = {}) {
   const {
+    scope: requestedScope = null,
     persist = true,
     resolveDependents: shouldResolveDependents = true,
-    runtimeVariables = null,
   } = options;
-  const { scope, variable } = getVariableScope(page, varName);
+  const { scope, variable } = getVariableScope(page, varName, requestedScope);
 
   if (!variable) {
-    throw new Error(`Variable "${varName}" not found`);
+    throw new Error(`${requestedScope === 'global' ? 'Global' : 'Page'}.${varName} not found`);
+  }
+  if (variable.eval !== undefined) {
+    throw new Error(`${scope === 'global' ? 'Global' : 'Page'}.${varName} is computed and read-only`);
   }
 
   let newValue = value;
@@ -192,15 +266,11 @@ async function applyVariableChange(page, pageIndex = 0, globalVariables = {}, va
   if (variable.max !== undefined && newValue > variable.max) newValue = variable.max;
 
   variable.value = newValue;
-  delete variable.eval;
-  if (runtimeVariables) {
-    runtimeVariables[varName] = newValue;
-  }
 
   if (scope === 'global') {
     globalVariables[varName] = newValue;
     if (!page._resolved) page._resolved = {};
-    page._resolved[varName] = newValue;
+    if (!(varName in (page.variables || {}))) page._resolved[varName] = newValue;
     variableEngine.invalidateDependencyGraph(variableStore.globalVariablesConfig);
     variableStore.setGlobalVariableResolved(varName, newValue);
     updateRenderedValue(varName, newValue, null);
@@ -249,40 +319,33 @@ async function resolvePageDependents(page, pageIndex = 0, globalVariables = {}, 
   }
 }
 
-function createHelperFunctions(page, pageIndex = 0, globalVariables = {}, runtimeVariables = null) {
-  return {
-    setValue: async (varName, value) => {
-      const newValue = await applyVariableChange(page, pageIndex, globalVariables, varName, value, { runtimeVariables });
-      logger.log('Set value:', varName, '=', newValue);
-      return newValue;
-    },
+async function resolveGlobalDependents(page, globalVariables, changedNames) {
+  if (!changedNames.size) return;
+  const globalConfig = variableStore.globalVariablesConfig || {};
+  const dependentVars = variableEngine.getDependentVariables(globalConfig, changedNames, { scope: 'global' });
+  changedNames.forEach(name => dependentVars.delete(name));
+  if (!dependentVars.size) return;
 
-    addValue: async (varName, delta) => {
-      const { scope } = getVariableScope(page, varName);
-      if (!scope) {
-        throw new Error(`Variable "${varName}" not found`);
-      }
-      const currentValue = scope === 'global'
-        ? Number(globalVariables[varName] ?? variableStore.globalVariablesResolved[varName] ?? page._resolved[varName]) || 0
-        : Number(variableStore.getVariableResolved(varName, pageIndex) ?? page._resolved[varName]) || 0;
-      const newValue = await applyVariableChange(page, pageIndex, globalVariables, varName, currentValue + Number(delta), { runtimeVariables });
-      logger.log('Add value:', varName, '+=', delta, '=>', newValue);
-      return newValue;
-    },
-  };
+  const resolved = await variableEngine.resolveVariables(
+    globalConfig,
+    { ...variableStore.globalVariablesResolved, ...globalVariables },
+    dependentVars,
+    { scope: 'global' },
+  );
+  for (const name of dependentVars) {
+    const value = resolved[name];
+    globalVariables[name] = value;
+    variableStore.setGlobalVariableResolved(name, value);
+    if (!page._resolved) page._resolved = {};
+    if (!(name in (page.variables || {}))) page._resolved[name] = value;
+    updateRenderedValue(name, value, null);
+  }
 }
 
-/**
- * Legacy wrapper for backwards compatibility
- */
 export async function executeCommand(command, page) {
   const script = Array.isArray(command) ? command.join('\n') : command;
-  const variables = page?._resolved || {};
-  const context = {
-    variables,
-    helpers: createHelperFunctions(page, page?._pageIndex ?? 0, {}, variables),
-  };
-  return executionSandbox.executeCommand(script, context);
+  const pageIndex = page?._pageIndex ?? 0;
+  return handleButtonClick([script], page, variableStore.globalVariablesResolved || {}, null, pageIndex);
 }
 
 /**

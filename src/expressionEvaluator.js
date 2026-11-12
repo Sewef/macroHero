@@ -16,18 +16,18 @@ const logger = createDebugLogger('expressionEvaluator');
  * Evaluate a single variable expression
  * Delegated to VariableEngine
  */
-export async function evaluateExpression(expression, resolvedVars = {}) {
+export async function evaluateExpression(expression, resolvedVars = {}, scopes = {}) {
   logger.log("Delegating to VariableEngine");
-  return variableEngine.evaluateExpression(expression, resolvedVars);
+  return variableEngine.evaluateExpression(expression, resolvedVars, scopes);
 }
 
 /**
  * Resolve all variables in dependency order
  * Delegated to VariableEngine
  */
-export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null) {
+export async function resolveVariables(variablesConfig, globalVars = {}, onVariableResolved = null, onlyVars = null, options = {}) {
   logger.log("Delegating to VariableEngine");
-  const resolved = await variableEngine.resolveVariables(variablesConfig, globalVars, onlyVars);
+  const resolved = await variableEngine.resolveVariables(variablesConfig, globalVars, onlyVars, options);
   
   // Call the callback for requested config variables only (backwards compatibility).
   // The resolved object also contains base/global values; those should not be reported

@@ -16,7 +16,7 @@ export class ButtonComponent extends UIComponent {
       btn.textContent = "";
       this.services.renderedExpressionElements.push({ element: btn, item: this.item, page: this.page });
       const resolvedVars = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
-      this.services.evaluateItemText(this.item, resolvedVars)
+      this.services.evaluateItemText(this.item, resolvedVars, this.page)
         .then(res => { btn.textContent = res; })
         .catch(err => { this.handleError("Button", err); });
     } else {
@@ -38,7 +38,10 @@ export class ButtonComponent extends UIComponent {
     UIComponent.applyTooltip(
       btn,
       this.item.tooltip || this.item.label || (hasOnclick ? 'Button' : 'No commands defined'),
-      () => ({ ...this.services.globalVariables, ...(this.page?._resolved || {}) })
+      () => ({
+        Global: { ...this.services.globalVariables },
+        Page: Object.fromEntries(Object.keys(this.page?.variables || {}).map(name => [name, this.page?._resolved?.[name]])),
+      })
     );
 
     // Add right-click handler if onrightclick commands exist

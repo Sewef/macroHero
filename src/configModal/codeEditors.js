@@ -24,6 +24,8 @@ const JS_LINT_CONFIG = [
         Promise: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
+        Page: "readonly",
+        Global: "readonly",
       },
     },
     rules: {
@@ -45,28 +47,6 @@ const JS_LINT_CONFIG = [
 ];
 
 const SCRIPT_HELPER_COMPLETIONS = [
-  snippetCompletion("await setValue(${varName}, ${value})", {
-    label: "setValue",
-    type: "function",
-    detail: "(varName, value)",
-    info: completionInfo({
-      signature: "await setValue(varName, value)",
-      description: "Updates a State variable, then refreshes every value that depends on it.",
-      parameters: [["varName", "State variable name."], ["value", "New value to store."]],
-      example: "await setValue('hitPoints', 12)",
-    }),
-  }),
-  snippetCompletion("await addValue(${varName}, ${delta})", {
-    label: "addValue",
-    type: "function",
-    detail: "(varName, delta)",
-    info: completionInfo({
-      signature: "await addValue(varName, delta)",
-      description: "Adds a positive or negative amount to a numeric State variable.",
-      parameters: [["varName", "State variable name."], ["delta", "Amount to add or subtract."]],
-      example: "await addValue('hitPoints', -1)",
-    }),
-  }),
   snippetCompletion("console.log(${value})", {
     label: "console.log",
     type: "function",
@@ -75,7 +55,7 @@ const SCRIPT_HELPER_COMPLETIONS = [
       signature: "console.log(value)",
       description: "Writes a diagnostic value to the browser console.",
       parameters: [["value", "Value or expression to inspect."]],
-      example: "console.log(hitPoints)",
+      example: "console.log(Page.hitPoints)",
       note: "Useful for debugging; it does not change the MacroHero state.",
     }),
   }),
@@ -540,23 +520,39 @@ function createScriptCompletionSource(variables = []) {
       label: variable.name,
       type: "variable",
       detail: variable.detail || "MacroHero variable",
+      scope: variable.scope || "Page",
       info: completionInfo({
-        signature: variable.name,
+        signature: `${variable.scope || "Page"}.${variable.name}`,
         description: variable.info || "Resolved MacroHero variable available in this script.",
         note: variable.detail || "The value is resolved from the current Global or Page scope.",
       }),
     }));
+  const scopedVariableOptions = {
+    Page: variableOptions.filter(variable => variable.scope === "Page"),
+    Global: variableOptions.filter(variable => variable.scope === "Global"),
+  };
   const rootOptions = [
     ...SCRIPT_HELPER_COMPLETIONS,
+    ...["Page", "Global"].map(label => ({
+      label,
+      type: "namespace",
+      detail: label === "Page" ? "Current screen variables" : "Global variables",
+      info: completionInfo({
+        signature: label,
+        description: label === "Page"
+          ? "State and computed variables belonging to the current screen. Computed values are read-only."
+          : "State and computed variables shared by every screen. Computed values are read-only.",
+        note: "Type a dot to list the variables available in this scope.",
+      }),
+    })),
     ...SCRIPT_NAMESPACE_COMPLETIONS,
-    ...variableOptions,
   ];
 
   return context => {
     const property = context.matchBefore(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)?$/);
     if (property) {
       const [namespace] = property.text.split(".");
-      const methods = SCRIPT_NAMESPACE_METHODS[namespace];
+      const methods = SCRIPT_NAMESPACE_METHODS[namespace] || scopedVariableOptions[namespace];
       if (!methods) return null;
       return {
         from: property.from + namespace.length + 1,

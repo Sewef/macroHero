@@ -13,11 +13,22 @@ import { UIComponent } from "./UIComponent.js";
 import { parseMd, sanitizeHtml, MD_PATTERN } from "./markdownUtils.js";
 
 // ── Substitute ${varName} in a string ────────────────────────────────────────
-function substituteVars(str, resolved) {
+function substituteVars(str, resolved, page, globalValues) {
   if (!str.includes('${')) return str;
-  return str.replace(/\$\{([a-zA-Z_]\w*)\}/g, (m, v) =>
-    resolved[v] !== undefined ? String(resolved[v]) : m
+  const Global = Object.fromEntries(
+    Object.keys(globalValues || {}).map(name => [name, globalValues[name]])
   );
+  const Page = Object.fromEntries(
+    Object.keys(page?.variables || {}).map(name => [name, page?._resolved?.[name] ?? resolved[name]])
+  );
+  return str.replace(/\$\{([^{}]+)\}/g, (placeholder, expression) => {
+    try {
+      const value = new Function('Page', 'Global', `return (${expression})`)(Page, Global);
+      return value === null || value === undefined ? '' : String(value);
+    } catch {
+      return placeholder;
+    }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,7 +60,7 @@ export class TextComponent extends UIComponent {
     });
 
     const setContent = (resolved) => {
-      el.innerHTML = toHtml(substituteVars(raw, resolved));
+      el.innerHTML = toHtml(substituteVars(raw, resolved, this.page, this.services.globalVariables));
     };
 
     setContent(getResolved());

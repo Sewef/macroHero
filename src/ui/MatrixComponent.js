@@ -92,7 +92,7 @@ export class MatrixComponent extends UIComponent {
         labelEl.textContent = "";
         this.services.renderedExpressionElements.push({ element: labelEl, item: buttonConfig, page: this.page });
         const resolvedVars = { ...this.services.globalVariables, ...(this.page?._resolved || {}) };
-        this.services.evaluateItemText(buttonConfig, resolvedVars)
+        this.services.evaluateItemText(buttonConfig, resolvedVars, this.page)
           .then(res => { labelEl.textContent = res; })
           .catch(err => { this.handleError("MatrixButton", err); });
       } else {
@@ -106,7 +106,10 @@ export class MatrixComponent extends UIComponent {
     UIComponent.applyTooltip(
       btn,
       buttonConfig.tooltip || buttonConfig.label || `Button ${index + 1}`,
-      () => ({ ...this.services.globalVariables, ...(this.page?._resolved || {}) })
+      () => ({
+        Global: { ...this.services.globalVariables },
+        Page: Object.fromEntries(Object.keys(this.page?.variables || {}).map(name => [name, this.page?._resolved?.[name]])),
+      })
     );
 
     // Add click handler if commands exist

@@ -67,7 +67,7 @@ OBR.onReady(async () => {
       const detail = (cfg._migration.messages || []).join(" ");
       logger.warn("Configuration migrated:", detail);
       try {
-        await OBR.notification.show("MacroHero config migrated to the new state format.", "INFO");
+        await OBR.notification.show("MacroHero config migrated to v3 variable namespaces.", "INFO");
       } catch (err) {
         logger.warn("Could not show migration notification:", err);
       }
@@ -83,7 +83,7 @@ OBR.onReady(async () => {
     }
 
     // Resolve global variables (these are needed immediately for page variable expressions)
-    const globalVars = await resolveVariables(cfg.global?.variables);
+    const globalVars = await resolveVariables(cfg.global?.variables, {}, null, null, { scope: "global" });
 
     // Apply width/height settings if specified
     if (cfg.global?.width || cfg.global?.height) {

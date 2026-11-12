@@ -26,7 +26,7 @@ const dependencyCache = new WeakMap();
 const REGEX_PATTERNS = {
   awaitKeyword: /\bawait\s+/,
   thisReference: /\bthis\.(\w+)/g,
-  variableIdentifier: /\b([a-z_][a-zA-Z0-9_]*)\b/g,
+  variableIdentifier: /(?<![A-Za-z0-9_$])([A-Za-z_$][A-Za-z0-9_$]*)(?![A-Za-z0-9_$])/g,
 };
 
 // Build integration detection regex map
@@ -100,7 +100,7 @@ class VariableEngine {
    * @param {Object} variablesConfig - Variable definitions (needed for structure)
    * @returns {Set} Set of variable names actually used
    */
-  _trackDependencies(expression, variablesConfig = {}) {
+  _trackDependencies(expression, variablesConfig = {}, namespace = "Page") {
     const trackedVars = new Set();
     const varNames = Object.keys(variablesConfig || {});
     const varSet = new Set(varNames);
@@ -109,26 +109,9 @@ class VariableEngine {
       return trackedVars;
     }
 
-    // Track explicit this.var references first.
-    const thisRefs = expression.matchAll(REGEX_PATTERNS.thisReference);
-    for (const match of thisRefs) {
-      const refName = match[1];
-      if (varSet.has(refName)) {
-        trackedVars.add(refName);
-      }
-    }
-
-    // Ignore quoted string literals to reduce false positives from labels/sheet names.
-    const expressionWithoutQuotedStrings = expression
-      .replace(/"(?:\\.|[^"\\])*"/g, ' ')
-      .replace(/'(?:\\.|[^'\\])*'/g, ' ');
-
-    const identifiers = expressionWithoutQuotedStrings.matchAll(REGEX_PATTERNS.variableIdentifier);
-    for (const match of identifiers) {
-      const identifier = match[1];
-      if (varSet.has(identifier)) {
-        trackedVars.add(identifier);
-      }
+    const namespacePattern = new RegExp(`\\b${namespace}\\.([A-Za-z_$][A-Za-z0-9_$]*)`, 'g');
+    for (const match of expression.matchAll(namespacePattern)) {
+      if (varSet.has(match[1])) trackedVars.add(match[1]);
     }
 
     return trackedVars;
@@ -140,7 +123,7 @@ class VariableEngine {
    * @param {Object} resolvedVars - Variables available in scope
    * @returns {Promise<any>} Result
    */
-  async evaluateExpression(expression, resolvedVars = {}) {
+  async evaluateExpression(expression, resolvedVars = {}, scopes = {}) {
     try {
       // Literal values pass through unchanged
       if (expression === null || expression === undefined) return expression;
@@ -154,8 +137,8 @@ class VariableEngine {
 
       // Execute through sandbox
       const result = hasAsync
-        ? await executionSandbox.executeAsync(expression, resolvedVars)
-        : executionSandbox.executeSync(expression, resolvedVars);
+        ? await executionSandbox.executeAsync(expression, resolvedVars, scopes)
+        : executionSandbox.executeSync(expression, resolvedVars, scopes);
 
       return result;
     } catch (error) {
@@ -185,11 +168,10 @@ class VariableEngine {
   /**
    * Build and cache dependency graph from static dependency tracking.
    */
-  _buildDependencyGraph(variablesConfig) {
+  _buildDependencyGraph(variablesConfig, namespace = "Page") {
     // Check cache first
-    if (dependencyCache.has(variablesConfig)) {
-      return dependencyCache.get(variablesConfig);
-    }
+    const cached = dependencyCache.get(variablesConfig);
+    if (cached?.[namespace]) return cached[namespace];
 
     const dependencies = new Map();
     const varNames = Object.keys(variablesConfig || {});
@@ -201,7 +183,7 @@ class VariableEngine {
         const expr = String(varConfig.eval);
 
         // Use tracking to detect actual dependencies
-        let trackedDeps = this._trackDependencies(expr, variablesConfig);
+        let trackedDeps = this._trackDependencies(expr, variablesConfig, namespace);
 
         // Filter out self-references
         for (const depVar of trackedDeps) {
@@ -210,22 +192,12 @@ class VariableEngine {
           }
         }
 
-        // Fallback: if tracking found nothing, use this.varName references as backup
-        if (deps.length === 0) {
-          const thisRefs = expr.match(REGEX_PATTERNS.thisReference) || [];
-          for (const ref of thisRefs) {
-            const depVar = ref.replace('this.', '');
-            if (depVar in variablesConfig && depVar !== varName) {
-              deps.push(depVar);
-            }
-          }
-        }
       }
 
       dependencies.set(varName, deps);
     }
 
-    dependencyCache.set(variablesConfig, dependencies);
+    dependencyCache.set(variablesConfig, { ...(cached || {}), [namespace]: dependencies });
     return dependencies;
   }
 
@@ -236,11 +208,12 @@ class VariableEngine {
    * @param {Set} varsToResolve - Only resolve these (optional)
    * @returns {Promise<Object>} All resolved variables
    */
-  async resolveVariables(variablesConfig, resolvedVars = {}, varsToResolve = null) {
+  async resolveVariables(variablesConfig, resolvedVars = {}, varsToResolve = null, options = {}) {
     if (!variablesConfig) return resolvedVars;
 
     const resolved = { ...resolvedVars };
-    const dependencies = this._buildDependencyGraph(variablesConfig);
+    const namespace = options.scope === "global" ? "Global" : "Page";
+    const dependencies = this._buildDependencyGraph(variablesConfig, namespace);
 
     // Determine which variables to resolve
     let toResolve = varsToResolve;
@@ -273,7 +246,11 @@ class VariableEngine {
         const oldValue = resolved[varName];
 
         if (varConfig.eval !== undefined) {
-          value = await this.evaluateExpression(varConfig.eval, resolved);
+          value = await this.evaluateExpression(
+            varConfig.eval,
+            resolved,
+            this._buildVariableScopes(resolved, variablesConfig, options),
+          );
         } else if (varConfig.value !== undefined) {
           value = varConfig.value;
         } else {
@@ -294,6 +271,22 @@ class VariableEngine {
     }
 
     return resolved;
+  }
+
+  _buildVariableScopes(resolved, variablesConfig, options = {}) {
+    const scope = options.scope || "page";
+    const globalNames = options.globalVariableNames
+      || Object.keys(variableStore.globalVariablesConfig || {});
+    const currentNames = Object.keys(variablesConfig || {});
+    const pick = names => Object.fromEntries(
+      names.filter(name => Object.prototype.hasOwnProperty.call(resolved, name))
+        .map(name => [name, resolved[name]])
+    );
+
+    if (scope === "global") {
+      return { Global: pick(currentNames), Page: {} };
+    }
+    return { Global: pick(globalNames), Page: pick(currentNames) };
   }
 
   /**
@@ -384,11 +377,12 @@ class VariableEngine {
   /**
    * Get dependent variables (variables that depend on changed ones)
    */
-  getDependentVariables(variablesConfig, changedVars) {
+  getDependentVariables(variablesConfig, changedVars, options = {}) {
     if (!variablesConfig) return new Set();
 
     const changedSet = changedVars instanceof Set ? changedVars : new Set(Array.isArray(changedVars) ? changedVars : [changedVars]);
-    const dependencies = this._buildDependencyGraph(variablesConfig);
+    const namespace = options.scope === "global" ? "Global" : "Page";
+    const dependencies = this._buildDependencyGraph(variablesConfig, namespace);
 
     // Build reverse dependency map
     const reverseDeps = new Map();

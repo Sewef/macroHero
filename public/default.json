@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "global": {
     "title": "MacroHero Configuration",
     "width": 800,
@@ -103,8 +103,8 @@
               "tooltip": "Fetch the first cell of the range and store it in `gsResult`",
               "color": "#27ae60",
               "onclick": [
-                "const val = await GoogleSheets.getValue(gsSheetId, gsSheetName, gsRange);",
-                "await setValue('gsResult', val);",
+                "const val = await GoogleSheets.getValue(Page.gsSheetId, Page.gsSheetName, Page.gsRange);",
+                "(Page.gsResult = val);",
                 "await Owlbear.notification.show('Value: ' + val, 'SUCCESS');"
               ]
             },
@@ -114,8 +114,8 @@
               "tooltip": "Fetch the full range and display it as JSON in `gsResult`",
               "color": "#2980b9",
               "onclick": [
-                "const rows = await GoogleSheets.getRange(gsSheetId, gsSheetName, gsRange);",
-                "await setValue('gsResult', JSON.stringify(rows));",
+                "const rows = await GoogleSheets.getRange(Page.gsSheetId, Page.gsSheetName, Page.gsRange);",
+                "(Page.gsResult = JSON.stringify(rows));",
                 "await Owlbear.notification.show('Range fetched: ' + rows.length + ' row(s)', 'INFO');"
               ]
             }
@@ -128,8 +128,8 @@
       "id": "conditionmarkers",
       "state": {},
       "computed": {
-        "conditionValue": "ConditionMarkers.getValue(token, 'Bandaged')",
-        "isBandaged": "ConditionMarkers.hasCondition(token, 'Bandaged')"
+        "conditionValue": "ConditionMarkers.getValue(Global.token, 'Bandaged')",
+        "isBandaged": "ConditionMarkers.hasCondition(Global.token, 'Bandaged')"
       },
       "layout": [
         {
@@ -176,7 +176,7 @@
               "type": "button",
               "label": "Toggle Bandaged",
               "onclick": [
-                "await ConditionMarkers.toggleCondition(token, 'Bandaged');",
+                "await ConditionMarkers.toggleCondition(Global.token, 'Bandaged');",
                 "await Owlbear.notification.show('Bandaged condition toggled', 'INFO');"
               ]
             },
@@ -184,7 +184,7 @@
               "type": "button",
               "label": "Increment Value",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Bandaged', conditionValue + 1);",
+                "await ConditionMarkers.addCondition(Global.token, 'Bandaged', Page.conditionValue + 1);",
                 "await Owlbear.notification.show('Condition value increased', 'INFO');"
               ]
             },
@@ -192,7 +192,7 @@
               "type": "button",
               "label": "Clear All",
               "onclick": [
-                "await ConditionMarkers.clearAllConditions(token);",
+                "await ConditionMarkers.clearAllConditions(Global.token);",
                 "await Owlbear.notification.show('All conditions cleared', 'WARNING');"
               ]
             }
@@ -212,7 +212,7 @@
               "type": "button",
               "label": "Poisoned",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Poisoned');",
+                "await ConditionMarkers.addCondition(Global.token, 'Poisoned');",
                 "await Owlbear.notification.show('Poisoned condition applied', 'WARNING');"
               ]
             },
@@ -220,7 +220,7 @@
               "type": "button",
               "label": "Paralyzed",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Paralysed');",
+                "await ConditionMarkers.addCondition(Global.token, 'Paralysed');",
                 "await Owlbear.notification.show('Paralyzed condition applied', 'WARNING');"
               ]
             },
@@ -228,7 +228,7 @@
               "type": "button",
               "label": "Fainted",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Fainted');",
+                "await ConditionMarkers.addCondition(Global.token, 'Fainted');",
                 "await Owlbear.notification.show('Fainted condition applied', 'ERROR');"
               ]
             }
@@ -241,8 +241,8 @@
       "id": "owltrackers",
       "state": {},
       "computed": {
-        "trackerHP": "OwlTrackers.getValue(token, 'HP')",
-        "trackerMaxHP": "OwlTrackers.getMax(token, 'HP')"
+        "trackerHP": "OwlTrackers.getValue(Global.token, 'HP')",
+        "trackerMaxHP": "OwlTrackers.getMax(Global.token, 'HP')"
       },
       "layout": [
         {
@@ -285,7 +285,7 @@
               "type": "button",
               "label": "Heal 10",
               "onclick": [
-                "await OwlTrackers.addValue(token, 'HP', 10);",
+                "await OwlTrackers.addValue(Global.token, 'HP', 10);",
                 "await Owlbear.notification.show('Healed 10 HP', 'SUCCESS');"
               ]
             },
@@ -293,7 +293,7 @@
               "type": "button",
               "label": "Damage 10",
               "onclick": [
-                "await OwlTrackers.addValue(token, 'HP', -10);",
+                "await OwlTrackers.addValue(Global.token, 'HP', -10);",
                 "await Owlbear.notification.error('Took 10 damage');"
               ]
             },
@@ -301,7 +301,7 @@
               "type": "button",
               "label": "Full Heal",
               "onclick": [
-                "await OwlTrackers.setValue(token, 'HP', trackerMaxHP);",
+                "await OwlTrackers.setValue(Global.token, 'HP', Page.trackerMaxHP);",
                 "await Owlbear.notification.show('Fully healed', 'SUCCESS');"
               ]
             }
@@ -321,7 +321,7 @@
               "type": "button",
               "label": "Create HP Tracker (50/50)",
               "onclick": [
-                "await OwlTrackers.addTracker(token, {",
+                "await OwlTrackers.addTracker(Global.token, {",
                 "  variant: 'value-max',",
                 "  name: 'HP',",
                 "  value: 50,",
@@ -335,7 +335,7 @@
               "type": "button",
               "label": "Remove HP Tracker",
               "onclick": [
-                "await OwlTrackers.removeTracker(token, 'HP');",
+                "await OwlTrackers.removeTracker(Global.token, 'HP');",
                 "await Owlbear.notification.show('HP Tracker removed', 'WARNING');"
               ]
             }
@@ -348,9 +348,9 @@
       "id": "statbubbles",
       "state": {},
       "computed": {
-        "bubbleAC": "StatBubbles.getValue(token, 'armor class')",
-        "bubbleHealth": "StatBubbles.getValue(token, 'health')",
-        "bubbleMaxHealth": "StatBubbles.getValue(token, 'max health')"
+        "bubbleAC": "StatBubbles.getValue(Global.token, 'armor class')",
+        "bubbleHealth": "StatBubbles.getValue(Global.token, 'health')",
+        "bubbleMaxHealth": "StatBubbles.getValue(Global.token, 'max health')"
       },
       "layout": [
         {
@@ -398,7 +398,7 @@
               "type": "button",
               "label": "Heal 15",
               "onclick": [
-                "await StatBubbles.heal(token, 15);",
+                "await StatBubbles.heal(Global.token, 15);",
                 "await Owlbear.notification.show('Healed 15 HP', 'SUCCESS');"
               ]
             },
@@ -406,7 +406,7 @@
               "type": "button",
               "label": "Damage 15",
               "onclick": [
-                "await StatBubbles.damage(token, 15);",
+                "await StatBubbles.damage(Global.token, 15);",
                 "await Owlbear.notification.error('Took 15 damage');"
               ]
             },
@@ -414,7 +414,7 @@
               "type": "button",
               "label": "Full Heal",
               "onclick": [
-                "await StatBubbles.setValue(token, 'health', bubbleMaxHealth);",
+                "await StatBubbles.setValue(Global.token, 'health', Page.bubbleMaxHealth);",
                 "await Owlbear.notification.show('Fully healed', 'SUCCESS');"
               ]
             }
@@ -434,7 +434,7 @@
               "type": "button",
               "label": "AC +2",
               "onclick": [
-                "await StatBubbles.addValue(token, 'armor class', 2);",
+                "await StatBubbles.addValue(Global.token, 'armor class', 2);",
                 "await Owlbear.notification.show('AC increased by 2', 'INFO');"
               ]
             },
@@ -442,7 +442,7 @@
               "type": "button",
               "label": "Add Temp HP (20)",
               "onclick": [
-                "await StatBubbles.setValue(token, 'temporary health', 20);",
+                "await StatBubbles.setValue(Global.token, 'temporary health', 20);",
                 "await Owlbear.notification.show('Temporary HP added', 'SUCCESS');"
               ]
             },
@@ -450,7 +450,7 @@
               "type": "button",
               "label": "Remove Temp HP",
               "onclick": [
-                "await StatBubbles.setValue(token, 'temporary health', 0);",
+                "await StatBubbles.setValue(Global.token, 'temporary health', 0);",
                 "await Owlbear.notification.show('Temporary HP removed', 'INFO');"
               ]
             }
@@ -463,7 +463,7 @@
       "id": "coloredrings",
       "state": {},
       "computed": {
-        "hasBlueRing": "ColoredRings.hasRing(token, '#1a6aff')"
+        "hasBlueRing": "ColoredRings.hasRing(Global.token, '#1a6aff')"
       },
       "layout": [
         {
@@ -501,7 +501,7 @@
               "type": "button",
               "label": "Blue Ring",
               "onclick": [
-                "await ColoredRings.addRing(token, '#1a6aff');",
+                "await ColoredRings.addRing(Global.token, '#1a6aff');",
                 "await Owlbear.notification.show('Blue ring added', 'INFO');"
               ]
             },
@@ -509,7 +509,7 @@
               "type": "button",
               "label": "Red Ring",
               "onclick": [
-                "await ColoredRings.addRing(token, '#ff0000');",
+                "await ColoredRings.addRing(Global.token, '#ff0000');",
                 "await Owlbear.notification.show('Red ring added', 'WARNING');"
               ]
             },
@@ -517,7 +517,7 @@
               "type": "button",
               "label": "Green Ring",
               "onclick": [
-                "await ColoredRings.addRing(token, '#00ff00');",
+                "await ColoredRings.addRing(Global.token, '#00ff00');",
                 "await Owlbear.notification.show('Green ring added', 'SUCCESS');"
               ]
             }
@@ -530,7 +530,7 @@
               "type": "button",
               "label": "Yellow Ring",
               "onclick": [
-                "await ColoredRings.addRing(token, '#ffff00');",
+                "await ColoredRings.addRing(Global.token, '#ffff00');",
                 "await Owlbear.notification.show('Yellow ring added', 'INFO');"
               ]
             },
@@ -538,7 +538,7 @@
               "type": "button",
               "label": "Purple Ring",
               "onclick": [
-                "await ColoredRings.addRing(token, '#ff00ff');",
+                "await ColoredRings.addRing(Global.token, '#ff00ff');",
                 "await Owlbear.notification.show('Purple ring added', 'INFO');"
               ]
             },
@@ -546,8 +546,8 @@
               "type": "button",
               "label": "Remove All Rings",
               "onclick": [
-                "const rings = await ColoredRings.getRings(token);",
-                "for (const ring of rings) { await ColoredRings.removeRing(token, ring); }",
+                "const rings = await ColoredRings.getRings(Global.token);",
+                "for (const ring of rings) { await ColoredRings.removeRing(Global.token, ring); }",
                 "await Owlbear.notification.show('All rings removed', 'INFO');"
               ]
             }
@@ -560,8 +560,8 @@
       "id": "prettysordid",
       "state": {},
       "computed": {
-        "prettyHasInitiative": "PrettySordid.hasInitiative(token)",
-        "prettyInitiativeCount": "PrettySordid.getInitiative(token)"
+        "prettyHasInitiative": "PrettySordid.hasInitiative(Global.token)",
+        "prettyInitiativeCount": "PrettySordid.getInitiative(Global.token)"
       },
       "layout": [
         {
@@ -605,7 +605,7 @@
               "label": "Roll Initiative (+3)",
               "onclick": [
                 "const roll = await JustDices.rollSilent('1d20 + 3');",
-                "await PrettySordid.setInitiative(token, roll);",
+                "await PrettySordid.setInitiative(Global.token, roll);",
                 "await Owlbear.notification.show('Initiative: ' + roll, 'SUCCESS');"
               ]
             },
@@ -613,8 +613,8 @@
               "type": "button",
               "label": "Increment",
               "onclick": [
-                "const current = await PrettySordid.getInitiative(token) || 0;",
-                "await PrettySordid.setInitiative(token, current + 1);",
+                "const current = await PrettySordid.getInitiative(Global.token) || 0;",
+                "await PrettySordid.setInitiative(Global.token, current + 1);",
                 "await Owlbear.notification.show('Initiative increased', 'INFO');"
               ]
             },
@@ -622,7 +622,7 @@
               "type": "button",
               "label": "Clear Initiative",
               "onclick": [
-                "await PrettySordid.removeInitiative(token);",
+                "await PrettySordid.removeInitiative(Global.token);",
                 "await Owlbear.notification.show('Initiative cleared', 'WARNING');"
               ]
             }
@@ -834,8 +834,8 @@
               "label": "Save",
               "color": "#27ae60",
               "onclick": [
-                "Local.set(storageKey, storageValue);",
-                "await Owlbear.notification.show('Saved: ' + storageKey + ' = ' + storageValue, 'SUCCESS');"
+                "Local.set(Page.storageKey, Page.storageValue);",
+                "await Owlbear.notification.show('Saved: ' + Page.storageKey + ' = ' + Page.storageValue, 'SUCCESS');"
               ]
             },
             {
@@ -843,8 +843,8 @@
               "label": "Read",
               "color": "#2980b9",
               "onclick": [
-                "const v = Local.value(storageKey, '(not set)');",
-                "await Owlbear.notification.show(storageKey + ' → ' + v, 'INFO');"
+                "const v = Local.value(Page.storageKey, '(not set)');",
+                "await Owlbear.notification.show(Page.storageKey + ' → ' + v, 'INFO');"
               ]
             },
             {
@@ -885,7 +885,7 @@
               "onclick": [
                 "const next = Local.value('persistentCounter', 0) + 1;",
                 "Local.set('persistentCounter', next);",
-                "await setValue('persistentCounter', next);"
+                "(Page.persistentCounter = next);"
               ]
             },
             {
@@ -894,7 +894,7 @@
               "color": "#e74c3c",
               "onclick": [
                 "Local.set('persistentCounter', 0);",
-                "await setValue('persistentCounter', 0);"
+                "(Page.persistentCounter = 0);"
               ]
             }
           ]
@@ -949,7 +949,7 @@
               "color": "#c0392b",
               "onclick": [
                 "Local.clear();",
-                "await setValue('persistentCounter', 0);",
+                "(Page.persistentCounter = 0);",
                 "await Owlbear.notification.show('Local storage cleared', 'WARNING');"
               ]
             }
@@ -1006,7 +1006,7 @@
               "type": "button",
               "label": "Rain",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'RAIN' });",
+                "await Weather.setWeather(Page.mapID, { type: 'RAIN' });",
                 "await Owlbear.notification.show('Rain effect applied', 'INFO');"
               ]
             },
@@ -1014,7 +1014,7 @@
               "type": "button",
               "label": "Snow",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'SNOW' });",
+                "await Weather.setWeather(Page.mapID, { type: 'SNOW' });",
                 "await Owlbear.notification.show('Snow effect applied', 'INFO');"
               ]
             },
@@ -1022,7 +1022,7 @@
               "type": "button",
               "label": "Fog",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'BLOOM' });",
+                "await Weather.setWeather(Page.mapID, { type: 'BLOOM' });",
                 "await Owlbear.notification.show('Fog effect applied', 'INFO');"
               ]
             }
@@ -1044,7 +1044,7 @@
               "type": "button",
               "label": "Sand Storm",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'SAND', speed: 3, density: 4 });",
+                "await Weather.setWeather(Page.mapID, { type: 'SAND', speed: 3, density: 4 });",
                 "await Owlbear.notification.show('Sand storm applied', 'INFO');"
               ]
             },
@@ -1052,7 +1052,7 @@
               "type": "button",
               "label": "Fire Rain",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'FIRE', density: 2, tint: '#ff6600' });",
+                "await Weather.setWeather(Page.mapID, { type: 'FIRE', density: 2, tint: '#ff6600' });",
                 "await Owlbear.notification.show('Fire rain applied', 'INFO');"
               ]
             },
@@ -1060,7 +1060,7 @@
               "type": "button",
               "label": "Energy Storm",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'ENERGYSTORM', speed: 4, tint: '#00ff00' });",
+                "await Weather.setWeather(Page.mapID, { type: 'ENERGYSTORM', speed: 4, tint: '#00ff00' });",
                 "await Owlbear.notification.show('Energy storm applied', 'INFO');"
               ]
             }
@@ -1073,7 +1073,7 @@
               "type": "button",
               "label": "Water",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'WATER', speed: 2 });",
+                "await Weather.setWeather(Page.mapID, { type: 'WATER', speed: 2 });",
                 "await Owlbear.notification.show('Water effect applied', 'INFO');"
               ]
             },
@@ -1081,7 +1081,7 @@
               "type": "button",
               "label": "Cloud Cover",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'CLOUD', density: 3 });",
+                "await Weather.setWeather(Page.mapID, { type: 'CLOUD', density: 3 });",
                 "await Owlbear.notification.show('Cloud cover applied', 'INFO');"
               ]
             },
@@ -1089,7 +1089,7 @@
               "type": "button",
               "label": "Current (Custom)",
               "onclick": [
-                "await Weather.setWeather(mapID, { type: 'CURRENT', speed: 2, density: 2 });",
+                "await Weather.setWeather(Page.mapID, { type: 'CURRENT', speed: 2, density: 2 });",
                 "await Owlbear.notification.show('Current weather applied', 'INFO');"
               ]
             }
@@ -1115,7 +1115,7 @@
               "tooltip": "Displays current type, speed, and density",
               "color": "#2980b9",
               "onclick": [
-                "const weather = await Weather.getWeather(mapID);",
+                "const weather = await Weather.getWeather(Page.mapID);",
                 "if (weather) {",
                 "  await Owlbear.notification.show(`Current: ${weather.type} (Speed: ${weather.speed}, Density: ${weather.density})`, 'INFO');",
                 "} else {",
@@ -1129,7 +1129,7 @@
               "tooltip": "Yes/No check: is there active weather?",
               "color": "#2980b9",
               "onclick": [
-                "const has = await Weather.hasWeather(mapID);",
+                "const has = await Weather.hasWeather(Page.mapID);",
                 "await Owlbear.notification.show(has ? 'Weather is active' : 'No weather', 'INFO');"
               ]
             },
@@ -1137,7 +1137,7 @@
               "type": "button",
               "label": "Clear Weather",
               "onclick": [
-                "await Weather.removeWeather(mapID);",
+                "await Weather.removeWeather(Page.mapID);",
                 "await Owlbear.notification.show('Weather cleared', 'INFO');"
               ]
             }
@@ -1164,7 +1164,7 @@
               "tooltip": "Maximum intensity: speed 4, density 4, blue tint",
               "color": "#c0392b",
               "onclick": [
-                "await Weather.setWeather(mapID, {",
+                "await Weather.setWeather(Page.mapID, {",
                 "  type: 'RAIN',",
                 "  speed: 4,",
                 "  density: 4,",
@@ -1179,7 +1179,7 @@
               "tooltip": "Slow down to speed 2",
               "color": "#e67e22",
               "onclick": [
-                "await Weather.updateWeather(mapID, { speed: 2 });",
+                "await Weather.updateWeather(Page.mapID, { speed: 2 });",
                 "await Owlbear.notification.show('Weather speed updated to 2', 'INFO');"
               ]
             },
@@ -1189,7 +1189,7 @@
               "tooltip": "Apply red tint for danger",
               "color": "#9b59b6",
               "onclick": [
-                "await Weather.updateWeather(mapID, { tint: '#ff0000' });",
+                "await Weather.updateWeather(Page.mapID, { tint: '#ff0000' });",
                 "await Owlbear.notification.show('Weather tint updated to red', 'INFO');"
               ]
             }
@@ -1250,7 +1250,7 @@
               "tooltip": "3 projectiles fire simultaneously at target",
               "onclick": [
                 "await Embers.sequence()",
-                "  .projectile('magic_missile', token, await Token.getSelected(), { copies: 3 })",
+                "  .projectile('magic_missile', Global.token, await Token.getSelected(), { copies: 3 })",
                 "  .cast({ spellName: 'Magic Missile' });"
               ]
             },
@@ -1286,7 +1286,7 @@
               "tooltip": "Missile travels first, then explodes on arrival",
               "onclick": [
                 "await Embers.sequence()",
-                "  .projectile('magic_missile', token, await Token.getSelected())",
+                "  .projectile('magic_missile', Global.token, await Token.getSelected())",
                 "  .then()",
                 "  .aoe('generic.impact.fire', await Token.getSelected(), { size: 4 })",
                 "  .cast({ spellName: 'Missile Impact' });"
@@ -1299,7 +1299,7 @@
               "onclick": [
                 "const target = await Token.getSelected();",
                 "await Embers.sequence()",
-                "  .projectile('magic_missile', token, target)",
+                "  .projectile('magic_missile', Global.token, target)",
                 "  .delay(300)",
                 "  .aoe('generic.impact.fire', target, { size: 3 })",
                 "  .cast({ spellName: 'Delayed Blast' });"
@@ -1329,7 +1329,7 @@
               "onclick": [
                 "const target = await Token.getSelected();",
                 "await Embers.sequence()",
-                "  .projectile('generic.lightning.electric_arc', token, target, { speed: 3 })",
+                "  .projectile('generic.lightning.electric_arc', Global.token, target, { speed: 3 })",
                 "  .then()",
                 "  .aoe('generic.lightning.static_electricity.1', target, { size: 2 })",
                 "  .delay(200)",
@@ -1346,8 +1346,8 @@
               "onclick": [
                 "const target = await Token.getSelected();",
                 "await Embers.sequence()",
-                "  .projectile('magic_missile', token, target)",
-                "  .projectile('magic_missile', token, target)",
+                "  .projectile('magic_missile', Global.token, target)",
+                "  .projectile('magic_missile', Global.token, target)",
                 "  .then()",
                 "  .aoe('generic.impact.fire', target, { size: 4 })",
                 "  .cast({ spellName: 'Dual Strike' });"
@@ -1365,7 +1365,7 @@
               "onclick": [
                 "const target = await Token.getSelected();",
                 "await Embers.sequence()",
-                "  .cone('burning_hands', token, target, { size: 10 })",
+                "  .cone('burning_hands', Global.token, target, { size: 10 })",
                 "  .cast({ spellName: 'Cone of Fire' });"
               ]
             },
@@ -1376,7 +1376,7 @@
               "onclick": [
                 "const target = await Token.getSelected();",
                 "await Embers.sequence()",
-                "  .projectile('magic_missile', token, target, { speed: 2 })",
+                "  .projectile('magic_missile', Global.token, target, { speed: 2 })",
                 "  .then()",
                 "  .aoe('generic.impact.fire', target, { size: 5 })",
                 "  .delay(250)",
@@ -1406,13 +1406,13 @@
         },
         {
           "type": "text",
-          "text": "Type your command in the input below and execute it to test custom Embers sequences. Use `token` as caster and/or `await Token.getSelected()` for interactive selection."
+          "text": "Type your command in the input below and execute it to test custom Embers sequences. Use `Global.token` as caster and/or `await Token.getSelected()` for interactive selection."
         },
         {
           "type": "input",
           "label": "Custom Embers Command",
           "var": "customCommand",
-          "placeholder": "Embers.sequence().projectile('magic_missile', token, await Token.getSelected()).cast({ spellName: 'Custom' });"
+          "placeholder": "Embers.sequence().projectile('magic_missile', Global.token, await Token.getSelected()).cast({ spellName: 'Custom' });"
         },
         {
           "type": "button",
@@ -1420,7 +1420,7 @@
           "color": "#8e44ad",
           "onclick": [
             "try {",
-            "  await eval(`(async () => { ${customCommand} })()`);",
+            "  await eval(`(async () => { ${Page.customCommand} })()`);",
             "  await Owlbear.notification.show('Custom command executed successfully', 'SUCCESS');",
             "} catch (err) {",
             "  console.error('Error executing custom command:', err);",
@@ -1464,7 +1464,7 @@
               "tooltip": "Animated red glow effect (size 2)",
               "color": "#c0392b",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Glow', color: '#ff0000', size: 2, animated: true });",
+                "await Auras.addAura(Global.token, { style: 'Glow', color: '#ff0000', size: 2, animated: true });",
                 "await Owlbear.notification.show('Red glow aura added', 'INFO');"
               ]
             },
@@ -1474,7 +1474,7 @@
               "tooltip": "Animated blue glow effect (size 2)",
               "color": "#2980b9",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Glow', color: '#0000ff', size: 2, animated: true });",
+                "await Auras.addAura(Global.token, { style: 'Glow', color: '#0000ff', size: 2, animated: true });",
                 "await Owlbear.notification.show('Blue glow aura added', 'INFO');"
               ]
             },
@@ -1484,7 +1484,7 @@
               "tooltip": "Animated green glow effect (size 2)",
               "color": "#27ae60",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Glow', color: '#00ff00', size: 2, animated: true });",
+                "await Auras.addAura(Global.token, { style: 'Glow', color: '#00ff00', size: 2, animated: true });",
                 "await Owlbear.notification.show('Green glow aura added', 'INFO');"
               ]
             }
@@ -1510,7 +1510,7 @@
               "tooltip": "Small blue bubble (size 1)",
               "color": "#3498db",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 1 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#0000ff', size: 1 });",
                 "await Owlbear.notification.show('Small blue bubble added', 'INFO');"
               ]
             },
@@ -1520,7 +1520,7 @@
               "tooltip": "Medium blue bubble (size 2)",
               "color": "#3498db",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 2 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#0000ff', size: 2 });",
                 "await Owlbear.notification.show('Medium blue bubble added', 'INFO');"
               ]
             },
@@ -1530,7 +1530,7 @@
               "tooltip": "Large blue bubble (size 3)",
               "color": "#3498db",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#0000ff', size: 3 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#0000ff', size: 3 });",
                 "await Owlbear.notification.show('Large blue bubble added', 'INFO');"
               ]
             }
@@ -1545,7 +1545,7 @@
               "tooltip": "Purple bubble effect (size 2)",
               "color": "#9b59b6",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#ff00ff', size: 2 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#ff00ff', size: 2 });",
                 "await Owlbear.notification.show('Purple bubble added', 'INFO');"
               ]
             },
@@ -1555,7 +1555,7 @@
               "tooltip": "Yellow bubble effect (size 2)",
               "color": "#f39c12",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#ffff00', size: 2 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#ffff00', size: 2 });",
                 "await Owlbear.notification.show('Yellow bubble added', 'INFO');"
               ]
             },
@@ -1565,7 +1565,7 @@
               "tooltip": "Orange bubble effect (size 2)",
               "color": "#e67e22",
               "onclick": [
-                "await Auras.addAura(token, { style: 'Bubble', color: '#ff8800', size: 2 });",
+                "await Auras.addAura(Global.token, { style: 'Bubble', color: '#ff8800', size: 2 });",
                 "await Owlbear.notification.show('Orange bubble added', 'INFO');"
               ]
             }
@@ -1587,7 +1587,7 @@
               "tooltip": "Remove all auras from the token",
               "color": "#c0392b",
               "onclick": [
-                "await Auras.removeAura(token);",
+                "await Auras.removeAura(Global.token);",
                 "await Owlbear.notification.show('All auras removed', 'WARNING');"
               ]
             }
@@ -1648,7 +1648,7 @@
               "tooltip": "Deep night - minimal light, cool tones",
               "color": "#1a1a2e",
               "onclick": [
-                "await Aurora.setAurora(mapID, 'MIDNIGHT');",
+                "await Aurora.setAurora(Page.mapID, 'MIDNIGHT');",
                 "await Owlbear.notification.show('Midnight preset applied', 'INFO');"
               ]
             },
@@ -1658,7 +1658,7 @@
               "tooltip": "Dawn/dusk - warm golden light",
               "color": "#e67e22",
               "onclick": [
-                "await Aurora.setAurora(mapID, 'GOLDEN_HOUR');",
+                "await Aurora.setAurora(Page.mapID, 'GOLDEN_HOUR');",
                 "await Owlbear.notification.show('Golden hour preset applied', 'INFO');"
               ]
             },
@@ -1668,7 +1668,7 @@
               "tooltip": "Early morning - cool light before sunrise",
               "color": "#5dade2",
               "onclick": [
-                "await Aurora.setAurora(mapID, 'PRE_DAWN');",
+                "await Aurora.setAurora(Page.mapID, 'PRE_DAWN');",
                 "await Owlbear.notification.show('Pre-dawn preset applied', 'INFO');"
               ]
             }
@@ -1683,7 +1683,7 @@
               "tooltip": "Eerie red moonlight - supernatural atmosphere",
               "color": "#c0392b",
               "onclick": [
-                "await Aurora.setAurora(mapID, 'BLOOD_MOON');",
+                "await Aurora.setAurora(Page.mapID, 'BLOOD_MOON');",
                 "await Owlbear.notification.show('Blood moon preset applied', 'WARNING');"
               ]
             }
@@ -1716,7 +1716,7 @@
               "tooltip": "Maximum brightness - very washed out",
               "color": "#f1c40f",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 200 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 200 });",
                 "await Owlbear.notification.show('Very bright lighting applied', 'INFO');"
               ]
             },
@@ -1726,7 +1726,7 @@
               "tooltip": "Increased brightness",
               "color": "#f39c12",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 150 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 150 });",
                 "await Owlbear.notification.show('Bright lighting applied', 'INFO');"
               ]
             },
@@ -1736,7 +1736,7 @@
               "tooltip": "Standard brightness level",
               "color": "#e8e8e8",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 100 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 100 });",
                 "await Owlbear.notification.show('Normal brightness applied', 'INFO');"
               ]
             }
@@ -1751,7 +1751,7 @@
               "tooltip": "Reduced brightness - moody atmosphere",
               "color": "#7f8c8d",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 70 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 70 });",
                 "await Owlbear.notification.show('Dim lighting applied', 'INFO');"
               ]
             },
@@ -1761,7 +1761,7 @@
               "tooltip": "Very dark - barely visible",
               "color": "#34495e",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 30 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 30 });",
                 "await Owlbear.notification.show('Very dark lighting applied', 'WARNING');"
               ]
             },
@@ -1771,7 +1771,7 @@
               "tooltip": "Nearly complete darkness",
               "color": "#1a1a1a",
               "onclick": [
-                "await Aurora.setAurora(mapID, { lightness: 10 });",
+                "await Aurora.setAurora(Page.mapID, { lightness: 10 });",
                 "await Owlbear.notification.show('Almost complete darkness', 'ERROR');"
               ]
             }
@@ -1797,7 +1797,7 @@
               "tooltip": "Shift toward red and orange tones",
               "color": "#e67e22",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 30 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 30 });",
                 "await Owlbear.notification.show('Warm color shift applied', 'INFO');"
               ]
             },
@@ -1807,7 +1807,7 @@
               "tooltip": "Shift toward blue and cyan tones",
               "color": "#3498db",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: -60 });",
+                "await Aurora.setAurora(Page.mapID, { hue: -60 });",
                 "await Owlbear.notification.show('Cool color shift applied', 'INFO');"
               ]
             },
@@ -1817,7 +1817,7 @@
               "tooltip": "Reset to neutral color",
               "color": "#95a5a6",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 0 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 0 });",
                 "await Owlbear.notification.show('Neutral color applied', 'INFO');"
               ]
             }
@@ -1843,7 +1843,7 @@
               "tooltip": "Very vivid and intense colors",
               "color": "#e74c3c",
               "onclick": [
-                "await Aurora.setAurora(mapID, { saturation: 200 });",
+                "await Aurora.setAurora(Page.mapID, { saturation: 200 });",
                 "await Owlbear.notification.show('Hyper-saturated colors applied', 'INFO');"
               ]
             },
@@ -1853,7 +1853,7 @@
               "tooltip": "Standard color saturation",
               "color": "#2c3e50",
               "onclick": [
-                "await Aurora.setAurora(mapID, { saturation: 100 });",
+                "await Aurora.setAurora(Page.mapID, { saturation: 100 });",
                 "await Owlbear.notification.show('Normal saturation applied', 'INFO');"
               ]
             },
@@ -1863,7 +1863,7 @@
               "tooltip": "Washed out, grayscale tones",
               "color": "#bdc3c7",
               "onclick": [
-                "await Aurora.setAurora(mapID, { saturation: 50 });",
+                "await Aurora.setAurora(Page.mapID, { saturation: 50 });",
                 "await Owlbear.notification.show('Desaturated colors applied', 'INFO');"
               ]
             }
@@ -1889,7 +1889,7 @@
               "tooltip": "Red hue shift, dark, intense saturation",
               "color": "#c0392b",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 0, lightness: 40, saturation: 150, opacity: 60 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 0, lightness: 40, saturation: 150, opacity: 60 });",
                 "await Owlbear.notification.show('Hellfire atmosphere applied', 'WARNING');"
               ]
             },
@@ -1899,7 +1899,7 @@
               "tooltip": "Cool blue shift, reduced saturation, dim",
               "color": "#3498db",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: -80, lightness: 50, saturation: 120, opacity: 50 });",
+                "await Aurora.setAurora(Page.mapID, { hue: -80, lightness: 50, saturation: 120, opacity: 50 });",
                 "await Owlbear.notification.show('Icy cavern atmosphere applied', 'INFO');"
               ]
             },
@@ -1909,7 +1909,7 @@
               "tooltip": "Green hue, desaturated, sickly pale",
               "color": "#27ae60",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 120, lightness: 110, saturation: 80, opacity: 40 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 120, lightness: 110, saturation: 80, opacity: 40 });",
                 "await Owlbear.notification.show('Toxic atmosphere applied', 'INFO');"
               ]
             }
@@ -1924,7 +1924,7 @@
               "tooltip": "Cool desaturated, dim and eerie",
               "color": "#34495e",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: -40, lightness: 35, saturation: 60, opacity: 55 });",
+                "await Aurora.setAurora(Page.mapID, { hue: -40, lightness: 35, saturation: 60, opacity: 55 });",
                 "await Owlbear.notification.show('Haunted manor atmosphere applied', 'INFO');"
               ]
             },
@@ -1934,7 +1934,7 @@
               "tooltip": "Warm, well-lit, natural saturation",
               "color": "#27ae60",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 25, lightness: 120, saturation: 110, opacity: 30 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 25, lightness: 120, saturation: 110, opacity: 30 });",
                 "await Owlbear.notification.show('Peaceful garden atmosphere applied', 'SUCCESS');"
               ]
             },
@@ -1944,7 +1944,7 @@
               "tooltip": "Clear all custom lighting",
               "color": "#95a5a6",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 0, lightness: 100, saturation: 100, opacity: 0 });",
+                "await Aurora.setAurora(Page.mapID, { hue: 0, lightness: 100, saturation: 100, opacity: 0 });",
                 "await Owlbear.notification.show('Lighting reset to normal', 'INFO');"
               ]
             }
@@ -1970,7 +1970,7 @@
               "tooltip": "Dark overlay with Multiply blend mode",
               "color": "#2c3e50",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 0, lightness: 60, saturation: 50, opacity: 70, blendMode: 'Multiply' });",
+                "await Aurora.setAurora(Page.mapID, { hue: 0, lightness: 60, saturation: 50, opacity: 70, blendMode: 'Multiply' });",
                 "await Owlbear.notification.show('Multiply blend mode applied', 'INFO');"
               ]
             },
@@ -1980,7 +1980,7 @@
               "tooltip": "Balanced blend mode effect",
               "color": "#16a085",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 45, lightness: 90, saturation: 80, opacity: 60, blendMode: 'Overlay' });",
+                "await Aurora.setAurora(Page.mapID, { hue: 45, lightness: 90, saturation: 80, opacity: 60, blendMode: 'Overlay' });",
                 "await Owlbear.notification.show('Overlay blend mode applied', 'INFO');"
               ]
             },
@@ -1990,7 +1990,7 @@
               "tooltip": "Subtle gentle blending",
               "color": "#d68910",
               "onclick": [
-                "await Aurora.setAurora(mapID, { hue: 30, lightness: 110, saturation: 100, opacity: 50, blendMode: 'Soft Light' });",
+                "await Aurora.setAurora(Page.mapID, { hue: 30, lightness: 110, saturation: 100, opacity: 50, blendMode: 'Soft Light' });",
                 "await Owlbear.notification.show('Soft Light blend mode applied', 'INFO');"
               ]
             }
@@ -2127,7 +2127,7 @@
               "tooltip": "Display to all players",
               "color": "#9b59b6",
               "onclick": [
-                "await Announcement.setAnnouncement(announcementContent, true);",
+                "await Announcement.setAnnouncement(Page.announcementContent, true);",
                 "await Owlbear.notification.show('Announcement posted', 'SUCCESS');"
               ]
             },
@@ -2137,7 +2137,7 @@
               "tooltip": "Post but keep hidden initially",
               "color": "#7f8c8d",
               "onclick": [
-                "await Announcement.setAnnouncement(announcementContent, false);",
+                "await Announcement.setAnnouncement(Page.announcementContent, false);",
                 "await Owlbear.notification.show('Announcement ready (hidden)', 'INFO');"
               ]
             }
@@ -2398,7 +2398,7 @@
         },
         {
           "type": "text",
-          "text": "**Counter value: ${counterValue}** — `${varName}` expressions work inside Markdown too, updated live."
+          "text": "**Counter value: ${Page.counterValue}** — `Page.variable` expressions work inside Markdown too, updated live."
         },
         {
           "type": "divider"
@@ -2536,7 +2536,7 @@
         },
         {
           "type": "text",
-          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `${varName}` expressions are evaluated at hover time. Hover the buttons below."
+          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `Page.variable` and `Global.variable` expressions are evaluated at hover time. Hover the buttons below."
         },
         {
           "type": "row",
@@ -2550,22 +2550,22 @@
             {
               "type": "button",
               "label": "Plain tooltip",
-              "tooltip": "Counter is currently: ${counterValue}",
+              "tooltip": "Counter is currently: ${Page.counterValue}",
               "color": "#e67e22",
               "onclick": [
-                "await Owlbear.notification.show('Counter value: ' + counterValue, 'INFO');"
+                "await Owlbear.notification.show('Counter value: ' + Page.counterValue, 'INFO');"
               ]
             },
             {
               "type": "button",
               "label": "Markdown tooltip",
-              "tooltip": "**Counter :** ${counterValue}\n\n- <span style=\"color:green\">*Left-click*</span> to confirm\n- <span style=\"color:red\">*Right-click*</span> to reset\n\n`setValue('counterValue', 0)`",
+              "tooltip": "**Counter :** ${Page.counterValue}\n\n- <span style=\"color:green\">*Left-click*</span> to confirm\n- <span style=\"color:red\">*Right-click*</span> to reset\n\n`Page.counterValue = 0`",
               "color": "#6c3483",
               "onclick": [
-                "await Owlbear.notification.show('Confirmed! Counter = ' + counterValue, 'SUCCESS');"
+                "await Owlbear.notification.show('Confirmed! Counter = ' + Page.counterValue, 'SUCCESS');"
               ],
               "onrightclick": [
-                "await setValue('counterValue', 0);",
+                "(Page.counterValue = 0);",
                 "await Owlbear.notification.show('Counter reset', 'WARNING');"
               ]
             }
@@ -2592,11 +2592,11 @@
               "tooltip": "Left: Heal 15 | Right: Damage 10",
               "color": "#27ae60",
               "onclick": [
-                "await StatBubbles.heal(token, 15);",
+                "await StatBubbles.heal(Global.token, 15);",
                 "await Owlbear.notification.show('Healed 15 HP');"
               ],
               "onrightclick": [
-                "await StatBubbles.damage(token, 10);",
+                "await StatBubbles.damage(Global.token, 10);",
                 "await Owlbear.notification.show('Took 10 damage');"
               ]
             },
@@ -2637,11 +2637,11 @@
               "tooltip": "Left: Add | Right: Remove",
               "color": "#f39c12",
               "onclick": [
-                "await ConditionMarkers.addCondition(token, 'Poisoned');",
+                "await ConditionMarkers.addCondition(Global.token, 'Poisoned');",
                 "await Owlbear.notification.show('Poisoned condition applied', 'WARNING');"
               ],
               "onrightclick": [
-                "await ConditionMarkers.removeCondition(token, 'Poisoned');",
+                "await ConditionMarkers.removeCondition(Global.token, 'Poisoned');",
                 "await Owlbear.notification.show('Poisoned removed', 'INFO');"
               ]
             },
@@ -2651,11 +2651,11 @@
               "tooltip": "Left: Add blue ring | Right: Remove",
               "color": "#1abc9c",
               "onclick": [
-                "await ColoredRings.addRing(token, '#1a6aff');",
+                "await ColoredRings.addRing(Global.token, '#1a6aff');",
                 "await Owlbear.notification.show('Blue ring added', 'INFO');"
               ],
               "onrightclick": [
-                "await ColoredRings.removeRing(token, '#1a6aff');",
+                "await ColoredRings.removeRing(Global.token, '#1a6aff');",
                 "await Owlbear.notification.show('Blue ring removed', 'INFO');"
               ]
             }
@@ -2666,7 +2666,7 @@
         },
         {
           "type": "text",
-          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `${varName}` expressions evaluated at hover time."
+          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `Page.variable` / `Global.variable` expressions are evaluated at hover time."
         },
         {
           "type": "divider"
@@ -3110,7 +3110,9 @@
               "type": "matrixButton",
               "icon": "⬜",
               "tooltip": "No action — disabled",
-              "onclick": []
+              "onclick": [
+                ""
+              ]
             },
             {
               "type": "matrixButton",
@@ -3150,7 +3152,7 @@
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; ${varName} works in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }

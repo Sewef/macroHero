@@ -325,7 +325,7 @@ export function updateRenderedValue(varName, value, pageIndex = null) {
           // Custom updater (e.g. HTML text with ${vars})
           entry.updateFn(resolvedVars);
         } else {
-          evaluateItemText(entry.item, resolvedVars)
+          evaluateItemText(entry.item, resolvedVars, entry.page)
             .then(res => { entry.element.textContent = res; })
             .catch(err => logger.error('Error evaluating layout expression:', err));
         }
@@ -350,7 +350,16 @@ export function updateRenderedValue(varName, value, pageIndex = null) {
  * @param {Object} resolvedVars - Resolved variables for evaluation
  * @returns {Promise<string>} Evaluated text
  */
-async function evaluateItemText(item, resolvedVars) {
+function buildVariableScopes(page, resolvedVars = {}) {
+  const globalNames = Object.keys(config?.global?.variables || {});
+  const pageNames = Object.keys(page?.variables || {});
+  return {
+    Global: Object.fromEntries(globalNames.map(name => [name, globalVariables[name] ?? resolvedVars[name]])),
+    Page: Object.fromEntries(pageNames.map(name => [name, page?._resolved?.[name] ?? resolvedVars[name]])),
+  };
+}
+
+async function evaluateItemText(item, resolvedVars, page = null) {
   let text = item.label ?? item.content ?? item.text ?? "";
   
   if (!text) return "";
@@ -359,17 +368,22 @@ async function evaluateItemText(item, resolvedVars) {
   const match = text.match(/^\$\{(.+)\}$/);
   if (match) {
     try {
-      const res = await evaluateExpression(match[1], resolvedVars);
+      const scopes = buildVariableScopes(page, resolvedVars);
+      const res = await evaluateExpression(match[1], resolvedVars, scopes);
       return (res === null || res === undefined) ? "" : String(res);
     } catch (err) {
       // Fall through to variable substitution if expression fails
     }
   }
   
-  // Substitute ${variable} placeholders
-  return text.replace(/\$\{([a-zA-Z_]\w*)\}/g, (match, varName) => {
-    const value = resolvedVars[varName];
-    return value !== undefined ? String(value) : match;
+  const scopes = buildVariableScopes(page, resolvedVars);
+  return text.replace(/\$\{([^{}]+)\}/g, (placeholder, expression) => {
+    try {
+      const result = new Function('Page', 'Global', `return (${expression})`)(scopes.Page, scopes.Global);
+      return result === null || result === undefined ? '' : String(result);
+    } catch {
+      return placeholder;
+    }
   });
 }
 
@@ -387,7 +401,7 @@ function evaluateAndSetElementText(element, item, page) {
   element.textContent = "";
   renderedExpressionElements.push({ element, item, page });
   const resolvedVars = { ...globalVariables, ...(page?._resolved || {}) };
-  evaluateItemText(item, resolvedVars)
+  evaluateItemText(item, resolvedVars, page)
     .then(res => { element.textContent = res; })
     .catch(err => { logger.error('Error evaluating element text:', err); });
   
@@ -514,7 +528,7 @@ export async function updateConfig(newConfig) {
   // Re-resolve variables when config updates
   try {
     // Resolve global variables
-    const globalVars = await resolveVariables(config.global?.variables);
+    const globalVars = await resolveVariables(config.global?.variables, {}, null, null, { scope: "global" });
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
 

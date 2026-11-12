@@ -1500,6 +1500,10 @@ function _saveVariableFromInspector() {
     alert('Variable name is required.');
     return;
   }
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(nextName)) {
+    alert('Variable names must be valid JavaScript identifiers (letters, digits, _ or $, and cannot start with a digit).');
+    return;
+  }
   if (nextName !== name && (Object.prototype.hasOwnProperty.call(scope.state || {}, nextName) || Object.prototype.hasOwnProperty.call(scope.computed || {}, nextName))) {
     alert(`Variable "${nextName}" already exists.`);
     return;
@@ -1681,10 +1685,14 @@ function _allVariableNames() {
 }
 
 function _scriptCompletionVariables() {
-  return _bindingOptionGroups('all').flatMap(group => group.names.map(name => ({
+  const groups = _bindingOptionGroups('all').filter(group => (
+    _selection.kind !== 'variable' || _selection.owner !== 'global' || group.shortLabel.startsWith('global')
+  ));
+  return groups.flatMap(group => group.names.map(name => ({
     name,
-    detail: group.label,
-    info: `${group.label} variable available in this script.`,
+    scope: group.shortLabel.startsWith('global') ? 'Global' : 'Page',
+    detail: `${group.label}${group.shortLabel.includes('computed') ? ' · read-only' : ' · writable'}`,
+    info: `${group.label} variable available as ${group.shortLabel.startsWith('global') ? 'Global' : 'Page'}.${name}.`,
   })));
 }
 
@@ -1872,9 +1880,10 @@ function _containsIdentifier(source, name) {
 
 function _renameVariableReferences(owner, previousName, nextName) {
   if (!previousName || previousName === nextName) return;
+  const namespace = owner === 'global' ? 'Global' : 'Page';
   const replace = value => String(value).replace(
-    new RegExp(`(^|[^A-Za-z0-9_$])${_escapeRegExp(previousName)}(?=$|[^A-Za-z0-9_$])`, 'g'),
-    (_, prefix) => `${prefix}${nextName}`,
+    new RegExp(`\\b${namespace}\\.${_escapeRegExp(previousName)}(?=$|[^A-Za-z0-9_$])`, 'g'),
+    `${namespace}.${nextName}`,
   );
   const pages = owner === 'global' ? (_config.pages || []) : [_config.pages?.[Number(owner)]].filter(Boolean);
   pages.forEach(page => {
