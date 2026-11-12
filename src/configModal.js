@@ -5,10 +5,10 @@
  *   - Bootstrap OBR.onReady
  *   - Orchestration des onglets
  *   - Save / Cancel
- *   - Sync JSON <=> Puck builder
+ *   - Sync JSON <=> project studio
  *
  * La logique détaillée est dans src/configModal/ :
- *   utils.js | puckBuilder.jsx | rawJsonEditor.js |
+ *   utils.js | treeEditor.js | rawJsonEditor.js |
  *   debugMode.js | tokenHelper.js
  */
 
@@ -38,9 +38,24 @@ let currentConfig = null;
 let currentTab = 'editor';
 let rawJsonEditorModule = null;
 let rawJsonEditorPromise = null;
-let puckBuilderModule = null;
-let puckBuilderPromise = null;
+let projectEditorModule = null;
+let projectEditorPromise = null;
+let projectEditorMounted = false;
 let themeUnsubscribe = null;
+let isDirty = false;
+let savedConfigFingerprint = '';
+
+function _configFingerprint(config) {
+  try { return JSON.stringify(prepareConfigForSave(normalizeConfig(config))); }
+  catch { return ''; }
+}
+
+function _setDirty(next = true) {
+  isDirty = Boolean(next);
+  const indicator = document.getElementById('dirtyIndicator');
+  if (indicator) indicator.hidden = !isDirty;
+  document.title = `${isDirty ? '• ' : ''}Macro Hero Studio`;
+}
 
 // ── Owlbear theme sync ───────────────────────────────────────────────────────
 
@@ -113,6 +128,9 @@ async function switchTab(tabName) {
 
 async function _captureCurrentTabState() {
   if (!currentConfig) return;
+  if (currentTab === 'editor' && projectEditorModule && projectEditorMounted) {
+    currentConfig = normalizeConfig(projectEditorModule.buildConfigFromEditor());
+  }
   if (currentTab === 'json') {
     currentConfig = await _parseRawConfig({ validateShape: false });
   }
@@ -143,10 +161,11 @@ async function _syncJsonToEditor() {
     });
 
     currentConfig = parsed;
-    if (puckBuilderModule) {
-      puckBuilderModule.refreshPuckBuilder({ getConfig: () => currentConfig, setConfig: _setConfigFromBuilder });
+    _setDirty(true);
+    if (projectEditorModule && projectEditorMounted) {
+      projectEditorModule.rerenderEditor(currentConfig);
     }
-    alert('Synced from JSON to Builder');
+    alert('JSON applied to Studio');
   } catch (e) {
     alert('Invalid JSON: ' + e.message);
   }
@@ -168,26 +187,28 @@ async function _parseRawConfig({ validateShape = true } = {}) {
 
 async function _mountBuilder() {
   if (!currentConfig) {
-    _showBuilderStatus('Loading Builder...', 'Waiting for the saved configuration.');
+    _showBuilderStatus('Opening project…', 'Waiting for the saved configuration.');
     return;
   }
 
   try {
-    _showBuilderStatus('Loading Builder...', 'Loading Puck and preparing the page editor.');
-    const puckBuilder = await _loadPuckBuilder();
-    puckBuilder.mountPuckBuilder({
-      target: document.getElementById('puckBuilderHost'),
-      getConfig: () => currentConfig,
-      setConfig: _setConfigFromBuilder,
-    });
+    _showBuilderStatus('Opening project…', 'Preparing the workspace.');
+    const projectEditor = await _loadProjectEditor();
+    if (!projectEditorMounted) {
+      projectEditor.initEditor(currentConfig, _setConfigFromBuilder);
+      projectEditorMounted = true;
+    } else {
+      projectEditor.rerenderEditor(currentConfig);
+    }
   } catch (e) {
-    logger.error('Puck builder mount failed:', e);
-    _showBuilderStatus('Builder failed to load.', e?.message || String(e), true, true);
+    logger.error('Project studio mount failed:', e);
+    _showBuilderStatus('Studio failed to load.', e?.message || String(e), true);
   }
 }
 
 function _setConfigFromBuilder(config) {
   currentConfig = normalizeConfig(config);
+  _setDirty(_configFingerprint(currentConfig) !== savedConfigFingerprint);
 }
 
 function _setRawJsonText(text) {
@@ -240,24 +261,24 @@ function _setRawEditorFallback(enabled, detail = '') {
   }
 }
 
-async function _loadPuckBuilder() {
-  if (!puckBuilderPromise) {
-    puckBuilderPromise = import("./configModal/puckBuilder.jsx")
+async function _loadProjectEditor() {
+  if (!projectEditorPromise) {
+    projectEditorPromise = import("./configModal/treeEditor.js")
       .then(module => {
-        puckBuilderModule = module;
+        projectEditorModule = module;
         return module;
       });
   }
-  return puckBuilderPromise;
+  return projectEditorPromise;
 }
 
 function _showBuilderStatus(title, detail = '', isError = false, force = false) {
-  const host = document.getElementById('puckBuilderHost');
-  if (!host || (puckBuilderModule && !force)) return;
+  const host = document.getElementById('pageEditorContainer');
+  if (!host || (projectEditorMounted && !force)) return;
 
   host.replaceChildren();
   const box = document.createElement('div');
-  box.className = `puck-empty-state${isError ? ' error' : ''}`;
+  box.className = `studio-loading${isError ? ' error' : ''}`;
 
   const heading = document.createElement('strong');
   heading.textContent = title;
@@ -291,13 +312,14 @@ async function _loadDefaultConfig() {
 
     // Update internal state
     currentConfig = normalizeConfig(defaultConfig);
+    _setDirty(true);
 
     // Sync to JSON tab
     _setRawJsonText(formatConfig(prepareConfigForSave(currentConfig)));
 
-    // Sync to Builder tab
-    if (puckBuilderModule) {
-      puckBuilderModule.refreshPuckBuilder({ getConfig: () => currentConfig, setConfig: _setConfigFromBuilder });
+    // Sync to Studio tab
+    if (projectEditorModule && projectEditorMounted) {
+      projectEditorModule.rerenderEditor(currentConfig);
     }
 
     logger.log('Default config loaded');
@@ -343,12 +365,13 @@ async function _closeModal(data) {
 
 OBR.onReady(() => {
   logger.log('=== Config Modal Ready ===');
-  _showBuilderStatus('Loading Builder...', 'Loading configuration.');
+  _showBuilderStatus('Opening project…', 'Loading configuration.');
 
   initGoogleSheetsUI();
 
   Promise.all([_initThemeSync(), loadConfig()]).then(([, cfg]) => {
     currentConfig = cfg;
+    savedConfigFingerprint = _configFingerprint(cfg);
 
     _setRawJsonText(JSON.stringify(prepareConfigForSave(cfg), null, 2));
     document.querySelectorAll('.tab').forEach(tab => {
@@ -365,6 +388,8 @@ OBR.onReady(() => {
         let config;
         if (currentTab === 'json') {
           config = await _parseRawConfig();
+        } else if (currentTab === 'editor' && projectEditorModule && projectEditorMounted) {
+          config = normalizeConfig(projectEditorModule.buildConfigFromEditor());
         } else {
           config = currentConfig;
         }
@@ -381,6 +406,8 @@ OBR.onReady(() => {
 
         saveGoogleSheetsInputs();
         await saveConfigToLocalStorage(config);
+        savedConfigFingerprint = _configFingerprint(config);
+        _setDirty(false);
         logger.log('Config saved to localStorage');
         await _closeModal({ savedFromModal: true, gsheetUpdated: true });
       } catch (e) {
@@ -391,7 +418,26 @@ OBR.onReady(() => {
 
     document.getElementById('loadDefaultBtn').onclick = _loadDefaultConfig;
 
-    document.getElementById('cancelBtn').onclick = () => _closeModal();
+    document.getElementById('cancelBtn').onclick = () => {
+      if (isDirty && !confirm('Discard unsaved changes?')) return;
+      _closeModal();
+    };
+
+    addTrackedListener(document.getElementById('cfgArea'), 'input', () => _setDirty(true));
+    addTrackedListener(document, 'macrohero:raw-json-change', () => _setDirty(true));
+    addTrackedListener(document.getElementById('apiKeyInput'), 'input', () => _setDirty(true));
+    addTrackedListener(window, 'beforeunload', event => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+    addTrackedListener(window, 'keydown', event => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return;
+      event.preventDefault();
+      document.getElementById('saveBtn')?.click();
+    });
+
+    _setDirty(false);
 
     initDebugModeUI();
     initTokenHelperUI();
@@ -399,7 +445,7 @@ OBR.onReady(() => {
 
     switchTab(currentTab)
       .then(() => {
-        // Warm the editor after the Builder has mounted so the first tab switch
+        // Warm the editor after the Studio has mounted so the first tab switch
         // is instant without competing with the initial builder bundle.
         const preload = () => void _prepareRawJsonEditor();
         if ('requestIdleCallback' in window) {

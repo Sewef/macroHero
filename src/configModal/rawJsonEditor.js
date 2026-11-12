@@ -29,7 +29,10 @@ export function ensureRawJsonEditor() {
     EditorView.updateListener.of(update => {
       if (!update.docChanged) return;
       const text = update.state.doc.toString();
-      if (!syncing) textarea.value = text;
+      if (!syncing) {
+        textarea.value = text;
+        document.dispatchEvent(new CustomEvent("macrohero:raw-json-change"));
+      }
       renderStatus(text);
     }),
   ];

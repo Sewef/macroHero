@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Macro Hero Config</title>
+  <title>Macro Hero Studio</title>
   <link rel="stylesheet" href="/src/configModal.css" />
   <script src="/src/configModal.js" type="module"></script>
 </head>
@@ -12,16 +12,19 @@
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
-      <h2>Macro Hero — Configuration</h2>
+      <h2>Macro Hero Studio</h2>
       <div class="tabs">
-        <button type="button" class="tab active" data-tab="editor">Builder</button>
-        <button type="button" class="tab" data-tab="json">Raw Editor</button>
+        <button type="button" class="tab active" data-tab="editor">Studio</button>
+        <button type="button" class="tab" data-tab="json">JSON</button>
         <button type="button" class="tab" data-tab="integrations">Integrations</button>
         <button type="button" class="tab" data-tab="tokens">Token Helper</button>
         <button type="button" class="tab" data-tab="debug">Debug</button>
       </div>
     </div>
     <div class="header-actions">
+      <span id="dirtyIndicator" class="dirty-indicator" hidden>Unsaved changes</span>
+      <button type="button" id="undoBtn" class="btn-icon header-tool" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>↶</button>
+      <button type="button" id="redoBtn" class="btn-icon header-tool" title="Redo (Ctrl+Y)" aria-label="Redo" disabled>↷</button>
       <button type="button" id="loadDefaultBtn" title="Load the default configuration">Load Default</button>
       <button type="button" id="cancelBtn">Cancel</button>
       <button type="button" id="saveBtn">Save</button>
@@ -30,13 +33,74 @@
 
   <form id="configForm" onsubmit="return false;">
 
-    <!-- ── PUCK BUILDER ────────────────────────────── -->
+    <!-- ── PROJECT STUDIO ──────────────────────────── -->
     <div id="editor-tab" class="tab-content active">
-      <div id="puckBuilderHost" class="puck-builder-host">
-        <div class="puck-empty-state">
-          <strong>Loading Builder...</strong>
-          <small>Preparing the visual editor.</small>
-        </div>
+      <div class="editor-layout">
+        <aside class="editor-sidebar" aria-label="Project explorer">
+          <div class="explorer-header">
+            <div>
+              <span class="explorer-eyebrow">Project</span>
+              <strong>Macro Hero</strong>
+            </div>
+            <div class="explorer-header-actions">
+              <span class="explorer-badge">v2</span>
+              <button type="button" id="collapseExplorerBtn" class="btn-icon" title="Collapse explorer" aria-label="Collapse explorer">‹</button>
+            </div>
+          </div>
+
+          <div class="sidebar-body">
+            <div class="project-search-wrap">
+              <input type="search" id="projectSearch" class="project-search" placeholder="Search project…" autocomplete="off" />
+              <kbd>Ctrl K</kbd>
+            </div>
+            <div id="projectSearchResults" class="project-search-results" hidden></div>
+            <section class="sidebar-section project-tree-section">
+              <div class="section-header">
+                <span class="section-title">Explorer</span>
+              </div>
+
+              <button type="button" id="projectSettingsNav" class="project-tree-node project-tree-root">
+                <span class="tree-caret">◆</span>
+                <span class="project-tree-label">Application</span>
+              </button>
+
+              <div class="project-tree-branch">
+                <button type="button" id="globalVariablesNav" class="project-tree-node">
+                  <span class="tree-icon tree-icon-variable">V</span>
+                  <span class="project-tree-label">Global variables</span>
+                  <span id="globalIssuesBadge" class="tree-issue-badge" hidden>!</span>
+                  <span id="globalVariablesCount" class="tree-count">0</span>
+                </button>
+                <div id="globalVariablesList" class="tree-variable-list"></div>
+              </div>
+
+              <div class="project-tree-branch screens-branch">
+                <div class="project-tree-group-head">
+                  <span class="tree-icon tree-icon-screen">▣</span>
+                  <span class="project-tree-label">Screens</span>
+                  <button type="button" class="btn-icon btn-add" id="addPageBtn" title="Add screen" aria-label="Add screen">+</button>
+                </div>
+                <div id="pagesListSidebar" class="pages-list"></div>
+              </div>
+            </section>
+          </div>
+        </aside>
+
+        <div id="explorerResizeHandle" class="panel-resize-handle explorer-resize-handle" role="separator" aria-label="Resize project explorer" aria-orientation="vertical"></div>
+
+        <main class="editor-main" aria-label="Project workspace">
+          <div id="pageEditorContainer" class="page-editor-container">
+            <div class="studio-loading">
+              <strong>Opening project…</strong>
+              <small>Preparing the workspace.</small>
+            </div>
+          </div>
+        </main>
+      </div>
+      <div class="studio-statusbar">
+        <button type="button" id="expandExplorerBtn" class="statusbar-action" hidden>Show explorer</button>
+        <span id="studioValidationStatus" class="validation-status">Checking project…</span>
+        <span>State · Computed · Screens · Components</span>
       </div>
     </div><!-- /#editor-tab -->
 
@@ -48,7 +112,7 @@
         <div id="jsonEditorHost" class="json-editor-host jse-theme-dark"></div>
         <div id="jsonEditorStatus" class="json-editor-status"></div>
       </div>
-      <button type="button" id="syncFromJson">Sync to Builder</button>
+      <button type="button" id="syncFromJson">Apply JSON to Studio</button>
     </div>
 
     <!-- ── GOOGLE SHEETS ───────────────────────────── -->
