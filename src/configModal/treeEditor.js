@@ -21,6 +21,7 @@ let _onConfigChange = null;
 let _selection = { kind: 'page' };
 let _activeWorkspace = 'screen-layout';
 const _collapsedBuilderPaths = new Set();
+const _builderDragControllers = new WeakMap();
 let _tooltipsInstalled = false;
 let _tooltipEl = null;
 let _projectSearchQuery = '';
@@ -30,6 +31,7 @@ let _lastHistorySnapshot = '';
 let _historyRestoring = false;
 let _inspectorWidth = 320;
 let _draggedElement = null;
+let _dropTarget = null;
 let _previewResizeObserver = null;
 
 const HISTORY_LIMIT = 100;
@@ -805,10 +807,23 @@ function _renderBuilder(pageIndex) {
   if (!builder) return;
   const layout = _config.pages[pageIndex].layout || [];
   builder.innerHTML = layout.length
-    ? layout.map((item, idx) => _renderBlock(item, [idx], pageIndex)).join('')
+    ? _renderBlockList(layout, [], pageIndex)
     : '<div class="builder-empty">No elements yet. Add a block above.</div>';
   _attachBuilderActions(builder, pageIndex);
   _attachBuilderDragDrop(builder, pageIndex);
+}
+
+function _renderBlockList(items, parentPath, pageIndex) {
+  const zonesAndBlocks = [_renderDropZone(parentPath, 0)];
+  items.forEach((item, index) => {
+    zonesAndBlocks.push(_renderBlock(item, [...parentPath, index], pageIndex));
+    zonesAndBlocks.push(_renderDropZone(parentPath, index + 1));
+  });
+  return zonesAndBlocks.join('');
+}
+
+function _renderDropZone(parentPath, index) {
+  return `<div class="builder-drop-zone" data-drop-parent="${parentPath.join('.')}" data-drop-index="${index}" aria-hidden="true"><span>Move here</span></div>`;
 }
 
 function _renderPreview(pageIndex) {
@@ -963,8 +978,9 @@ function _renderBlock(item, path, pageIndex) {
   const parentCount = _getChildArray(_config.pages[pageIndex].layout, path)?.length || 0;
   const index = path[path.length - 1];
 
-  return `<article class="builder-block depth-${Math.min(path.length, 4)} ${selected} ${isCollapsed ? 'collapsed' : ''}" data-path="${pathStr}" data-action="selectElement" draggable="true" tabindex="-1">
+  return `<article class="builder-block depth-${Math.min(path.length, 4)} ${selected} ${isCollapsed ? 'collapsed' : ''}" data-path="${pathStr}" data-action="selectElement" tabindex="-1">
     <div class="builder-block-head">
+      <span class="builder-drag-handle" draggable="true" title="Drag to move" aria-label="Drag to move">&#8942;&#8942;</span>
       ${canHaveChildren ? `<button type="button" class="builder-toggle ${isCollapsed ? '' : 'open'}" data-action="toggleCollapse" data-path="${pathStr}" title="${isCollapsed ? 'Expand' : 'Collapse'}">▶</button>` : '<span class="builder-toggle-spacer"></span>'}
       <span class="builder-type badge-${_typeColor(type)}">${_esc(type)}</span>
       <div class="builder-block-title">
@@ -997,9 +1013,10 @@ function _renderChildrenZone(item, path, pageIndex, children) {
       <select data-role="childType" data-path="${pathStr}">${options}</select>
       <button type="button" class="btn-small" data-action="addChildElement" data-path="${pathStr}">+ Add inside</button>
     </div>
-    <div class="builder-child-list">
-      ${children.length ? children.map((child, idx) => _renderBlock(child, [...path, idx], pageIndex)).join('') : '<div class="builder-empty small">Empty container</div>'}
+    <div class="builder-child-list" data-drop-parent="${pathStr}">
+      ${children.length ? _renderBlockList(children, path, pageIndex) : `${_renderDropZone(path, 0)}<div class="builder-empty small">Empty container</div>`}
     </div>
+    <div class="builder-outdent-zone" data-drop-outside="${pathStr}" aria-hidden="true"><span>Move outside container</span></div>
   </div>`;
 }
 
@@ -1031,93 +1048,257 @@ function _attachBuilderActions(container, pageIndex) {
 }
 
 function _attachBuilderDragDrop(container, pageIndex) {
-  container.querySelectorAll('.builder-block').forEach(block => {
-    block.addEventListener('dragstart', event => {
-      const path = block.dataset.path.split('.').map(Number);
-      _draggedElement = { pageIndex, path };
-      block.classList.add('dragging');
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', block.dataset.path);
+  _builderDragControllers.get(container)?.abort();
+  const dragController = new AbortController();
+  _builderDragControllers.set(container, dragController);
+  const listenerOptions = { signal: dragController.signal };
+
+  const clearIndicators = () => {
+    container.classList.remove('is-dragging');
+    container.querySelectorAll('.dragging, .drop-active, .drop-disabled, .drop-inside').forEach(node => {
+      node.classList.remove('dragging', 'drop-active', 'drop-disabled', 'drop-inside');
     });
-    block.addEventListener('dragend', () => {
-      _draggedElement = null;
-      container.querySelectorAll('.dragging, .drop-before, .drop-after, .drop-inside').forEach(node => {
-        node.classList.remove('dragging', 'drop-before', 'drop-after', 'drop-inside');
-      });
+    _dropTarget = null;
+  };
+
+  const refreshDropZones = () => {
+    container.querySelectorAll('.builder-drop-zone').forEach(zone => {
+      const spec = _dropSpecFromZone(zone);
+      zone.classList.toggle('drop-disabled', !_canDropAt(pageIndex, _draggedElement.path, spec.parentPath, spec.index));
     });
-  });
+    container.querySelectorAll('.builder-outdent-zone').forEach(zone => {
+      const spec = _dropSpecFromOutdent(zone);
+      zone.classList.toggle('drop-disabled', !_canDropAt(pageIndex, _draggedElement.path, spec.parentPath, spec.index));
+    });
+  };
+
+  container.addEventListener('dragstart', event => {
+    const handle = event.target.closest('.builder-drag-handle');
+    const block = handle?.closest('.builder-block');
+    if (!handle || !block || !container.contains(block)) {
+      event.preventDefault();
+      return;
+    }
+    event.stopPropagation();
+    const path = _pathFromDataset(block.dataset.path);
+    _draggedElement = { pageIndex, path };
+    block.classList.add('dragging');
+    container.classList.add('is-dragging');
+    refreshDropZones();
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', block.dataset.path);
+  }, listenerOptions);
+
+  container.addEventListener('dragend', () => {
+    _draggedElement = null;
+    clearIndicators();
+  }, listenerOptions);
 
   container.addEventListener('dragover', event => {
     if (!_draggedElement || _draggedElement.pageIndex !== pageIndex) return;
-    event.preventDefault();
-    const target = event.target.closest('.builder-block');
-    container.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(node => {
-      node.classList.remove('drop-before', 'drop-after', 'drop-inside');
-    });
-    if (!target) {
-      container.classList.add('drop-root');
+    const spec = _resolveDropSpec(event, container, pageIndex);
+    if (!spec || !_canDropAt(pageIndex, _draggedElement.path, spec.parentPath, spec.index)) {
+      if (_dropTarget && _pointNearIndicator(event, _dropTarget.indicator)) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+        return;
+      }
+      _clearActiveDropIndicator(container);
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
       return;
     }
-    container.classList.remove('drop-root');
-    const targetPath = target.dataset.path.split('.').map(Number);
-    if (_samePath(targetPath, _draggedElement.path) || _isDescendantPath(targetPath, _draggedElement.path)) return;
-    const rect = target.getBoundingClientRect();
-    const ratio = (event.clientY - rect.top) / Math.max(1, rect.height);
-    const targetItem = _getNodeAt(_config.pages[pageIndex].layout, targetPath);
-    const mode = _isContainer(targetItem) && ratio > 0.28 && ratio < 0.72 ? 'inside' : ratio < 0.5 ? 'before' : 'after';
-    target.classList.add(`drop-${mode}`);
-  });
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    if (_sameDropTarget(_dropTarget, spec)) return;
+    _clearActiveDropIndicator(container);
+    spec.indicator?.classList.add(spec.inside ? 'drop-inside' : 'drop-active');
+    _dropTarget = spec;
+  }, listenerOptions);
 
   container.addEventListener('dragleave', event => {
-    if (!container.contains(event.relatedTarget)) container.classList.remove('drop-root');
-  });
+    if (!container.contains(event.relatedTarget)) {
+      container.querySelectorAll('.drop-active, .drop-inside').forEach(node => {
+        node.classList.remove('drop-active', 'drop-inside');
+      });
+      _dropTarget = null;
+    }
+  }, listenerOptions);
 
   container.addEventListener('drop', event => {
     if (!_draggedElement || _draggedElement.pageIndex !== pageIndex) return;
     event.preventDefault();
-    const target = event.target.closest('.builder-block');
-    if (!target) {
-      _moveElementByDrop(pageIndex, _draggedElement.path, null, 'root');
+    const spec = _resolveDropSpec(event, container, pageIndex) || _dropTarget;
+    const sourcePath = [..._draggedElement.path];
+    _draggedElement = null;
+    if (!spec || !_canDropAt(pageIndex, sourcePath, spec.parentPath, spec.index)) {
+      clearIndicators();
       return;
     }
-    const mode = target.classList.contains('drop-inside') ? 'inside' : target.classList.contains('drop-before') ? 'before' : 'after';
-    _moveElementByDrop(pageIndex, _draggedElement.path, target.dataset.path.split('.').map(Number), mode);
-  });
+    clearIndicators();
+    _moveElementToPosition(pageIndex, sourcePath, spec.parentPath, spec.index);
+  }, listenerOptions);
 }
 
-function _moveElementByDrop(pageIndex, sourcePath, targetPath, mode) {
-  const root = _config.pages[pageIndex].layout;
+function _resolveDropSpec(event, container, pageIndex) {
+  const outdent = event.target.closest('.builder-outdent-zone');
+  if (outdent && container.contains(outdent)) {
+    return { ..._dropSpecFromOutdent(outdent), indicator: outdent, inside: false };
+  }
+  const zone = event.target.closest('.builder-drop-zone');
+  if (zone && container.contains(zone)) return { ..._dropSpecFromZone(zone), indicator: zone, inside: false };
+
+  const head = event.target.closest('.builder-block-head');
+  const block = head?.closest('.builder-block') || event.target.closest('.builder-block');
+  if (block && container.contains(block)) {
+    const targetPath = _pathFromDataset(block.dataset.path);
+    const item = _getNodeAt(_config.pages[pageIndex].layout, targetPath);
+    if (_isContainer(item)) {
+      return {
+        parentPath: targetPath,
+        index: (_getChildren(item) || []).length,
+        indicator: block,
+        inside: true,
+      };
+    }
+    const rect = block.getBoundingClientRect();
+    const after = event.clientY >= rect.top + rect.height / 2;
+    return {
+      parentPath: targetPath.slice(0, -1),
+      index: targetPath[targetPath.length - 1] + (after ? 1 : 0),
+      indicator: _findDropZone(container, targetPath.slice(0, -1), targetPath[targetPath.length - 1] + (after ? 1 : 0)),
+      inside: false,
+    };
+  }
+
+  const childList = event.target.closest('.builder-child-list');
+  if (childList && container.contains(childList)) {
+    const parentPath = _pathFromDataset(childList.dataset.dropParent);
+    const parent = _getNodeAt(_config.pages[pageIndex].layout, parentPath);
+    return {
+      parentPath,
+      index: (_getChildren(parent) || []).length,
+      indicator: childList,
+      inside: true,
+    };
+  }
+
+  if (container.contains(event.target)) {
+    return {
+      parentPath: [],
+      index: _config.pages[pageIndex].layout.length,
+      indicator: _findDropZone(container, [], _config.pages[pageIndex].layout.length) || container,
+      inside: false,
+    };
+  }
+  return null;
+}
+
+function _dropSpecFromOutdent(zone) {
+  const containerPath = _pathFromDataset(zone.dataset.dropOutside);
+  return {
+    parentPath: containerPath.slice(0, -1),
+    index: containerPath[containerPath.length - 1] + 1,
+  };
+}
+
+function _dropSpecFromZone(zone) {
+  return {
+    parentPath: _pathFromDataset(zone.dataset.dropParent),
+    index: Number(zone.dataset.dropIndex) || 0,
+  };
+}
+
+function _sameDropTarget(previous, next) {
+  return Boolean(previous && next)
+    && previous.indicator === next.indicator
+    && previous.index === next.index
+    && previous.inside === next.inside
+    && _samePath(previous.parentPath, next.parentPath);
+}
+
+function _clearActiveDropIndicator(container) {
+  container.querySelectorAll('.drop-active, .drop-inside').forEach(node => {
+    node.classList.remove('drop-active', 'drop-inside');
+  });
+  _dropTarget = null;
+}
+
+function _pointNearIndicator(event, indicator, margin = 7) {
+  if (!indicator?.getBoundingClientRect) return false;
+  const rect = indicator.getBoundingClientRect();
+  return event.clientX >= rect.left - margin
+    && event.clientX <= rect.right + margin
+    && event.clientY >= rect.top - margin
+    && event.clientY <= rect.bottom + margin;
+}
+
+function _findDropZone(container, parentPath, index) {
+  const parent = parentPath.join('.');
+  return [...container.querySelectorAll('.builder-drop-zone')].find(zone => (
+    zone.dataset.dropParent === parent && Number(zone.dataset.dropIndex) === index
+  )) || null;
+}
+
+function _pathFromDataset(value) {
+  return String(value || '').split('.').filter(Boolean).map(Number);
+}
+
+function _canDropAt(pageIndex, sourcePath, parentPath, index) {
+  const root = _config.pages[pageIndex]?.layout;
+  return _canDropInLayout(root, sourcePath, parentPath, index);
+}
+
+function _canDropInLayout(root, sourcePath, parentPath, index) {
   const source = _getNodeAt(root, sourcePath);
-  if (!source) return;
-  if (targetPath && (_samePath(sourcePath, targetPath) || _isDescendantPath(targetPath, sourcePath))) return;
-  const target = targetPath ? _getNodeAt(root, targetPath) : null;
-  const sourceArray = _getChildArray(root, sourcePath);
-  if (!sourceArray) return;
-  sourceArray.splice(sourceArray.indexOf(source), 1);
+  if (!root || !source || !Array.isArray(parentPath)) return false;
+  if (_samePath(parentPath, sourcePath) || _isDescendantPath(parentPath, sourcePath)) return false;
+  const parent = parentPath.length ? _getNodeAt(root, parentPath) : null;
+  if (parentPath.length && !_isContainer(parent)) return false;
+  if (!_canPlaceInParent(source, parent)) return false;
 
-  let destination = root;
-  let insertIndex = root.length;
-  let parent = null;
-  if (mode === 'inside' && target) {
-    parent = target;
-    destination = _ensureChildren(target);
-    insertIndex = destination.length;
-  } else if (target) {
-    const location = _findNodeLocation(root, target);
-    if (!location) return;
-    destination = location.array;
-    parent = location.parent;
-    insertIndex = location.index + (mode === 'after' ? 1 : 0);
-  }
+  return true;
+}
 
-  if (!_canPlaceInParent(source, parent)) {
-    sourceArray.splice(Math.min(sourcePath[sourcePath.length - 1], sourceArray.length), 0, source);
-    alert('Matrix containers can only contain Matrix Button components.');
-    renderPagePanel(pageIndex);
-    return;
+export function moveLayoutElement(layout, sourcePath, parentPath, requestedIndex) {
+  if (!_canDropInLayout(layout, sourcePath, parentPath, requestedIndex)) return null;
+  const source = _getNodeAt(layout, sourcePath);
+  const sourceLocation = _findNodeLocation(layout, source);
+  const parent = parentPath.length ? _getNodeAt(layout, parentPath) : null;
+  const destination = parent ? _ensureChildren(parent) : layout;
+  if (!sourceLocation) return null;
+
+  let insertIndex = Math.max(0, Math.min(Number(requestedIndex) || 0, destination.length));
+  if (sourceLocation.array === destination && sourceLocation.index < insertIndex) insertIndex -= 1;
+  if (sourceLocation.array === destination && sourceLocation.index === insertIndex) {
+    return { item: source, path: [...sourcePath], moved: false };
   }
+  sourceLocation.array.splice(sourceLocation.index, 1);
   destination.splice(insertIndex, 0, source);
-  _selection = { kind: 'element', path: _findPathByReference(root, source) || [0] };
+  return { item: source, path: _findPathByReference(layout, source), moved: true };
+}
+
+function _moveElementToPosition(pageIndex, sourcePath, parentPath, requestedIndex) {
+  const root = _config.pages[pageIndex].layout;
+  if (!_canDropAt(pageIndex, sourcePath, parentPath, requestedIndex)) return;
+  const collapsedItems = _collectContainerPaths(root)
+    .filter(path => _isBuilderCollapsed(pageIndex, path))
+    .map(path => _getNodeAt(root, path))
+    .filter(Boolean);
+
+  const result = moveLayoutElement(root, sourcePath, parentPath, requestedIndex);
+  if (!result) return;
+  if (!result.moved) return;
+
+  const pageKeyPrefix = `${_config.pages[pageIndex]?.id || pageIndex}:`;
+  [..._collapsedBuilderPaths].forEach(key => {
+    if (key.startsWith(pageKeyPrefix)) _collapsedBuilderPaths.delete(key);
+  });
+  collapsedItems.forEach(item => {
+    const path = _findPathByReference(root, item);
+    if (path) _collapsedBuilderPaths.add(_builderCollapseKey(pageIndex, path));
+  });
+
+  _selection = { kind: 'element', path: result.path || [0] };
   _notify();
   renderPagePanel(pageIndex);
 }
