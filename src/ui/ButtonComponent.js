@@ -38,10 +38,7 @@ export class ButtonComponent extends UIComponent {
     UIComponent.applyTooltip(
       btn,
       this.item.tooltip || this.item.label || (hasOnclick ? 'Button' : 'No commands defined'),
-      () => ({
-        Global: { ...this.services.globalVariables },
-        Page: Object.fromEntries(Object.keys(this.page?.variables || {}).map(name => [name, this.page?._resolved?.[name]])),
-      })
+      () => this.services.getVariableScopes(this.page)
     );
 
     // Add right-click handler if onrightclick commands exist

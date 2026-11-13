@@ -35,24 +35,31 @@ const ELEMENT_KEY_ORDER = [
 const STATE_ENTRY_KEY_ORDER = ["default", "min", "max"];
 const COMPUTED_ENTRY_KEY_ORDER = ["eval", "min", "max"];
 
-function slugify(value, fallback) {
-  const slug = String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return slug || fallback;
-}
-
 function uniqueId(base, used) {
   let id = base;
   let suffix = 2;
   while (used.has(id)) {
-    id = `${base}-${suffix}`;
+    id = `${base}_${suffix}`;
     suffix += 1;
   }
   used.add(id);
   return id;
+}
+
+const RESERVED_PAGE_KEYS = new Set(["__proto__", "prototype", "constructor", "then"]);
+
+export function normalizePageId(value, fallback = "page") {
+  let key = String(value || fallback)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_$]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  if (!key) key = fallback;
+  if (!/^[A-Za-z_$]/.test(key)) key = `page_${key}`;
+  if (RESERVED_PAGE_KEYS.has(key)) key = `page_${key}`;
+  return key;
 }
 
 function isPlainObject(value) {
@@ -220,10 +227,29 @@ function normalizeScope(scope, options = {}) {
   return migrated;
 }
 
+function rewritePageIdReferences(value, renames) {
+  if (typeof value === "string") {
+    let result = value;
+    for (const [previousId, nextId] of Object.entries(renames)) {
+      const escaped = previousId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result.replace(new RegExp(`\\bPages\\.${escaped}(?=\\.)`, "g"), `Pages.${nextId}`);
+    }
+    return result;
+  }
+  if (Array.isArray(value)) return value.map(entry => rewritePageIdReferences(entry, renames));
+  if (isPlainObject(value)) {
+    Object.keys(value).forEach(key => {
+      value[key] = rewritePageIdReferences(value[key], renames);
+    });
+  }
+  return value;
+}
+
 export function normalizeConfig(rawConfig, options = {}) {
   const cfg = deepClone(rawConfig || {});
   const messages = Array.isArray(cfg._migration?.messages) ? [...cfg._migration.messages] : [];
   let variableRenames = cfg._migration?.variableRenames || null;
+  const pageIdRenames = { ...(cfg._migration?.pageIdRenames || {}) };
   let migrated = Boolean(cfg._migration?.migrated);
   const sourceVersion = Number(cfg.schemaVersion) || 1;
 
@@ -252,17 +278,22 @@ export function normalizeConfig(rawConfig, options = {}) {
       messages.push(`Page ${index + 1} received label "${currentPage.label}".`);
     }
 
+    const previousId = currentPage.id;
     if (!currentPage.id) {
-      currentPage.id = uniqueId(slugify(currentPage.label || currentPage.title, `page-${index + 1}`), usedPageIds);
+      currentPage.id = uniqueId(normalizePageId(currentPage.label || currentPage.title, `page_${index + 1}`), usedPageIds);
       migrated = true;
       messages.push(`Page "${currentPage.label || currentPage.title || index + 1}" received id "${currentPage.id}".`);
     } else {
-      const nextId = uniqueId(slugify(currentPage.id, `page-${index + 1}`), usedPageIds);
+      const nextId = uniqueId(normalizePageId(currentPage.id, `page_${index + 1}`), usedPageIds);
       if (nextId !== currentPage.id) {
         currentPage.id = nextId;
         migrated = true;
-        messages.push(`Duplicate page id normalized to "${currentPage.id}".`);
+        messages.push(`Page id "${previousId}" normalized to "${currentPage.id}" for Pages.${currentPage.id}.`);
       }
+    }
+    if (previousId && normalizePageId(previousId) !== previousId && previousId !== currentPage.id
+      && !Object.prototype.hasOwnProperty.call(pageIdRenames, previousId)) {
+      pageIdRenames[previousId] = currentPage.id;
     }
 
     if (!Array.isArray(currentPage.layout)) currentPage.layout = [];
@@ -271,6 +302,14 @@ export function normalizeConfig(rawConfig, options = {}) {
       messages.push(`Page "${currentPage.label || currentPage.id}" variables split into state/computed.`);
     }
   });
+
+  if (Object.keys(pageIdRenames).length) {
+    rewritePageIdReferences(cfg.global?.computed, pageIdRenames);
+    cfg.pages.forEach(page => {
+      rewritePageIdReferences(page.computed, pageIdRenames);
+      rewritePageIdReferences(page.layout, pageIdRenames);
+    });
+  }
 
   if (sourceVersion < 3) {
     const v3Migration = migrateConfigV2ToV3(cfg);
@@ -294,6 +333,7 @@ export function normalizeConfig(rawConfig, options = {}) {
     migrated,
     messages,
     ...(variableRenames ? { variableRenames } : {}),
+    ...(Object.keys(pageIdRenames).length ? { pageIdRenames } : {}),
   };
 
   return cfg;

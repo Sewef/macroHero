@@ -158,6 +158,33 @@ class VariableStore {
   }
 
   /**
+   * Get declared values for one page, preferring the latest resolved cache.
+   */
+  getPageVariablesResolved(pageIndex) {
+    const page = this.config?.pages?.[pageIndex];
+    if (!page) return {};
+    const cached = this.pageVariablesResolved[pageIndex] || {};
+    return Object.fromEntries(Object.entries(page.variables || {}).map(([name, definition]) => [
+      name,
+      Object.prototype.hasOwnProperty.call(cached, name)
+        ? cached[name]
+        : (Object.prototype.hasOwnProperty.call(page._resolved || {}, name)
+          ? page._resolved[name]
+          : definition?.value),
+    ]));
+  }
+
+  /**
+   * Build the Pages.<screenId> namespace used by expressions and scripts.
+   */
+  getPagesResolved() {
+    return Object.fromEntries((this.config?.pages || []).map((page, pageIndex) => [
+      page.id || `page_${pageIndex + 1}`,
+      this.getPageVariablesResolved(pageIndex),
+    ]));
+  }
+
+  /**
    * Get variable configuration (definition, not resolved value)
    */
   getVariableConfig(varName, pageIndex = null) {

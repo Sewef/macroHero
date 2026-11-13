@@ -10,10 +10,11 @@
  */
 
 import { addTrackedListener, dedentCommandList } from './utils.js';
-import { buildVariablesFromStateComputed } from '../configSchema.js';
+import { buildVariablesFromStateComputed, normalizePageId } from '../configSchema.js';
 import { deepClone } from '../utils.js';
 import { enhanceCodeEditors } from './codeEditors.js';
 import { parseMd } from '../ui/markdownUtils.js';
+import { renameEvaluatedPageScope } from '../storage.js';
 
 let _config = null;
 let _selectedPageIndex = null;
@@ -353,8 +354,9 @@ function _ensureConfigShape() {
 
   if (!Array.isArray(_config.pages)) _config.pages = [];
   _config.pages.forEach((page, index) => {
-    if (!page.id) page.id = _uniquePageId(_slugify(page.label || `page-${index + 1}`));
+    if (!page.id) page.id = _uniquePageId(normalizePageId(page.label || `page_${index + 1}`));
     if (!page.label) page.label = `Page ${index + 1}`;
+    page.id = _uniquePageId(normalizePageId(page.id, `page_${index + 1}`), page);
     if (!page.state) page.state = {};
     if (!page.computed) page.computed = {};
     if (!Array.isArray(page.layout)) page.layout = [];
@@ -617,8 +619,8 @@ export function renderPagePanel(pageIndex) {
             <input type="text" id="pageLabelInput" value="${_attr(page.label || '')}" placeholder="Screen name" />
           </div>
           <div class="input-group page-field">
-            <label>Screen ID</label>
-            <input type="text" id="pageIdInput" value="${_attr(page.id || '')}" placeholder="stable-page-id" />
+            <label>Screen ID <small>Pages.${_esc(page.id || '')}</small></label>
+            <input type="text" id="pageIdInput" value="${_attr(page.id || '')}" placeholder="screen_id" />
           </div>
         </div>
 
@@ -654,11 +656,17 @@ export function renderPagePanel(pageIndex) {
     _renderPageList();
     _notify();
   });
-  addTrackedListener(document.getElementById('pageIdInput'), 'change', e => {
-    const nextId = _slugify(e.target.value, page.id || `page-${pageIndex + 1}`);
-    page.id = _uniquePageId(nextId, page);
+  addTrackedListener(document.getElementById('pageIdInput'), 'change', async e => {
+    const previousId = page.id;
+    const nextId = _uniquePageId(normalizePageId(e.target.value, page.id || `page_${pageIndex + 1}`), page);
+    if (previousId !== nextId) {
+      _renamePageIdReferences(previousId, nextId);
+      await renameEvaluatedPageScope(previousId, nextId).catch(() => false);
+    }
+    page.id = nextId;
     e.target.value = page.id;
     _notify();
+    renderPagePanel(pageIndex);
   });
 
   container.querySelector('[data-action="collapseAll"]').onclick = () => _setAllBuilderCollapsed(pageIndex, true);
@@ -689,7 +697,7 @@ function renderPageVariablesPanel(pageIndex) {
           <div>
             <span class="workspace-kicker">${_esc(page.label || `Screen ${pageIndex + 1}`)}</span>
             <h3>Screen variables</h3>
-            <p>Values and expressions scoped to this screen.</p>
+            <p>Values and expressions scoped to this screen · <code>Pages.${_esc(page.id)}.variable</code></p>
           </div>
           <div class="workspace-summary">${stateCount + computedCount} variables</div>
         </header>
@@ -1427,10 +1435,12 @@ function _renderVariableInspector() {
   const entry = name ? deepClone(scope[varKind]?.[name]) : {};
   const title = isNew ? `Add ${varKind}` : `Edit ${name}`;
   const referencesHtml = isNew ? '' : _renderVariableReferences(owner, name);
+  const accessHtml = isNew ? '' : _renderVariableAccess(owner, name);
 
   if (varKind === 'computed') {
     const expr = typeof entry === 'string' ? entry : entry?.eval || '';
     return `<div class="property-header"><span class="section-title">${_esc(title)}</span></div>
+      ${accessHtml}
       <div class="input-group"><label>Name</label><input id="varNameInput" type="text" value="${_attr(name || '')}" /></div>
       <div class="input-group"><label>Expression</label><textarea id="varExpressionInput" class="inspector-expression" data-editor-lang="javascript">${_esc(expr)}</textarea></div>
       <div class="row-2">
@@ -1446,6 +1456,7 @@ function _renderVariableInspector() {
 
   const defaultValue = entry && typeof entry === 'object' && 'default' in entry ? entry.default : null;
   return `<div class="property-header"><span class="section-title">${_esc(title)}</span></div>
+    ${accessHtml}
     <div class="input-group"><label>Name</label><input id="varNameInput" type="text" value="${_attr(name || '')}" /></div>
     <div class="input-group"><label>Default Value (JSON or text)</label><input id="varDefaultInput" type="text" value="${_attr(_formatValueForInput(defaultValue))}" /></div>
     <div class="row-2">
@@ -1471,6 +1482,17 @@ function _attachVariableInspector() {
     if (_selectedPageIndex !== null) renderPageVariablesPanel(_selectedPageIndex);
   };
   document.getElementById('saveVariableInspector').onclick = () => _saveVariableFromInspector();
+  document.querySelectorAll('#propertyPanel [data-copy-variable-path]').forEach(button => {
+    button.onclick = async () => {
+      const path = button.dataset.copyVariablePath;
+      try {
+        await navigator.clipboard.writeText(path);
+        button.textContent = 'Copied';
+      } catch {
+        button.textContent = path;
+      }
+    };
+  });
   document.querySelectorAll('#propertyPanel [data-variable-reference]').forEach(button => {
     button.onclick = () => {
       const pageIndex = Number(button.dataset.pageIndex);
@@ -1479,6 +1501,16 @@ function _attachVariableInspector() {
       _focusElementPath(pageIndex, path);
     };
   });
+}
+
+function _renderVariableAccess(owner, name) {
+  const paths = owner === 'global'
+    ? [`Global.${name}`]
+    : [`Page.${name}`, `Pages.${_config.pages[Number(owner)]?.id}.${name}`];
+  return `<div class="variable-access-paths">
+    <span>Script access</span>
+    ${paths.map(path => `<button type="button" class="variable-access-path" data-copy-variable-path="${_attr(path)}" title="Copy reference"><code>${_esc(path)}</code></button>`).join('')}
+  </div>`;
 }
 
 function _renderElementInspector() {
@@ -1862,7 +1894,7 @@ function _moveElement(pageIndex, path, dir) {
 function _addPage() {
   if (!_config.pages) _config.pages = [];
   const page = {
-    id: _uniquePageId(`page-${_config.pages.length + 1}`),
+    id: _uniquePageId(`page_${_config.pages.length + 1}`),
     label: 'New Page',
     state: {},
     computed: {},
@@ -1927,12 +1959,31 @@ function _scriptCompletionVariables() {
   const groups = _bindingOptionGroups('all').filter(group => (
     _selection.kind !== 'variable' || _selection.owner !== 'global' || group.shortLabel.startsWith('global')
   ));
-  return groups.flatMap(group => group.names.map(name => ({
+  const localVariables = groups.flatMap(group => group.names.map(name => ({
     name,
     scope: group.shortLabel.startsWith('global') ? 'Global' : 'Page',
     detail: `${group.label}${group.shortLabel.includes('computed') ? ' · read-only' : ' · writable'}`,
     info: `${group.label} variable available as ${group.shortLabel.startsWith('global') ? 'Global' : 'Page'}.${name}.`,
   })));
+  const pageVariables = (_config.pages || []).flatMap((page, pageIndex) => [
+    ...Object.keys(page.state || {}).map(name => ({
+      name,
+      scope: 'Pages',
+      pageKey: page.id,
+      pageLabel: page.label || `Page ${pageIndex + 1}`,
+      detail: `${page.label || page.id} State · writable`,
+      info: `State variable available from every screen as Pages.${page.id}.${name}.`,
+    })),
+    ...Object.keys(page.computed || {}).map(name => ({
+      name,
+      scope: 'Pages',
+      pageKey: page.id,
+      pageLabel: page.label || `Page ${pageIndex + 1}`,
+      detail: `${page.label || page.id} Computed · read-only`,
+      info: `Computed variable available from every screen as Pages.${page.id}.${name}.`,
+    })),
+  ]);
+  return [...localVariables, ...pageVariables];
 }
 
 function _bindingOptionGroups(mode) {
@@ -2063,18 +2114,26 @@ function _computedDesc(entry) {
 function _variableUsages(owner, name) {
   if (!name) return [];
   const usages = [];
-  const pages = owner === 'global'
-    ? (_config.pages || []).map((page, pageIndex) => ({ page, pageIndex }))
-    : [{ page: _config.pages?.[Number(owner)], pageIndex: Number(owner) }];
+  const ownerIndex = owner === 'global' ? null : Number(owner);
+  const ownerPageId = ownerIndex === null ? null : _config.pages?.[ownerIndex]?.id;
+  const pages = (_config.pages || []).map((page, pageIndex) => ({ page, pageIndex }));
+  const referenced = (source, pageIndex) => {
+    if (owner === 'global') return _containsPath(source, `Global.${name}`);
+    return (pageIndex === ownerIndex && _containsPath(source, `Page.${name}`))
+      || _containsPath(source, `Pages.${ownerPageId}.${name}`);
+  };
 
   pages.forEach(({ page, pageIndex }) => {
     if (!page) return;
     _walkLayout(page.layout, (item, path) => {
       const fields = [];
-      if (item.var === name) fields.push('binding');
+      if ((owner === 'global' || pageIndex === ownerIndex) && item.var === name) fields.push('binding');
       ['onclick', 'onrightclick', 'onupdate'].forEach(prop => {
         const source = Array.isArray(item[prop]) ? item[prop].join('\n') : String(item[prop] || '');
-        if (_containsIdentifier(source, name)) fields.push(prop);
+        if (referenced(source, pageIndex)) fields.push(prop);
+      });
+      ['label', 'text', 'content', 'tooltip', 'placeholder'].forEach(prop => {
+        if (referenced(item[prop], pageIndex)) fields.push(prop);
       });
       if (fields.length) {
         usages.push({ kind: 'component', pageIndex, path, label: _blockLabel(item), detail: fields.join(', ') });
@@ -2083,7 +2142,7 @@ function _variableUsages(owner, name) {
     Object.entries(page.computed || {}).forEach(([computedName, entry]) => {
       if (computedName === name) return;
       const expression = typeof entry === 'string' ? entry : entry?.eval || '';
-      if (_containsIdentifier(expression, name)) {
+      if (referenced(expression, pageIndex)) {
         usages.push({ kind: 'expression', pageIndex, label: computedName, detail: 'computed expression' });
       }
     });
@@ -2093,7 +2152,12 @@ function _variableUsages(owner, name) {
     Object.entries(_config.global?.computed || {}).forEach(([computedName, entry]) => {
       if (computedName === name) return;
       const expression = typeof entry === 'string' ? entry : entry?.eval || '';
-      if (_containsIdentifier(expression, name)) usages.push({ kind: 'expression', label: computedName, detail: 'global computed expression' });
+      if (_containsPath(expression, `Global.${name}`)) usages.push({ kind: 'expression', label: computedName, detail: 'global computed expression' });
+    });
+  } else if (ownerPageId) {
+    Object.entries(_config.global?.computed || {}).forEach(([computedName, entry]) => {
+      const expression = typeof entry === 'string' ? entry : entry?.eval || '';
+      if (_containsPath(expression, `Pages.${ownerPageId}.${name}`)) usages.push({ kind: 'expression', label: computedName, detail: 'global computed expression' });
     });
   }
   return usages;
@@ -2112,38 +2176,48 @@ function _renderVariableReferences(owner, name) {
   </section>`;
 }
 
-function _containsIdentifier(source, name) {
-  if (!source || !name) return false;
-  return new RegExp(`(^|[^A-Za-z0-9_$])${_escapeRegExp(name)}(?=$|[^A-Za-z0-9_$])`).test(String(source));
+function _containsPath(source, path) {
+  if (!source || !path) return false;
+  return new RegExp(`(^|[^A-Za-z0-9_$])${_escapeRegExp(path)}(?=$|[^A-Za-z0-9_$])`).test(String(source));
 }
 
 function _renameVariableReferences(owner, previousName, nextName) {
   if (!previousName || previousName === nextName) return;
-  const namespace = owner === 'global' ? 'Global' : 'Page';
-  const replace = value => String(value).replace(
-    new RegExp(`\\b${namespace}\\.${_escapeRegExp(previousName)}(?=$|[^A-Za-z0-9_$])`, 'g'),
-    `${namespace}.${nextName}`,
+  const ownerIndex = owner === 'global' ? null : Number(owner);
+  const ownerPageId = ownerIndex === null ? null : _config.pages?.[ownerIndex]?.id;
+  const replacePath = (value, previousPath, nextPath) => String(value).replace(
+    new RegExp(`\\b${_escapeRegExp(previousPath)}(?=$|[^A-Za-z0-9_$])`, 'g'),
+    nextPath,
   );
-  const pages = owner === 'global' ? (_config.pages || []) : [_config.pages?.[Number(owner)]].filter(Boolean);
-  pages.forEach(page => {
+  const replaceForPage = (value, pageIndex) => {
+    let result = String(value);
+    if (owner === 'global') return replacePath(result, `Global.${previousName}`, `Global.${nextName}`);
+    if (pageIndex === ownerIndex) result = replacePath(result, `Page.${previousName}`, `Page.${nextName}`);
+    return replacePath(result, `Pages.${ownerPageId}.${previousName}`, `Pages.${ownerPageId}.${nextName}`);
+  };
+  (_config.pages || []).forEach((page, pageIndex) => {
     _walkLayout(page.layout, item => {
-      if (item.var === previousName) item.var = nextName;
+      if ((owner === 'global' || pageIndex === ownerIndex) && item.var === previousName) item.var = nextName;
       ['onclick', 'onrightclick', 'onupdate'].forEach(prop => {
-        if (Array.isArray(item[prop])) item[prop] = item[prop].map(replace);
-        else if (typeof item[prop] === 'string') item[prop] = replace(item[prop]);
+        if (Array.isArray(item[prop])) item[prop] = item[prop].map(value => replaceForPage(value, pageIndex));
+        else if (typeof item[prop] === 'string') item[prop] = replaceForPage(item[prop], pageIndex);
+      });
+      ['label', 'text', 'content', 'tooltip', 'placeholder'].forEach(prop => {
+        if (typeof item[prop] === 'string') item[prop] = replaceForPage(item[prop], pageIndex);
       });
     });
     Object.entries(page.computed || {}).forEach(([key, entry]) => {
-      if (typeof entry === 'string') page.computed[key] = replace(entry);
-      else if (entry && typeof entry === 'object' && typeof entry.eval === 'string') entry.eval = replace(entry.eval);
+      if (typeof entry === 'string') page.computed[key] = replaceForPage(entry, pageIndex);
+      else if (entry && typeof entry === 'object' && typeof entry.eval === 'string') entry.eval = replaceForPage(entry.eval, pageIndex);
     });
   });
-  if (owner === 'global') {
-    Object.entries(_config.global?.computed || {}).forEach(([key, entry]) => {
-      if (typeof entry === 'string') _config.global.computed[key] = replace(entry);
-      else if (entry && typeof entry === 'object' && typeof entry.eval === 'string') entry.eval = replace(entry.eval);
-    });
-  }
+  Object.entries(_config.global?.computed || {}).forEach(([key, entry]) => {
+    const replaceGlobal = value => owner === 'global'
+      ? replacePath(value, `Global.${previousName}`, `Global.${nextName}`)
+      : replacePath(value, `Pages.${ownerPageId}.${previousName}`, `Pages.${ownerPageId}.${nextName}`);
+    if (typeof entry === 'string') _config.global.computed[key] = replaceGlobal(entry);
+    else if (entry && typeof entry === 'object' && typeof entry.eval === 'string') entry.eval = replaceGlobal(entry.eval);
+  });
 }
 
 function _escapeRegExp(value) {
@@ -2171,23 +2245,38 @@ function _typeColor(type) {
   return map[t] || 'gray';
 }
 
-function _slugify(value, fallback = 'page') {
-  return String(value || fallback)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || fallback;
-}
-
 function _uniquePageId(base, currentPage = null) {
   const used = new Set((_config.pages || []).filter(page => page !== currentPage).map(page => page.id));
-  let id = _slugify(base);
+  const root = normalizePageId(base);
+  let id = root;
   let suffix = 2;
   while (used.has(id)) {
-    id = `${base}-${suffix}`;
+    id = `${root}_${suffix}`;
     suffix += 1;
   }
   return id;
+}
+
+function _renamePageIdReferences(previousId, nextId) {
+  if (!previousId || previousId === nextId) return;
+  const escaped = previousId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`\\bPages\\.${escaped}(?=\\.)`, 'g');
+  const rewrite = value => {
+    if (typeof value === 'string') return value.replace(pattern, `Pages.${nextId}`);
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => { value[index] = rewrite(entry); });
+      return value;
+    }
+    if (value && typeof value === 'object') {
+      Object.keys(value).forEach(key => { value[key] = rewrite(value[key]); });
+    }
+    return value;
+  };
+  rewrite(_config.global?.computed);
+  (_config.pages || []).forEach(page => {
+    rewrite(page.computed);
+    rewrite(page.layout);
+  });
 }
 
 function _samePath(a, b) {
@@ -2241,12 +2330,14 @@ function _collectProjectIssues() {
     if (!String(expression || '').trim()) issues.push({ scope: 'global', message: `Computed variable "${name}" has no expression.` });
   });
 
-  const pageIds = new Map();
+  const pageIds = new Map((_config.pages || []).map((page, pageIndex) => [page.id, pageIndex]));
+  const seenPageIds = new Set();
   (_config.pages || []).forEach((page, pageIndex) => {
     if (!String(page.label || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Screen label is empty.' });
     if (!String(page.id || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Screen ID is empty.' });
-    else if (pageIds.has(page.id)) issues.push({ scope: 'page', pageIndex, message: `Screen ID "${page.id}" is duplicated.` });
-    else pageIds.set(page.id, pageIndex);
+    else if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(page.id)) issues.push({ scope: 'page', pageIndex, message: `Screen ID "${page.id}" is not a valid JavaScript identifier.` });
+    else if (seenPageIds.has(page.id)) issues.push({ scope: 'page', pageIndex, message: `Screen ID "${page.id}" is duplicated.` });
+    else seenPageIds.add(page.id);
 
     const pageState = new Set(Object.keys(page.state || {}));
     const pageComputed = new Set(Object.keys(page.computed || {}));
@@ -2272,6 +2363,112 @@ function _collectProjectIssues() {
 
     });
   });
+  issues.push(..._collectPagesReferenceIssues(pageIds));
+  issues.push(..._collectVariableCycleIssues());
+  return issues;
+}
+
+function _collectPagesReferenceIssues(pageIds) {
+  const issues = [];
+  const seen = new Set();
+  const inspect = (value, issueScope) => {
+    if (typeof value === 'string') {
+      for (const match of value.matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+        const [, pageId, variableName] = match;
+        const targetIndex = pageIds.get(pageId);
+        const targetPage = targetIndex === undefined ? null : _config.pages[targetIndex];
+        const key = `${issueScope.scope}:${issueScope.pageIndex ?? 'global'}:${pageId}.${variableName}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (!targetPage) {
+          issues.push({ ...issueScope, message: `Pages.${pageId} references an unknown screen ID.` });
+        } else if (!Object.prototype.hasOwnProperty.call(targetPage.state || {}, variableName)
+          && !Object.prototype.hasOwnProperty.call(targetPage.computed || {}, variableName)) {
+          issues.push({ ...issueScope, message: `Pages.${pageId}.${variableName} references an unknown variable.` });
+        }
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(entry => inspect(entry, issueScope));
+      return;
+    }
+    if (value && typeof value === 'object') {
+      Object.values(value).forEach(entry => inspect(entry, issueScope));
+    }
+  };
+
+  inspect(_config.global?.computed, { scope: 'global' });
+  (_config.pages || []).forEach((page, pageIndex) => {
+    inspect(page.computed, { scope: 'page', pageIndex });
+    inspect(page.layout, { scope: 'page', pageIndex });
+  });
+  return issues;
+}
+
+function _collectVariableCycleIssues() {
+  const nodes = new Map();
+  const addScope = (scope, prefix, issueScope) => {
+    Object.entries(scope?.state || {}).forEach(([name, entry]) => {
+      nodes.set(`${prefix}.${name}`, { expression: null, issueScope, entry });
+    });
+    Object.entries(scope?.computed || {}).forEach(([name, entry]) => {
+      nodes.set(`${prefix}.${name}`, {
+        expression: typeof entry === 'string' ? entry : entry?.eval || '',
+        issueScope,
+      });
+    });
+  };
+  addScope(_config.global, 'Global', { scope: 'global' });
+  (_config.pages || []).forEach((page, pageIndex) => {
+    addScope(page, `Pages.${page.id}`, { scope: 'page', pageIndex });
+  });
+
+  const dependencies = (nodeId, expression) => {
+    if (!expression) return [];
+    const result = new Set();
+    const pagePrefix = nodeId.startsWith('Pages.') ? nodeId.split('.').slice(0, 2).join('.') : null;
+    for (const match of String(expression).matchAll(/\bGlobal\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+      const target = `Global.${match[1]}`;
+      if (nodes.has(target)) result.add(target);
+    }
+    if (pagePrefix) {
+      for (const match of String(expression).matchAll(/\bPage\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+        const target = `${pagePrefix}.${match[1]}`;
+        if (nodes.has(target)) result.add(target);
+      }
+    }
+    for (const match of String(expression).matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+      const target = `Pages.${match[1]}.${match[2]}`;
+      if (nodes.has(target)) result.add(target);
+    }
+    return [...result];
+  };
+
+  const issues = [];
+  const completed = new Set();
+  const visiting = new Set();
+  const reported = new Set();
+  const visit = (nodeId, path = []) => {
+    if (completed.has(nodeId)) return;
+    if (visiting.has(nodeId)) {
+      const start = path.indexOf(nodeId);
+      const cycle = [...path.slice(Math.max(0, start)), nodeId];
+      const signature = [...new Set(cycle)].sort().join('|');
+      if (!reported.has(signature)) {
+        reported.add(signature);
+        issues.push({ ...nodes.get(nodeId).issueScope, message: `Variable cycle: ${cycle.join(' → ')}.` });
+      }
+      return;
+    }
+    visiting.add(nodeId);
+    for (const dependency of dependencies(nodeId, nodes.get(nodeId)?.expression)) {
+      visit(dependency, [...path, nodeId]);
+    }
+    visiting.delete(nodeId);
+    completed.add(nodeId);
+  };
+  nodes.forEach((_node, nodeId) => visit(nodeId));
   return issues;
 }
 

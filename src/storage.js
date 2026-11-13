@@ -73,6 +73,15 @@ export async function configureRuntimeStateStorage(config) {
   }
 
   let migrated = false;
+  for (const [previousId, nextId] of Object.entries(config?._migration?.pageIdRenames || {})) {
+    if (!evaluatedVariablesCache[previousId]) continue;
+    evaluatedVariablesCache[nextId] = {
+      ...(evaluatedVariablesCache[nextId] || {}),
+      ...evaluatedVariablesCache[previousId],
+    };
+    delete evaluatedVariablesCache[previousId];
+    migrated = true;
+  }
   for (const [legacyKey, values] of Object.entries({ ...evaluatedVariablesCache })) {
     if (!/^\d+$/.test(legacyKey)) continue;
 
@@ -167,6 +176,21 @@ export async function updateEvaluatedVariable(pageRef, varName, value) {
   await scheduleBatchSave();
   
     logger.log(`Variable queued: ${scopeKey}.${varName}`);
+}
+
+export async function renameEvaluatedPageScope(previousId, nextId) {
+  if (!previousId || !nextId || previousId === nextId) return false;
+  if (!Object.keys(evaluatedVariablesCache).length) await loadAllEvaluatedVariables();
+  if (!evaluatedVariablesCache[previousId]) return false;
+  evaluatedVariablesCache[nextId] = {
+    ...(evaluatedVariablesCache[nextId] || {}),
+    ...evaluatedVariablesCache[previousId],
+  };
+  delete evaluatedVariablesCache[previousId];
+  pendingChanges = { ...evaluatedVariablesCache };
+  await flushPendingChanges();
+  logger.log(`Runtime state scope renamed: ${previousId} -> ${nextId}`);
+  return true;
 }
 
 /**

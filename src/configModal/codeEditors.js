@@ -26,6 +26,7 @@ const JS_LINT_CONFIG = [
         clearTimeout: "readonly",
         Page: "readonly",
         Global: "readonly",
+        Pages: "readonly",
       },
     },
     rules: {
@@ -521,38 +522,78 @@ function createScriptCompletionSource(variables = []) {
       type: "variable",
       detail: variable.detail || "MacroHero variable",
       scope: variable.scope || "Page",
+      pageKey: variable.pageKey,
       info: completionInfo({
-        signature: `${variable.scope || "Page"}.${variable.name}`,
+        signature: variable.scope === "Pages"
+          ? `Pages.${variable.pageKey}.${variable.name}`
+          : `${variable.scope || "Page"}.${variable.name}`,
         description: variable.info || "Resolved MacroHero variable available in this script.",
-        note: variable.detail || "The value is resolved from the current Global or Page scope.",
+        note: variable.detail || "The value is resolved from its declared MacroHero scope.",
       }),
     }));
   const scopedVariableOptions = {
     Page: variableOptions.filter(variable => variable.scope === "Page"),
     Global: variableOptions.filter(variable => variable.scope === "Global"),
   };
+  const pagesVariableOptions = variableOptions
+    .filter(variable => variable.scope === "Pages")
+    .reduce((groups, variable) => {
+      if (!groups[variable.pageKey]) groups[variable.pageKey] = [];
+      groups[variable.pageKey].push(variable);
+      return groups;
+    }, {});
+  const pageNamespaceOptions = Object.keys(pagesVariableOptions).sort().map(pageKey => ({
+    label: pageKey,
+    type: "namespace",
+    detail: variables.find(variable => variable.pageKey === pageKey)?.pageLabel || "Page variables",
+    info: completionInfo({
+      signature: `Pages.${pageKey}`,
+      description: `State and computed variables declared by the ${pageKey} page.`,
+      note: "State variables are writable; computed variables are read-only.",
+    }),
+  }));
   const rootOptions = [
     ...SCRIPT_HELPER_COMPLETIONS,
-    ...["Page", "Global"].map(label => ({
+    ...["Page", "Global", "Pages"].map(label => ({
       label,
       type: "namespace",
-      detail: label === "Page" ? "Current screen variables" : "Global variables",
+      detail: label === "Page"
+        ? "Current screen variables"
+        : (label === "Pages" ? "Variables from every screen" : "Global variables"),
       info: completionInfo({
         signature: label,
         description: label === "Page"
           ? "State and computed variables belonging to the current screen. Computed values are read-only."
-          : "State and computed variables shared by every screen. Computed values are read-only.",
-        note: "Type a dot to list the variables available in this scope.",
+          : (label === "Pages"
+            ? "Access variables from any screen through its stable script key."
+            : "State and computed variables shared by every screen. Computed values are read-only."),
+        note: label === "Pages"
+          ? "Use Pages.screenId.variableName."
+          : "Type a dot to list the variables available in this scope.",
       }),
     })),
     ...SCRIPT_NAMESPACE_COMPLETIONS,
   ];
 
   return context => {
+    const nestedProperty = context.matchBefore(/Pages\.([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)?$/);
+    if (nestedProperty) {
+      const pageKey = nestedProperty.text.split(".")[1];
+      const options = pagesVariableOptions[pageKey];
+      if (!options) return null;
+      return {
+        from: nestedProperty.from + `Pages.${pageKey}.`.length,
+        options,
+        validFor: /^[\w$]*$/,
+      };
+    }
+
     const property = context.matchBefore(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)?$/);
     if (property) {
       const [namespace] = property.text.split(".");
-      const methods = SCRIPT_NAMESPACE_METHODS[namespace] || scopedVariableOptions[namespace];
+      const methods = namespace === "Pages"
+        ? pageNamespaceOptions
+        : (SCRIPT_NAMESPACE_METHODS[namespace] || scopedVariableOptions[namespace]);
       if (!methods) return null;
       return {
         from: property.from + namespace.length + 1,

@@ -21,8 +21,9 @@ let renderCycle = 0; // Incremented for each page render to ignore stale async w
 import OBR from "@owlbear-rodeo/sdk";
 import { saveConfig } from "./config.js";
 import { handleButtonClick } from "./executor.js";
-import { resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
+import { resolveAllPageVariables, resolveVariables, getDependentVariables, evaluateExpression } from "./expressionEvaluator.js";
 import { eventBus } from "./events/EventBus.js";
+import { variableEngine } from "./engines/VariableEngine.js";
 
 /**
  * Broadcast config update notification to refresh pages across the app
@@ -175,6 +176,40 @@ export async function reloadCurrentPage() {
   }
 }
 
+function collectLayoutVariableTargets(page, pageIndex) {
+  const targets = new Set();
+  const localVariables = new Set();
+  const pageKey = page.id || `page_${pageIndex + 1}`;
+  const displayFields = ['label', 'text', 'content', 'tooltip'];
+
+  const addExpressionReferences = value => {
+    if (typeof value !== 'string') return;
+    for (const match of value.matchAll(/\bPage\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+      if (!(match[1] in (page.variables || {}))) continue;
+      localVariables.add(match[1]);
+      targets.add(`${pageKey}.${match[1]}`);
+    }
+    for (const match of value.matchAll(
+      /\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g
+    )) {
+      targets.add(`${match[1]}.${match[2]}`);
+    }
+  };
+
+  const visit = item => {
+    if (!item || typeof item !== 'object') return;
+    if (typeof item.var === 'string' && item.var in (page.variables || {})) {
+      localVariables.add(item.var);
+      targets.add(`${pageKey}.${item.var}`);
+    }
+    displayFields.forEach(field => addExpressionReferences(item[field]));
+    if (Array.isArray(item.children)) item.children.forEach(visit);
+  };
+
+  (page.layout || []).forEach(visit);
+  return { targets, localVariables };
+}
+
 async function renderPageContent(page) {
   const container = document.getElementById("content");
   const pageIndex = config.pages?.indexOf(page) ?? -1;
@@ -217,39 +252,30 @@ async function renderPageContent(page) {
     container.appendChild(tempContainer.firstChild);
   }
 
-  // BACKGROUND RESOLUTION: Resolve variables asynchronously after page is rendered
-  // This allows the UI to be immediately visible while variables are being computed
+  // BACKGROUND RESOLUTION: only resolve variables used by the visible layout.
+  // Commands remain lazy and resolve their own references when invoked.
   if (page.variables && Object.keys(page.variables).length > 0) {
-    // Find which variables need resolution (not already in _resolved)
-    const varsToResolve = new Set();
-    for (const [varName, variableConfig] of Object.entries(page.variables)) {
-      if (variableConfig?.eval !== undefined || !(varName in page._resolved)) {
-        varsToResolve.add(varName);
-      }
-    }
+    const { targets, localVariables: varsToResolve } = collectLayoutVariableTargets(page, pageIndex);
     
-    // Only resolve if there are unresolved variables
-    if (varsToResolve.size > 0) {
+    // Resolve local bindings and direct Pages references used by visible text.
+    if (targets.size > 0) {
       const resolutionVersion = page._variablesVersion || 0;
-      const onVariableResolved = (varName, value) => {
-        if ((page._variablesVersion || 0) !== resolutionVersion) return;
-        page._resolved[varName] = value;
-        if (isCurrentRender(page, pageIndex, cycle)) {
-          updateRenderedValue(varName, value, pageIndex);
-        }
-      };
-      
-      // Resolve the needed variables in the background, not blocking the initial render
-      // Pass existing _resolved as base to avoid re-evaluating already-resolved vars
-      resolveVariables(page.variables, page._resolved, onVariableResolved, varsToResolve)
-        .then(allResolved => {
+
+      // The targeted cross-page graph also handles local Page dependencies.
+      resolveAllPageVariables(config, globalVariables, targets)
+        .then(pages => {
           if ((page._variablesVersion || 0) !== resolutionVersion) return;
+          const pageKey = page.id || `page_${pageIndex + 1}`;
+          const allResolved = pages[pageKey] || {};
           for (const varName of varsToResolve) {
             if (varName in allResolved) {
               page._resolved[varName] = allResolved[varName];
+              if (isCurrentRender(page, pageIndex, cycle)) {
+                updateRenderedValue(varName, allResolved[varName], pageIndex);
+              }
             }
           }
-          logger.log("Background variable resolution complete");
+          logger.log("Visible variable resolution complete");
         })
         .catch(err => {
           logger.error('Error during variable resolution:', err);
@@ -356,6 +382,7 @@ function buildVariableScopes(page, resolvedVars = {}) {
   return {
     Global: Object.fromEntries(globalNames.map(name => [name, globalVariables[name] ?? resolvedVars[name]])),
     Page: Object.fromEntries(pageNames.map(name => [name, page?._resolved?.[name] ?? resolvedVars[name]])),
+    Pages: variableStore.getPagesResolved(),
   };
 }
 
@@ -379,7 +406,7 @@ async function evaluateItemText(item, resolvedVars, page = null) {
   const scopes = buildVariableScopes(page, resolvedVars);
   return text.replace(/\$\{([^{}]+)\}/g, (placeholder, expression) => {
     try {
-      const result = new Function('Page', 'Global', `return (${expression})`)(scopes.Page, scopes.Global);
+      const result = new Function('Page', 'Global', 'Pages', `return (${expression})`)(scopes.Page, scopes.Global, scopes.Pages);
       return result === null || result === undefined ? '' : String(result);
     } catch {
       return placeholder;
@@ -440,6 +467,10 @@ function renderElement(type, item, page, inStack = false) {
     updateRenderedValue,
     evaluateItemText,
     evaluateAndSetElementText,
+    getVariableScopes: page => buildVariableScopes(page, {
+      ...globalVariables,
+      ...(page?._resolved || {}),
+    }),
     globalVariables,
     renderedExpressionElements,
     renderedValueElements,
@@ -447,6 +478,23 @@ function renderElement(type, item, page, inStack = false) {
     currentPage,
     getDependentVariables,
     resolveVariables,
+    resolveCrossPageVariables: async (pageId, varName) => {
+      const affected = variableEngine.getCrossPageDependents(
+        config,
+        new Set([`${pageId}.${varName}`]),
+      );
+      if (affected.size === 0) return;
+      const pages = await resolveAllPageVariables(config, globalVariables, affected);
+      const activePage = config.pages?.[currentPage];
+      const activeValues = activePage ? pages[activePage.id] : null;
+      const activePrefix = `${activePage?.id}.`;
+      for (const nodeId of affected) {
+        if (!activePage || !nodeId.startsWith(activePrefix)) continue;
+        const name = nodeId.slice(activePrefix.length);
+        const value = activeValues?.[name];
+        updateRenderedValue(name, value, currentPage);
+      }
+    },
     renderLayoutElement,
     renderElement  // Allow recursive calls with inStack
   };
@@ -532,10 +580,11 @@ export async function updateConfig(newConfig) {
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
 
-    // Reset page resolved sets - they will resolve progressively when rendered
+    // Reset page scopes. The active screen resolves only its visible variables
+    // when renderConfigUI renders it below.
     for (let i = 0; i < (config.pages || []).length; i++) {
       const page = config.pages[i];
-      page._resolved = { ...globalVars }; // Start with global vars
+      page._resolved = {};
       page._pageIndex = i;
       page._variablesVersion = 0;
     }

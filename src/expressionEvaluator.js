@@ -8,6 +8,7 @@
  */
 
 import { variableEngine } from "./engines/VariableEngine.js";
+import { variableStore } from "./stores/VariableStore.js";
 import { createDebugLogger } from "./debugMode.js";
 
 const logger = createDebugLogger('expressionEvaluator');
@@ -47,6 +48,29 @@ export async function resolveVariables(variablesConfig, globalVars = {}, onVaria
   return resolved;
 }
 
+export async function resolveAllPageVariables(config, globalVars = {}, targetNodeIds = null) {
+  logger.log("Resolving cross-page variables");
+  let pages = await variableEngine.resolveAllPages(config, globalVars, targetNodeIds);
+  const globalUsesPages = Object.values(config?.global?.variables || {}).some(definition => (
+    definition?.eval !== undefined && /\bPages\./.test(String(definition.eval))
+  ));
+  if (globalUsesPages) {
+    const resolvedGlobal = await variableEngine.resolveVariables(
+      config.global.variables,
+      { ...globalVars },
+      null,
+      { scope: "global", pages },
+    );
+    Object.keys(config.global.variables || {}).forEach(name => {
+      globalVars[name] = resolvedGlobal[name];
+    });
+    variableStore.setGlobalVariablesResolved(globalVars);
+    config._resolvedGlobal = { ...globalVars };
+    pages = await variableEngine.resolveAllPages(config, globalVars, targetNodeIds);
+  }
+  return pages;
+}
+
 /**
  * Get variables used in commands
  * Delegated to VariableEngine
@@ -74,6 +98,7 @@ export function getDependentVariables(variablesConfig, changedVars) {
 export default {
   evaluateExpression,
   resolveVariables,
+  resolveAllPageVariables,
   getVariablesUsedInCommands,
   getAffectedVariables,
   getDependentVariables,

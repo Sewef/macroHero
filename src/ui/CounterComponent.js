@@ -324,6 +324,7 @@ export class CounterComponent extends UIComponent {
             dependentVarsToResolve
           );
         }
+        await this.services.resolveCrossPageVariables?.(this.page.id, varName);
       } catch (err) {
         this.handleError("Counter", err);
       } finally {

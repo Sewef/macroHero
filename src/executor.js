@@ -89,14 +89,49 @@ function sameVariableValue(left, right) {
   }
 }
 
+function getStaticPagesReferences(script) {
+  const references = new Set();
+  for (const match of String(script || '').matchAll(
+    /\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g
+  )) {
+    references.add(`${match[1]}.${match[2]}`);
+  }
+  return references;
+}
+
 function createExecutionScopes(page, pageIndex, globalVariables) {
-  const resolved = buildResolvedContext(page, pageIndex, globalVariables);
   const globalValues = {
     ...variableStore.globalVariablesResolved,
     ...globalVariables,
   };
+  const config = variableStore.config || { pages: [page] };
+  const pageNamespaces = new Map();
+  const pagesTarget = {};
+  (config.pages || []).forEach((candidate, candidateIndex) => {
+    const key = candidate.id || `page_${candidateIndex + 1}`;
+    const values = variableStore.getPageVariablesResolved(candidateIndex);
+    if (candidate === page) Object.assign(values, buildResolvedContext(page, pageIndex, globalVariables));
+    const namespace = createVariableNamespace(candidate.variables || {}, values, `Pages.${key}`);
+    pageNamespaces.set(key, { ...namespace, page: candidate, pageIndex: candidateIndex });
+    pagesTarget[key] = namespace.proxy;
+  });
+  const currentKey = page?.id || `page_${pageIndex + 1}`;
+  const currentNamespace = pageNamespaces.get(currentKey)
+    || createVariableNamespace(page?.variables || {}, buildResolvedContext(page, pageIndex, globalVariables), 'Page');
+  const Pages = new Proxy(pagesTarget, {
+    set(_object, property) {
+      throw new Error(`Pages.${String(property)} cannot be replaced; assign a declared variable instead`);
+    },
+    deleteProperty(_object, property) {
+      throw new Error(`Pages.${String(property)} cannot be deleted`);
+    },
+    defineProperty() {
+      throw new Error('Pages entries cannot be redefined');
+    },
+  });
   return {
-    Page: createVariableNamespace(page?.variables || {}, resolved, 'Page'),
+    Page: currentNamespace,
+    Pages: { proxy: Pages, namespaces: pageNamespaces },
     Global: createVariableNamespace(variableStore.globalVariablesConfig || {}, globalValues, 'Global'),
   };
 }
@@ -115,6 +150,17 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
 
     if (pageIndex === undefined || pageIndex === null) pageIndex = 0;
     if (!page._modifiedVars) page._modifiedVars = new Set();
+
+    const script = Array.isArray(commands) ? commands.join('\n') : commands;
+    const scriptUsesPages = /\bPages\./.test(script);
+    if (scriptUsesPages) {
+      const referencedPageVariables = getStaticPagesReferences(script);
+      await variableEngine.resolveAllPages(
+        variableStore.config,
+        globalVariables,
+        referencedPageVariables.size > 0 ? referencedPageVariables : null,
+      );
+    }
 
     // Step 1: Find variables USED in commands
     const usedVars = variableEngine.getVariablesUsedInCommands(commands);
@@ -146,30 +192,38 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
       scopes: {
         Page: namespaces.Page.proxy,
         Global: namespaces.Global.proxy,
+        Pages: namespaces.Pages.proxy,
       },
     };
 
     // Step 4: Execute commands
-    const script = Array.isArray(commands) ? commands.join('\n') : commands;
     logger.log("Executing script");
 
-    const beforePageValues = new Map([...namespaces.Page.mutable].map(name => [name, cloneVariableValue(namespaces.Page.proxy[name])]));
+    const beforePagesValues = new Map([...namespaces.Pages.namespaces].map(([key, namespace]) => [
+      key,
+      new Map([...namespace.mutable].map(name => [name, cloneVariableValue(namespace.proxy[name])])),
+    ]));
     const beforeGlobalValues = new Map([...namespaces.Global.mutable].map(name => [name, cloneVariableValue(namespaces.Global.proxy[name])]));
 
     await executionSandbox.executeCommand(script, executionContext);
 
     const directlyMutatedPageVars = new Set();
+    const mutatedPages = new Map();
     const directlyMutatedGlobalVars = new Set();
-    for (const varName of namespaces.Page.mutable) {
-      const beforeValue = beforePageValues.get(varName);
-      const afterValue = namespaces.Page.proxy[varName];
-      if (!sameVariableValue(beforeValue, afterValue)) {
-        await applyVariableChange(page, pageIndex, globalVariables, varName, afterValue, {
+    for (const [key, namespace] of namespaces.Pages.namespaces) {
+      const beforeValues = beforePagesValues.get(key);
+      for (const varName of namespace.mutable) {
+        const beforeValue = beforeValues.get(varName);
+        const afterValue = namespace.proxy[varName];
+        if (sameVariableValue(beforeValue, afterValue)) continue;
+        await applyVariableChange(namespace.page, namespace.pageIndex, globalVariables, varName, afterValue, {
           scope: 'page',
           persist: true,
           resolveDependents: false,
         });
-        directlyMutatedPageVars.add(varName);
+        if (!mutatedPages.has(namespace.pageIndex)) mutatedPages.set(namespace.pageIndex, new Set());
+        mutatedPages.get(namespace.pageIndex).add(varName);
+        if (namespace.pageIndex === pageIndex) directlyMutatedPageVars.add(varName);
       }
     }
     for (const varName of namespaces.Global.mutable) {
@@ -186,15 +240,42 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     }
 
     await resolveGlobalDependents(page, globalVariables, directlyMutatedGlobalVars);
+    const crossPageResolvedCurrentVars = new Set();
+    if (mutatedPages.size > 0 || directlyMutatedGlobalVars.size > 0) {
+      const changedNodes = new Set(
+        [...directlyMutatedGlobalVars].map(name => `Global.${name}`)
+      );
+      for (const [mutatedPageIndex, names] of mutatedPages) {
+        const mutatedPage = variableStore.config?.pages?.[mutatedPageIndex];
+        const pageKey = mutatedPage?.id || `page_${mutatedPageIndex + 1}`;
+        for (const name of names) changedNodes.add(`${pageKey}.${name}`);
+      }
+      const affectedPageVariables = variableEngine.getCrossPageDependents(
+        variableStore.config,
+        changedNodes,
+      );
+      const resolvedPages = affectedPageVariables.size > 0
+        ? await variableEngine.resolveAllPages(
+          variableStore.config,
+          globalVariables,
+          affectedPageVariables,
+        )
+        : null;
+      const currentKey = page?.id || `page_${pageIndex + 1}`;
+      const currentPrefix = `${currentKey}.`;
+      for (const nodeId of affectedPageVariables) {
+        if (!nodeId.startsWith(currentPrefix)) continue;
+        const name = nodeId.slice(currentPrefix.length);
+        const value = resolvedPages?.[currentKey]?.[name];
+        crossPageResolvedCurrentVars.add(name);
+        updateRenderedValue(name, value, pageIndex);
+        if (onVariableResolved) onVariableResolved(name, value);
+      }
+    }
 
     // Step 5: Find variables AFFECTED by commands
     const affectedVars = variableEngine.getAffectedVariables(commands, page.variables);
     directlyMutatedPageVars.forEach(varName => affectedVars.add(varName));
-    if (directlyMutatedGlobalVars.size > 0) {
-      Object.entries(page.variables || {}).forEach(([name, variable]) => {
-        if (variable?.eval !== undefined) affectedVars.add(name);
-      });
-    }
     
     if (page._modifiedVars.size > 0) {
       for (const modVar of page._modifiedVars) {
@@ -207,6 +288,9 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
     // Step 6: Re-resolve affected variables and their dependents
     if (affectedVars.size > 0) {
       const allAffected = variableEngine.getDependentVariables(page.variables, affectedVars);
+      // Cross-page resolution already included these local computed variables.
+      // Do not execute their expressions a second time in the local pass.
+      crossPageResolvedCurrentVars.forEach(name => allAffected.delete(name));
       logger.log("Re-resolving affected variables");
 
       const postBaseResolved = buildResolvedContext(page, pageIndex, globalVariables);

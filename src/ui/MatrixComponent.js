@@ -106,10 +106,7 @@ export class MatrixComponent extends UIComponent {
     UIComponent.applyTooltip(
       btn,
       buttonConfig.tooltip || buttonConfig.label || `Button ${index + 1}`,
-      () => ({
-        Global: { ...this.services.globalVariables },
-        Page: Object.fromEntries(Object.keys(this.page?.variables || {}).map(name => [name, this.page?._resolved?.[name]])),
-      })
+      () => this.services.getVariableScopes(this.page)
     );
 
     // Add click handler if commands exist

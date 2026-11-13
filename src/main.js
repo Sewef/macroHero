@@ -93,17 +93,17 @@ OBR.onReady(async () => {
       await OBR.action.setHeight(height);
     }
 
+    // Prepare stable page scopes. Page variables are resolved lazily when their
+    // screen is displayed; opening the extension must not execute every screen.
+    for (let i = 0; i < (cfg.pages || []).length; i++) {
+      const page = cfg.pages[i];
+      page._resolved = {};
+      page._pageIndex = i;
+    }
+
     // Store global variables for use in button clicks
     setGlobalVariables(globalVars);
     cfg._resolvedGlobal = globalVars;
-
-    // Don't pre-resolve page variables here - let renderPageContent do it
-    // This allows live updates as variables resolve
-    for (let i = 0; i < (cfg.pages || []).length; i++) {
-      const page = cfg.pages[i];
-      page._resolved = {}; // Start with empty resolved set
-      page._pageIndex = i; // Store page index for later use
-    }
 
     // Initialize UI immediately so it's visible even if the scene isn't ready yet.
     initUI(cfg);

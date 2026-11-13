@@ -284,9 +284,180 @@ class VariableEngine {
     );
 
     if (scope === "global") {
-      return { Global: pick(currentNames), Page: {} };
+      return { Global: pick(currentNames), Page: {}, Pages: options.pages || variableStore.getPagesResolved() };
     }
-    return { Global: pick(globalNames), Page: pick(currentNames) };
+    return {
+      Global: pick(globalNames),
+      Page: pick(currentNames),
+      Pages: options.pages || variableStore.getPagesResolved(),
+    };
+  }
+
+  /**
+   * Resolve page variables as one cross-page dependency graph.
+   * Local dependencies use Page.x; remote dependencies use Pages.screenId.x.
+   * When targetNodeIds is provided, only those variables and their dependency
+   * closure are evaluated. This keeps a Pages.foo.bar read from waking up every
+   * computed variable and integration in the configuration.
+   */
+  async resolveAllPages(config, globalValues = {}, targetNodeIds = null) {
+    const pages = config?.pages || [];
+    const pageByKey = new Map();
+    const values = {};
+    const nodes = new Map();
+
+    pages.forEach((page, pageIndex) => {
+      const pageKey = page.id || `page_${pageIndex + 1}`;
+      pageByKey.set(pageKey, { page, pageIndex });
+      const cached = variableStore.pageVariablesResolved[pageIndex] || {};
+      values[pageKey] = {};
+      Object.entries(page.variables || {}).forEach(([name, definition]) => {
+        const value = Object.prototype.hasOwnProperty.call(cached, name)
+          ? cached[name]
+          : (Object.prototype.hasOwnProperty.call(page._resolved || {}, name)
+            ? page._resolved[name]
+            : definition?.value);
+        values[pageKey][name] = value;
+        nodes.set(`${pageKey}.${name}`, { pageKey, name, definition });
+      });
+    });
+
+    const dependenciesFor = node => {
+      if (node.definition?.eval === undefined) return [];
+      const expression = String(node.definition.eval || "");
+      const dependencies = new Set();
+      for (const match of expression.matchAll(/\bPage\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+        const dependency = `${node.pageKey}.${match[1]}`;
+        if (nodes.has(dependency)) dependencies.add(dependency);
+      }
+      for (const match of expression.matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+        const dependency = `${match[1]}.${match[2]}`;
+        if (nodes.has(dependency)) dependencies.add(dependency);
+      }
+      return [...dependencies];
+    };
+
+    const completed = new Set();
+    const visiting = new Set();
+    const cyclic = new Set();
+    const visit = async (nodeId, path = []) => {
+      if (completed.has(nodeId)) return;
+      if (visiting.has(nodeId)) {
+        const cycleStart = path.indexOf(nodeId);
+        const cycle = [...path.slice(Math.max(0, cycleStart)), nodeId];
+        cycle.forEach(id => cyclic.add(id));
+        logger.error(`Circular cross-page variable dependency: ${cycle.join(" -> ")}`);
+        return;
+      }
+      const node = nodes.get(nodeId);
+      if (!node) return;
+      visiting.add(nodeId);
+      for (const dependency of dependenciesFor(node)) {
+        await visit(dependency, [...path, nodeId]);
+      }
+      visiting.delete(nodeId);
+
+      if (node.definition?.eval !== undefined) {
+        values[node.pageKey][node.name] = cyclic.has(nodeId)
+          ? null
+          : await this.evaluateExpression(
+            node.definition.eval,
+            { ...globalValues, ...values[node.pageKey] },
+            {
+              Global: { ...globalValues },
+              Page: values[node.pageKey],
+              Pages: values,
+            },
+          );
+      }
+      completed.add(nodeId);
+    };
+
+    const requestedNodeIds = targetNodeIds === null
+      ? nodes.keys()
+      : (targetNodeIds instanceof Set ? targetNodeIds : new Set(targetNodeIds));
+    for (const nodeId of requestedNodeIds) {
+      if (nodes.has(nodeId)) await visit(nodeId);
+    }
+
+    if (targetNodeIds === null) {
+      for (const [pageKey, { page, pageIndex }] of pageByKey) {
+        if (!page._resolved) page._resolved = {};
+        Object.assign(page._resolved, values[pageKey]);
+        Object.entries(values[pageKey]).forEach(([name, value]) => {
+          variableStore.setVariableResolved(name, value, pageIndex);
+        });
+      }
+    } else {
+      // State dependencies already come from their stored/configured value.
+      // Only computed nodes were freshly evaluated and need their cache updated.
+      for (const nodeId of completed) {
+        const node = nodes.get(nodeId);
+        if (!node || node.definition?.eval === undefined) continue;
+        const pageEntry = pageByKey.get(node.pageKey);
+        if (!pageEntry) continue;
+        if (!pageEntry.page._resolved) pageEntry.page._resolved = {};
+        const value = values[node.pageKey][node.name];
+        pageEntry.page._resolved[node.name] = value;
+        variableStore.setVariableResolved(node.name, value, pageEntry.pageIndex);
+      }
+    }
+    return values;
+  }
+
+  /**
+   * Find computed page variables affected by page/global state changes.
+   * Node IDs use "screenId.variable"; global inputs use "Global.variable".
+   */
+  getCrossPageDependents(config, changedNodeIds) {
+    const changed = changedNodeIds instanceof Set
+      ? changedNodeIds
+      : new Set(Array.isArray(changedNodeIds) ? changedNodeIds : [changedNodeIds]);
+    if (changed.size === 0) return new Set();
+
+    const nodes = new Set();
+    for (const [pageIndex, page] of (config?.pages || []).entries()) {
+      const pageKey = page.id || `page_${pageIndex + 1}`;
+      for (const name of Object.keys(page.variables || {})) nodes.add(`${pageKey}.${name}`);
+    }
+
+    const reverseDependencies = new Map();
+    const addReverseDependency = (dependency, dependent) => {
+      if (!reverseDependencies.has(dependency)) reverseDependencies.set(dependency, new Set());
+      reverseDependencies.get(dependency).add(dependent);
+    };
+
+    for (const [pageIndex, page] of (config?.pages || []).entries()) {
+      const pageKey = page.id || `page_${pageIndex + 1}`;
+      for (const [name, definition] of Object.entries(page.variables || {})) {
+        if (definition?.eval === undefined) continue;
+        const dependent = `${pageKey}.${name}`;
+        const expression = String(definition.eval || "");
+        for (const match of expression.matchAll(/\bPage\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+          const dependency = `${pageKey}.${match[1]}`;
+          if (nodes.has(dependency)) addReverseDependency(dependency, dependent);
+        }
+        for (const match of expression.matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+          const dependency = `${match[1]}.${match[2]}`;
+          if (nodes.has(dependency)) addReverseDependency(dependency, dependent);
+        }
+        for (const match of expression.matchAll(/\bGlobal\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+          addReverseDependency(`Global.${match[1]}`, dependent);
+        }
+      }
+    }
+
+    const affected = new Set();
+    const pending = [...changed];
+    while (pending.length > 0) {
+      const dependency = pending.pop();
+      for (const dependent of reverseDependencies.get(dependency) || []) {
+        if (affected.has(dependent)) continue;
+        affected.add(dependent);
+        pending.push(dependent);
+      }
+    }
+    return affected;
   }
 
   /**

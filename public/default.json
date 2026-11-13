@@ -7,6 +7,9 @@
     "state": {
       "token": {
         "default": "fe508da6-88ec-4526-96b5-2886bfe2bd28"
+      },
+      "demoMessage": {
+        "default": "Hello from Global.demoMessage"
       }
     },
     "computed": {}
@@ -30,7 +33,7 @@
     },
     {
       "label": "Google Sheets",
-      "id": "google-sheets",
+      "id": "google_sheets",
       "state": {
         "gsRange": {
           "default": "A1"
@@ -776,7 +779,7 @@
     },
     {
       "label": "Local Storage",
-      "id": "local-storage",
+      "id": "local_storage",
       "state": {
         "storageKey": {
           "default": "myKey"
@@ -2249,7 +2252,7 @@
     },
     {
       "label": "SDK Helpers",
-      "id": "sdk-helpers",
+      "id": "sdk_helpers",
       "state": {},
       "computed": {},
       "layout": [
@@ -2316,8 +2319,140 @@
       ]
     },
     {
+      "label": "Variable Scopes",
+      "id": "variable_scopes",
+      "state": {
+        "localCounter": {
+          "default": 1,
+          "min": 0,
+          "max": 20
+        },
+        "localNote": {
+          "default": "Variable Scopes page"
+        }
+      },
+      "computed": {
+        "localDouble": "Page.localCounter * 2",
+        "uiCounterMirror": "Pages.ui_elements.counterValue"
+      },
+      "layout": [
+        {
+          "type": "title",
+          "text": "Page, Pages and Global Variables"
+        },
+        {
+          "type": "text",
+          "text": "MacroHero exposes three explicit variable namespaces:\n\n- `Page.variable` accesses the current screen.\n- `Pages.screenId.variable` accesses any screen through its **Screen ID**.\n- `Global.variable` accesses application-wide variables.\n\nState variables are writable. Computed variables are evaluated automatically and are read-only."
+        },
+        {
+          "type": "text",
+          "text": "On this screen, `Page.localCounter` and `Pages.variable_scopes.localCounter` point to the same state variable. Prefer `Page.localCounter` locally and use the longer form from another screen."
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Live values",
+          "color": "#3498db"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "counter",
+              "label": "Page.localCounter",
+              "var": "localCounter",
+              "step": 1
+            },
+            {
+              "type": "value",
+              "label": "Computed double",
+              "var": "localDouble"
+            },
+            {
+              "type": "value",
+              "label": "UI Elements counter",
+              "var": "uiCounterMirror"
+            }
+          ]
+        },
+        {
+          "type": "input",
+          "label": "Local note",
+          "var": "localNote",
+          "placeholder": "Used by the Global write example"
+        },
+        {
+          "type": "text",
+          "text": "**Current values**\n\n- Local: `${Page.localCounter}`\n- Other page: `${Pages.ui_elements.counterValue}`\n- Global: `${Global.demoMessage}`"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Increment Page",
+              "tooltip": "Runs `Page.localCounter += 1`",
+              "color": "#3498db",
+              "onclick": [
+                "Page.localCounter += 1;"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Increment UI Elements",
+              "tooltip": "Runs `Pages.ui_elements.counterValue += 1`",
+              "color": "#9b59b6",
+              "onclick": [
+                "Pages.ui_elements.counterValue += 1;"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Update Global",
+              "tooltip": "State variables in Global are writable from every screen.",
+              "color": "#27ae60",
+              "onclick": [
+                "Global.demoMessage = 'Updated from ' + Page.localNote;"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "label": "Read all three scopes",
+          "tooltip": "Displays Page, Pages and Global values without modifying them.",
+          "onclick": [
+            "await Owlbear.notification.show('Page=' + Page.localCounter + ' | Pages=' + Pages.ui_elements.counterValue + ' | Global=' + Global.demoMessage, 'INFO');"
+          ]
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "State and Computed",
+          "color": "#e67e22"
+        },
+        {
+          "type": "text",
+          "text": "`localCounter` is declared in `state`, so scripts and controls may assign it. `localDouble` and `uiCounterMirror` are declared in `computed`: they update from their dependencies and assignments to them are rejected.\n\n```js\nPage.localCounter += 1;                  // writable\nPages.ui_elements.counterValue = 10;    // writable remote state\nGlobal.demoMessage = 'Shared value';    // writable global state\n// Page.localDouble = 4;                // error: computed and read-only\n```"
+        },
+        {
+          "type": "title",
+          "text": "Screen ID rules",
+          "color": "#e74c3c"
+        },
+        {
+          "type": "text",
+          "text": "The Screen ID is also the name used after `Pages.`. It must therefore be a valid JavaScript identifier: letters, digits, `_` or `$`, without starting with a digit. Existing IDs containing spaces or hyphens are migrated automatically, for example `ui-elements` becomes `ui_elements`. Renaming an ID in Studio refactors its `Pages.oldId.variable` references."
+        }
+      ]
+    },
+    {
       "label": "UI Elements",
-      "id": "ui-elements",
+      "id": "ui_elements",
       "state": {
         "checkboxValue": {
           "default": false
@@ -2341,7 +2476,9 @@
           "default": "Enter text here"
         }
       },
-      "computed": {},
+      "computed": {
+        "variableScopesCounter": "Pages.variable_scopes.localCounter"
+      },
       "layout": [
         {
           "type": "title",
@@ -2350,6 +2487,49 @@
         {
           "type": "text",
           "text": "Complete guide to all available UI components. Each element type is demonstrated below with descriptions and properties."
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Cross-page variable access",
+          "color": "#9b59b6"
+        },
+        {
+          "type": "text",
+          "text": "This screen can access the **Variable Scopes** screen through its Screen ID, `variable_scopes`. The value below is a computed mirror of `Pages.variable_scopes.localCounter`; the button writes directly to that remote state variable. Open the Variable Scopes screen afterward to see the shared value."
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "value",
+              "label": "Variable Scopes counter",
+              "var": "variableScopesCounter"
+            },
+            {
+              "type": "button",
+              "label": "Increment remote counter",
+              "tooltip": "Runs `Pages.variable_scopes.localCounter += 1`",
+              "color": "#9b59b6",
+              "onclick": [
+                "Pages.variable_scopes.localCounter += 1;"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Read remote counter",
+              "tooltip": "Reads a variable from another screen without changing it.",
+              "onclick": [
+                "await Owlbear.notification.show('Remote counter: ' + Pages.variable_scopes.localCounter, 'INFO');"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "Equivalent script examples:\n\n```js\nconst current = Pages.variable_scopes.localCounter; // read\nPages.variable_scopes.localCounter = 5;             // assign\nPages.variable_scopes.localCounter += 1;            // update\n```"
         },
         {
           "type": "divider"
@@ -2536,7 +2716,7 @@
         },
         {
           "type": "text",
-          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `Page.variable` and `Global.variable` expressions are evaluated at hover time. Hover the buttons below."
+          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `Page.variable`, `Pages.screenId.variable`, and `Global.variable` expressions are evaluated at hover time. Hover the buttons below."
         },
         {
           "type": "row",
@@ -2666,7 +2846,7 @@
         },
         {
           "type": "text",
-          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `Page.variable` / `Global.variable` expressions are evaluated at hover time."
+          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `Page.variable`, `Pages.screenId.variable`, and `Global.variable` expressions are evaluated at hover time."
         },
         {
           "type": "divider"
@@ -3152,7 +3332,7 @@
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable, Pages.screenId.variable, and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }

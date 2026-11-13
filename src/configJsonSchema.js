@@ -40,7 +40,7 @@ export const MACRO_HERO_CONFIG_JSON_SCHEMA = {
       additionalProperties: true,
       properties: {
         label: { type: "string" },
-        id: { type: "string", minLength: 1 },
+        id: { type: "string", pattern: variableNamePattern },
         state: { $ref: "#/definitions/stateVariables" },
         computed: { $ref: "#/definitions/computedVariables" },
         layout: { $ref: "#/definitions/layout" },

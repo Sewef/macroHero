@@ -134,7 +134,11 @@ export class UIComponent {
       const scopes = getResolved();
       return rawTooltip.replace(/\$\{([^}]+)\}/g, (m, expr) => {
         try {
-          const result = new Function('Page', 'Global', `return (${expr})`)(scopes.Page || {}, scopes.Global || {});
+          const result = new Function('Page', 'Global', 'Pages', `return (${expr})`)(
+            scopes.Page || {},
+            scopes.Global || {},
+            scopes.Pages || {},
+          );
           return result !== undefined && result !== null ? String(result) : m;
         } catch {
           return m;
@@ -291,30 +295,29 @@ export class UIComponent {
     const dependentVars = this.services.getDependentVariables(this.page.variables, [varName]);
     dependentVars.delete(varName);
 
-    if (dependentVars.size === 0) {
-      return;
-    }
+    if (dependentVars.size > 0) {
+      const baseResolved = {
+        ...(this.services.globalVariables || {}),
+        ...(this.page?._resolved || {}),
+      };
 
-    const baseResolved = {
-      ...(this.services.globalVariables || {}),
-      ...(this.page?._resolved || {}),
-    };
+      const resolved = await this.services.resolveVariables(
+        this.page.variables,
+        baseResolved,
+        null,
+        dependentVars
+      );
 
-    const resolved = await this.services.resolveVariables(
-      this.page.variables,
-      baseResolved,
-      null,
-      dependentVars
-    );
-
-    for (const depVarName of dependentVars) {
-      const value = resolved[depVarName];
-      this.page._resolved[depVarName] = value;
-      if (this.page._pageIndex !== undefined) {
-        variableStore.setVariableResolved(depVarName, value, this.page._pageIndex);
+      for (const depVarName of dependentVars) {
+        const value = resolved[depVarName];
+        this.page._resolved[depVarName] = value;
+        if (this.page._pageIndex !== undefined) {
+          variableStore.setVariableResolved(depVarName, value, this.page._pageIndex);
+        }
+        this.services.updateRenderedValue(depVarName, value, this.page._pageIndex);
       }
-      this.services.updateRenderedValue(depVarName, value, this.page._pageIndex);
     }
+    await this.services.resolveCrossPageVariables?.(this.page.id, varName);
   }
 
   /**
