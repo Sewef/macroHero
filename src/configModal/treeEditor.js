@@ -32,6 +32,7 @@ let _historyRestoring = false;
 let _inspectorWidth = 320;
 let _draggedElement = null;
 let _dropTarget = null;
+let _suppressBuilderClickUntil = 0;
 let _previewResizeObserver = null;
 
 const HISTORY_LIMIT = 100;
@@ -980,7 +981,7 @@ function _renderBlock(item, path, pageIndex) {
 
   return `<article class="builder-block depth-${Math.min(path.length, 4)} ${selected} ${isCollapsed ? 'collapsed' : ''}" data-path="${pathStr}" data-action="selectElement" tabindex="-1">
     <div class="builder-block-head">
-      <span class="builder-drag-handle" draggable="true" title="Drag to move" aria-label="Drag to move">&#8942;&#8942;</span>
+      <span class="builder-drag-handle" title="Drag to move" aria-label="Drag to move">&#8942;&#8942;</span>
       ${canHaveChildren ? `<button type="button" class="builder-toggle ${isCollapsed ? '' : 'open'}" data-action="toggleCollapse" data-path="${pathStr}" title="${isCollapsed ? 'Expand' : 'Collapse'}">▶</button>` : '<span class="builder-toggle-spacer"></span>'}
       <span class="builder-type badge-${_typeColor(type)}">${_esc(type)}</span>
       <div class="builder-block-title">
@@ -1023,6 +1024,11 @@ function _renderChildrenZone(item, path, pageIndex, children) {
 function _attachBuilderActions(container, pageIndex) {
   container.querySelectorAll('[data-action]').forEach(el => {
     addTrackedListener(el, 'click', e => {
+      if (Date.now() < _suppressBuilderClickUntil) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (e.target.closest('select[data-role="childType"]')) {
         e.stopPropagation();
         return;
@@ -1052,6 +1058,7 @@ function _attachBuilderDragDrop(container, pageIndex) {
   const dragController = new AbortController();
   _builderDragControllers.set(container, dragController);
   const listenerOptions = { signal: dragController.signal };
+  let pointerSession = null;
 
   const clearIndicators = () => {
     container.classList.remove('is-dragging');
@@ -1072,83 +1079,134 @@ function _attachBuilderDragDrop(container, pageIndex) {
     });
   };
 
-  container.addEventListener('dragstart', event => {
-    const handle = event.target.closest('.builder-drag-handle');
-    const block = handle?.closest('.builder-block');
-    if (!handle || !block || !container.contains(block)) {
-      event.preventDefault();
-      return;
-    }
-    event.stopPropagation();
-    const path = _pathFromDataset(block.dataset.path);
-    _draggedElement = { pageIndex, path };
-    block.classList.add('dragging');
+  const startPointerDrag = session => {
+    session.started = true;
+    _draggedElement = { pageIndex, path: [...session.path] };
+    session.block.classList.add('dragging');
     container.classList.add('is-dragging');
+    document.documentElement.classList.add('builder-pointer-dragging');
     refreshDropZones();
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', block.dataset.path);
-  }, listenerOptions);
+  };
 
-  container.addEventListener('dragend', () => {
-    _draggedElement = null;
-    clearIndicators();
-  }, listenerOptions);
-
-  container.addEventListener('dragover', event => {
-    if (!_draggedElement || _draggedElement.pageIndex !== pageIndex) return;
-    const spec = _resolveDropSpec(event, container, pageIndex);
+  const updatePointerTarget = event => {
+    const hitTarget = document.elementFromPoint(event.clientX, event.clientY);
+    const spec = _resolveDropSpec(event, container, pageIndex, hitTarget);
     if (!spec || !_canDropAt(pageIndex, _draggedElement.path, spec.parentPath, spec.index)) {
-      if (_dropTarget && _pointNearIndicator(event, _dropTarget.indicator)) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-        return;
-      }
+      if (_dropTarget && _pointNearIndicator(event, _dropTarget.indicator)) return;
       _clearActiveDropIndicator(container);
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
       return;
     }
-    event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     if (_sameDropTarget(_dropTarget, spec)) return;
     _clearActiveDropIndicator(container);
     spec.indicator?.classList.add(spec.inside ? 'drop-inside' : 'drop-active');
     _dropTarget = spec;
-  }, listenerOptions);
+  };
 
-  container.addEventListener('dragleave', event => {
-    if (!container.contains(event.relatedTarget)) {
-      container.querySelectorAll('.drop-active, .drop-inside').forEach(node => {
-        node.classList.remove('drop-active', 'drop-inside');
-      });
-      _dropTarget = null;
+  const finishPointerDrag = (event = null, commit = false) => {
+    const session = pointerSession;
+    if (!session) return;
+
+    let spec = null;
+    if (commit && session.started && event) {
+      const hitTarget = document.elementFromPoint(event.clientX, event.clientY);
+      const resolvedSpec = _resolveDropSpec(event, container, pageIndex, hitTarget);
+      const resolvedIsValid = resolvedSpec
+        && _canDropAt(pageIndex, session.path, resolvedSpec.parentPath, resolvedSpec.index);
+      spec = resolvedIsValid
+        ? resolvedSpec
+        : (hitTarget && container.contains(hitTarget) ? _dropTarget : null);
     }
-  }, listenerOptions);
 
-  container.addEventListener('drop', event => {
-    if (!_draggedElement || _draggedElement.pageIndex !== pageIndex) return;
-    event.preventDefault();
-    const spec = _resolveDropSpec(event, container, pageIndex) || _dropTarget;
-    const sourcePath = [..._draggedElement.path];
+    pointerSession = null;
     _draggedElement = null;
-    if (!spec || !_canDropAt(pageIndex, sourcePath, spec.parentPath, spec.index)) {
-      clearIndicators();
-      return;
-    }
+    document.documentElement.classList.remove('builder-pointer-dragging');
+    if (session.started) _suppressBuilderClickUntil = Date.now() + 250;
     clearIndicators();
-    _moveElementToPosition(pageIndex, sourcePath, spec.parentPath, spec.index);
+
+    try {
+      if (session.handle.hasPointerCapture?.(session.pointerId)) {
+        session.handle.releasePointerCapture(session.pointerId);
+      }
+    } catch {
+      // Pointer capture may already have been released by the browser.
+    }
+
+    if (spec && _canDropAt(pageIndex, session.path, spec.parentPath, spec.index)) {
+      _moveElementToPosition(pageIndex, session.path, spec.parentPath, spec.index);
+    }
+  };
+
+  container.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    const handle = event.target.closest('.builder-drag-handle');
+    const block = handle?.closest('.builder-block');
+    if (!handle || !block || !container.contains(block)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    pointerSession = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      path: _pathFromDataset(block.dataset.path),
+      block,
+      handle,
+      started: false,
+    };
+    handle.setPointerCapture?.(event.pointerId);
   }, listenerOptions);
+
+  container.addEventListener('pointermove', event => {
+    if (!pointerSession || event.pointerId !== pointerSession.pointerId) return;
+    event.preventDefault();
+    if (!pointerSession.started) {
+      const distance = Math.hypot(
+        event.clientX - pointerSession.startX,
+        event.clientY - pointerSession.startY,
+      );
+      if (distance < 4) return;
+      startPointerDrag(pointerSession);
+    }
+    updatePointerTarget(event);
+  }, listenerOptions);
+
+  container.addEventListener('pointerup', event => {
+    if (!pointerSession || event.pointerId !== pointerSession.pointerId) return;
+    if (pointerSession.started) event.preventDefault();
+    finishPointerDrag(event, true);
+  }, listenerOptions);
+
+  container.addEventListener('pointercancel', event => {
+    if (!pointerSession || event.pointerId !== pointerSession.pointerId) return;
+    finishPointerDrag();
+  }, listenerOptions);
+
+  container.addEventListener('lostpointercapture', event => {
+    if (!pointerSession || event.pointerId !== pointerSession.pointerId) return;
+    finishPointerDrag();
+  }, listenerOptions);
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !pointerSession) return;
+    event.preventDefault();
+    finishPointerDrag();
+  }, listenerOptions);
+
+  window.addEventListener('blur', () => finishPointerDrag(), listenerOptions);
+  dragController.signal.addEventListener('abort', () => finishPointerDrag(), { once: true });
 }
 
-function _resolveDropSpec(event, container, pageIndex) {
-  const outdent = event.target.closest('.builder-outdent-zone');
+function _resolveDropSpec(event, container, pageIndex, eventTarget = event.target) {
+  if (!eventTarget?.closest) return null;
+  const outdent = eventTarget.closest('.builder-outdent-zone');
   if (outdent && container.contains(outdent)) {
     return { ..._dropSpecFromOutdent(outdent), indicator: outdent, inside: false };
   }
-  const zone = event.target.closest('.builder-drop-zone');
+  const zone = eventTarget.closest('.builder-drop-zone');
   if (zone && container.contains(zone)) return { ..._dropSpecFromZone(zone), indicator: zone, inside: false };
 
-  const head = event.target.closest('.builder-block-head');
-  const block = head?.closest('.builder-block') || event.target.closest('.builder-block');
+  const head = eventTarget.closest('.builder-block-head');
+  const block = head?.closest('.builder-block') || eventTarget.closest('.builder-block');
   if (block && container.contains(block)) {
     const targetPath = _pathFromDataset(block.dataset.path);
     const item = _getNodeAt(_config.pages[pageIndex].layout, targetPath);
@@ -1170,7 +1228,7 @@ function _resolveDropSpec(event, container, pageIndex) {
     };
   }
 
-  const childList = event.target.closest('.builder-child-list');
+  const childList = eventTarget.closest('.builder-child-list');
   if (childList && container.contains(childList)) {
     const parentPath = _pathFromDataset(childList.dataset.dropParent);
     const parent = _getNodeAt(_config.pages[pageIndex].layout, parentPath);
@@ -1182,7 +1240,7 @@ function _resolveDropSpec(event, container, pageIndex) {
     };
   }
 
-  if (container.contains(event.target)) {
+  if (container.contains(eventTarget)) {
     return {
       parentPath: [],
       index: _config.pages[pageIndex].layout.length,

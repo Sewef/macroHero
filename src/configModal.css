@@ -1628,7 +1628,9 @@ body {
   font-size: 0.72em;
   font-weight: 800;
   letter-spacing: -3px;
+  touch-action: none;
   user-select: none;
+  -webkit-user-drag: none;
 }
 .builder-drag-handle:hover {
   color: var(--accent);
@@ -1636,6 +1638,11 @@ body {
 }
 .builder-drag-handle:active {
   cursor: grabbing;
+}
+html.builder-pointer-dragging,
+html.builder-pointer-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 .builder-drop-zone {
   position: relative;
