@@ -558,17 +558,17 @@ function createScriptCompletionSource(variables = []) {
       label,
       type: "namespace",
       detail: label === "Page"
-        ? "Current screen variables"
-        : (label === "Pages" ? "Variables from every screen" : "Global variables"),
+        ? "Current page variables"
+        : (label === "Pages" ? "Variables from every page" : "Global variables"),
       info: completionInfo({
         signature: label,
         description: label === "Page"
-          ? "State and computed variables belonging to the current screen. Computed values are read-only."
+          ? "State and computed variables belonging to the current page. Computed values are read-only."
           : (label === "Pages"
-            ? "Access variables from any screen through its stable script key."
-            : "State and computed variables shared by every screen. Computed values are read-only."),
+            ? "Access variables from any page through its Page ID."
+            : "State and computed variables shared by every page. Computed values are read-only."),
         note: label === "Pages"
-          ? "Use Pages.screenId.variableName."
+          ? "Use Pages.pageId.variableName."
           : "Type a dot to list the variables available in this scope.",
       }),
     })),

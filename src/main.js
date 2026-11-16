@@ -94,7 +94,7 @@ OBR.onReady(async () => {
     }
 
     // Prepare stable page scopes. Page variables are resolved lazily when their
-    // screen is displayed; opening the extension must not execute every screen.
+    // page is displayed; opening the extension must not execute every page.
     for (let i = 0; i < (cfg.pages || []).length; i++) {
       const page = cfg.pages[i];
       page._resolved = {};

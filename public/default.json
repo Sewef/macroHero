@@ -2342,11 +2342,11 @@
         },
         {
           "type": "text",
-          "text": "MacroHero exposes three explicit variable namespaces:\n\n- `Page.variable` accesses the current screen.\n- `Pages.screenId.variable` accesses any screen through its **Screen ID**.\n- `Global.variable` accesses application-wide variables.\n\nState variables are writable. Computed variables are evaluated automatically and are read-only."
+          "text": "MacroHero exposes three explicit variable namespaces:\n\n- `Page.variable` accesses the current page.\n- `Pages.pageId.variable` accesses any page through its **Page ID**.\n- `Global.variable` accesses application-wide variables.\n\nState variables are writable. Computed variables are evaluated automatically and are read-only."
         },
         {
           "type": "text",
-          "text": "On this screen, `Page.localCounter` and `Pages.variable_scopes.localCounter` point to the same state variable. Prefer `Page.localCounter` locally and use the longer form from another screen."
+          "text": "On this page, `Page.localCounter` and `Pages.variable_scopes.localCounter` point to the same state variable. Prefer `Page.localCounter` locally and use the longer form from another page."
         },
         {
           "type": "divider"
@@ -2411,7 +2411,7 @@
             {
               "type": "button",
               "label": "Update Global",
-              "tooltip": "State variables in Global are writable from every screen.",
+              "tooltip": "State variables in Global are writable from every page.",
               "color": "#27ae60",
               "onclick": [
                 "Global.demoMessage = 'Updated from ' + Page.localNote;"
@@ -2441,12 +2441,12 @@
         },
         {
           "type": "title",
-          "text": "Screen ID rules",
+          "text": "Page ID rules",
           "color": "#e74c3c"
         },
         {
           "type": "text",
-          "text": "The Screen ID is also the name used after `Pages.`. It must therefore be a valid JavaScript identifier: letters, digits, `_` or `$`, without starting with a digit. Existing IDs containing spaces or hyphens are migrated automatically, for example `ui-elements` becomes `ui_elements`. Renaming an ID in Studio refactors its `Pages.oldId.variable` references."
+          "text": "The Page ID is also the name used after `Pages.`. It must therefore be a valid JavaScript identifier: letters, digits, `_` or `$`, without starting with a digit. Existing IDs containing spaces or hyphens are migrated automatically, for example `ui-elements` becomes `ui_elements`. Renaming an ID in Studio refactors its `Pages.oldId.variable` references."
         }
       ]
     },
@@ -2498,7 +2498,7 @@
         },
         {
           "type": "text",
-          "text": "This screen can access the **Variable Scopes** screen through its Screen ID, `variable_scopes`. The value below is a computed mirror of `Pages.variable_scopes.localCounter`; the button writes directly to that remote state variable. Open the Variable Scopes screen afterward to see the shared value."
+          "text": "This page can access the **Variable Scopes** page through its Page ID, `variable_scopes`. The value below is a computed mirror of `Pages.variable_scopes.localCounter`; the button writes directly to that remote state variable. Open the Variable Scopes page afterward to see the shared value."
         },
         {
           "type": "row",
@@ -2520,7 +2520,7 @@
             {
               "type": "button",
               "label": "Read remote counter",
-              "tooltip": "Reads a variable from another screen without changing it.",
+              "tooltip": "Reads a variable from another page without changing it.",
               "onclick": [
                 "await Owlbear.notification.show('Remote counter: ' + Pages.variable_scopes.localCounter, 'INFO');"
               ]
@@ -2716,7 +2716,7 @@
         },
         {
           "type": "text",
-          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `Page.variable`, `Pages.screenId.variable`, and `Global.variable` expressions are evaluated at hover time. Hover the buttons below."
+          "text": "Tooltips support **plain text**, **Markdown**, and raw HTML. `Page.variable`, `Pages.pageId.variable`, and `Global.variable` expressions are evaluated at hover time. Hover the buttons below."
         },
         {
           "type": "row",
@@ -2846,7 +2846,7 @@
         },
         {
           "type": "text",
-          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `Page.variable`, `Pages.screenId.variable`, and `Global.variable` expressions are evaluated at hover time."
+          "text": "Button properties summary:\n- onclick: Array of commands executed on LEFT-click\n- onrightclick: Array of commands executed on RIGHT-click (optional)\n- label: Button text\n- color: Button background color (hex code)\n- tooltip: Hover text — plain text, Markdown, or HTML. `Page.variable`, `Pages.pageId.variable`, and `Global.variable` expressions are evaluated at hover time."
         },
         {
           "type": "divider"
@@ -3332,7 +3332,7 @@
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable, Pages.screenId.variable, and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable, Pages.pageId.variable, and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }

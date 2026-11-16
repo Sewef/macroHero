@@ -35,6 +35,7 @@ let _draggedElement = null;
 let _dropTarget = null;
 let _suppressBuilderClickUntil = 0;
 let _previewResizeObserver = null;
+let _latestProjectIssues = [];
 
 const HISTORY_LIMIT = 100;
 
@@ -104,13 +105,14 @@ export function buildConfigFromEditor() {
 }
 
 export function renderSidebar() {
+  _latestProjectIssues = _collectProjectIssues();
   _renderGlobalFields();
   _renderGlobalVariables();
   _renderPageList();
   document.getElementById('projectSettingsNav')?.classList.toggle('active', _activeWorkspace === 'project');
   document.getElementById('globalVariablesNav')?.classList.toggle('active', _activeWorkspace === 'variables');
   _renderProjectSearchResults();
-  _updateValidationUI();
+  _updateValidationUI(_latestProjectIssues);
 }
 
 function _installStudioControls() {
@@ -311,9 +313,9 @@ function _renderProjectSearchResults() {
   addVariableResults(_config.global, 'global', 'Global');
   (_config.pages || []).forEach((page, pageIndex) => {
     if (`${page.label} ${page.id}`.toLowerCase().includes(query)) {
-      results.push({ kind: 'screen', pageIndex, label: page.label, meta: `Screen · ${page.id}` });
+      results.push({ kind: 'screen', pageIndex, label: page.label, meta: `Page · ${page.id}` });
     }
-    addVariableResults(page, pageIndex, page.label || `Screen ${pageIndex + 1}`);
+    addVariableResults(page, pageIndex, page.label || `Page ${pageIndex + 1}`);
     _walkLayout(page.layout, (item, path) => {
       const label = _blockLabel(item);
       if (`${item.type} ${label} ${item.var || ''}`.toLowerCase().includes(query)) {
@@ -327,7 +329,7 @@ function _renderProjectSearchResults() {
         <span class="tree-icon">${result.kind === 'variable' ? 'V' : result.kind === 'screen' ? '▤' : 'C'}</span>
         <span><strong>${_esc(result.label)}</strong><small>${_esc(result.meta)}</small></span>
       </button>`).join('')
-    : '<div class="project-search-empty">No matching screen, variable, or component.</div>';
+    : '<div class="project-search-empty">No matching page, variable, or component.</div>';
 
   resultsHost.querySelectorAll('[data-result-index]').forEach(button => {
     button.onclick = () => {
@@ -416,7 +418,7 @@ function _showProjectSettings() {
         <div>
           <span class="workspace-kicker">Application</span>
           <h3>Project settings</h3>
-          <p>Window identity and dimensions shared by every screen.</p>
+          <p>Window identity and dimensions shared by every page.</p>
         </div>
       </header>
       <div class="workspace-content narrow-content">
@@ -471,7 +473,7 @@ function _showGlobalVariablesWorkspace() {
           <div>
             <span class="workspace-kicker">Application</span>
             <h3>Global variables</h3>
-            <p>Values available to every screen and every script.</p>
+            <p>Values available to every page and every script.</p>
           </div>
           <div class="workspace-summary">${stateCount + computedCount} variables</div>
         </header>
@@ -548,10 +550,12 @@ function _renderPageList() {
       <div class="page-tree-views">
         <button type="button" class="page-tree-view ${variablesActive}" data-page-index="${i}" data-workspace="variables">
           <span class="tree-view-icon">V</span><span>Variables</span>
+          <span class="tree-issue-badge" data-page-variable-issues="${i}" hidden>0</span>
           <span class="tree-count">${Object.keys(page.state || {}).length + Object.keys(page.computed || {}).length}</span>
         </button>
         <button type="button" class="page-tree-view ${layoutActive}" data-page-index="${i}" data-workspace="layout">
           <span class="tree-view-icon">▦</span><span>Interface</span>
+          <span class="tree-issue-badge" data-page-layout-issues="${i}" hidden>0</span>
           <span class="tree-count">${(page.layout || []).length}</span>
         </button>
       </div>
@@ -615,12 +619,12 @@ export function renderPagePanel(pageIndex) {
       <section class="builder-main">
         <div class="page-panel-header builder-header">
           <div class="input-group page-field">
-            <label>Screen label</label>
-            <input type="text" id="pageLabelInput" value="${_attr(page.label || '')}" placeholder="Screen name" />
+            <label>Page label</label>
+            <input type="text" id="pageLabelInput" value="${_attr(page.label || '')}" placeholder="Page name" />
           </div>
           <div class="input-group page-field">
-            <label>Screen ID <small>Pages.${_esc(page.id || '')}</small></label>
-            <input type="text" id="pageIdInput" value="${_attr(page.id || '')}" placeholder="screen_id" />
+            <label>Page ID <small>Pages.${_esc(page.id || '')}</small></label>
+            <input type="text" id="pageIdInput" value="${_attr(page.id || '')}" placeholder="page_id" />
           </div>
         </div>
 
@@ -695,9 +699,9 @@ function renderPageVariablesPanel(pageIndex) {
       <section class="builder-main">
         <header class="workspace-header">
           <div>
-            <span class="workspace-kicker">${_esc(page.label || `Screen ${pageIndex + 1}`)}</span>
-            <h3>Screen variables</h3>
-            <p>Values and expressions scoped to this screen · <code>Pages.${_esc(page.id)}.variable</code></p>
+            <span class="workspace-kicker">${_esc(page.label || `Page ${pageIndex + 1}`)}</span>
+            <h3>Page variables</h3>
+            <p>Values and expressions scoped to this page · <code>Pages.${_esc(page.id)}.variable</code></p>
           </div>
           <div class="workspace-summary">${stateCount + computedCount} variables</div>
         </header>
@@ -784,10 +788,16 @@ function _renderVariableList(scope, owner, kind) {
       && _selection.name === name
       ? 'selected'
       : '';
-    return `<div class="var-item ${selected}" data-action="selectVar" data-owner="${owner}" data-kind="${kind}" data-name="${_attr(name)}">
+    const variableIssues = _latestProjectIssues.filter(issue => (
+      String(issue.owner) === String(owner)
+      && issue.variableName === name
+      && (!issue.varKind || issue.varKind === kind)
+    ));
+    return `<div class="var-item ${selected} ${variableIssues.length ? 'has-issues' : ''}" data-action="selectVar" data-owner="${owner}" data-kind="${kind}" data-name="${_attr(name)}">
       <span class="var-key">${_esc(name)}</span>
       <span class="var-val" title="${_attr(desc)}">${_esc(_truncate(desc, 30))}</span>
       <span class="variable-usage-count" title="${usageCount} reference${usageCount === 1 ? '' : 's'}">${usageCount}</span>
+      <span class="tree-issue-badge variable-issue-badge" data-variable-issue-owner="${_attr(owner)}" data-variable-issue-kind="${_attr(kind)}" data-variable-issue-name="${_attr(name)}" title="${_attr(variableIssues.map(issue => issue.message).join('\n'))}" ${variableIssues.length ? '' : 'hidden'}>${variableIssues.length}</span>
       <div class="var-actions">
         <button type="button" class="btn-icon" data-action="selectVar" data-owner="${owner}" data-kind="${kind}" data-name="${_attr(name)}" title="Edit">E</button>
         <button type="button" class="btn-icon btn-danger" data-action="deleteVar" data-owner="${owner}" data-kind="${kind}" data-name="${_attr(name)}" title="Delete">x</button>
@@ -961,8 +971,8 @@ function _openPreviewOverlay(pageIndex) {
   const overlay = document.createElement('div');
   overlay.id = 'studioPreviewOverlay';
   overlay.className = 'preview-overlay';
-  overlay.innerHTML = `<div class="preview-overlay-window" role="dialog" aria-modal="true" aria-label="Screen preview">
-    <header><div><span class="workspace-kicker">Live preview</span><strong>${_esc(page.label || 'Screen')}</strong></div><button type="button" class="close-modal" aria-label="Close preview">×</button></header>
+  overlay.innerHTML = `<div class="preview-overlay-window" role="dialog" aria-modal="true" aria-label="Page preview">
+    <header><div><span class="workspace-kicker">Live preview</span><strong>${_esc(page.label || 'Page')}</strong></div><button type="button" class="close-modal" aria-label="Close preview">×</button></header>
     <div class="preview-overlay-canvas" style="--preview-width:${Number(_config.global?.width) || 600}px;--preview-height:${Number(_config.global?.height) || 600}px">
       <div class="live-preview-surface">${(page.layout || []).map((item, index) => _renderPreviewNode(item, [index], pageIndex)).join('') || '<div class="preview-empty">No layout yet</div>'}</div>
     </div>
@@ -986,8 +996,11 @@ function _renderBlock(item, path, pageIndex) {
   const isCollapsed = canHaveChildren && _isBuilderCollapsed(pageIndex, path);
   const parentCount = _getChildArray(_config.pages[pageIndex].layout, path)?.length || 0;
   const index = path[path.length - 1];
+  const blockIssues = _latestProjectIssues.filter(issue => (
+    issue.pageIndex === pageIndex && _samePath(issue.path, path)
+  ));
 
-  return `<article class="builder-block depth-${Math.min(path.length, 4)} ${selected} ${isCollapsed ? 'collapsed' : ''}" data-path="${pathStr}" data-action="selectElement" tabindex="-1">
+  return `<article class="builder-block depth-${Math.min(path.length, 4)} ${selected} ${isCollapsed ? 'collapsed' : ''} ${blockIssues.length ? 'has-issues' : ''}" data-path="${pathStr}" data-action="selectElement" tabindex="-1">
     <div class="builder-block-head">
       <span class="builder-drag-handle" title="Drag to move" aria-label="Drag to move">&#8942;&#8942;</span>
       ${canHaveChildren ? `<button type="button" class="builder-toggle ${isCollapsed ? '' : 'open'}" data-action="toggleCollapse" data-path="${pathStr}" title="${isCollapsed ? 'Expand' : 'Collapse'}">▶</button>` : '<span class="builder-toggle-spacer"></span>'}
@@ -996,6 +1009,7 @@ function _renderBlock(item, path, pageIndex) {
         <strong>${_esc(label)}</strong>
         ${meta ? `<small>${_esc(meta)}</small>` : ''}
       </div>
+      <span class="tree-issue-badge element-issue-badge" data-element-issue-page="${pageIndex}" data-element-issue-path="${pathStr}" title="${_attr(blockIssues.map(issue => issue.message).join('\n'))}" ${blockIssues.length ? '' : 'hidden'}>${blockIssues.length}</span>
       <div class="builder-actions">
         <button type="button" class="btn-icon" data-action="moveElement" data-path="${pathStr}" data-dir="-1" ${index === 0 ? 'disabled' : ''}>↑</button>
         <button type="button" class="btn-icon" data-action="moveElement" data-path="${pathStr}" data-dir="1" ${index >= parentCount - 1 ? 'disabled' : ''}>↓</button>
@@ -1972,7 +1986,7 @@ function _scriptCompletionVariables() {
       pageKey: page.id,
       pageLabel: page.label || `Page ${pageIndex + 1}`,
       detail: `${page.label || page.id} State · writable`,
-      info: `State variable available from every screen as Pages.${page.id}.${name}.`,
+      info: `State variable available from every page as Pages.${page.id}.${name}.`,
     })),
     ...Object.keys(page.computed || {}).map(name => ({
       name,
@@ -1980,7 +1994,7 @@ function _scriptCompletionVariables() {
       pageKey: page.id,
       pageLabel: page.label || `Page ${pageIndex + 1}`,
       detail: `${page.label || page.id} Computed · read-only`,
-      info: `Computed variable available from every screen as Pages.${page.id}.${name}.`,
+      info: `Computed variable available from every page as Pages.${page.id}.${name}.`,
     })),
   ]);
   return [...localVariables, ...pageVariables];
@@ -2169,7 +2183,7 @@ function _renderVariableReferences(owner, name) {
     <div class="variable-references-head"><strong>References</strong><span>${usages.length}</span></div>
     ${usages.length ? usages.map(usage => usage.kind === 'component'
       ? `<button type="button" class="variable-reference" data-variable-reference data-page-index="${usage.pageIndex}" data-path="${usage.path.join('.')}">
-          <span>${_esc(usage.label)}</span><small>${_esc((_config.pages?.[usage.pageIndex]?.label || 'Screen') + ' · ' + usage.detail)}</small>
+          <span>${_esc(usage.label)}</span><small>${_esc((_config.pages?.[usage.pageIndex]?.label || 'Page') + ' · ' + usage.detail)}</small>
         </button>`
       : `<div class="variable-reference static"><span>${_esc(usage.label)}</span><small>${_esc(usage.detail)}</small></div>`).join('')
       : '<div class="tree-empty">No references. This variable can be removed safely.</div>'}
@@ -2323,30 +2337,30 @@ function _collectProjectIssues() {
   const globalState = new Set(Object.keys(_config.global?.state || {}));
   const globalComputed = new Set(Object.keys(_config.global?.computed || {}));
   [...globalState].filter(name => globalComputed.has(name)).forEach(name => {
-    issues.push({ scope: 'global', message: `Global variable "${name}" exists in State and Computed.` });
+    issues.push({ scope: 'global', owner: 'global', variableName: name, message: `Global variable "${name}" exists in State and Computed.` });
   });
   Object.entries(_config.global?.computed || {}).forEach(([name, entry]) => {
     const expression = typeof entry === 'string' ? entry : entry?.eval;
-    if (!String(expression || '').trim()) issues.push({ scope: 'global', message: `Computed variable "${name}" has no expression.` });
+    if (!String(expression || '').trim()) issues.push({ scope: 'global', owner: 'global', variableName: name, varKind: 'computed', message: `Computed variable "${name}" has no expression.` });
   });
 
   const pageIds = new Map((_config.pages || []).map((page, pageIndex) => [page.id, pageIndex]));
   const seenPageIds = new Set();
   (_config.pages || []).forEach((page, pageIndex) => {
-    if (!String(page.label || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Screen label is empty.' });
-    if (!String(page.id || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Screen ID is empty.' });
-    else if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(page.id)) issues.push({ scope: 'page', pageIndex, message: `Screen ID "${page.id}" is not a valid JavaScript identifier.` });
-    else if (seenPageIds.has(page.id)) issues.push({ scope: 'page', pageIndex, message: `Screen ID "${page.id}" is duplicated.` });
+    if (!String(page.label || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Page label is empty.' });
+    if (!String(page.id || '').trim()) issues.push({ scope: 'page', pageIndex, message: 'Page ID is empty.' });
+    else if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(page.id)) issues.push({ scope: 'page', pageIndex, message: `Page ID "${page.id}" is not a valid JavaScript identifier.` });
+    else if (seenPageIds.has(page.id)) issues.push({ scope: 'page', pageIndex, message: `Page ID "${page.id}" is duplicated.` });
     else seenPageIds.add(page.id);
 
     const pageState = new Set(Object.keys(page.state || {}));
     const pageComputed = new Set(Object.keys(page.computed || {}));
     [...pageState].filter(name => pageComputed.has(name)).forEach(name => {
-      issues.push({ scope: 'page', pageIndex, message: `Variable "${name}" exists in State and Computed.` });
+      issues.push({ scope: 'page', pageIndex, owner: pageIndex, variableName: name, message: `Variable "${name}" exists in State and Computed.` });
     });
     Object.entries(page.computed || {}).forEach(([name, entry]) => {
       const expression = typeof entry === 'string' ? entry : entry?.eval;
-      if (!String(expression || '').trim()) issues.push({ scope: 'page', pageIndex, message: `Computed variable "${name}" has no expression.` });
+      if (!String(expression || '').trim()) issues.push({ scope: 'page', pageIndex, owner: pageIndex, variableName: name, varKind: 'computed', message: `Computed variable "${name}" has no expression.` });
     });
 
     const allNames = new Set([...globalState, ...globalComputed, ...pageState, ...pageComputed]);
@@ -2371,57 +2385,75 @@ function _collectProjectIssues() {
 function _collectPagesReferenceIssues(pageIds) {
   const issues = [];
   const seen = new Set();
-  const inspect = (value, issueScope) => {
-    if (typeof value === 'string') {
-      for (const match of value.matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
+  const inspectExpression = (value, issueScope) => {
+    if (typeof value !== 'string') return;
+    for (const match of value.matchAll(/\bPages\.([A-Za-z_$][A-Za-z0-9_$]*)\.([A-Za-z_$][A-Za-z0-9_$]*)/g)) {
         const [, pageId, variableName] = match;
         const targetIndex = pageIds.get(pageId);
         const targetPage = targetIndex === undefined ? null : _config.pages[targetIndex];
-        const key = `${issueScope.scope}:${issueScope.pageIndex ?? 'global'}:${pageId}.${variableName}`;
+        const source = issueScope.variableName || issueScope.path?.join('.') || 'scope';
+        const key = `${issueScope.scope}:${issueScope.pageIndex ?? 'global'}:${source}:${pageId}.${variableName}`;
         if (seen.has(key)) continue;
         seen.add(key);
         if (!targetPage) {
-          issues.push({ ...issueScope, message: `Pages.${pageId} references an unknown screen ID.` });
+          issues.push({ ...issueScope, message: `Pages.${pageId} references an unknown Page ID.` });
         } else if (!Object.prototype.hasOwnProperty.call(targetPage.state || {}, variableName)
           && !Object.prototype.hasOwnProperty.call(targetPage.computed || {}, variableName)) {
           issues.push({ ...issueScope, message: `Pages.${pageId}.${variableName} references an unknown variable.` });
         }
-      }
-      return;
     }
-    if (Array.isArray(value)) {
-      value.forEach(entry => inspect(entry, issueScope));
-      return;
-    }
-    if (value && typeof value === 'object') {
-      Object.values(value).forEach(entry => inspect(entry, issueScope));
+  };
+  const inspectCommands = (value, issueScope) => {
+    if (Array.isArray(value)) value.forEach(command => inspectExpression(command, issueScope));
+    else inspectExpression(value, issueScope);
+  };
+  const inspectInterpolations = (value, issueScope) => {
+    if (typeof value !== 'string') return;
+    for (const match of value.matchAll(/\$\{([\s\S]*?)\}/g)) {
+      inspectExpression(match[1], issueScope);
     }
   };
 
-  inspect(_config.global?.computed, { scope: 'global' });
+  Object.entries(_config.global?.computed || {}).forEach(([name, entry]) => {
+    inspectExpression(typeof entry === 'string' ? entry : entry?.eval, {
+      scope: 'global', owner: 'global', variableName: name, varKind: 'computed',
+    });
+  });
   (_config.pages || []).forEach((page, pageIndex) => {
-    inspect(page.computed, { scope: 'page', pageIndex });
-    inspect(page.layout, { scope: 'page', pageIndex });
+    Object.entries(page.computed || {}).forEach(([name, entry]) => {
+      inspectExpression(typeof entry === 'string' ? entry : entry?.eval, {
+        scope: 'page', pageIndex, owner: pageIndex, variableName: name, varKind: 'computed',
+      });
+    });
+    _walkLayout(page.layout, (item, path) => {
+      const issueScope = { scope: 'page', pageIndex, path };
+      ['onclick', 'onrightclick', 'onupdate'].forEach(field => inspectCommands(item?.[field], issueScope));
+      ['label', 'text', 'content', 'tooltip'].forEach(field => inspectInterpolations(item?.[field], issueScope));
+    });
   });
   return issues;
 }
 
 function _collectVariableCycleIssues() {
   const nodes = new Map();
-  const addScope = (scope, prefix, issueScope) => {
+  const addScope = (scope, prefix, issueScope, owner) => {
     Object.entries(scope?.state || {}).forEach(([name, entry]) => {
-      nodes.set(`${prefix}.${name}`, { expression: null, issueScope, entry });
+      nodes.set(`${prefix}.${name}`, {
+        expression: null,
+        issueScope: { ...issueScope, owner, variableName: name, varKind: 'state' },
+        entry,
+      });
     });
     Object.entries(scope?.computed || {}).forEach(([name, entry]) => {
       nodes.set(`${prefix}.${name}`, {
         expression: typeof entry === 'string' ? entry : entry?.eval || '',
-        issueScope,
+        issueScope: { ...issueScope, owner, variableName: name, varKind: 'computed' },
       });
     });
   };
-  addScope(_config.global, 'Global', { scope: 'global' });
+  addScope(_config.global, 'Global', { scope: 'global' }, 'global');
   (_config.pages || []).forEach((page, pageIndex) => {
-    addScope(page, `Pages.${page.id}`, { scope: 'page', pageIndex });
+    addScope(page, `Pages.${page.id}`, { scope: 'page', pageIndex }, pageIndex);
   });
 
   const dependencies = (nodeId, expression) => {
@@ -2472,8 +2504,9 @@ function _collectVariableCycleIssues() {
   return issues;
 }
 
-function _updateValidationUI() {
-  const issues = _collectProjectIssues();
+function _updateValidationUI(precomputedIssues = null) {
+  const issues = precomputedIssues || _collectProjectIssues();
+  _latestProjectIssues = issues;
   const status = document.getElementById('studioValidationStatus');
   if (status) {
     status.textContent = issues.length ? `${issues.length} project issue${issues.length === 1 ? '' : 's'}` : 'Project valid';
@@ -2494,6 +2527,44 @@ function _updateValidationUI() {
     badge.hidden = pageIssues.length === 0;
     badge.textContent = String(pageIssues.length);
     badge.title = pageIssues.map(issue => issue.message).join('\n');
+  });
+
+  document.querySelectorAll('[data-page-variable-issues]').forEach(badge => {
+    const pageIndex = Number(badge.dataset.pageVariableIssues);
+    const variableIssues = issues.filter(issue => issue.pageIndex === pageIndex && issue.variableName);
+    badge.hidden = variableIssues.length === 0;
+    badge.textContent = String(variableIssues.length);
+    badge.title = variableIssues.map(issue => issue.message).join('\n');
+  });
+
+  document.querySelectorAll('[data-page-layout-issues]').forEach(badge => {
+    const pageIndex = Number(badge.dataset.pageLayoutIssues);
+    const layoutIssues = issues.filter(issue => issue.pageIndex === pageIndex && Array.isArray(issue.path));
+    badge.hidden = layoutIssues.length === 0;
+    badge.textContent = String(layoutIssues.length);
+    badge.title = layoutIssues.map(issue => issue.message).join('\n');
+  });
+
+  document.querySelectorAll('[data-variable-issue-name]').forEach(badge => {
+    const variableIssues = issues.filter(issue => (
+      String(issue.owner) === badge.dataset.variableIssueOwner
+      && issue.variableName === badge.dataset.variableIssueName
+      && (!issue.varKind || issue.varKind === badge.dataset.variableIssueKind)
+    ));
+    badge.hidden = variableIssues.length === 0;
+    badge.textContent = String(variableIssues.length);
+    badge.title = variableIssues.map(issue => issue.message).join('\n');
+    badge.closest('.var-item')?.classList.toggle('has-issues', variableIssues.length > 0);
+  });
+
+  document.querySelectorAll('[data-element-issue-path]').forEach(badge => {
+    const pageIndex = Number(badge.dataset.elementIssuePage);
+    const path = badge.dataset.elementIssuePath.split('.').filter(Boolean).map(Number);
+    const elementIssues = issues.filter(issue => issue.pageIndex === pageIndex && _samePath(issue.path, path));
+    badge.hidden = elementIssues.length === 0;
+    badge.textContent = String(elementIssues.length);
+    badge.title = elementIssues.map(issue => issue.message).join('\n');
+    badge.closest('.builder-block')?.classList.toggle('has-issues', elementIssues.length > 0);
   });
 }
 

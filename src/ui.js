@@ -580,7 +580,7 @@ export async function updateConfig(newConfig) {
     setGlobalVariables(globalVars);
     config._resolvedGlobal = globalVars;
 
-    // Reset page scopes. The active screen resolves only its visible variables
+    // Reset page scopes. The active page resolves only its visible variables
     // when renderConfigUI renders it below.
     for (let i = 0; i < (config.pages || []).length; i++) {
       const page = config.pages[i];

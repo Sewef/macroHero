@@ -175,7 +175,7 @@ class VariableStore {
   }
 
   /**
-   * Build the Pages.<screenId> namespace used by expressions and scripts.
+   * Build the Pages.<pageId> namespace used by expressions and scripts.
    */
   getPagesResolved() {
     return Object.fromEntries((this.config?.pages || []).map((page, pageIndex) => [

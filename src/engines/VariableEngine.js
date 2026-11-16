@@ -295,7 +295,7 @@ class VariableEngine {
 
   /**
    * Resolve page variables as one cross-page dependency graph.
-   * Local dependencies use Page.x; remote dependencies use Pages.screenId.x.
+   * Local dependencies use Page.x; remote dependencies use Pages.pageId.x.
    * When targetNodeIds is provided, only those variables and their dependency
    * closure are evaluated. This keeps a Pages.foo.bar read from waking up every
    * computed variable and integration in the configuration.
@@ -407,7 +407,7 @@ class VariableEngine {
 
   /**
    * Find computed page variables affected by page/global state changes.
-   * Node IDs use "screenId.variable"; global inputs use "Global.variable".
+   * Node IDs use "pageId.variable"; global inputs use "Global.variable".
    */
   getCrossPageDependents(config, changedNodeIds) {
     const changed = changedNodeIds instanceof Set

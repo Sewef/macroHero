@@ -690,7 +690,7 @@ body {
 }
 .page-tree-view {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 6px;
   width: 100%;
@@ -1516,7 +1516,7 @@ body {
 .var-item {
   cursor: pointer;
   display: grid;
-  grid-template-columns: minmax(60px, 0.8fr) minmax(0, 1.4fr) auto auto;
+  grid-template-columns: minmax(60px, 0.8fr) minmax(0, 1.4fr) auto auto auto;
   align-items: center;
   gap: 6px;
   margin-bottom: 0;
@@ -1553,6 +1553,9 @@ body {
 .var-item.selected {
   border-color: var(--accent);
   background: var(--accent-bg);
+}
+.var-item.has-issues {
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 .builder-layout-section {
   flex: 1;
@@ -1610,6 +1613,14 @@ body {
   border-left-color: var(--accent);
   background: var(--accent-bg);
   box-shadow: inset 2px 0 0 var(--accent);
+}
+.builder-block.has-issues {
+  border-left-color: var(--amber);
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--amber) 75%, transparent);
+}
+.element-issue-badge,
+.variable-issue-badge {
+  flex: 0 0 auto;
 }
 .builder-block.dragging {
   opacity: 0.35;
