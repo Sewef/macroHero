@@ -2331,6 +2331,152 @@
       ]
     },
     {
+      "label": "Events",
+      "id": "events",
+      "state": {
+        "lastEvent": {
+          "default": "Enable an example in the Events branch, then trigger its source."
+        }
+      },
+      "computed": {},
+      "hooks": [
+        {
+          "id": "token_metadata_changed",
+          "label": "Token metadata changed",
+          "enabled": false,
+          "watch": "Token.onMetadataChange(Global.token, 'com.example/token')",
+          "commands": [
+            "Page.lastEvent = 'Token metadata: ' + JSON.stringify(Event.value);"
+          ]
+        },
+        {
+          "id": "owltrackers_hp_changed",
+          "label": "OwlTrackers HP changed",
+          "enabled": false,
+          "watch": "OwlTrackers.onChange(Global.token, 'HP')",
+          "condition": "Event.value !== undefined",
+          "commands": [
+            "Page.lastEvent = 'HP: ' + Event.previousValue + ' -> ' + Event.value + ' (delta ' + Event.delta + ')';"
+          ]
+        },
+        {
+          "id": "scene_metadata_changed",
+          "label": "Scene metadata changed",
+          "enabled": false,
+          "watch": "Scene.onMetadataChange('com.example/scene')",
+          "commands": [
+            "Page.lastEvent = 'Scene metadata: ' + JSON.stringify(Event.value);"
+          ]
+        },
+        {
+          "id": "room_metadata_changed",
+          "label": "Room metadata changed",
+          "enabled": false,
+          "watch": "Room.onMetadataChange('com.example/room')",
+          "commands": [
+            "Page.lastEvent = 'Room metadata: ' + JSON.stringify(Event.value);"
+          ]
+        },
+        {
+          "id": "player_metadata_changed",
+          "label": "Player metadata changed",
+          "enabled": false,
+          "watch": "Player.onMetadataChange('com.example/player')",
+          "commands": [
+            "Page.lastEvent = 'Player metadata: ' + JSON.stringify(Event.value);"
+          ]
+        },
+        {
+          "id": "broadcast_message_received",
+          "label": "Broadcast message received",
+          "enabled": false,
+          "watch": "Broadcast.onMessage('com.example/event')",
+          "condition": "Event.data?.type === 'demo'",
+          "commands": [
+            "Page.lastEvent = 'Broadcast from ' + Event.connectionId + ': ' + JSON.stringify(Event.data);"
+          ]
+        }
+      ],
+      "layout": [
+        {
+          "type": "title",
+          "text": "Events and Hooks"
+        },
+        {
+          "type": "text",
+          "text": "Open the **Events** branch of this page to inspect the examples. They are disabled by default so opening MacroHero does not create demo subscriptions. Enable an event, save the configuration, then use the matching button below."
+        },
+        {
+          "type": "value",
+          "label": "Last event",
+          "var": "lastEvent"
+        },
+        {
+          "type": "divider"
+        },
+        {
+          "type": "title",
+          "text": "Trigger metadata examples"
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Scene metadata",
+              "onclick": [
+                "await Owlbear.scene.setMetadata({ 'com.example/scene': { updatedAt: Date.now() } });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Room metadata",
+              "onclick": [
+                "await Owlbear.room.setMetadata({ 'com.example/room': { updatedAt: Date.now() } });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Player metadata",
+              "onclick": [
+                "await Owlbear.player.setMetadata({ 'com.example/player': { updatedAt: Date.now() } });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "children": [
+            {
+              "type": "button",
+              "label": "Token metadata",
+              "onclick": [
+                "await Token.setMetadata(Global.token, { 'com.example/token': { updatedAt: Date.now() } });"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Decrease HP",
+              "onclick": [
+                "await OwlTrackers.addValue(Global.token, 'HP', -1);"
+              ]
+            },
+            {
+              "type": "button",
+              "label": "Send broadcast",
+              "onclick": [
+                "await Owlbear.broadcast.sendMessage('com.example/event', { type: 'demo', message: 'Hello from MacroHero' }, { destination: 'LOCAL' });"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "The token examples use `Global.token`. Change that global value to a valid token ID. The OwlTrackers example expects a tracker named `HP`; the generic token example watches `com.example/token`."
+        }
+      ]
+    },
+    {
       "label": "Variable Scopes",
       "id": "variable_scopes",
       "state": {

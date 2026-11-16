@@ -12,9 +12,10 @@ const OWL_TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
  * Describe a hook that fires whenever one metadata entry changes on a token.
  * HookEngine owns the subscription; calling this helper has no side effects.
  */
-export function onChange(tokenId, metadataKey) {
+export function onMetadataChange(tokenId, metadataKey) {
   return createTokenMetadataWatchDescriptor({
-    integration: "TokenMetadata",
+    integration: "Token",
+    eventMethod: "onMetadataChange",
     tokenId,
     metadataKey,
     selectorKey: "metadata",
@@ -299,7 +300,7 @@ export async function getFlatMetadata(tokenId, metadataKey) {
 }
 
 export default {
-  onChange,
+  onMetadataChange,
   getTokenMetadata,
   getTokenMetadataValue,
   setTokenMetadata,

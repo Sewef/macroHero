@@ -41,8 +41,8 @@ class TokenMetadataObserver {
     if (!isTokenMetadataWatchDescriptor(descriptor)) {
       throw new Error("Invalid token metadata watch descriptor");
     }
-    if (!descriptor.tokenId) throw new Error(`${descriptor.integration}.onChange requires a token ID`);
-    if (!descriptor.metadataKey) throw new Error(`${descriptor.integration}.onChange requires a metadata key`);
+    if (!descriptor.tokenId) throw new Error(`${descriptor.integration}.${descriptor.eventMethod} requires a token ID`);
+    if (!descriptor.metadataKey) throw new Error(`${descriptor.integration}.${descriptor.eventMethod} requires a metadata key`);
     if (typeof callback !== "function") throw new Error("Token metadata observer callback is required");
 
     this._ensureOwlbearListeners();
@@ -162,8 +162,9 @@ class TokenMetadataObserver {
       const previousValue = cloneValue(record.snapshot);
       record.snapshot = cloneValue(nextValue);
       const baseEvent = Object.freeze({
-        type: `${record.descriptor.integration}.onChange`,
+        type: `${record.descriptor.integration}.${record.descriptor.eventMethod}`,
         integration: record.descriptor.integration,
+        scope: "token",
         tokenId: record.descriptor.tokenId,
         token: item ? cloneValue(item) : null,
         metadataKey: record.descriptor.metadataKey,

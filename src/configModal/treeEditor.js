@@ -1587,7 +1587,7 @@ function _renderHookInspector() {
     <div class="input-group"><label>ID</label><input id="hookIdInput" type="text" value="${_attr(hook.id || '')}" /></div>
     <div class="input-group"><label>Label</label><input id="hookLabelInput" type="text" value="${_attr(hook.label || '')}" /></div>
     <div class="input-group"><label class="checkbox-label"><input id="hookEnabledInput" type="checkbox" ${hook.enabled === false ? '' : 'checked'} /> Enabled</label></div>
-    <div class="input-group"><label>Watch</label><textarea id="hookWatchInput" data-editor-lang="javascript" rows="4">${_esc(hook.watch || '')}</textarea><small>Returns one observer descriptor, for example <code>OwlTrackers.onChange(Page.token, "HP")</code>.</small></div>
+    <div class="input-group"><label>Watch</label><textarea id="hookWatchInput" data-editor-lang="javascript" rows="4">${_esc(hook.watch || '')}</textarea><small>Returns one observer descriptor, for example <code>OwlTrackers.onChange(Page.token, "HP")</code>, <code>Scene.onMetadataChange("key")</code>, or <code>Broadcast.onMessage("channel")</code>.</small></div>
     <div class="input-group"><label>Condition <small>optional</small></label><textarea id="hookConditionInput" data-editor-lang="javascript" rows="3">${_esc(hook.condition || '')}</textarea><small>Runs only when the expression is truthy. The read-only <code>Event</code> object is available.</small></div>
     <div class="input-group"><label>Commands</label><textarea id="hookCommandsInput" data-editor-lang="javascript" rows="9">${_esc(dedentCommandList(hook.commands || []).join('\n'))}</textarea></div>`;
 }

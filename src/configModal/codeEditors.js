@@ -68,7 +68,7 @@ const SCRIPT_NAMESPACE_DOCS = {
   Local: "Reads and writes values stored locally by MacroHero.",
   ConditionMarkers: "Reads and manages condition markers attached to tokens.",
   OwlTrackers: "Reads and updates OwlTrackers values attached to tokens.",
-  TokenMetadata: "Observes raw metadata entries attached to Owlbear tokens.",
+  Broadcast: "Observes messages published on an exact Owlbear broadcast channel.",
   StatBubbles: "Reads and updates Stat Bubbles, including health helpers.",
   ColoredRings: "Reads and manages colored rings around tokens.",
   JustDices: "Rolls dice through the Just Dices integration.",
@@ -79,8 +79,10 @@ const SCRIPT_NAMESPACE_DOCS = {
   Embers: "Builds and sends Embers visual-effect sequences.",
   Announcement: "Reads and controls the room announcement.",
   Auras: "Reads and manages token auras.",
-  Token: "Finds, creates, and updates Owlbear Rodeo tokens.",
-  Scene: "Provides helpers related to the current Owlbear scene.",
+  Token: "Finds, creates, updates, and observes Owlbear Rodeo tokens.",
+  Scene: "Provides helpers and metadata events for the current Owlbear scene.",
+  Room: "Provides metadata events for the current Owlbear room.",
+  Player: "Provides metadata events for the local Owlbear player.",
 };
 
 const SCRIPT_METHOD_DOCS = {
@@ -176,7 +178,11 @@ const SCRIPT_METHOD_DOCS = {
   "Token.setRotation": "Changes the rotation of one or more items.",
   "Token.setMetadata": "Merges metadata into one or more items.",
   "Scene.getMapIdFromToken": "Returns the map identifier underneath the supplied token.",
-  "TokenMetadata.onChange": "Creates a hook source that watches one metadata key on one token.",
+  "Token.onMetadataChange": "Creates a hook source that watches one metadata key on one token.",
+  "Scene.onMetadataChange": "Creates a hook source that watches one scene metadata key.",
+  "Room.onMetadataChange": "Creates a hook source that watches one room metadata key.",
+  "Player.onMetadataChange": "Creates a hook source that watches one local-player metadata key.",
+  "Broadcast.onMessage": "Creates a hook source that receives messages from one exact broadcast channel.",
 };
 
 const SCRIPT_NAMESPACE_SIGNATURES = {
@@ -283,6 +289,7 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
     removeAura: ["itemId"],
   },
   Token: {
+    onMetadataChange: ["tokenId", "metadataKey"],
     getSelected: [],
     getSelectedAll: [],
     getPosition: ["tokenId"],
@@ -302,10 +309,17 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
     setMetadata: ["itemIds", "metadata"],
   },
   Scene: {
+    onMetadataChange: ["metadataKey"],
     getMapIdFromToken: ["tokenId"],
   },
-  TokenMetadata: {
-    onChange: ["tokenId", "metadataKey"],
+  Room: {
+    onMetadataChange: ["metadataKey"],
+  },
+  Player: {
+    onMetadataChange: ["metadataKey"],
+  },
+  Broadcast: {
+    onMessage: ["channel"],
   },
 };
 
@@ -344,6 +358,7 @@ const EVENT_PROPERTY_DOCS = {
   integration: "Name of the integration that produced the event.",
   hookId: "ID of the page event currently executing.",
   pageId: "ID of the page that owns the event.",
+  scope: "Observed source: token, scene, room, player, or broadcast.",
   tokenId: "ID of the observed Owlbear token.",
   token: "Latest Owlbear token snapshot, or null when it no longer exists.",
   metadataKey: "Metadata key watched by the observer.",
@@ -357,7 +372,24 @@ const EVENT_PROPERTY_DOCS = {
   previousMax: "Previous OwlTrackers maximum value.",
   max: "Current OwlTrackers maximum value.",
   delta: "Numeric difference between the new and previous tracker values, or null.",
+  roomId: "ID of the observed Owlbear room.",
+  playerId: "ID of the observed local player.",
+  player: "Latest local-player snapshot supplied by Owlbear.",
+  channel: "Exact broadcast channel that received the message.",
+  data: "Payload carried by the broadcast message.",
+  connectionId: "Connection ID of the broadcast sender, when provided.",
 };
+
+function watchMethodExample(namespace) {
+  return {
+    OwlTrackers: 'OwlTrackers.onChange(Page.token, "HP")',
+    Token: 'Token.onMetadataChange(Page.token, "com.example/status")',
+    Scene: 'Scene.onMetadataChange("com.example/scene")',
+    Room: 'Room.onMetadataChange("com.example/room")',
+    Player: 'Player.onMetadataChange("com.example/player")',
+    Broadcast: 'Broadcast.onMessage("com.example/event")',
+  }[namespace] || "";
+}
 
 const EVENT_PROPERTY_COMPLETIONS = Object.entries(EVENT_PROPERTY_DOCS).map(([label, description]) => ({
   label,
@@ -660,23 +692,20 @@ function createScriptCompletionSource(variables = []) {
 }
 
 function methodCompletion(namespace, label, args) {
+  const isWatchMethod = label === "onChange" || label === "onMetadataChange" || label === "onMessage";
   const placeholders = args.map(arg => `\${${arg}}`).join(", ");
   return snippetCompletion(`${label}(${placeholders})`, {
     label,
     type: "function",
     detail: `(${args.join(", ")})`,
     info: completionInfo({
-      signature: label === "onChange"
+      signature: isWatchMethod
         ? `${namespace}.${label}(${args.join(", ")})`
         : `await ${namespace}.${label}(${args.join(", ")})`,
       description: SCRIPT_METHOD_DOCS[`${namespace}.${label}`] || `${label} operation provided by the ${namespace} integration.`,
       parameters: args.map(arg => [arg, parameterDescription(arg)]),
-      example: label === "onChange"
-        ? (namespace === "OwlTrackers"
-          ? 'OwlTrackers.onChange(Page.token, "HP")'
-          : 'TokenMetadata.onChange(Page.token, "com.example/status")')
-        : "",
-      note: label === "onChange"
+      example: isWatchMethod ? watchMethodExample(namespace) : "",
+      note: isWatchMethod
         ? "Use this descriptor in a page event Watch field; it does not subscribe when called from a command."
         : "Integration calls may be asynchronous; use await when you need the returned value or completion.",
     }),
@@ -738,6 +767,7 @@ function parameterDescription(name) {
   const exact = {
     active: "Whether the feature should be active.",
     amount: "Numeric amount to apply.",
+    channel: "Exact Owlbear broadcast channel to observe.",
     color: "CSS/HTML color value.",
     config: "Configuration object for this operation.",
     count: "Numeric initiative value.",

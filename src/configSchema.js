@@ -1,5 +1,5 @@
 import { deepClone } from "./utils.js";
-import { migrateConfigV2ToV3, repairConfigV3VariableCalls } from "./configMigration.js";
+import { migrateConfigV2ToV3, repairConfigV3HookApis, repairConfigV3VariableCalls } from "./configMigration.js";
 
 export const CONFIG_SCHEMA_VERSION = 3;
 export const GLOBAL_STATE_ID = "__global";
@@ -331,6 +331,10 @@ export function normalizeConfig(rawConfig, options = {}) {
       page.variables = buildVariablesFromStateComputed(page);
     });
   }
+
+  const hookApiRepair = repairConfigV3HookApis(cfg);
+  if (hookApiRepair.migrated) migrated = true;
+  messages.push(...hookApiRepair.messages);
 
   const v3Repair = repairConfigV3VariableCalls(cfg);
   if (v3Repair.migrated) migrated = true;

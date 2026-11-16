@@ -1,8 +1,17 @@
 ﻿import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
+import { createScopedMetadataWatchDescriptor } from "../../events/metadataWatchDescriptor.js";
 
 // Debug mode constants
 const logger = createDebugLogger("sceneMetadata");
+
+export function onMetadataChange(metadataKey) {
+  return createScopedMetadataWatchDescriptor({
+    integration: "Scene",
+    scope: "scene",
+    metadataKey,
+  });
+}
 
 
 /**

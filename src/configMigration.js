@@ -190,6 +190,36 @@ export function repairConfigV3VariableCalls(config) {
   return { migrated: repairedCount > 0, messages };
 }
 
+const HOOK_API_RENAMES = [
+  [/\bTokenMetadata\.onChange(?=\s*\()/g, "Token.onMetadataChange"],
+  [/\bSceneMetadata\.onChange(?=\s*\()/g, "Scene.onMetadataChange"],
+  [/\bRoomMetadata\.onChange(?=\s*\()/g, "Room.onMetadataChange"],
+  [/\bPlayerMetadata\.onChange(?=\s*\()/g, "Player.onMetadataChange"],
+];
+
+export function repairConfigV3HookApis(config) {
+  let repairedCount = 0;
+  for (const page of config.pages || []) {
+    for (const hook of page.hooks || []) {
+      if (typeof hook?.watch !== "string") continue;
+      let watch = hook.watch;
+      for (const [pattern, replacement] of HOOK_API_RENAMES) {
+        watch = watch.replace(pattern, () => {
+          repairedCount += 1;
+          return replacement;
+        });
+      }
+      hook.watch = watch;
+    }
+  }
+  return {
+    migrated: repairedCount > 0,
+    messages: repairedCount > 0
+      ? [`${repairedCount} metadata event API reference${repairedCount === 1 ? "" : "s"} updated.`]
+      : [],
+  };
+}
+
 function terminateMigratedAssignmentLines(source) {
   let count = 0;
   const repaired = source.split("\n").map(line => {

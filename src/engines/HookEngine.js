@@ -1,7 +1,7 @@
 import { createDebugLogger } from "../debugMode.js";
 import { eventBus } from "../events/EventBus.js";
-import { tokenMetadataObserver } from "../events/TokenMetadataObserver.js";
-import { isTokenMetadataWatchDescriptor } from "../events/metadataWatchDescriptor.js";
+import { watchObserverRegistry } from "../events/WatchObserverRegistry.js";
+import { isWatchDescriptor } from "../events/metadataWatchDescriptor.js";
 import { variableStore } from "../stores/VariableStore.js";
 import { executionSandbox } from "./ExecutionSandbox.js";
 import { variableEngine } from "./VariableEngine.js";
@@ -90,7 +90,7 @@ class HookEngine {
       if (record.restartTimer) clearTimeout(record.restartTimer);
     }
     this.records.clear();
-    tokenMetadataObserver.clear();
+    watchObserverRegistry.clear();
     this.config = null;
   }
 
@@ -137,10 +137,10 @@ class HookEngine {
       if (generation !== record.generation) return;
       const scopes = this._buildScopes(record.page, record.pageIndex);
       const descriptor = executionSandbox.executeSync(watch, { ...scopes.Global, ...scopes.Page }, scopes);
-      if (!isTokenMetadataWatchDescriptor(descriptor)) {
-        throw new Error("Watch expression must return a TokenMetadata.onChange or OwlTrackers.onChange descriptor");
+      if (!isWatchDescriptor(descriptor)) {
+        throw new Error("Watch expression must return an event descriptor such as onChange, onMetadataChange, or onMessage");
       }
-      const unsubscribe = await tokenMetadataObserver.observe(
+      const unsubscribe = await watchObserverRegistry.observe(
         descriptor,
         event => this._enqueue(record, event, generation),
       );

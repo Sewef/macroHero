@@ -14,6 +14,8 @@ import * as PrettySordid from "./PrettySordid.js";
 import * as playerMetadata from "../player/playerMetadata.js";
 import * as sceneMetadata from "../scene/sceneMetadata.js";
 import * as tokenMetadata from "../token/tokenMetadata.js";
+import * as roomMetadata from "../roomMetadata.js";
+import * as Broadcast from "./Broadcast.js";
 import * as tokenAttachments from "../token/tokenAttachments.js";
 import * as sceneHelpers from "../scene/sceneHelpers.js";
 import * as tokenHelpers from "../token/tokenHelpers.js";
@@ -216,12 +218,14 @@ class IntegrationsManager {
       playerMetadata,
       sceneMetadata,
       tokenMetadata,
-      TokenMetadata: {
-        onChange: (tokenId, metadataKey) => tokenMetadata.onChange(tokenId, metadataKey),
+      roomMetadata,
+      Broadcast: {
+        onMessage: channel => Broadcast.onMessage(channel),
       },
       tokenAttachments,
       // Token — namespaced helpers (getters, creators, setters)
       Token: {
+        onMetadataChange: (tokenId, metadataKey) => tokenMetadata.onMetadataChange(tokenId, metadataKey),
         // Getters
         getSelected:    this.wrapAsync(() => tokenHelpers.getSelectedTokenId()),
         getSelectedAll: this.wrapAsync(() => tokenHelpers.getSelectedTokensIds()),
@@ -245,7 +249,14 @@ class IntegrationsManager {
       },
       // Scene — namespaced helpers
       Scene: {
+        onMetadataChange: metadataKey => sceneMetadata.onMetadataChange(metadataKey),
         getMapIdFromToken: this.wrapAsync((tokenId) => sceneHelpers.getMapIdFromToken(tokenId)),
+      },
+      Room: {
+        onMetadataChange: metadataKey => roomMetadata.onMetadataChange(metadataKey),
+      },
+      Player: {
+        onMetadataChange: metadataKey => playerMetadata.onMetadataChange(metadataKey),
       },
       // Full OBR SDK proxy — Owlbear.anything maps to OBR.anything
       // Augmented: Owlbear.notification.{success,warning,error,info}, Owlbear.image.*
