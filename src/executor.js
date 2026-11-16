@@ -139,7 +139,7 @@ function createExecutionScopes(page, pageIndex, globalVariables) {
 /**
  * Handle button click - simplified flow with new architecture
  */
-export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null, pageIndex = 0) {
+export async function handleButtonClick(commands, page, globalVariables = {}, onVariableResolved = null, pageIndex = 0, extraScopes = {}) {
   if (!Array.isArray(commands) || commands.length === 0) {
     logger.warn("No commands provided");
     return;
@@ -193,6 +193,7 @@ export async function handleButtonClick(commands, page, globalVariables = {}, on
         Page: namespaces.Page.proxy,
         Global: namespaces.Global.proxy,
         Pages: namespaces.Pages.proxy,
+        Event: extraScopes.Event || null,
       },
     };
 

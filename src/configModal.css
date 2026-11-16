@@ -861,6 +861,68 @@ body {
   padding: 5px 8px;
   background: var(--control);
 }
+.hooks-workspace-content {
+  display: grid;
+  align-content: start;
+}
+.hook-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hook-item {
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 6px 8px;
+  color: var(--text);
+  background: var(--control);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.hook-item:hover,
+.hook-item:focus-visible {
+  border-color: var(--border2);
+  background: var(--panel2);
+  outline: none;
+}
+.hook-item.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.hook-item.has-issues {
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+.hook-status {
+  width: 9px;
+  height: 9px;
+  background: var(--success, #7dd3a7);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success, #7dd3a7) 16%, transparent);
+}
+.hook-status.disabled {
+  background: var(--text3);
+  box-shadow: none;
+}
+.hook-summary {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+.hook-summary strong,
+.hook-summary small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hook-summary small {
+  color: var(--text2);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
 .property-placeholder {
   display: flex;
   height: 100%;
@@ -1888,13 +1950,35 @@ html.builder-pointer-dragging * {
   padding: 12px;
 }
 .property-header {
+  position: sticky;
+  top: -12px;
+  z-index: 6;
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  min-height: 45px;
+  margin: -12px -12px 12px;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: 0 4px 10px color-mix(in srgb, black 14%, transparent);
+  backdrop-filter: blur(8px);
+}
+.property-header > .section-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.property-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+.property-header-actions .btn-small {
+  min-width: 56px;
 }
 .property-header small {
   color: var(--text2);
@@ -1987,14 +2071,6 @@ html.builder-pointer-dragging * {
 .property-summary span {
   color: var(--text2);
   font-size: 0.78em;
-}
-.property-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
 }
 .variable-references {
   display: flex;

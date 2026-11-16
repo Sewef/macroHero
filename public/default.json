@@ -247,6 +247,18 @@
         "trackerHP": "OwlTrackers.getValue(Global.token, 'HP')",
         "trackerMaxHP": "OwlTrackers.getMax(Global.token, 'HP')"
       },
+      "hooks": [
+        {
+          "id": "hp_changed_example",
+          "label": "HP changed (example, disabled)",
+          "enabled": false,
+          "watch": "OwlTrackers.onChange(Global.token, 'HP')",
+          "condition": "Event.value !== undefined",
+          "commands": [
+            "await Owlbear.notification.show('HP: ' + Event.previousValue + ' -> ' + Event.value, 'INFO');"
+          ]
+        }
+      ],
       "layout": [
         {
           "type": "title",
@@ -254,7 +266,7 @@
         },
         {
           "type": "text",
-          "text": "Create and manage numeric trackers on tokens. Useful for HP, resources, cooldowns, and custom counters."
+          "text": "Create and manage numeric trackers on tokens. The **Events** item for this page contains a disabled `onChange` example: enable it to react only when the selected token's HP tracker changes."
         },
         {
           "type": "divider"

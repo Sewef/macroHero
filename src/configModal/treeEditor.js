@@ -82,6 +82,8 @@ export function rerenderEditor(config) {
     _showGlobalVariablesWorkspace();
   } else if (_activeWorkspace === 'screen-variables' && _selectedPageIndex !== null && _config.pages?.[_selectedPageIndex]) {
     renderPageVariablesPanel(_selectedPageIndex);
+  } else if (_activeWorkspace === 'page-hooks' && _selectedPageIndex !== null && _config.pages?.[_selectedPageIndex]) {
+    renderPageHooksPanel(_selectedPageIndex);
   } else if (_selectedPageIndex !== null && _config.pages?.[_selectedPageIndex]) {
     renderPagePanel(_selectedPageIndex);
   } else if (_config.pages?.length) {
@@ -284,6 +286,7 @@ function _renderActiveWorkspace() {
   if (_activeWorkspace === 'project') _showProjectSettings();
   else if (_activeWorkspace === 'variables') _showGlobalVariablesWorkspace();
   else if (_activeWorkspace === 'screen-variables' && _selectedPageIndex !== null) renderPageVariablesPanel(_selectedPageIndex);
+  else if (_activeWorkspace === 'page-hooks' && _selectedPageIndex !== null) renderPageHooksPanel(_selectedPageIndex);
   else if (_selectedPageIndex !== null) renderPagePanel(_selectedPageIndex);
   else _showProjectSettings();
 }
@@ -316,6 +319,18 @@ function _renderProjectSearchResults() {
       results.push({ kind: 'screen', pageIndex, label: page.label, meta: `Page · ${page.id}` });
     }
     addVariableResults(page, pageIndex, page.label || `Page ${pageIndex + 1}`);
+    (page.hooks || []).forEach((hook, hookIndex) => {
+      const searchText = `${hook?.id || ''} ${hook?.label || ''} ${hook?.watch || ''} ${hook?.condition || ''} ${(hook?.commands || []).join(' ')}`;
+      if (searchText.toLowerCase().includes(query)) {
+        results.push({
+          kind: 'hook',
+          pageIndex,
+          hookIndex,
+          label: hook?.label || hook?.id || `Event ${hookIndex + 1}`,
+          meta: `${page.label} · event`,
+        });
+      }
+    });
     _walkLayout(page.layout, (item, path) => {
       const label = _blockLabel(item);
       if (`${item.type} ${label} ${item.var || ''}`.toLowerCase().includes(query)) {
@@ -326,10 +341,10 @@ function _renderProjectSearchResults() {
 
   resultsHost.innerHTML = results.length
     ? results.slice(0, 60).map((result, index) => `<button type="button" class="project-search-result" data-result-index="${index}">
-        <span class="tree-icon">${result.kind === 'variable' ? 'V' : result.kind === 'screen' ? '▤' : 'C'}</span>
+        <span class="tree-icon">${result.kind === 'variable' ? 'V' : result.kind === 'screen' ? '▤' : result.kind === 'hook' ? 'E' : 'C'}</span>
         <span><strong>${_esc(result.label)}</strong><small>${_esc(result.meta)}</small></span>
       </button>`).join('')
-    : '<div class="project-search-empty">No matching page, variable, or component.</div>';
+    : '<div class="project-search-empty">No matching page, variable, event, or component.</div>';
 
   resultsHost.querySelectorAll('[data-result-index]').forEach(button => {
     button.onclick = () => {
@@ -340,6 +355,7 @@ function _renderProjectSearchResults() {
       _projectSearchQuery = '';
       if (result.kind === 'variable') _selectVariable(result.owner, result.varKind, result.name);
       else if (result.kind === 'screen') _selectPage(result.pageIndex);
+      else if (result.kind === 'hook') _selectHook(result.pageIndex, result.hookIndex);
       else {
         _selectPage(result.pageIndex);
         _focusElementPath(result.pageIndex, result.path);
@@ -361,6 +377,7 @@ function _ensureConfigShape() {
     page.id = _uniquePageId(normalizePageId(page.id, `page_${index + 1}`), page);
     if (!page.state) page.state = {};
     if (!page.computed) page.computed = {};
+    if (!Array.isArray(page.hooks)) page.hooks = [];
     if (!Array.isArray(page.layout)) page.layout = [];
     _syncRuntimeVariables(page);
   });
@@ -530,12 +547,12 @@ function _renderPageList() {
     container.innerHTML = '<div class="tree-empty">No pages</div>';
     return;
   }
-
   container.innerHTML = pages.map((page, i) => {
     const selected = i === _selectedPageIndex;
-    const active = selected && _activeWorkspace.startsWith('screen-') ? 'active' : '';
+    const active = selected && (_activeWorkspace.startsWith('screen-') || _activeWorkspace === 'page-hooks') ? 'active' : '';
     const layoutActive = selected && _activeWorkspace === 'screen-layout' ? 'active' : '';
     const variablesActive = selected && _activeWorkspace === 'screen-variables' ? 'active' : '';
+    const hooksActive = selected && _activeWorkspace === 'page-hooks' ? 'active' : '';
     return `<div class="page-tree-screen ${active}">
       <div class="page-item-sidebar ${active}" data-page-index="${i}">
       <span class="tree-icon tree-icon-page">▤</span>
@@ -558,6 +575,11 @@ function _renderPageList() {
           <span class="tree-issue-badge" data-page-layout-issues="${i}" hidden>0</span>
           <span class="tree-count">${(page.layout || []).length}</span>
         </button>
+        <button type="button" class="page-tree-view ${hooksActive}" data-page-index="${i}" data-workspace="hooks">
+          <span class="tree-view-icon">E</span><span>Events</span>
+          <span class="tree-issue-badge" data-page-hook-issues="${i}" hidden>0</span>
+          <span class="tree-count">${(page.hooks || []).length}</span>
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -574,6 +596,7 @@ function _renderPageList() {
       e.stopPropagation();
       const index = parseInt(item.dataset.pageIndex);
       if (item.dataset.workspace === 'variables') _selectPageVariables(index);
+      else if (item.dataset.workspace === 'hooks') _selectPageHooks(index);
       else _selectPage(index);
     });
   });
@@ -602,6 +625,14 @@ function _selectPageVariables(index) {
   _selection = { kind: 'page-variables' };
   renderSidebar();
   renderPageVariablesPanel(index);
+}
+
+function _selectPageHooks(index) {
+  _activeWorkspace = 'page-hooks';
+  _selectedPageIndex = index;
+  _selection = { kind: 'page-hooks' };
+  renderSidebar();
+  renderPageHooksPanel(index);
 }
 
 export function renderPagePanel(pageIndex) {
@@ -748,6 +779,89 @@ function renderPageVariablesPanel(pageIndex) {
       <small>Its value, limits, or expression will appear here.</small>
     </div>`;
   }
+}
+
+function renderPageHooksPanel(pageIndex) {
+  const container = document.getElementById('pageEditorContainer');
+  const page = _config.pages?.[pageIndex];
+  if (!container || !page) return;
+
+  _activeWorkspace = 'page-hooks';
+  if (!Array.isArray(page.hooks)) page.hooks = [];
+  container.innerHTML = `
+    <div class="builder-shell variables-workspace hooks-workspace">
+      <section class="builder-main">
+        <header class="workspace-header">
+          <div>
+            <span class="workspace-kicker">${_esc(page.label || `Page ${pageIndex + 1}`)}</span>
+            <h3>Page events</h3>
+            <p>Metadata observers executed with <code>Event</code>, <code>Page</code>, <code>Pages</code>, and <code>Global</code>.</p>
+          </div>
+          <button type="button" class="btn-small" data-action="addHook">+ Event</button>
+        </header>
+        <div class="workspace-content hooks-workspace-content">
+          <section class="variable-table-card">
+            <div class="variable-table-head">
+              <div><strong>Observers</strong><small>Subscriptions are active while MacroHero is open</small></div>
+              <span>${page.hooks.length}</span>
+            </div>
+            <div id="pageHooksWorkspace" class="hook-list">
+              ${page.hooks.length ? page.hooks.map((hook, hookIndex) => _renderHookRow(pageIndex, hook, hookIndex)).join('') : '<div class="tree-empty compact-empty">No events</div>'}
+            </div>
+          </section>
+        </div>
+      </section>
+      <div class="panel-resize-handle inspector-resize-handle" data-inspector-resize role="separator" aria-label="Resize inspector"></div>
+      <aside class="inspector-column">
+        <div id="propertyPanel" class="property-panel"></div>
+      </aside>
+    </div>`;
+
+  _installInspectorControls(container);
+  container.querySelector('[data-action="addHook"]').onclick = () => _selectHook(pageIndex, null);
+  container.querySelectorAll('.hook-item[data-hook-index]').forEach(row => {
+    addTrackedListener(row, 'click', event => {
+      if (event.target.closest('[data-action="deleteHook"]')) return;
+      _selectHook(pageIndex, Number(row.dataset.hookIndex));
+    });
+    addTrackedListener(row, 'keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (event.target.closest('[data-action="deleteHook"]')) return;
+      event.preventDefault();
+      _selectHook(pageIndex, Number(row.dataset.hookIndex));
+    });
+  });
+  container.querySelectorAll('[data-action="deleteHook"]').forEach(button => {
+    addTrackedListener(button, 'click', event => {
+      event.stopPropagation();
+      _deleteHook(pageIndex, Number(button.dataset.hookIndex));
+    });
+  });
+
+  const panel = document.getElementById('propertyPanel');
+  if (_selection.kind === 'hook' && _selection.pageIndex === pageIndex) {
+    _renderPropertyPanel();
+  } else {
+    panel.innerHTML = `<div class="property-empty property-placeholder">
+      <span class="tree-icon">E</span>
+      <strong>Select an event</strong>
+      <small>Its observer, condition, and commands will appear here.</small>
+    </div>`;
+  }
+  _updateValidationUI();
+}
+
+function _renderHookRow(pageIndex, hook, hookIndex) {
+  const selected = _selection.kind === 'hook'
+    && _selection.pageIndex === pageIndex
+    && _selection.hookIndex === hookIndex;
+  const hookIssues = _latestProjectIssues.filter(issue => issue.pageIndex === pageIndex && issue.hookIndex === hookIndex);
+  return `<div role="button" tabindex="0" class="hook-item ${selected ? 'selected' : ''} ${hookIssues.length ? 'has-issues' : ''}" data-hook-index="${hookIndex}">
+    <span class="hook-status ${hook.enabled === false ? 'disabled' : ''}" title="${hook.enabled === false ? 'Disabled' : 'Enabled'}"></span>
+    <span class="hook-summary"><strong>${_esc(hook.label || hook.id || `Event ${hookIndex + 1}`)}</strong><small>${_esc(hook.watch || 'No observer')}</small></span>
+    <span class="tree-issue-badge" data-hook-issue-page="${pageIndex}" data-hook-issue-index="${hookIndex}" title="${_attr(hookIssues.map(issue => issue.message).join('\n'))}" ${hookIssues.length ? '' : 'hidden'}>${hookIssues.length}</span>
+    <button type="button" class="btn-icon btn-danger" data-action="deleteHook" data-hook-index="${hookIndex}" title="Delete">x</button>
+  </div>`;
 }
 
 function _renderGlobalVariableList(scope, type) {
@@ -1413,6 +1527,12 @@ function _findPathByReference(items, target, basePath = []) {
 function _renderPropertyPanel() {
   const panel = document.getElementById('propertyPanel');
   if (!panel) return;
+  if (_selection.kind === 'hook') {
+    panel.innerHTML = _renderHookInspector();
+    _attachHookInspector();
+    enhanceCodeEditors(panel, { variables: _scriptCompletionVariables() });
+    return;
+  }
   if (_selection.kind === 'variable') {
     panel.innerHTML = _renderVariableInspector();
     _attachVariableInspector();
@@ -1438,8 +1558,91 @@ function _renderPageInspector() {
   <div class="property-summary">
     <div><strong>${Object.keys(page.state || {}).length}</strong><span>state</span></div>
     <div><strong>${Object.keys(page.computed || {}).length}</strong><span>computed</span></div>
+    <div><strong>${(page.hooks || []).length}</strong><span>events</span></div>
     <div><strong>${(page.layout || []).length}</strong><span>root blocks</span></div>
   </div>`;
+}
+
+function _renderHookInspector() {
+  const { pageIndex, hookIndex } = _selection;
+  const page = _config.pages?.[pageIndex];
+  if (!page) return '<div class="property-empty">Select a page.</div>';
+  const isNew = hookIndex === null || hookIndex === undefined;
+  const hook = isNew ? {
+    id: _uniqueHookId(page, 'metadata_changed'),
+    label: 'Metadata changed',
+    enabled: true,
+    watch: 'OwlTrackers.onChange(Page.token, "HP")',
+    condition: '',
+    commands: [],
+  } : deepClone(page.hooks?.[hookIndex] || {});
+
+  return `<div class="property-header">
+      <span class="section-title">${isNew ? 'Add event' : `Edit ${_esc(hook.label || hook.id)}`}</span>
+      <div class="property-header-actions">
+        <button type="button" class="btn-small btn-quiet" id="cancelHookInspector">Cancel</button>
+        <button type="button" class="btn-small" id="saveHookInspector">Save</button>
+      </div>
+    </div>
+    <div class="input-group"><label>ID</label><input id="hookIdInput" type="text" value="${_attr(hook.id || '')}" /></div>
+    <div class="input-group"><label>Label</label><input id="hookLabelInput" type="text" value="${_attr(hook.label || '')}" /></div>
+    <div class="input-group"><label class="checkbox-label"><input id="hookEnabledInput" type="checkbox" ${hook.enabled === false ? '' : 'checked'} /> Enabled</label></div>
+    <div class="input-group"><label>Watch</label><textarea id="hookWatchInput" data-editor-lang="javascript" rows="4">${_esc(hook.watch || '')}</textarea><small>Returns one observer descriptor, for example <code>OwlTrackers.onChange(Page.token, "HP")</code>.</small></div>
+    <div class="input-group"><label>Condition <small>optional</small></label><textarea id="hookConditionInput" data-editor-lang="javascript" rows="3">${_esc(hook.condition || '')}</textarea><small>Runs only when the expression is truthy. The read-only <code>Event</code> object is available.</small></div>
+    <div class="input-group"><label>Commands</label><textarea id="hookCommandsInput" data-editor-lang="javascript" rows="9">${_esc(dedentCommandList(hook.commands || []).join('\n'))}</textarea></div>`;
+}
+
+function _attachHookInspector() {
+  document.getElementById('cancelHookInspector').onclick = () => {
+    _selection = { kind: 'page-hooks' };
+    renderPageHooksPanel(_selectedPageIndex);
+  };
+  document.getElementById('saveHookInspector').onclick = () => _saveHookFromInspector();
+}
+
+function _saveHookFromInspector() {
+  const { pageIndex, hookIndex } = _selection;
+  const page = _config.pages?.[pageIndex];
+  if (!page) return;
+  if (!Array.isArray(page.hooks)) page.hooks = [];
+  const id = document.getElementById('hookIdInput').value.trim();
+  const watch = document.getElementById('hookWatchInput').value.trim();
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(id)) {
+    alert('Event ID must be a valid JavaScript identifier.');
+    return;
+  }
+  if (page.hooks.some((hook, index) => hook?.id === id && index !== hookIndex)) {
+    alert(`Event ID "${id}" already exists on this page.`);
+    return;
+  }
+  if (!watch) {
+    alert('Watch expression is required.');
+    return;
+  }
+  const hook = {
+    id,
+    label: document.getElementById('hookLabelInput').value.trim() || id,
+    enabled: document.getElementById('hookEnabledInput').checked,
+    watch,
+    commands: document.getElementById('hookCommandsInput').value.split('\n').filter(line => line.trim()),
+  };
+  const condition = document.getElementById('hookConditionInput').value.trim();
+  if (condition) hook.condition = condition;
+
+  const nextIndex = hookIndex === null || hookIndex === undefined ? page.hooks.length : hookIndex;
+  page.hooks[nextIndex] = hook;
+  _selection = { kind: 'hook', pageIndex, hookIndex: nextIndex };
+  _notify();
+  renderSidebar();
+  renderPageHooksPanel(pageIndex);
+}
+
+function _uniqueHookId(page, base = 'event') {
+  const used = new Set((page?.hooks || []).map(hook => hook?.id).filter(Boolean));
+  let id = base;
+  let suffix = 2;
+  while (used.has(id)) id = `${base}_${suffix++}`;
+  return id;
 }
 
 function _renderVariableInspector() {
@@ -1453,7 +1656,13 @@ function _renderVariableInspector() {
 
   if (varKind === 'computed') {
     const expr = typeof entry === 'string' ? entry : entry?.eval || '';
-    return `<div class="property-header"><span class="section-title">${_esc(title)}</span></div>
+    return `<div class="property-header">
+        <span class="section-title">${_esc(title)}</span>
+        <div class="property-header-actions">
+          <button type="button" class="btn-small btn-quiet" id="cancelInspector">Cancel</button>
+          <button type="button" class="btn-small" id="saveVariableInspector">Save</button>
+        </div>
+      </div>
       ${accessHtml}
       <div class="input-group"><label>Name</label><input id="varNameInput" type="text" value="${_attr(name || '')}" /></div>
       <div class="input-group"><label>Expression</label><textarea id="varExpressionInput" class="inspector-expression" data-editor-lang="javascript">${_esc(expr)}</textarea></div>
@@ -1461,15 +1670,17 @@ function _renderVariableInspector() {
         <div class="input-group"><label>Min</label><input id="varMinInput" type="number" value="${_attr(entry?.min ?? '')}" /></div>
         <div class="input-group"><label>Max</label><input id="varMaxInput" type="number" value="${_attr(entry?.max ?? '')}" /></div>
       </div>
-      ${referencesHtml}
-      <div class="property-actions">
-        <button type="button" id="saveVariableInspector">Save</button>
-        <button type="button" class="btn-danger" id="cancelInspector">Cancel</button>
-      </div>`;
+      ${referencesHtml}`;
   }
 
   const defaultValue = entry && typeof entry === 'object' && 'default' in entry ? entry.default : null;
-  return `<div class="property-header"><span class="section-title">${_esc(title)}</span></div>
+  return `<div class="property-header">
+      <span class="section-title">${_esc(title)}</span>
+      <div class="property-header-actions">
+        <button type="button" class="btn-small btn-quiet" id="cancelInspector">Cancel</button>
+        <button type="button" class="btn-small" id="saveVariableInspector">Save</button>
+      </div>
+    </div>
     ${accessHtml}
     <div class="input-group"><label>Name</label><input id="varNameInput" type="text" value="${_attr(name || '')}" /></div>
     <div class="input-group"><label>Default Value (JSON or text)</label><input id="varDefaultInput" type="text" value="${_attr(_formatValueForInput(defaultValue))}" /></div>
@@ -1477,11 +1688,7 @@ function _renderVariableInspector() {
       <div class="input-group"><label>Min</label><input id="varMinInput" type="number" value="${_attr(entry?.min ?? '')}" /></div>
       <div class="input-group"><label>Max</label><input id="varMaxInput" type="number" value="${_attr(entry?.max ?? '')}" /></div>
     </div>
-    ${referencesHtml}
-    <div class="property-actions">
-      <button type="button" id="saveVariableInspector">Save</button>
-      <button type="button" class="btn-danger" id="cancelInspector">Cancel</button>
-    </div>`;
+    ${referencesHtml}`;
 }
 
 function _attachVariableInspector() {
@@ -1777,6 +1984,25 @@ function _selectVariable(owner, varKind, name) {
   renderPageVariablesPanel(_selectedPageIndex);
 }
 
+function _selectHook(pageIndex, hookIndex) {
+  _selectedPageIndex = pageIndex;
+  _activeWorkspace = 'page-hooks';
+  _selection = { kind: 'hook', pageIndex, hookIndex };
+  renderSidebar();
+  renderPageHooksPanel(pageIndex);
+}
+
+function _deleteHook(pageIndex, hookIndex) {
+  const page = _config.pages?.[pageIndex];
+  const hook = page?.hooks?.[hookIndex];
+  if (!hook || !confirm(`Delete event "${hook.label || hook.id || hookIndex + 1}"?`)) return;
+  page.hooks.splice(hookIndex, 1);
+  _selection = { kind: 'page-hooks' };
+  _notify();
+  renderSidebar();
+  renderPageHooksPanel(pageIndex);
+}
+
 function _saveVariableFromInspector() {
   const { owner, varKind, name } = _selection;
   const scope = _getScope(owner);
@@ -1913,6 +2139,7 @@ function _addPage() {
     state: {},
     computed: {},
     variables: {},
+    hooks: [],
     layout: [],
   };
   _config.pages.push(page);
@@ -1927,6 +2154,7 @@ function _deletePage(index) {
   renderSidebar();
   if (_selectedPageIndex >= 0 && _config.pages.length > 0) {
     if (_activeWorkspace === 'screen-variables') renderPageVariablesPanel(_selectedPageIndex);
+    else if (_activeWorkspace === 'page-hooks') renderPageHooksPanel(_selectedPageIndex);
     else renderPagePanel(_selectedPageIndex);
   }
   else {
@@ -1946,6 +2174,7 @@ function _movePage(index, dir) {
   if (_selectedPageIndex === index) _selectedPageIndex = next;
   renderSidebar();
   if (_activeWorkspace === 'screen-variables') renderPageVariablesPanel(_selectedPageIndex);
+  else if (_activeWorkspace === 'page-hooks') renderPageHooksPanel(_selectedPageIndex);
   else renderPagePanel(_selectedPageIndex);
   _notify();
 }
@@ -2160,6 +2389,18 @@ function _variableUsages(owner, name) {
         usages.push({ kind: 'expression', pageIndex, label: computedName, detail: 'computed expression' });
       }
     });
+    (page.hooks || []).forEach((hook, hookIndex) => {
+      const sources = [hook?.watch, hook?.condition, ...(Array.isArray(hook?.commands) ? hook.commands : [])];
+      if (sources.some(source => referenced(source, pageIndex))) {
+        usages.push({
+          kind: 'hook',
+          pageIndex,
+          hookIndex,
+          label: hook?.label || hook?.id || `Event ${hookIndex + 1}`,
+          detail: 'page event',
+        });
+      }
+    });
   });
 
   if (owner === 'global') {
@@ -2223,6 +2464,12 @@ function _renameVariableReferences(owner, previousName, nextName) {
     Object.entries(page.computed || {}).forEach(([key, entry]) => {
       if (typeof entry === 'string') page.computed[key] = replaceForPage(entry, pageIndex);
       else if (entry && typeof entry === 'object' && typeof entry.eval === 'string') entry.eval = replaceForPage(entry.eval, pageIndex);
+    });
+    (page.hooks || []).forEach(hook => {
+      if (!hook || typeof hook !== 'object') return;
+      if (typeof hook.watch === 'string') hook.watch = replaceForPage(hook.watch, pageIndex);
+      if (typeof hook.condition === 'string') hook.condition = replaceForPage(hook.condition, pageIndex);
+      if (Array.isArray(hook.commands)) hook.commands = hook.commands.map(command => replaceForPage(command, pageIndex));
     });
   });
   Object.entries(_config.global?.computed || {}).forEach(([key, entry]) => {
@@ -2289,6 +2536,7 @@ function _renamePageIdReferences(previousId, nextId) {
   rewrite(_config.global?.computed);
   (_config.pages || []).forEach(page => {
     rewrite(page.computed);
+    rewrite(page.hooks);
     rewrite(page.layout);
   });
 }
@@ -2363,6 +2611,19 @@ function _collectProjectIssues() {
       if (!String(expression || '').trim()) issues.push({ scope: 'page', pageIndex, owner: pageIndex, variableName: name, varKind: 'computed', message: `Computed variable "${name}" has no expression.` });
     });
 
+    const seenHookIds = new Set();
+    (page.hooks || []).forEach((hook, hookIndex) => {
+      const issueScope = { scope: 'page', pageIndex, hookIndex };
+      const id = String(hook?.id || '').trim();
+      if (!id) issues.push({ ...issueScope, message: 'Event ID is empty.' });
+      else if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(id)) issues.push({ ...issueScope, message: `Event ID "${id}" is not a valid JavaScript identifier.` });
+      else if (seenHookIds.has(id)) issues.push({ ...issueScope, message: `Event ID "${id}" is duplicated on this page.` });
+      else seenHookIds.add(id);
+      if (!String(hook?.watch || '').trim()) issues.push({ ...issueScope, message: `Event "${id || hookIndex + 1}" has no Watch expression.` });
+      if (!Array.isArray(hook?.commands)) issues.push({ ...issueScope, message: `Event "${id || hookIndex + 1}" commands must be a list.` });
+      else if (hook.commands.every(command => !String(command || '').trim())) issues.push({ ...issueScope, message: `Event "${id || hookIndex + 1}" has no commands.` });
+    });
+
     const allNames = new Set([...globalState, ...globalComputed, ...pageState, ...pageComputed]);
     const stateNames = new Set([...globalState, ...pageState]);
     _walkLayout(page.layout, (item, path) => {
@@ -2391,7 +2652,9 @@ function _collectPagesReferenceIssues(pageIds) {
         const [, pageId, variableName] = match;
         const targetIndex = pageIds.get(pageId);
         const targetPage = targetIndex === undefined ? null : _config.pages[targetIndex];
-        const source = issueScope.variableName || issueScope.path?.join('.') || 'scope';
+        const source = issueScope.variableName
+          || issueScope.path?.join('.')
+          || (Number.isInteger(issueScope.hookIndex) ? `hook:${issueScope.hookIndex}` : 'scope');
         const key = `${issueScope.scope}:${issueScope.pageIndex ?? 'global'}:${source}:${pageId}.${variableName}`;
         if (seen.has(key)) continue;
         seen.add(key);
@@ -2424,6 +2687,12 @@ function _collectPagesReferenceIssues(pageIds) {
       inspectExpression(typeof entry === 'string' ? entry : entry?.eval, {
         scope: 'page', pageIndex, owner: pageIndex, variableName: name, varKind: 'computed',
       });
+    });
+    (page.hooks || []).forEach((hook, hookIndex) => {
+      const issueScope = { scope: 'page', pageIndex, hookIndex };
+      inspectExpression(hook?.watch, issueScope);
+      inspectExpression(hook?.condition, issueScope);
+      inspectCommands(hook?.commands, issueScope);
     });
     _walkLayout(page.layout, (item, path) => {
       const issueScope = { scope: 'page', pageIndex, path };
@@ -2545,6 +2814,14 @@ function _updateValidationUI(precomputedIssues = null) {
     badge.title = layoutIssues.map(issue => issue.message).join('\n');
   });
 
+  document.querySelectorAll('[data-page-hook-issues]').forEach(badge => {
+    const pageIndex = Number(badge.dataset.pageHookIssues);
+    const hookIssues = issues.filter(issue => issue.pageIndex === pageIndex && Number.isInteger(issue.hookIndex));
+    badge.hidden = hookIssues.length === 0;
+    badge.textContent = String(hookIssues.length);
+    badge.title = hookIssues.map(issue => issue.message).join('\n');
+  });
+
   document.querySelectorAll('[data-variable-issue-name]').forEach(badge => {
     const variableIssues = issues.filter(issue => (
       String(issue.owner) === badge.dataset.variableIssueOwner
@@ -2565,6 +2842,16 @@ function _updateValidationUI(precomputedIssues = null) {
     badge.textContent = String(elementIssues.length);
     badge.title = elementIssues.map(issue => issue.message).join('\n');
     badge.closest('.builder-block')?.classList.toggle('has-issues', elementIssues.length > 0);
+  });
+
+  document.querySelectorAll('[data-hook-issue-index]').forEach(badge => {
+    const pageIndex = Number(badge.dataset.hookIssuePage);
+    const hookIndex = Number(badge.dataset.hookIssueIndex);
+    const hookIssues = issues.filter(issue => issue.pageIndex === pageIndex && issue.hookIndex === hookIndex);
+    badge.hidden = hookIssues.length === 0;
+    badge.textContent = String(hookIssues.length);
+    badge.title = hookIssues.map(issue => issue.message).join('\n');
+    badge.closest('.hook-item')?.classList.toggle('has-issues', hookIssues.length > 0);
   });
 }
 

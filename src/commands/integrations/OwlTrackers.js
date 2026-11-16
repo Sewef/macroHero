@@ -6,12 +6,52 @@
   setTokenMetadata
 } from "../token/tokenMetadata.js";
 import { createDebugLogger } from "../../debugMode.js";
+import { createTokenMetadataWatchDescriptor } from "../../events/metadataWatchDescriptor.js";
 
 // Debug mode constants
 const logger = createDebugLogger("OwlTrackers");
 
 
 const OWLTRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
+
+/**
+ * Describe a hook that fires when a named OwlTrackers entry changes.
+ * The descriptor is inert until HookEngine subscribes to it.
+ */
+export function onChange(tokenId, trackerName) {
+  const normalizedName = String(trackerName || "");
+  return createTokenMetadataWatchDescriptor({
+    integration: "OwlTrackers",
+    tokenId,
+    metadataKey: OWLTRACKERS_METADATA_KEY,
+    selectorKey: `tracker:${normalizedName}`,
+    select: trackers => {
+      if (!Array.isArray(trackers)) return undefined;
+      const tracker = trackers.find(entry => entry?.name === normalizedName);
+      return tracker ? { ...tracker } : undefined;
+    },
+    mapEvent: event => {
+      const previousTracker = event.previousValue;
+      const tracker = event.value;
+      const valueOf = entry => entry?.value ?? entry?.checked;
+      const previousValue = valueOf(previousTracker);
+      const value = valueOf(tracker);
+      return {
+        ...event,
+        trackerName: normalizedName,
+        previousTracker,
+        tracker,
+        previousValue,
+        value,
+        previousMax: previousTracker?.max,
+        max: tracker?.max,
+        delta: typeof value === "number" && typeof previousValue === "number"
+          ? value - previousValue
+          : null,
+      };
+    },
+  });
+}
 
 /**
  * Owl-Trackers Integration
@@ -234,6 +274,7 @@ export async function removeTracker(tokenId, trackerIdentifier) {
 }
 
 export default {
+  onChange,
   getValue,
   getMax,
   setValue,

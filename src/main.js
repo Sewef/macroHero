@@ -6,6 +6,7 @@ import { initializeExpressions } from "./expressionHelpers.js";
 import { getGoogleSheetsCredentials } from "./commands/integrations/GoogleSheets.js";
 import { flushPendingChanges } from "./storage.js";
 import { createDebugLogger } from "./debugMode.js";
+import { hookEngine } from "./engines/HookEngine.js";
 
 // Debug logger
 const logger = createDebugLogger('main');
@@ -107,6 +108,7 @@ OBR.onReady(async () => {
 
     // Initialize UI immediately so it's visible even if the scene isn't ready yet.
     initUI(cfg);
+    await hookEngine.start(cfg, globalVars);
 
     // Handle optional scene-dependent logging asynchronously; don't block UI init.
     (async () => {
@@ -198,6 +200,7 @@ OBR.onReady(async () => {
 
 // Clean up broadcast subscriptions on page unload
 window.addEventListener('beforeunload', () => {
+  hookEngine.stop();
   broadcastUnsubs.forEach(unsub => { try { unsub?.(); } catch (e) { /* ignore */ } });
   logger.log("Cleaned up broadcast subscriptions");
 });

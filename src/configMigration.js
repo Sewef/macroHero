@@ -159,22 +159,28 @@ export function repairConfigV3VariableCalls(config) {
 
   (config.pages || []).forEach((page, pageIndex) => {
     const pageState = new Set(Object.keys(page.state || {}));
+    const repairCommands = (commands, label, assign) => {
+      if (!Array.isArray(commands) || commands.length === 0) return;
+      const source = commands.map(String).join("\n");
+      try {
+        const terminated = terminateMigratedAssignmentLines(source);
+        const repaired = rewriteStateVariableCalls(terminated.source, pageState, globalState);
+        if (repaired.source !== source) {
+          assign(repaired.source.split("\n"));
+          repairedCount += repaired.count + terminated.count;
+        }
+      } catch (error) {
+        const pageLabel = page.label || page.id || `Page ${pageIndex + 1}`;
+        messages.push(`${pageLabel} ${label} could not be checked for v3 variable calls: ${error.message}`);
+      }
+    };
     walkLayout(page.layout, item => {
       for (const property of ["onclick", "onrightclick", "onupdate"]) {
-        if (!Array.isArray(item[property]) || item[property].length === 0) continue;
-        const source = item[property].map(String).join("\n");
-        try {
-          const terminated = terminateMigratedAssignmentLines(source);
-          const repaired = rewriteStateVariableCalls(terminated.source, pageState, globalState);
-          if (repaired.source !== source) {
-            item[property] = repaired.source.split("\n");
-            repairedCount += repaired.count + terminated.count;
-          }
-        } catch (error) {
-          const pageLabel = page.label || page.id || `Page ${pageIndex + 1}`;
-          messages.push(`${pageLabel} ${property} could not be checked for v3 variable calls: ${error.message}`);
-        }
+        repairCommands(item[property], property, value => { item[property] = value; });
       }
+    });
+    (page.hooks || []).forEach((hook, hookIndex) => {
+      repairCommands(hook?.commands, `event ${hook?.id || hookIndex + 1}`, value => { hook.commands = value; });
     });
   });
 

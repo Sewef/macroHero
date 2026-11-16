@@ -6,7 +6,8 @@ export const GLOBAL_STATE_ID = "__global";
 
 const ROOT_KEY_ORDER = ["schemaVersion", "global", "pages"];
 const GLOBAL_KEY_ORDER = ["title", "width", "height", "state", "computed"];
-const PAGE_KEY_ORDER = ["label", "id", "state", "computed", "layout"];
+const PAGE_KEY_ORDER = ["label", "id", "state", "computed", "hooks", "layout"];
+const HOOK_KEY_ORDER = ["id", "label", "enabled", "watch", "condition", "commands"];
 const ELEMENT_KEY_ORDER = [
   "type",
   "label",
@@ -118,6 +119,11 @@ function orderLayoutItem(item) {
   });
 }
 
+function orderHook(hook) {
+  if (!isPlainObject(hook)) return orderGenericValue(hook);
+  return orderObjectByKeys(hook, HOOK_KEY_ORDER, orderGenericValue);
+}
+
 function orderGlobalForExport(global = {}) {
   return orderObjectByKeys(global, GLOBAL_KEY_ORDER, (value, key) => {
     if (key === "state") return orderStateEntries(value);
@@ -130,6 +136,7 @@ function orderPageForExport(page = {}) {
   return orderObjectByKeys(page, PAGE_KEY_ORDER, (value, key) => {
     if (key === "state") return orderStateEntries(value);
     if (key === "computed") return orderComputedEntries(value);
+    if (key === "hooks") return Array.isArray(value) ? value.map(orderHook) : [];
     if (key === "layout") return Array.isArray(value) ? value.map(orderLayoutItem) : [];
     return orderGenericValue(value);
   });
@@ -297,6 +304,7 @@ export function normalizeConfig(rawConfig, options = {}) {
     }
 
     if (!Array.isArray(currentPage.layout)) currentPage.layout = [];
+    if (!Array.isArray(currentPage.hooks)) currentPage.hooks = [];
     if (normalizeScope(currentPage, options)) {
       migrated = true;
       messages.push(`Page "${currentPage.label || currentPage.id}" variables split into state/computed.`);
@@ -307,6 +315,7 @@ export function normalizeConfig(rawConfig, options = {}) {
     rewritePageIdReferences(cfg.global?.computed, pageIdRenames);
     cfg.pages.forEach(page => {
       rewritePageIdReferences(page.computed, pageIdRenames);
+      rewritePageIdReferences(page.hooks, pageIdRenames);
       rewritePageIdReferences(page.layout, pageIdRenames);
     });
   }

@@ -43,6 +43,10 @@ export const MACRO_HERO_CONFIG_JSON_SCHEMA = {
         id: { type: "string", pattern: variableNamePattern },
         state: { $ref: "#/definitions/stateVariables" },
         computed: { $ref: "#/definitions/computedVariables" },
+        hooks: {
+          type: "array",
+          items: { $ref: "#/definitions/hook" },
+        },
         layout: { $ref: "#/definitions/layout" },
       },
     },
@@ -84,6 +88,19 @@ export const MACRO_HERO_CONFIG_JSON_SCHEMA = {
           },
         },
       ],
+    },
+    hook: {
+      type: "object",
+      required: ["id", "watch", "commands"],
+      additionalProperties: true,
+      properties: {
+        id: { type: "string", pattern: variableNamePattern },
+        label: { type: "string" },
+        enabled: { type: "boolean" },
+        watch: { type: "string", minLength: 1 },
+        condition: { type: "string" },
+        commands: commandListSchema,
+      },
     },
     layout: {
       type: "array",

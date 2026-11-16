@@ -121,6 +121,7 @@ class IntegrationsManager {
       },
       // Owl Trackers integration (all async)
       OwlTrackers: {
+        onChange: (tokenId, trackerName) => OwlTrackers.onChange(tokenId, trackerName),
         getValue: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getValue(tokenId, trackerName)),
         getMax: this.wrapAsync((tokenId, trackerName) => OwlTrackers.getMax(tokenId, trackerName)),
         setValue: this.wrapAsync((tokenId, trackerName, value) => OwlTrackers.setValue(tokenId, trackerName, value)),
@@ -215,6 +216,9 @@ class IntegrationsManager {
       playerMetadata,
       sceneMetadata,
       tokenMetadata,
+      TokenMetadata: {
+        onChange: (tokenId, metadataKey) => tokenMetadata.onChange(tokenId, metadataKey),
+      },
       tokenAttachments,
       // Token — namespaced helpers (getters, creators, setters)
       Token: {

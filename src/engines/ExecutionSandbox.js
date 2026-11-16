@@ -74,6 +74,7 @@ class ExecutionSandbox {
         Global: scopes.Global || resolvedVars,
         Page: scopes.Page || {},
         Pages: scopes.Pages || {},
+        Event: scopes.Event || null,
       },
     };
   }
@@ -111,7 +112,7 @@ class ExecutionSandbox {
           `
             const { ${integrationKeys} } = context.integrations;
             const { ${mathKeys} } = context.math;
-            const { Page, Global, Pages } = context.scopes;
+            const { Page, Global, Pages, Event } = context.scopes;
             return (${expression});
           `
         );
@@ -167,7 +168,7 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              const { Page, Global, Pages } = context.scopes;
+              const { Page, Global, Pages, Event } = context.scopes;
               return (${processed});
             })();
           `
@@ -199,7 +200,7 @@ class ExecutionSandbox {
       const fullContext = {
         integrations: context.integrations || getExpressionContext(),
         math,
-        scopes: context.scopes || { Page: {}, Global: {}, Pages: {} },
+        scopes: context.scopes || { Page: {}, Global: {}, Pages: {}, Event: null },
       };
 
       // Generate cache key including code hash
@@ -219,7 +220,7 @@ class ExecutionSandbox {
             return (async () => {
               const { ${integrationKeys} } = context.integrations;
               const { ${mathKeys} } = context.math;
-              const { Page, Global, Pages } = context.scopes;
+              const { Page, Global, Pages, Event } = context.scopes;
               ${script}
             })();
           `

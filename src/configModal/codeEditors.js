@@ -27,6 +27,7 @@ const JS_LINT_CONFIG = [
         Page: "readonly",
         Global: "readonly",
         Pages: "readonly",
+        Event: "readonly",
       },
     },
     rules: {
@@ -67,6 +68,7 @@ const SCRIPT_NAMESPACE_DOCS = {
   Local: "Reads and writes values stored locally by MacroHero.",
   ConditionMarkers: "Reads and manages condition markers attached to tokens.",
   OwlTrackers: "Reads and updates OwlTrackers values attached to tokens.",
+  TokenMetadata: "Observes raw metadata entries attached to Owlbear tokens.",
   StatBubbles: "Reads and updates Stat Bubbles, including health helpers.",
   ColoredRings: "Reads and manages colored rings around tokens.",
   JustDices: "Rolls dice through the Just Dices integration.",
@@ -97,6 +99,7 @@ const SCRIPT_METHOD_DOCS = {
   "ConditionMarkers.toggleCondition": "Adds or removes a named condition depending on its current state.",
   "ConditionMarkers.clearAllConditions": "Removes every condition from a token.",
   "OwlTrackers.getValue": "Returns the current value of a named tracker.",
+  "OwlTrackers.onChange": "Creates a hook source that watches a named tracker on one token.",
   "OwlTrackers.getMax": "Returns the maximum value of a named tracker.",
   "OwlTrackers.setValue": "Sets the current value of a named tracker.",
   "OwlTrackers.addValue": "Adds a positive or negative delta to a tracker.",
@@ -173,6 +176,7 @@ const SCRIPT_METHOD_DOCS = {
   "Token.setRotation": "Changes the rotation of one or more items.",
   "Token.setMetadata": "Merges metadata into one or more items.",
   "Scene.getMapIdFromToken": "Returns the map identifier underneath the supplied token.",
+  "TokenMetadata.onChange": "Creates a hook source that watches one metadata key on one token.",
 };
 
 const SCRIPT_NAMESPACE_SIGNATURES = {
@@ -197,6 +201,7 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
     clearAllConditions: ["tokenId"],
   },
   OwlTrackers: {
+    onChange: ["tokenId", "trackerName"],
     getValue: ["tokenId", "trackerName"],
     getMax: ["tokenId", "trackerName"],
     setValue: ["tokenId", "trackerName", "value"],
@@ -299,6 +304,9 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
   Scene: {
     getMapIdFromToken: ["tokenId"],
   },
+  TokenMetadata: {
+    onChange: ["tokenId", "metadataKey"],
+  },
 };
 
 const SCRIPT_NAMESPACE_METHODS = Object.fromEntries(
@@ -330,6 +338,37 @@ const SCRIPT_NAMESPACE_COMPLETIONS = [
     }),
   },
 ];
+
+const EVENT_PROPERTY_DOCS = {
+  type: "Observer event type, for example OwlTrackers.onChange.",
+  integration: "Name of the integration that produced the event.",
+  hookId: "ID of the page event currently executing.",
+  pageId: "ID of the page that owns the event.",
+  tokenId: "ID of the observed Owlbear token.",
+  token: "Latest Owlbear token snapshot, or null when it no longer exists.",
+  metadataKey: "Metadata key watched by the observer.",
+  change: "Change kind: created, updated, or removed.",
+  previousValue: "Value selected before the metadata change.",
+  value: "Value selected after the metadata change.",
+  timestamp: "Event creation time in milliseconds since Unix epoch.",
+  trackerName: "Name of the OwlTrackers tracker selected by the observer.",
+  previousTracker: "Complete tracker snapshot before the change.",
+  tracker: "Complete tracker snapshot after the change.",
+  previousMax: "Previous OwlTrackers maximum value.",
+  max: "Current OwlTrackers maximum value.",
+  delta: "Numeric difference between the new and previous tracker values, or null.",
+};
+
+const EVENT_PROPERTY_COMPLETIONS = Object.entries(EVENT_PROPERTY_DOCS).map(([label, description]) => ({
+  label,
+  type: "property",
+  detail: "Hook event field",
+  info: completionInfo({
+    signature: `Event.${label}`,
+    description,
+    note: "Event is read-only and only exists while a hook condition or command is executing.",
+  }),
+}));
 
 const macroHeroTheme = EditorView.theme({
   "&": {
@@ -554,20 +593,26 @@ function createScriptCompletionSource(variables = []) {
   }));
   const rootOptions = [
     ...SCRIPT_HELPER_COMPLETIONS,
-    ...["Page", "Global", "Pages"].map(label => ({
+    ...["Page", "Global", "Pages", "Event"].map(label => ({
       label,
       type: "namespace",
-      detail: label === "Page"
+      detail: label === "Event"
+        ? "Current hook event"
+        : label === "Page"
         ? "Current page variables"
         : (label === "Pages" ? "Variables from every page" : "Global variables"),
       info: completionInfo({
         signature: label,
-        description: label === "Page"
+        description: label === "Event"
+          ? "Read-only payload supplied while an event hook is executing."
+          : label === "Page"
           ? "State and computed variables belonging to the current page. Computed values are read-only."
           : (label === "Pages"
             ? "Access variables from any page through its Page ID."
             : "State and computed variables shared by every page. Computed values are read-only."),
-        note: label === "Pages"
+        note: label === "Event"
+          ? "Available in hook conditions and commands only."
+          : label === "Pages"
           ? "Use Pages.pageId.variableName."
           : "Type a dot to list the variables available in this scope.",
       }),
@@ -593,7 +638,9 @@ function createScriptCompletionSource(variables = []) {
       const [namespace] = property.text.split(".");
       const methods = namespace === "Pages"
         ? pageNamespaceOptions
-        : (SCRIPT_NAMESPACE_METHODS[namespace] || scopedVariableOptions[namespace]);
+        : (namespace === "Event"
+          ? EVENT_PROPERTY_COMPLETIONS
+          : (SCRIPT_NAMESPACE_METHODS[namespace] || scopedVariableOptions[namespace]));
       if (!methods) return null;
       return {
         from: property.from + namespace.length + 1,
@@ -619,10 +666,19 @@ function methodCompletion(namespace, label, args) {
     type: "function",
     detail: `(${args.join(", ")})`,
     info: completionInfo({
-      signature: `await ${namespace}.${label}(${args.join(", ")})`,
+      signature: label === "onChange"
+        ? `${namespace}.${label}(${args.join(", ")})`
+        : `await ${namespace}.${label}(${args.join(", ")})`,
       description: SCRIPT_METHOD_DOCS[`${namespace}.${label}`] || `${label} operation provided by the ${namespace} integration.`,
       parameters: args.map(arg => [arg, parameterDescription(arg)]),
-      note: "Integration calls may be asynchronous; use await when you need the returned value or completion.",
+      example: label === "onChange"
+        ? (namespace === "OwlTrackers"
+          ? 'OwlTrackers.onChange(Page.token, "HP")'
+          : 'TokenMetadata.onChange(Page.token, "com.example/status")')
+        : "",
+      note: label === "onChange"
+        ? "Use this descriptor in a page event Watch field; it does not subscribe when called from a command."
+        : "Integration calls may be asynchronous; use await when you need the returned value or completion.",
     }),
   });
 }
@@ -699,6 +755,7 @@ function parameterDescription(name) {
     itemOrId: "Owlbear item object or its identifier.",
     key: "Local-storage key.",
     mapId: "Identifier of the target map.",
+    metadataKey: "Complete metadata namespace key to observe.",
     mime: "Image MIME type.",
     options: "Optional settings object.",
     params: "Token creation parameters.",
@@ -711,6 +768,7 @@ function parameterDescription(name) {
     timeoutMs: "Maximum wait time in milliseconds.",
     tokenId: "Identifier of the target token.",
     tokenIds: "Array of token identifiers.",
+    trackerName: "Exact OwlTrackers tracker name, for example 'HP'.",
     tokensParams: "Array of token creation parameter objects.",
     updates: "Object containing only the properties to update.",
     value: "Value to store or apply.",

@@ -1,11 +1,25 @@
 ﻿import OBR from "@owlbear-rodeo/sdk";
 import { createDebugLogger } from "../../debugMode.js";
+import { createTokenMetadataWatchDescriptor } from "../../events/metadataWatchDescriptor.js";
 
 // Debug mode constants
 const logger = createDebugLogger("tokenMetadata");
 
 
 const OWL_TRACKERS_METADATA_KEY = "com.owl-trackers/trackers";
+
+/**
+ * Describe a hook that fires whenever one metadata entry changes on a token.
+ * HookEngine owns the subscription; calling this helper has no side effects.
+ */
+export function onChange(tokenId, metadataKey) {
+  return createTokenMetadataWatchDescriptor({
+    integration: "TokenMetadata",
+    tokenId,
+    metadataKey,
+    selectorKey: "metadata",
+  });
+}
 
 /**
  * Get all metadata for a token
@@ -285,6 +299,7 @@ export async function getFlatMetadata(tokenId, metadataKey) {
 }
 
 export default {
+  onChange,
   getTokenMetadata,
   getTokenMetadataValue,
   setTokenMetadata,
