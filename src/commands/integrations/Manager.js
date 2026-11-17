@@ -165,6 +165,9 @@ class IntegrationsManager {
       },
       // PrettySordid (initiative helper)
       PrettySordid: {
+        onTurn: (itemOrId) => PrettySordid.onTurn(itemOrId),
+        onTurnChange: () => PrettySordid.onTurnChange(),
+        onRoundChange: () => PrettySordid.onRoundChange(),
         hasInitiative: this.wrapAsync((itemOrId) => PrettySordid.hasInitiative(itemOrId)),
         getInitiative: this.wrapAsync((itemOrId) => PrettySordid.getInitiative(itemOrId)),
         isActiveTurn: this.wrapAsync((itemOrId) => PrettySordid.isActiveTurn(itemOrId)),

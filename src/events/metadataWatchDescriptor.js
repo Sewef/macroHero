@@ -1,6 +1,7 @@
 const TOKEN_METADATA_WATCH = "macrohero.token-metadata-watch";
 const SCOPED_METADATA_WATCH = "macrohero.scoped-metadata-watch";
 const BROADCAST_WATCH = "macrohero.broadcast-watch";
+const SCENE_ITEMS_WATCH = "macrohero.scene-items-watch";
 
 /**
  * Create an inert description of a token metadata subscription.
@@ -15,6 +16,7 @@ export function createTokenMetadataWatchDescriptor(options = {}) {
     selectorKey = "metadata",
     select = value => value,
     mapEvent = event => event,
+    shouldEmit = () => true,
   } = options;
 
   return Object.freeze({
@@ -26,6 +28,7 @@ export function createTokenMetadataWatchDescriptor(options = {}) {
     selectorKey: String(selectorKey || "metadata"),
     select,
     mapEvent,
+    shouldEmit,
   });
 }
 
@@ -37,7 +40,8 @@ export function isTokenMetadataWatchDescriptor(value) {
       && typeof value.metadataKey === "string"
       && typeof value.eventMethod === "string"
       && typeof value.select === "function"
-      && typeof value.mapEvent === "function",
+      && typeof value.mapEvent === "function"
+      && typeof value.shouldEmit === "function"
   );
 }
 
@@ -80,12 +84,14 @@ export function createBroadcastWatchDescriptor(options = {}) {
   const {
     integration = "Broadcast",
     channel,
+    eventMethod = "onMessage",
     mapEvent = event => event,
   } = options;
 
   return Object.freeze({
     kind: BROADCAST_WATCH,
     integration: String(integration || "Broadcast"),
+    eventMethod: String(eventMethod || "onMessage"),
     channel: channel == null ? "" : String(channel),
     mapEvent,
   });
@@ -96,6 +102,44 @@ export function isBroadcastWatchDescriptor(value) {
     value
       && value.kind === BROADCAST_WATCH
       && typeof value.channel === "string"
+      && typeof value.eventMethod === "string"
+      && typeof value.mapEvent === "function",
+  );
+}
+
+export function createSceneItemsWatchDescriptor(options = {}) {
+  const {
+    integration,
+    eventMethod,
+    selectorKey = "items",
+    select,
+    isEqual,
+    shouldEmit = () => true,
+    mapEvent = event => event,
+  } = options;
+
+  return Object.freeze({
+    kind: SCENE_ITEMS_WATCH,
+    integration: String(integration || "Scene"),
+    eventMethod: String(eventMethod || "onChange"),
+    selectorKey: String(selectorKey || "items"),
+    select,
+    isEqual,
+    shouldEmit,
+    mapEvent,
+  });
+}
+
+export function isSceneItemsWatchDescriptor(value) {
+  return Boolean(
+    value
+      && value.kind === SCENE_ITEMS_WATCH
+      && typeof value.integration === "string"
+      && typeof value.eventMethod === "string"
+      && typeof value.selectorKey === "string"
+      && typeof value.select === "function"
+      && (value.isEqual === undefined || typeof value.isEqual === "function")
+      && typeof value.shouldEmit === "function"
       && typeof value.mapEvent === "function",
   );
 }
@@ -103,7 +147,8 @@ export function isBroadcastWatchDescriptor(value) {
 export function isWatchDescriptor(value) {
   return isTokenMetadataWatchDescriptor(value)
     || isScopedMetadataWatchDescriptor(value)
-    || isBroadcastWatchDescriptor(value);
+    || isBroadcastWatchDescriptor(value)
+    || isSceneItemsWatchDescriptor(value);
 }
 
-export { TOKEN_METADATA_WATCH, SCOPED_METADATA_WATCH, BROADCAST_WATCH };
+export { TOKEN_METADATA_WATCH, SCOPED_METADATA_WATCH, BROADCAST_WATCH, SCENE_ITEMS_WATCH };

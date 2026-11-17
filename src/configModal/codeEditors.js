@@ -130,6 +130,9 @@ const SCRIPT_METHOD_DOCS = {
   "PrettySordid.hasInitiative": "Checks whether an item is present in initiative.",
   "PrettySordid.getInitiative": "Returns the initiative value for an item.",
   "PrettySordid.isActiveTurn": "Checks whether an item currently has the active turn.",
+  "PrettySordid.onTurn": "Creates a hook source that fires when one token becomes the active combatant.",
+  "PrettySordid.onTurnChange": "Creates a hook source that fires whenever Pretty Sordid changes the active combatant.",
+  "PrettySordid.onRoundChange": "Creates a hook source for Pretty Sordid round changes.",
   "PrettySordid.setInitiative": "Sets an item's initiative count.",
   "PrettySordid.removeInitiative": "Removes an item from initiative.",
   "Weather.setWeather": "Applies a complete weather configuration to a map.",
@@ -247,6 +250,9 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
     hasInitiative: ["itemOrId"],
     getInitiative: ["itemOrId"],
     isActiveTurn: ["itemOrId"],
+    onTurn: ["itemOrId"],
+    onTurnChange: [],
+    onRoundChange: [],
     setInitiative: ["itemOrId", "count"],
     removeInitiative: ["itemOrId"],
   },
@@ -358,9 +364,15 @@ const EVENT_PROPERTY_DOCS = {
   integration: "Name of the integration that produced the event.",
   hookId: "ID of the page event currently executing.",
   pageId: "ID of the page that owns the event.",
-  scope: "Observed source: token, scene, room, player, or broadcast.",
+  scope: "Observed source: token, scene items, scene metadata, room, player, or broadcast.",
   tokenId: "ID of the observed Owlbear token.",
-  token: "Latest Owlbear token snapshot, or null when it no longer exists.",
+  token: "Latest Owlbear token snapshot, or null when no token is active.",
+  previousTokenId: "ID of the previously active Pretty Sordid token, or null.",
+  previousToken: "Previous active Owlbear token snapshot, or null.",
+  tokenName: "Display name of the currently active Pretty Sordid token.",
+  previousTokenName: "Display name of the previously active Pretty Sordid token.",
+  initiative: "Initiative of the currently active Pretty Sordid token, or null.",
+  previousInitiative: "Initiative of the previously active Pretty Sordid token, or null.",
   metadataKey: "Metadata key watched by the observer.",
   change: "Change kind: created, updated, or removed.",
   previousValue: "Value selected before the metadata change.",
@@ -378,17 +390,22 @@ const EVENT_PROPERTY_DOCS = {
   channel: "Exact broadcast channel that received the message.",
   data: "Payload carried by the broadcast message.",
   connectionId: "Connection ID of the broadcast sender, when provided.",
+  roundNumber: "Current Pretty Sordid round number, or null when round tracking is disabled.",
+  enabled: "Whether the integration feature represented by the event is enabled.",
 };
 
-function watchMethodExample(namespace) {
+function watchMethodExample(namespace, label) {
   return {
-    OwlTrackers: 'OwlTrackers.onChange(Page.token, "HP")',
-    Token: 'Token.onMetadataChange(Page.token, "com.example/status")',
-    Scene: 'Scene.onMetadataChange("com.example/scene")',
-    Room: 'Room.onMetadataChange("com.example/room")',
-    Player: 'Player.onMetadataChange("com.example/player")',
-    Broadcast: 'Broadcast.onMessage("com.example/event")',
-  }[namespace] || "";
+    "OwlTrackers.onChange": 'OwlTrackers.onChange(Page.token, "HP")',
+    "Token.onMetadataChange": 'Token.onMetadataChange(Page.token, "com.example/status")',
+    "Scene.onMetadataChange": 'Scene.onMetadataChange("com.example/scene")',
+    "Room.onMetadataChange": 'Room.onMetadataChange("com.example/room")',
+    "Player.onMetadataChange": 'Player.onMetadataChange("com.example/player")',
+    "Broadcast.onMessage": 'Broadcast.onMessage("com.example/event")',
+    "PrettySordid.onTurn": "PrettySordid.onTurn(Global.token)",
+    "PrettySordid.onTurnChange": "PrettySordid.onTurnChange()",
+    "PrettySordid.onRoundChange": "PrettySordid.onRoundChange()",
+  }[`${namespace}.${label}`] || "";
 }
 
 const EVENT_PROPERTY_COMPLETIONS = Object.entries(EVENT_PROPERTY_DOCS).map(([label, description]) => ({
@@ -692,7 +709,14 @@ function createScriptCompletionSource(variables = []) {
 }
 
 function methodCompletion(namespace, label, args) {
-  const isWatchMethod = label === "onChange" || label === "onMetadataChange" || label === "onMessage";
+  const isWatchMethod = [
+    "onChange",
+    "onMetadataChange",
+    "onMessage",
+    "onTurn",
+    "onTurnChange",
+    "onRoundChange",
+  ].includes(label);
   const placeholders = args.map(arg => `\${${arg}}`).join(", ");
   return snippetCompletion(`${label}(${placeholders})`, {
     label,
@@ -704,7 +728,7 @@ function methodCompletion(namespace, label, args) {
         : `await ${namespace}.${label}(${args.join(", ")})`,
       description: SCRIPT_METHOD_DOCS[`${namespace}.${label}`] || `${label} operation provided by the ${namespace} integration.`,
       parameters: args.map(arg => [arg, parameterDescription(arg)]),
-      example: isWatchMethod ? watchMethodExample(namespace) : "",
+      example: isWatchMethod ? watchMethodExample(namespace, label) : "",
       note: isWatchMethod
         ? "Use this descriptor in a page event Watch field; it does not subscribe when called from a command."
         : "Integration calls may be asynchronous; use await when you need the returned value or completion.",

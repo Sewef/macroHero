@@ -1,8 +1,10 @@
 import { tokenMetadataObserver } from "./TokenMetadataObserver.js";
 import { scopedMetadataObserver } from "./ScopedMetadataObserver.js";
 import { broadcastObserver } from "./BroadcastObserver.js";
+import { sceneItemsObserver } from "./SceneItemsObserver.js";
 import {
   isBroadcastWatchDescriptor,
+  isSceneItemsWatchDescriptor,
   isScopedMetadataWatchDescriptor,
   isTokenMetadataWatchDescriptor,
 } from "./metadataWatchDescriptor.js";
@@ -12,6 +14,7 @@ class WatchObserverRegistry {
     if (isTokenMetadataWatchDescriptor(descriptor)) return tokenMetadataObserver.observe(descriptor, callback);
     if (isScopedMetadataWatchDescriptor(descriptor)) return scopedMetadataObserver.observe(descriptor, callback);
     if (isBroadcastWatchDescriptor(descriptor)) return broadcastObserver.observe(descriptor, callback);
+    if (isSceneItemsWatchDescriptor(descriptor)) return sceneItemsObserver.observe(descriptor, callback);
     throw new Error("Unsupported hook watch descriptor");
   }
 
@@ -19,6 +22,7 @@ class WatchObserverRegistry {
     tokenMetadataObserver.clear();
     scopedMetadataObserver.clear();
     broadcastObserver.clear();
+    sceneItemsObserver.clear();
   }
 }
 

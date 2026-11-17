@@ -174,6 +174,8 @@ class TokenMetadataObserver {
         timestamp: Date.now(),
       });
 
+      if (!record.descriptor.shouldEmit(baseEvent)) continue;
+
       record.queue = record.queue
         .then(async () => {
           const event = Object.freeze(record.descriptor.mapEvent(baseEvent));

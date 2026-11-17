@@ -20,7 +20,7 @@ class BroadcastObserver {
 
   observe(descriptor, callback) {
     if (!isBroadcastWatchDescriptor(descriptor)) throw new Error("Invalid broadcast watch descriptor");
-    if (!descriptor.channel) throw new Error(`${descriptor.integration}.onMessage requires a broadcast channel`);
+    if (!descriptor.channel) throw new Error(`${descriptor.integration}.${descriptor.eventMethod} requires a broadcast channel`);
     if (typeof callback !== "function") throw new Error("Broadcast observer callback is required");
 
     let record = this.records.get(descriptor.channel);
@@ -57,7 +57,7 @@ class BroadcastObserver {
       try {
         const data = cloneValue(rawEvent.data);
         const event = Object.freeze(descriptor.mapEvent(Object.freeze({
-          type: `${descriptor.integration}.onMessage`,
+          type: `${descriptor.integration}.${descriptor.eventMethod}`,
           integration: descriptor.integration,
           scope: "broadcast",
           channel,

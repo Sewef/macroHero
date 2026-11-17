@@ -573,11 +573,47 @@
     {
       "label": "PrettySordid",
       "id": "prettysordid",
-      "state": {},
+      "state": {
+        "prettyLastEvent": {
+          "default": "Enable a PrettySordid event example, then change the initiative tracker."
+        }
+      },
       "computed": {
         "prettyHasInitiative": "PrettySordid.hasInitiative(Global.token)",
         "prettyInitiativeCount": "PrettySordid.getInitiative(Global.token)"
       },
+      "hooks": [
+        {
+          "id": "prettysordid_selected_token_turn",
+          "label": "Selected token starts its turn",
+          "enabled": false,
+          "watch": "PrettySordid.onTurn(Global.token)",
+          "commands": [
+            "Page.prettyLastEvent = 'Turn started for ' + (Event.tokenName || Event.tokenId) + ' (initiative ' + Event.initiative + ')';",
+            "await Owlbear.notification.show(Page.prettyLastEvent, 'INFO');"
+          ]
+        },
+        {
+          "id": "prettysordid_turn_changed",
+          "label": "Active turn changed",
+          "enabled": false,
+          "watch": "PrettySordid.onTurnChange()",
+          "commands": [
+            "Page.prettyLastEvent = 'Turn: ' + (Event.previousTokenName || Event.previousTokenId || 'none') + ' -> ' + (Event.tokenName || Event.tokenId || 'none');",
+            "await Owlbear.notification.show(Page.prettyLastEvent, 'INFO');"
+          ]
+        },
+        {
+          "id": "prettysordid_round_changed",
+          "label": "Round changed",
+          "enabled": false,
+          "watch": "PrettySordid.onRoundChange()",
+          "commands": [
+            "Page.prettyLastEvent = Event.roundNumber === null ? 'Round tracking disabled' : 'Round ' + Event.roundNumber;",
+            "await Owlbear.notification.show(Page.prettyLastEvent, Event.roundNumber === null ? 'WARNING' : 'SUCCESS');"
+          ]
+        }
+      ],
       "layout": [
         {
           "type": "title",
@@ -585,7 +621,12 @@
         },
         {
           "type": "text",
-          "text": "Manage combat initiative using PrettySordid extension. Track turn order and active combatants."
+          "text": "Manage combat initiative using PrettySordid extension. The **Events** branch contains three disabled hook examples: react when the selected token starts its turn, whenever the active token changes, or when the round changes. Enable only the examples you need."
+        },
+        {
+          "type": "value",
+          "label": "Last event",
+          "var": "prettyLastEvent"
         },
         {
           "type": "divider"
