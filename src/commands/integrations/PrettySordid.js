@@ -69,6 +69,22 @@ export function onTurn(itemOrId) {
   });
 }
 
+/** Create a hook source that fires when the selected token stops being active. */
+export function onTurnEnd(itemOrId) {
+  const tokenId = _tokenId(itemOrId);
+  if (!tokenId) throw new Error("[PrettySordid] onTurnEnd expects a token id or item object");
+
+  return createSceneItemsWatchDescriptor({
+    integration: "PrettySordid",
+    eventMethod: "onTurnEnd",
+    selectorKey: `turn-end:${tokenId}`,
+    select: items => _activeTurn(items, tokenId),
+    isEqual: _sameTurn,
+    shouldEmit: event => event.previousValue !== null && event.value === null,
+    mapEvent: _turnEvent,
+  });
+}
+
 /** Create a hook source that fires whenever the active token changes. */
 export function onTurnChange() {
   return createSceneItemsWatchDescriptor({
@@ -190,6 +206,7 @@ export async function removeInitiative(itemOrId) {
 
 export default {
   onTurn,
+  onTurnEnd,
   onTurnChange,
   onRoundChange,
   hasInitiative,

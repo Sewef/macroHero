@@ -594,6 +594,16 @@
           ]
         },
         {
+          "id": "prettysordid_selected_token_turn_end",
+          "label": "Selected token ends its turn",
+          "enabled": false,
+          "watch": "PrettySordid.onTurnEnd(Global.token)",
+          "commands": [
+            "Page.prettyLastEvent = 'Turn ended for ' + (Event.previousTokenName || Event.previousTokenId) + ' (initiative ' + Event.previousInitiative + ')';",
+            "await Owlbear.notification.show(Page.prettyLastEvent, 'INFO');"
+          ]
+        },
+        {
           "id": "prettysordid_turn_changed",
           "label": "Active turn changed",
           "enabled": false,
@@ -621,7 +631,7 @@
         },
         {
           "type": "text",
-          "text": "Manage combat initiative using PrettySordid extension. The **Events** branch contains three disabled hook examples: react when the selected token starts its turn, whenever the active token changes, or when the round changes. Enable only the examples you need."
+          "text": "Manage combat initiative using PrettySordid extension. The **Events** branch contains disabled hook examples for the selected token starting or ending its turn, active token changes, and round changes. Enable only the examples you need."
         },
         {
           "type": "value",

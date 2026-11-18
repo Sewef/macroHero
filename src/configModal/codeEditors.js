@@ -131,6 +131,7 @@ const SCRIPT_METHOD_DOCS = {
   "PrettySordid.getInitiative": "Returns the initiative value for an item.",
   "PrettySordid.isActiveTurn": "Checks whether an item currently has the active turn.",
   "PrettySordid.onTurn": "Creates a hook source that fires when one token becomes the active combatant.",
+  "PrettySordid.onTurnEnd": "Creates a hook source that fires when one token stops being the active combatant.",
   "PrettySordid.onTurnChange": "Creates a hook source that fires whenever Pretty Sordid changes the active combatant.",
   "PrettySordid.onRoundChange": "Creates a hook source for Pretty Sordid round changes.",
   "PrettySordid.setInitiative": "Sets an item's initiative count.",
@@ -251,6 +252,7 @@ const SCRIPT_NAMESPACE_SIGNATURES = {
     getInitiative: ["itemOrId"],
     isActiveTurn: ["itemOrId"],
     onTurn: ["itemOrId"],
+    onTurnEnd: ["itemOrId"],
     onTurnChange: [],
     onRoundChange: [],
     setInitiative: ["itemOrId", "count"],
@@ -403,6 +405,7 @@ function watchMethodExample(namespace, label) {
     "Player.onMetadataChange": 'Player.onMetadataChange("com.example/player")',
     "Broadcast.onMessage": 'Broadcast.onMessage("com.example/event")',
     "PrettySordid.onTurn": "PrettySordid.onTurn(Global.token)",
+    "PrettySordid.onTurnEnd": "PrettySordid.onTurnEnd(Global.token)",
     "PrettySordid.onTurnChange": "PrettySordid.onTurnChange()",
     "PrettySordid.onRoundChange": "PrettySordid.onRoundChange()",
   }[`${namespace}.${label}`] || "";
@@ -714,6 +717,7 @@ function methodCompletion(namespace, label, args) {
     "onMetadataChange",
     "onMessage",
     "onTurn",
+    "onTurnEnd",
     "onTurnChange",
     "onRoundChange",
   ].includes(label);
