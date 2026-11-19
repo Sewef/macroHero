@@ -34,13 +34,6 @@ export class ButtonComponent extends UIComponent {
       btn.disabled = true;
     }
 
-    // Set tooltip — plain text, ${vars}, or HTML (see UIComponent.applyTooltip)
-    UIComponent.applyTooltip(
-      btn,
-      this.item.tooltip,
-      () => this.services.getVariableScopes(this.page)
-    );
-
     // Add right-click handler if onrightclick commands exist
     if (this.item.onrightclick && Array.isArray(this.item.onrightclick) && this.item.onrightclick.length > 0) {
       this.addEventListener(btn, "contextmenu", async (event) => {

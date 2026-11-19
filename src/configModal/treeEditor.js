@@ -1743,7 +1743,8 @@ function _renderElementInspector() {
     <span class="section-title">${_esc(type)}</span>
     <small>${_esc(_breadcrumb(_selection.path))}</small>
   </div>
-  ${_elementFields(type, element)}`;
+  ${_elementFields(type, element)}
+  ${_textareaInput('Tooltip', 'tooltip', element.tooltip, { rows: 3, lang: 'markdown' })}`;
 }
 
 function _attachElementInspector() {
@@ -1820,7 +1821,6 @@ function _elementFields(type, e) {
     case 'button':
       return `
         ${_textInput('Label', 'label', e.label)}
-        ${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3, lang: 'markdown' })}
         ${_colorInput('Color', 'color', e.color)}
         ${_commandInput('onclick', 'onclick', e.onclick)}
         ${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
@@ -1848,7 +1848,7 @@ function _elementFields(type, e) {
     case 'matrix':
       return `${_numberInput('Columns', 'columns', e.columns ?? 4)}${_textInput('Button size', 'buttonSize', e.buttonSize ?? '40px')}${_textInput('Gap', 'gap', e.gap ?? '4px')}${_selectInput('Button shape', 'buttonShape', e.buttonShape || 'square', [['square', 'Square'], ['rectangle', 'Rectangle']])}${_checkboxInput('Border', 'border', e.border)}${_colorInput('Color', 'color', e.color)}`;
     case 'matrixbutton':
-      return `${_textInput('Label', 'label', e.label)}${_textInput('Icon', 'icon', e.icon)}${_textareaInput('Tooltip', 'tooltip', e.tooltip, { rows: 3, lang: 'markdown' })}${_colorInput('Color', 'color', e.color)}${_colorInput('Border color', 'borderColor', e.borderColor)}${_commandInput('onclick', 'onclick', e.onclick)}${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
+      return `${_textInput('Label', 'label', e.label)}${_textInput('Icon', 'icon', e.icon)}${_colorInput('Color', 'color', e.color)}${_colorInput('Border color', 'borderColor', e.borderColor)}${_commandInput('onclick', 'onclick', e.onclick)}${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
     default:
       return `<p class="property-help">Unknown element type: ${_esc(type)}</p>`;
   }

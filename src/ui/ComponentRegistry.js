@@ -16,6 +16,7 @@ import { DropdownComponent } from "./DropdownComponent.js";
 import { MatrixComponent } from "./MatrixComponent.js";
 import { DividerComponent } from "./DividerComponent.js";
 import { ToggleComponent } from "./ToggleComponent.js";
+import { UIComponent } from "./UIComponent.js";
 
 export class ComponentRegistry {
   static #registry = {
@@ -83,6 +84,10 @@ export class ComponentRegistry {
     if (!component) {
       return null;
     }
-    return component.render();
+    const element = component.render();
+    if (element) {
+      UIComponent.applyTooltip(element, item.tooltip, () => services.getVariableScopes(page));
+    }
+    return element;
   }
 }

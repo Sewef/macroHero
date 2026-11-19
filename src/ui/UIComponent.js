@@ -170,13 +170,14 @@ export class UIComponent {
     }
 
     let hoverVersion = 0;
-    element.addEventListener('mouseenter', async (e) => {
+    const showTooltip = async (e) => {
       const version = ++hoverVersion;
+      tooltipEl._mhOwner = element;
       let raw = evaluate();
       // Variables may not be resolved yet on first hover — retry after a frame
       if (raw.includes('${')) {
         await new Promise(r => setTimeout(r, 80));
-        if (version !== hoverVersion) return;
+        if (version !== hoverVersion || tooltipEl._mhOwner !== element) return;
         raw = evaluate();
       }
       if (isMd) tooltipEl.innerHTML = parseMd(raw);
@@ -184,13 +185,22 @@ export class UIComponent {
       else tooltipEl.textContent = raw;
       tooltipEl.style.display = 'block';
       UIComponent._positionTooltip(tooltipEl, e);
-    });
+    };
+    element._mhShowTooltip = showTooltip;
+    element.addEventListener('mouseenter', showTooltip);
     element.addEventListener('mousemove', (e) => {
-      UIComponent._positionTooltip(tooltipEl, e);
+      if (tooltipEl._mhOwner === element) UIComponent._positionTooltip(tooltipEl, e);
     });
-    element.addEventListener('mouseleave', () => {
+    element.addEventListener('mouseleave', (e) => {
       hoverVersion++;
+      if (tooltipEl._mhOwner !== element) return;
+      tooltipEl._mhOwner = null;
       tooltipEl.style.display = 'none';
+      let parent = element.parentElement;
+      while (parent && !parent._mhShowTooltip) parent = parent.parentElement;
+      if (parent && e.relatedTarget instanceof Node && parent.contains(e.relatedTarget)) {
+        parent._mhShowTooltip(e);
+      }
     });
   }
 
