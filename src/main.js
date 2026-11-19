@@ -34,7 +34,7 @@ function applyTheme(theme) {
   }
 }
 
-document.getElementById("configBtn").onclick = openConfigModal;
+document.getElementById("configBtn").onclick = () => openConfigModal(() => window.location.reload());
 document.getElementById("reloadBtn").onclick = reloadCurrentPage;
 
 // Ensure pending localStorage changes are saved before page unloads

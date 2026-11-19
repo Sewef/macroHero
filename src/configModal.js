@@ -338,6 +338,7 @@ async function _closeModal(data) {
   themeUnsubscribe = null;
   if (data) {
     const attempts = [
+      { opts: { destination: 'LOCAL' }, desc: 'LOCAL' },
       { opts: { destination: 'ROOM' }, desc: 'ROOM' },
       { opts: { destination: 'ALL' },  desc: 'ALL'  },
       { opts: undefined,               desc: 'default' }
@@ -405,7 +406,7 @@ OBR.onReady(() => {
         }
 
         saveGoogleSheetsInputs();
-        await saveConfigToLocalStorage(config);
+        if (!await saveConfigToLocalStorage(config)) throw new Error('Could not save the configuration to local storage.');
         savedConfigFingerprint = _configFingerprint(config);
         _setDirty(false);
         logger.log('Config saved to localStorage');
@@ -420,7 +421,7 @@ OBR.onReady(() => {
 
     document.getElementById('cancelBtn').onclick = () => {
       if (isDirty && !confirm('Discard unsaved changes?')) return;
-      _closeModal();
+      _closeModal({ cancelled: true });
     };
 
     addTrackedListener(document.getElementById('cfgArea'), 'input', () => _setDirty(true));

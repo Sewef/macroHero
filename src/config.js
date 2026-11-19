@@ -301,7 +301,7 @@ export async function saveConfig(cfg) {
         logger.log(`Saving for player: ${playerId}`);
         
         // Save full config to room-scoped localStorage (clean runtime fields first)
-        await saveConfigToLocalStorage(cfg);
+        if (!await saveConfigToLocalStorage(cfg)) throw new Error('Could not save the configuration to local storage.');
         
         // No longer saving evaluated variable values to room metadata
         return true;
@@ -317,46 +317,28 @@ export async function saveConfig(cfg) {
 // Opens the config editor modal
 // Flow: Modal edits config → sends broadcast → main app saves → main app re-renders
 // --------------------------------------
-export async function openConfigModal() {
+export async function openConfigModal(onSaved) {
     logger.log("Opening config modal");
-    const current = await loadConfig();
-    logger.log("Config loaded");
-
     // Listen for the result from the modal
     const unsubscribe = OBR.broadcast.onMessage("macrohero.config.result", async (event) => {
         logger.log("Received config update from modal");
         try {
             if (event.data?.updatedConfig) {
                 logger.log("Persisting updated config");
-                try {
-                    await saveConfig(event.data.updatedConfig);
-                    logger.log("Config persisted");
-                } catch (error) {
-                    logger.error('Failed to save config:', error);
-                }
+                await saveConfig(event.data.updatedConfig);
+                logger.log("Config persisted");
             } else if (event.data?.savedFromModal) {
-                logger.log("Loading config from storage");
-                try {
-                    const cfg = await loadConfigFromLocalStorage();
-                    if (cfg) {
-                        logger.log("Config loaded and persisted");
-                        await saveConfig(cfg);
-                    } else {
-                        logger.warn("No config found in storage");
-                    }
-                } catch (error) {
-                    logger.error('Error loading config from storage:', error);
-                }
+                logger.log("Config already saved by modal");
             } else {
                 logger.log("Closed without changes");
             }
 
-            // Notify main app to reload UI — send a small flag to avoid size limits
-            try {
-                await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromModal: true }, { destination: "LOCAL" });
-                logger.log("Notified main app of update");
-            } catch (err) {
-                logger.warn('Failed to notify main app:', err);
+            if (event.data?.updatedConfig || event.data?.savedFromModal) {
+                if (typeof onSaved === 'function') {
+                    await onSaved();
+                } else {
+                    await OBR.broadcast.sendMessage("macrohero.config.updated", { savedFromModal: true }, { destination: "LOCAL" });
+                }
             }
         } finally {
             unsubscribe();
