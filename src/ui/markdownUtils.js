@@ -40,8 +40,24 @@ marked.setOptions({ breaks: true });
  * @param {string} str
  * @returns {string} Safe HTML string
  */
-export function parseMd(str) {
-  const html = marked.parse(str, { renderer });
+export function parseMd(str, { preserveExpressions = false } = {}) {
+  const expressions = [];
+  let prefix = 'MHINTERPOLATION';
+  while (str.includes(prefix)) prefix += 'X';
+  const source = preserveExpressions
+    ? str.replace(/\$\{[^}]*\}/g, expression => {
+      const placeholder = `${prefix}${expressions.length}END`;
+      expressions.push(expression);
+      return placeholder;
+    })
+    : str;
+  let html = marked.parse(source, { renderer });
+  if (expressions.length) {
+    html = html.replace(new RegExp(`${prefix}(\\d+)END`, 'g'), (_, index) =>
+      expressions[Number(index)].replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      })[char]));
+  }
   const trimmed = html.trim();
   // Strip single <p>…</p> wrapper so short tooltips/labels stay inline
   const unwrapped =

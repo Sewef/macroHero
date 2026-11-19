@@ -115,8 +115,8 @@ export class UIComponent {
 
   /**
    * Apply a tooltip to an element.
-   * - Plain text / ${expr} → native title attribute (lazy-evaluated on mouseenter)
-   * - HTML (contains '<') → custom #mh-tooltip div positioned near the cursor
+   * Plain text, Markdown and HTML use the shared rich tooltip, with expressions
+   * evaluated when the pointer enters the element.
    *
    * @param {HTMLElement} element - Target element
    * @param {string} rawTooltip - Tooltip string (may contain ${vars} or HTML tags)
@@ -146,16 +146,7 @@ export class UIComponent {
       });
     };
 
-    if (!isHtml && !isMd) {
-      // Plain text — use native title, evaluated lazily
-      element.title = rawTooltip;
-      if (rawTooltip.includes('${')) {
-        element.addEventListener('mouseenter', () => { element.title = evaluate(); });
-      }
-      return;
-    }
-
-    // Markdown or HTML tooltip — use shared #mh-tooltip div
+    // All tooltip formats use the shared #mh-tooltip div.
     let tooltipEl = document.getElementById('mh-tooltip');
     if (!tooltipEl) {
       tooltipEl = document.createElement('div');
@@ -178,14 +169,19 @@ export class UIComponent {
       document.body.appendChild(tooltipEl);
     }
 
+    let hoverVersion = 0;
     element.addEventListener('mouseenter', async (e) => {
+      const version = ++hoverVersion;
       let raw = evaluate();
       // Variables may not be resolved yet on first hover — retry after a frame
       if (raw.includes('${')) {
         await new Promise(r => setTimeout(r, 80));
+        if (version !== hoverVersion) return;
         raw = evaluate();
       }
-      tooltipEl.innerHTML = isMd ? parseMd(raw) : sanitizeHtml(raw);
+      if (isMd) tooltipEl.innerHTML = parseMd(raw);
+      else if (isHtml) tooltipEl.innerHTML = sanitizeHtml(raw);
+      else tooltipEl.textContent = raw;
       tooltipEl.style.display = 'block';
       UIComponent._positionTooltip(tooltipEl, e);
     });
@@ -193,6 +189,7 @@ export class UIComponent {
       UIComponent._positionTooltip(tooltipEl, e);
     });
     element.addEventListener('mouseleave', () => {
+      hoverVersion++;
       tooltipEl.style.display = 'none';
     });
   }

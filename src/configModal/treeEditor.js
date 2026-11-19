@@ -1023,7 +1023,7 @@ function _renderPreviewNode(item, path, pageIndex) {
   const value = _previewVariableValue(item.var, pageIndex);
   switch (type) {
     case 'title': return shell(`<h3>${_esc(item.text || 'Title')}</h3>`);
-    case 'text': return shell(`<div class="live-markdown">${parseMd(item.text || 'Text')}</div>`);
+    case 'text': return shell(`<div class="live-markdown">${parseMd(item.text || 'Text', { preserveExpressions: true })}</div>`);
     case 'divider': return shell('<hr />');
     case 'button': return shell(`<button type="button" tabindex="-1">${_esc(item.label || 'Button')}</button>`);
     case 'matrixbutton': return shell(`<button type="button" class="live-matrix-button" tabindex="-1">${_esc(item.icon || item.label || '•')}</button>`);
