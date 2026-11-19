@@ -105,7 +105,7 @@ export class MatrixComponent extends UIComponent {
     // Set tooltip — plain text, ${vars}, or HTML (see UIComponent.applyTooltip)
     UIComponent.applyTooltip(
       btn,
-      buttonConfig.tooltip || buttonConfig.label || `Button ${index + 1}`,
+      buttonConfig.tooltip,
       () => this.services.getVariableScopes(this.page)
     );
 

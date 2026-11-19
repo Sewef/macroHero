@@ -37,7 +37,7 @@ export class ButtonComponent extends UIComponent {
     // Set tooltip — plain text, ${vars}, or HTML (see UIComponent.applyTooltip)
     UIComponent.applyTooltip(
       btn,
-      this.item.tooltip || this.item.label || (hasOnclick ? 'Button' : 'No commands defined'),
+      this.item.tooltip,
       () => this.services.getVariableScopes(this.page)
     );
 
