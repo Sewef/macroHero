@@ -132,24 +132,8 @@ function buildFields(type, el) {
 
     case 'matrix': {
       const isNew = !el;
-      const sizePresets = ['28px','40px','56px','72px'];
-      const gapPresets  = [['2px','Tight'],['4px','Normal'],['8px','Loose']];
       return `
         <div class="input-group"><label>Columns</label><input type="number" id="elem_columns" value="${e.columns || 4}" min="1" max="12" /></div>
-        <div class="input-group">
-          <label>Button Size</label>
-          <div class="preset-row">
-            ${sizePresets.map(v => `<button type="button" class="btn-small btn-preset${(e.buttonSize||'40px')===v?' btn-preset-active':''}" data-target="elem_buttonSize" data-value="${v}">${v}</button>`).join('')}
-          </div>
-          <input type="text" id="elem_buttonSize" value="${e.buttonSize || '40px'}" placeholder="40px" />
-        </div>
-        <div class="input-group">
-          <label>Gap</label>
-          <div class="preset-row">
-            ${gapPresets.map(([v,l]) => `<button type="button" class="btn-small btn-preset${(e.gap||'4px')===v?' btn-preset-active':''}" data-target="elem_gap" data-value="${v}">${l}</button>`).join('')}
-          </div>
-          <input type="text" id="elem_gap" value="${e.gap || '4px'}" placeholder="4px" />
-        </div>
         <div class="input-group">
           <label>Button Shape</label>
           <div class="preset-row compact">
@@ -268,8 +252,6 @@ function readFields(type, existingChildren) {
       break;
     case 'matrix':
       el.columns = parseInt(v('elem_columns') || '4');
-      el.buttonSize = v('elem_buttonSize') || '40px';
-      el.gap = v('elem_gap') || '4px';
       el.buttonShape = v('elem_buttonShape') || 'square';
       if (checked('elem_border')) el.border = true;
       if (checked('elem_customColor')) el.color = v('elem_color');

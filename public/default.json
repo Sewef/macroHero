@@ -3331,8 +3331,6 @@
         {
           "type": "matrix",
           "columns": 4,
-          "buttonSize": "50px",
-          "gap": "4px",
           "border": true,
           "color": "#9b59b6",
           "children": [
@@ -3412,7 +3410,7 @@
         },
         {
           "type": "text",
-          "text": "Matrix properties: columns (number), buttonSize (pixels), gap (spacing), border (true/false), color (accent color)."
+          "text": "Matrix properties: columns (number), border (true/false), color (accent color)."
         },
         {
           "type": "title",
@@ -3430,8 +3428,6 @@
         {
           "type": "matrix",
           "columns": 4,
-          "buttonSize": "56px",
-          "gap": "6px",
           "border": true,
           "color": "#9b59b6",
           "children": [
@@ -3541,7 +3537,7 @@
         },
         {
           "type": "text",
-          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable, Pages.pageId.variable, and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, buttonSize, gap, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
+          "text": "- title: text, color\n- text: text (plain, Markdown — **bold** *italic* ~~strike~~ `code` [link](url) - list --- hr, or raw HTML with <tags>; Page.variable, Pages.pageId.variable, and Global.variable work in all modes)\n- value: var, label\n- button: label, onclick, tooltip, color, onrightclick\n- counter: var, label, step, color, onupdate\n- checkbox: var, label, color, onupdate\n- toggle: var, label, color, onupdate\n- input: var, label, placeholder, onupdate\n- dropdown: var, label, options, onupdate\n- row: children (array of elements)\n- stack: children, border, color\n- matrix: columns, border, color, children\n- divider: (no properties)\n- alert: alert (info|warning|success|error), title (optional), text"
         }
       ]
     }

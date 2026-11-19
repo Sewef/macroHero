@@ -12,17 +12,12 @@ export class MatrixComponent extends UIComponent {
     
     // Apply grid styling (dynamic values stay inline)
     const cols = this.item.columns || 4;
-    const buttonSize = this.item.buttonSize || "40px";
-    const gap = this.item.gap || "4px";
     const isRect = this.item.buttonShape === 'rectangle';
     
     matrix.style.display = 'grid';
     // Keep configured columns while letting the matrix fill the available row width.
     matrix.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    matrix.style.gridAutoRows = buttonSize;
-    matrix.style.gap = gap;
     matrix.style.width = '100%';
-    matrix.style.setProperty('--mh-matrix-button-size', buttonSize);
     if (this.item.flex) matrix.style.flex = this.item.flex;
     this._isRect = isRect;
 

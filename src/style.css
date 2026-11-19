@@ -760,6 +760,8 @@ body {
   min-width: 0;
   margin: var(--spacing-xs) 0;
   align-content: start;
+  grid-auto-rows: minmax(40px, auto);
+  gap: 4px;
 }
 
 .mh-layout-matrix.mh-bordered {
@@ -777,7 +779,7 @@ body {
   gap: 2px;
   width: 100%;
   min-width: 0;
-  min-height: var(--mh-matrix-button-size, 36px);
+  min-height: 40px;
   height: 100%;
   margin: 0;
   padding: 2px 3px;
@@ -805,10 +807,6 @@ body {
 .mh-matrix-button:disabled {
   opacity: 0.45;
   cursor: default;
-}
-
-.mh-matrix-button--rect {
-  min-height: var(--mh-matrix-button-size, 34px);
 }
 
 .mh-matrix-icon {

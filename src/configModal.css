@@ -1413,7 +1413,7 @@ body {
 .live-container-matrix {
   display: grid;
   grid-template-columns: repeat(var(--preview-columns, 4), minmax(28px, 1fr));
-  gap: var(--preview-gap, 4px);
+  gap: 4px;
 }
 .live-empty {
   padding: 5px;

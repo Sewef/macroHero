@@ -1,5 +1,5 @@
 import { deepClone } from "./utils.js";
-import { migrateConfigV2ToV3, repairConfigV3HookApis, repairConfigV3VariableCalls } from "./configMigration.js";
+import { migrateConfigV2ToV3, migrateMatrixSettings, repairConfigV3HookApis, repairConfigV3VariableCalls } from "./configMigration.js";
 
 export const CONFIG_SCHEMA_VERSION = 3;
 export const GLOBAL_STATE_ID = "__global";
@@ -18,9 +18,7 @@ const ELEMENT_KEY_ORDER = [
   "icon",
   "tooltip",
   "columns",
-  "buttonSize",
   "buttonShape",
-  "gap",
   "step",
   "height",
   "margin",
@@ -331,6 +329,10 @@ export function normalizeConfig(rawConfig, options = {}) {
       page.variables = buildVariablesFromStateComputed(page);
     });
   }
+
+  const matrixMigration = migrateMatrixSettings(cfg);
+  if (matrixMigration.migrated) migrated = true;
+  messages.push(...matrixMigration.messages);
 
   const hookApiRepair = repairConfigV3HookApis(cfg);
   if (hookApiRepair.migrated) migrated = true;

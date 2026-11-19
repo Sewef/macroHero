@@ -938,12 +938,16 @@ function _attachVariableActions(container, fallbackOwner) {
 function _renderBuilder(pageIndex) {
   const builder = document.getElementById('pageBuilder');
   if (!builder) return;
+  const scrollTop = builder.scrollTop;
+  const scrollLeft = builder.scrollLeft;
   const layout = _config.pages[pageIndex].layout || [];
   builder.innerHTML = layout.length
     ? _renderBlockList(layout, [], pageIndex)
     : '<div class="builder-empty">No elements yet. Add a block above.</div>';
   _attachBuilderActions(builder, pageIndex);
   _attachBuilderDragDrop(builder, pageIndex);
+  builder.scrollTop = scrollTop;
+  builder.scrollLeft = scrollLeft;
 }
 
 function _renderBlockList(items, parentPath, pageIndex) {
@@ -1014,7 +1018,7 @@ function _renderPreviewNode(item, path, pageIndex) {
 
   if (CONTAINER_TYPES.has(type)) {
     const columns = Math.min(12, Math.max(1, Number(item.columns) || 4));
-    const style = type === 'matrix' ? ` style="--preview-columns:${columns};--preview-gap:${_attr(item.gap || '4px')}"` : '';
+    const style = type === 'matrix' ? ` style="--preview-columns:${columns}"` : '';
     return shell(`<div class="live-container live-container-${type}"${style}>${children.length
       ? children.map((child, index) => _renderPreviewNode(child, [...path, index], pageIndex)).join('')
       : '<span class="live-empty">Empty</span>'}</div>`);
@@ -1494,7 +1498,7 @@ function _moveElementToPosition(pageIndex, sourcePath, parentPath, requestedInde
 
   _selection = { kind: 'element', path: result.path || [0] };
   _notify();
-  renderPagePanel(pageIndex);
+  _refreshLayoutEditor(pageIndex);
 }
 
 function _canPlaceInParent(item, parent) {
@@ -1846,7 +1850,7 @@ function _elementFields(type, e) {
     case 'stack':
       return `${_checkboxInput('Border', 'border', e.border)}${_colorInput('Color', 'color', e.color)}<p class="property-help">Stack lays children vertically.</p>`;
     case 'matrix':
-      return `${_numberInput('Columns', 'columns', e.columns ?? 4)}${_textInput('Button size', 'buttonSize', e.buttonSize ?? '40px')}${_textInput('Gap', 'gap', e.gap ?? '4px')}${_selectInput('Button shape', 'buttonShape', e.buttonShape || 'square', [['square', 'Square'], ['rectangle', 'Rectangle']])}${_checkboxInput('Border', 'border', e.border)}${_colorInput('Color', 'color', e.color)}`;
+      return `${_numberInput('Columns', 'columns', e.columns ?? 4)}${_selectInput('Button shape', 'buttonShape', e.buttonShape || 'square', [['square', 'Square'], ['rectangle', 'Rectangle']])}${_checkboxInput('Border', 'border', e.border)}${_colorInput('Color', 'color', e.color)}`;
     case 'matrixbutton':
       return `${_textInput('Label', 'label', e.label)}${_textInput('Icon', 'icon', e.icon)}${_colorInput('Color', 'color', e.color)}${_colorInput('Border color', 'borderColor', e.borderColor)}${_commandInput('onclick', 'onclick', e.onclick)}${_commandInput('onrightclick', 'onrightclick', e.onrightclick)}`;
     default:
@@ -2068,6 +2072,12 @@ function _deleteVariable(owner, kind, name) {
   else if (_selectedPageIndex !== null) renderPageVariablesPanel(_selectedPageIndex);
 }
 
+function _refreshLayoutEditor(pageIndex) {
+  _renderPreview(pageIndex);
+  _renderBuilder(pageIndex);
+  _renderPropertyPanel();
+}
+
 function _addElement(pageIndex, parentPath, type) {
   const parent = parentPath ? _getNodeAt(_config.pages[pageIndex].layout, parentPath) : null;
   const element = _defaultElement(type, parent);
@@ -2075,7 +2085,7 @@ function _addElement(pageIndex, parentPath, type) {
   target.push(element);
   _selection = { kind: 'element', path: parentPath ? [...parentPath, target.length - 1] : [target.length - 1] };
   _notify();
-  renderPagePanel(pageIndex);
+  _refreshLayoutEditor(pageIndex);
 }
 
 function _defaultElement(type, parent = null) {
@@ -2093,7 +2103,7 @@ function _defaultElement(type, parent = null) {
     divider: { type: 'divider' },
     row: { type: 'row', children: [] },
     stack: { type: 'stack', children: [] },
-    matrix: { type: 'matrix', columns: 4, buttonSize: '40px', gap: '4px', children: [] },
+    matrix: { type: 'matrix', columns: 4, children: [] },
     matrixButton: { type: 'matrixButton', label: '', onclick: [] },
   };
   return deepClone(defaults[type] || defaults.button);
@@ -2106,7 +2116,7 @@ function _duplicateElement(pageIndex, path) {
   arr.splice(idx + 1, 0, deepClone(arr[idx]));
   _selection = { kind: 'element', path: [...path.slice(0, -1), idx + 1] };
   _notify();
-  renderPagePanel(pageIndex);
+  _refreshLayoutEditor(pageIndex);
 }
 
 function _deleteElement(pageIndex, path) {
@@ -2115,7 +2125,7 @@ function _deleteElement(pageIndex, path) {
   arr.splice(path[path.length - 1], 1);
   _selection = { kind: 'page' };
   _notify();
-  renderPagePanel(pageIndex);
+  _refreshLayoutEditor(pageIndex);
 }
 
 function _moveElement(pageIndex, path, dir) {
@@ -2128,7 +2138,7 @@ function _moveElement(pageIndex, path, dir) {
   arr.splice(next, 0, item);
   _selection = { kind: 'element', path: [...path.slice(0, -1), next] };
   _notify();
-  renderPagePanel(pageIndex);
+  _refreshLayoutEditor(pageIndex);
 }
 
 function _addPage() {

@@ -15,6 +15,26 @@ const RESERVED_IDENTIFIERS = new Set([
   "typeof", "var", "void", "while", "with", "yield",
 ]);
 
+export function migrateMatrixSettings(config) {
+  let count = 0;
+  for (const page of config.pages || []) {
+    walkLayout(page.layout, item => {
+      if (typeof item.type !== "string" || item.type.toLowerCase() !== "matrix") return;
+      let changed = false;
+      for (const property of ["buttonSize", "gap"]) {
+        if (!Object.prototype.hasOwnProperty.call(item, property)) continue;
+        delete item[property];
+        changed = true;
+      }
+      if (changed) count++;
+    });
+  }
+  return {
+    migrated: count > 0,
+    messages: count ? [`Removed obsolete size and gap settings from ${count} ${count === 1 ? "matrix" : "matrices"}.`] : [],
+  };
+}
+
 export function migrateConfigV2ToV3(config) {
   const messages = [];
   const writableComputed = prepareWritableComputedOverrides(config, messages);
